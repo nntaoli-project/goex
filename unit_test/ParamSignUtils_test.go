@@ -12,7 +12,7 @@ func Test_appendParamSign(t *testing.T) {
 	secret := "secret";
 
 	sign, _ := rest.GetParamMD5Sign(secret, params);
-	assert.Equal(t, strings.ToUpper(sign), "E0AEBA5156E0FEE8BDBC3B3A963C7968", "md5 sign fail");
+	assert.Equal(t, strings.ToUpper(sign), "C984E55DA4789949626EA9B26C4869F6", "md5 sign fail");
 
 	hmacSha256Sign, _ := rest.GetParamHmacSHA256Sign(secret, params);
 	assert.Equal(t, hmacSha256Sign, "c5b19a95474fc71f7e054d596452b8fe7c3ff517b5a05c12804da4ba6f987664", "hmac sha256 sign fail");
