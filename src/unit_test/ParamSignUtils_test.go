@@ -2,7 +2,7 @@ package unit_test
 
 import (
 	"testing"
-	"github.com/crypto_coin_api/rest"
+	"../rest"
 	"github.com/stretchr/testify/assert"
 	"strings"
 )
