@@ -32,8 +32,8 @@ type Ticker struct {
 	Sell float64;
 	High float64;
 	Low  float64;
-	Vol  string;
-	Date int;
+	Vol  float64;
+	Date uint64;
 }
 
 type DepthRecord struct {
