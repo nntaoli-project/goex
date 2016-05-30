@@ -6,6 +6,7 @@ import
 	"net/http"
 	"encoding/json"
 	"io/ioutil"
+	"strconv"
 )
 
 const url_ticker = "https://www.okcoin.cn/api/v1/ticker.do";
@@ -82,6 +83,7 @@ func (ctx * OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error){
 	if err != nil{
 		return nil, err;
 	}
+	defer resp.Body.Close();
 	body, err := ioutil.ReadAll(resp.Body);
 	if err != nil{
 		return nil, err;
@@ -90,8 +92,35 @@ func (ctx * OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error){
 	if err != nil{
 		return nil, err;
 	}
-	return &Ticker{tk.Data.Last, tk.Data.Buy, tk.Data.Sell, tk.Data.High,
-		tk.Data.Low, tk.Data.Vol, tk.Date}, nil;
+	last, err := strconv.ParseFloat(tk.Data.Last, 64);
+	if err != nil{
+		return nil, err;
+	}
+	buy, err := strconv.ParseFloat(tk.Data.Buy, 64);
+	if err != nil{
+		return nil, err;
+	}
+	sell, err := strconv.ParseFloat(tk.Data.Sell, 64);
+	if err != nil{
+		return nil, err;
+	}
+	high, err := strconv.ParseFloat(tk.Data.High, 64);
+	if err != nil{
+		return nil, err;
+	}
+	low, err := strconv.ParseFloat(tk.Data.Low, 64);
+	if err != nil{
+		return nil, err;
+	}
+	vol, err := strconv.ParseFloat(tk.Data.Vol, 64);
+	if err != nil{
+		return nil, err;
+	}
+	date, err := strconv.ParseUint(tk.Date, 10, 64);
+	if err != nil{
+		return nil, err;
+	}	
+	return &Ticker{last, buy, sell, high, low, vol, date}, nil;
 }
 
 func (ctx * OKCoinCN_API) GetDepth(size int32, currency CurrencyPair) (*Depth, error){
