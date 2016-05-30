@@ -1,5 +1,7 @@
 package rest
 
+import "net/http"
+
 type Order struct {
 	OrderID,
 	Price,
@@ -25,13 +27,13 @@ type Account struct {
 }
 
 type Ticker struct {
-	Last string;
-	Buy  string;
-	Sell string;
-	High string;
-	Low  string;
+	Last float64;
+	Buy  float64;
+	Sell float64;
+	High float64;
+	Low  float64;
 	Vol  string;
-	Date string;
+	Date int;
 }
 
 type DepthRecord struct {
@@ -42,4 +44,11 @@ type DepthRecord struct {
 type Depth struct {
 	AskList,
 	BidList []DepthRecord
+}
+
+type APIConfig struct {
+	HttpClient *http.Client;
+	ApiUrl,
+	AccessKey,
+	SecretKey string;
 }
