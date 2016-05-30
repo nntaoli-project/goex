@@ -2,7 +2,7 @@ package unit_test
 
 import (
 	"testing"
-	"../rest"
+	"rest"
 	"github.com/stretchr/testify/assert"
 	"strings"
 )
