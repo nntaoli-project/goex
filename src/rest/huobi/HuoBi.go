@@ -14,7 +14,7 @@ const
 (
 	API_BASE_URL = "https://api.huobi.com/";
 	TICKER_URI = "staticmarket/ticker_%s_json.js";
-	DEPTH_URI = "staticmarket/depth_%s_json.js";
+	DEPTH_URI = "staticmarket/depth_%s_%d.js";
 )
 
 type HuoBi struct {
@@ -82,5 +82,50 @@ func (hb *HuoBi) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (hb *HuoBi) GetDepth(size int32, currency CurrencyPair) (*Depth, error) {
-	return nil, nil;
+	var depthUri string;
+
+	switch currency {
+	case BTC_CNY:
+		depthUri = fmt.Sprintf(DEPTH_URI, "btc", size);
+	case LTC_CNY:
+		depthUri = fmt.Sprintf(DEPTH_URI, "ltc", size);
+	default:
+		return nil, errors.New("Unsupport The CurrencyPair");
+	}
+
+	bodyDataMap, err := httpGet(depthUri, hb.httpClient);
+
+	if err != nil {
+		return nil, err;
+	}
+
+	var depth Depth;
+
+	for _, v := range bodyDataMap["asks"].([]interface{}) {
+		var dr DepthRecord;
+		for i, vv := range v.([]interface{}) {
+			switch i {
+			case 0:
+				dr.Price = vv.(float64);
+			case 1:
+				dr.Amount = vv.(float64);
+			}
+		}
+		depth.AskList = append(depth.AskList, dr);
+	}
+
+	for _, v := range bodyDataMap["bids"].([]interface{}) {
+		var dr DepthRecord;
+		for i, vv := range v.([]interface{}) {
+			switch i {
+			case 0:
+				dr.Price = vv.(float64);
+			case 1:
+				dr.Amount = vv.(float64);
+			}
+		}
+		depth.BidList = append(depth.BidList, dr);
+	}
+
+	return &depth, nil;
 }
