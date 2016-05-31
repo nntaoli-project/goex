@@ -38,7 +38,7 @@ type Ticker struct {
 
 type DepthRecord struct {
 	Price,
-	Amount string;
+	Amount float64;
 }
 
 type Depth struct {
@@ -50,5 +50,5 @@ type APIConfig struct {
 	HttpClient *http.Client;
 	ApiUrl,
 	AccessKey,
-	SecretKey string;
+	SecretKey  string;
 }

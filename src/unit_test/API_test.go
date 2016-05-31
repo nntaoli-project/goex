@@ -17,4 +17,8 @@ func Test_HuoBiApi(t *testing.T) {
 	}
 
 	t.Log(ticker);
+
+	depth, err := huobiApi.GetDepth(3, LTC_CNY);
+	t.Log("bids:", depth.AskList);
+	t.Log("asks:", depth.AskList);
 }
