@@ -81,7 +81,7 @@ func (hb *HuoBi) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	return &ticker, nil;
 }
 
-func (hb *HuoBi) GetDepth(size int32, currency CurrencyPair) (*Depth, error) {
+func (hb *HuoBi) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	var depthUri string;
 
 	switch currency {
