@@ -21,7 +21,7 @@ func New(cfg APIConfig) *HuoBi {
 	return _hb;
 }
 
-func (hb HuoBi) GetTicker(currency CurrencyPair) (Ticker, error) {
+func (hb *HuoBi) GetTicker(currency CurrencyPair) (Ticker, error) {
 	var tickerUri string;
 
 	switch currency {
@@ -58,13 +58,13 @@ func (hb HuoBi) GetTicker(currency CurrencyPair) (Ticker, error) {
 
 	tickerMap = bodyDataMap["ticker"].(map[string]interface{});
 
-	ticker.Date, _ = strconv.Atoi(bodyDataMap["time"].(string));
+	ticker.Date, _ = strconv.ParseUint(bodyDataMap["time"].(string), 10, 64);
 	ticker.Last = tickerMap["last"].(float64);
 	ticker.Buy = tickerMap["buy"].(float64);
 	ticker.Sell = tickerMap["sell"].(float64);
 	ticker.Low = tickerMap["low"].(float64);
 	ticker.High = tickerMap["high"].(float64);
-	ticker.Vol = fmt.Sprintf("%.4f" , tickerMap["vol"].(float64));
+	ticker.Vol = tickerMap["vol"].(float64);
 
 	return ticker, nil;
 }
