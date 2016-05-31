@@ -12,7 +12,7 @@ type API interface {
 	GetAccount() (*Account, error);
 
 	GetTicker(currency CurrencyPair) (*Ticker, error);
-	GetDepth(size int32, currency CurrencyPair) (*Depth, error);
+	GetDepth(size int, currency CurrencyPair) (*Depth, error);
 
 	GetExchangeName() string;
 }

@@ -3,21 +3,21 @@ package okcoin
 import
 (
 	. "rest"
-	"net/http"
-	"encoding/json"
-	"io/ioutil"
 	"strconv"
 )
 
-const url_ticker = "https://www.okcoin.cn/api/v1/ticker.do";
-const url_depth = "https://www.okcoin.cn/api/v1/depth.do";
-const url_trades = "https://www.okcoin.cn/api/v1/trades.do";
-const url_kline = "https://www.okcoin.cn/api/v1/kline.do";
+const
+(
+	url_ticker = "https://www.okcoin.cn/api/v1/ticker.do";
+	url_depth = "https://www.okcoin.cn/api/v1/depth.do";
+	url_trades = "https://www.okcoin.cn/api/v1/trades.do";
+	url_kline = "https://www.okcoin.cn/api/v1/kline.do";
 
-const url_userinfo = "https://www.okcoin.cn/api/v1/userinfo.do";
-const url_trade = "https://www.okcoin.cn/api/v1/trade.do";
-const url_cancel_order = "https://www.okcoin.cn/api/v1/cancel_order.do";
-const url_order_info = "https://www.okcoin.cn/api/v1/order_info.do";
+	url_userinfo = "https://www.okcoin.cn/api/v1/userinfo.do";
+	url_trade = "https://www.okcoin.cn/api/v1/trade.do";
+	url_cancel_order = "https://www.okcoin.cn/api/v1/cancel_order.do";
+	url_order_info = "https://www.okcoin.cn/api/v1/order_info.do";	
+)
 
 type OKCoinCN_API struct{
 	name string
@@ -65,66 +65,63 @@ func (ctx * OKCoinCN_API) GetAccount() (*Account, error){
 }
 
 func (ctx * OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error){
-	type ticker_data struct{
-		Last string `json:"last"`
-		Buy  string `json:"buy"`
-		Sell string `json:"sell"`
-		High string `json:"high"`
-		Low  string `json:"low"`
-		Vol  string `json:"vol"`
-	}
-	type ticker struct{
-		Date string `json:"date"`
-		Data ticker_data `json:"ticker"`
-	}
-	var tk ticker;
+	var tickerMap map[string]interface{};
+	var ticker Ticker;
+	
 	url := url_ticker + "?symbol=" + currencyPair2String(currency);
-	resp, err := http.Get(url);
+	bodyDataMap, err := HttpGet(url);
 	if err != nil{
 		return nil, err;
 	}
-	defer resp.Body.Close();
-	body, err := ioutil.ReadAll(resp.Body);
-	if err != nil{
-		return nil, err;
-	}
-	err = json.Unmarshal(body, &tk);
-	if err != nil{
-		return nil, err;
-	}
-	last, err := strconv.ParseFloat(tk.Data.Last, 64);
-	if err != nil{
-		return nil, err;
-	}
-	buy, err := strconv.ParseFloat(tk.Data.Buy, 64);
-	if err != nil{
-		return nil, err;
-	}
-	sell, err := strconv.ParseFloat(tk.Data.Sell, 64);
-	if err != nil{
-		return nil, err;
-	}
-	high, err := strconv.ParseFloat(tk.Data.High, 64);
-	if err != nil{
-		return nil, err;
-	}
-	low, err := strconv.ParseFloat(tk.Data.Low, 64);
-	if err != nil{
-		return nil, err;
-	}
-	vol, err := strconv.ParseFloat(tk.Data.Vol, 64);
-	if err != nil{
-		return nil, err;
-	}
-	date, err := strconv.ParseUint(tk.Date, 10, 64);
-	if err != nil{
-		return nil, err;
-	}	
-	return &Ticker{last, buy, sell, high, low, vol, date}, nil;
+
+	tickerMap = bodyDataMap["ticker"].(map[string]interface{});
+	ticker.Date, _ = strconv.ParseUint(bodyDataMap["date"].(string), 10, 64);
+	ticker.Last, _ = strconv.ParseFloat(tickerMap["last"].(string), 64);
+	ticker.Buy, _ = strconv.ParseFloat(tickerMap["buy"].(string), 64);
+	ticker.Sell, _ = strconv.ParseFloat(tickerMap["sell"].(string), 64);
+	ticker.Low, _ = strconv.ParseFloat(tickerMap["low"].(string), 64);
+	ticker.High, _ = strconv.ParseFloat(tickerMap["high"].(string), 64);
+	ticker.Vol, _ = strconv.ParseFloat(tickerMap["vol"].(string), 64);
+
+	return &ticker, nil;
 }
 
-func (ctx * OKCoinCN_API) GetDepth(size int32, currency CurrencyPair) (*Depth, error){
-	return nil, nil;
+func (ctx * OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, error){
+	var depth Depth;
+	
+	url := url_depth + "?symbol=" + currencyPair2String(currency) + "&size=" + strconv.Itoa(size);
+	bodyDataMap, err := HttpGet(url);
+	if err != nil {
+		return nil, err;
+	}
+
+	for _, v := range bodyDataMap["asks"].([]interface{}) {
+		var dr DepthRecord;
+		for i, vv := range v.([]interface{}) {
+			switch i {
+			case 0:
+				dr.Price = vv.(float64);
+			case 1:
+				dr.Amount = vv.(float64);
+			}
+		}
+		depth.AskList = append(depth.AskList, dr);
+	}
+
+	for _, v := range bodyDataMap["bids"].([]interface{}) {
+		var dr DepthRecord;
+		for i, vv := range v.([]interface{}) {
+			switch i {
+			case 0:
+				dr.Price = vv.(float64);
+			case 1:
+				dr.Amount = vv.(float64);
+			}
+		}
+		depth.BidList = append(depth.BidList, dr);
+	}
+
+	return &depth, nil;
 }
 
 func (ctx * OKCoinCN_API) GetExchangeName() string{
