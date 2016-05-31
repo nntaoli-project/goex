@@ -7,54 +7,66 @@ import (
 	"encoding/json"
 	"strconv"
 	"fmt"
+	"net/http"
+)
+
+const
+(
+	API_BASE_URL = "https://api.huobi.com/";
+	TICKER_URI = "staticmarket/ticker_%s_json.js";
+	DEPTH_URI = "staticmarket/depth_%s_json.js";
 )
 
 type HuoBi struct {
-	cfg       APIConfig;
-	tickerUri string;
+	httpClient *http.Client;
+	accessKey,
+	secretKey  string
 }
 
-func New(cfg APIConfig) *HuoBi {
-	_hb := new(HuoBi);
-	_hb.cfg = cfg;
-	_hb.tickerUri = "staticmarket/ticker_%s_json.js";
-	return _hb;
+func New(httpClient *http.Client, accessKey, secretKey string) *HuoBi {
+	return &HuoBi{httpClient, accessKey, secretKey};
 }
 
-func (hb *HuoBi) GetTicker(currency CurrencyPair) (Ticker, error) {
-	var tickerUri string;
-
-	switch currency {
-	case BTC_CNY:
-		tickerUri = fmt.Sprintf(hb.tickerUri, "btc");
-	case LTC_CNY:
-		tickerUri = fmt.Sprintf(hb.tickerUri, "ltc");
-	default:
-		return Ticker{}, errors.New("Unsupport The CurrencyPair");
-	}
-
-	url := hb.cfg.ApiUrl + tickerUri;
-
+func httpGet(uri string, client *http.Client) (map[string]interface{}, error) {
+	url := API_BASE_URL + uri;
 	//println(url);
-	resp, err := hb.cfg.HttpClient.Get(url);
+	resp, err := client.Get(url);
 	if err != nil {
-		return Ticker{}, errors.New("Get Ticker Error ?");
+		return nil, err;
 	}
 
 	defer resp.Body.Close();
 
 	body, err := ioutil.ReadAll(resp.Body);
 	if err != nil {
-		return Ticker{}, errors.New("Read Body Error ?");
+		return nil, err;
 	}
 
-	//println(string(body))
-
 	var bodyDataMap map[string]interface{};
+	json.Unmarshal(body, &bodyDataMap);
+	return bodyDataMap, nil;
+}
+
+func (hb *HuoBi) GetTicker(currency CurrencyPair) (*Ticker, error) {
+	var tickerUri string;
+
+	switch currency {
+	case BTC_CNY:
+		tickerUri = fmt.Sprintf(TICKER_URI, "btc");
+	case LTC_CNY:
+		tickerUri = fmt.Sprintf(TICKER_URI, "ltc");
+	default:
+		return nil, errors.New("Unsupport The CurrencyPair");
+	}
+
+	bodyDataMap, err := httpGet(tickerUri, hb.httpClient);
+
+	if err != nil {
+		return nil, err;
+	}
+
 	var tickerMap map[string]interface{};
 	var ticker Ticker;
-
-	json.Unmarshal(body, &bodyDataMap);
 
 	tickerMap = bodyDataMap["ticker"].(map[string]interface{});
 
@@ -66,5 +78,9 @@ func (hb *HuoBi) GetTicker(currency CurrencyPair) (Ticker, error) {
 	ticker.High = tickerMap["high"].(float64);
 	ticker.Vol = tickerMap["vol"].(float64);
 
-	return ticker, nil;
+	return &ticker, nil;
+}
+
+func (hb *HuoBi) GetDepth(size int32, currency CurrencyPair) (*Depth, error) {
+	return nil, nil;
 }
