@@ -16,7 +16,7 @@ const
 (
 	EXCHANGE_NAME = "huobi";
 	API_BASE_URL = "https://api.huobi.com/";
-	TRADE_API_V3 = "apiv3";
+	TRADE_API_V3 = API_BASE_URL + "apiv3";
 	TICKER_URI = "staticmarket/ticker_%s_json.js";
 	DEPTH_URI = "staticmarket/depth_%s_%d.js";
 )
@@ -49,6 +49,19 @@ func httpGet(uri string, client *http.Client) (map[string]interface{}, error) {
 	var bodyDataMap map[string]interface{};
 	json.Unmarshal(body, &bodyDataMap);
 	return bodyDataMap, nil;
+}
+
+func (hb *HuoBi) buildPostForm(postForm *url.Values) error {
+	postForm.Set("created", fmt.Sprintf("%d", time.Now().Unix()));
+	postForm.Set("access_key", hb.accessKey);
+	postForm.Set("secret_key", hb.secretKey);
+	sign, err := GetParamMD5Sign(hb.secretKey, postForm.Encode());
+	if err != nil {
+		return err;
+	}
+	postForm.Set("sign", sign);
+	postForm.Del("secret_key");
+	return nil;
 }
 
 func (hb *HuoBi) GetExchangeName() string {
@@ -139,8 +152,6 @@ func (hb *HuoBi) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 }
 
 func (hb *HuoBi) GetAccount() (*Account, error) {
-	accountUrl := API_BASE_URL + TRADE_API_V3;
-
 	postData := url.Values{};
 	postData.Set("method", "get_account_info");
 	postData.Set("created", fmt.Sprintf("%d", time.Now().Unix()));
@@ -151,7 +162,7 @@ func (hb *HuoBi) GetAccount() (*Account, error) {
 	postData.Set("sign", sign);
 	postData.Del("secret_key");
 
-	bodyDataMap, err := HttpPostForm(hb.httpClient, accountUrl, postData);
+	bodyDataMap, err := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
 	if err != nil {
 		return nil, err;
 	}
@@ -188,4 +199,43 @@ func (hb *HuoBi) GetAccount() (*Account, error) {
 	account.SubAccounts[CNY] = cnySubAccount;
 
 	return account, nil;
+}
+
+func (hb *HuoBi) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
+	postData := url.Values{};
+	postData.Set("method", "order_info");
+	postData.Set("id", orderId);
+
+	switch currency {
+	case BTC_CNY:
+		postData.Set("coin_type", "1");
+	case LTC_CNY:
+		postData.Set("coin_type", "2");
+	}
+
+	hb.buildPostForm(&postData);
+
+	bodyDataMap, _ := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
+	//fmt.Println(bodyDataMap);
+	order := new(Order);
+	order.OrderID, _ = strconv.Atoi(orderId);
+	order.Side = TradeSide(bodyDataMap["type"].(float64));
+	order.Amount, _ = strconv.ParseFloat(bodyDataMap["order_amount"].(string), 64);
+	order.DealAmount, _ = strconv.ParseFloat(bodyDataMap["processed_amount"].(string), 64);
+	order.Price, _ = strconv.ParseFloat(bodyDataMap["order_price"].(string), 64);
+	order.AvgPrice, _ = strconv.ParseFloat(bodyDataMap["processed_price"].(string), 64);
+
+	tradeStatus := TradeStatus(bodyDataMap["status"].(float64));
+	switch tradeStatus {
+	case 0:
+		order.Status = ORDER_UNFINISH;
+	case 1:
+		order.Status = ORDER_PART_FINISH;
+	case 2:
+		order.Status = ORDER_FINISH;
+	case 3:
+		order.Status = ORDER_CANCEL;
+	}
+
+	return order, nil;
 }
