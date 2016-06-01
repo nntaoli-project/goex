@@ -15,15 +15,17 @@ type Order struct {
 }
 
 type SubAccount struct {
-	Currency     CurrencyPair;
-	Amount       string;
-	ForzenAmount string;
-	LoanAmount   string;
+	Currency   Currency;
+	Amount,
+	ForzenAmount,
+	LoanAmount float64;
 }
 
 type Account struct {
 	Exchange    string;
-	SubAccounts []SubAccount
+	Asset       float64; //总资产
+	NetAsset   float64; //净资产
+	SubAccounts map[Currency]SubAccount;
 }
 
 type Ticker struct {

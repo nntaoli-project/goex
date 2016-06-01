@@ -2,9 +2,20 @@ package rest
 
 type CurrencyPair int;
 
+type Currency int;
+
 type TradeSide int;
 
 type TradeStatus int;
+
+const
+(
+	CNY = 1 + iota
+	USD
+	BTC
+	LTC
+	ETH
+)
 
 const
 (
