@@ -3,15 +3,15 @@ package rest
 import "net/http"
 
 type Order struct {
-	OrderID,
 	Price,
 	Amount,
 	AvgPrice,
-	DealAmount string;
-	OrderTime  int32;
+	DealAmount float64;
+	OrderID    int;
+	OrderTime  int;
 	Status     TradeStatus;
 	Currency   CurrencyPair;
-	side       TradeSide;
+	Side       TradeSide;
 }
 
 type SubAccount struct {
@@ -24,7 +24,7 @@ type SubAccount struct {
 type Account struct {
 	Exchange    string;
 	Asset       float64; //总资产
-	NetAsset   float64; //净资产
+	NetAsset    float64; //净资产
 	SubAccounts map[Currency]SubAccount;
 }
 
