@@ -28,7 +28,7 @@ func HttpGet(url string) (map[string]interface{}, error) {
 	return bodyDataMap, nil;
 }
 
-func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) (map[string]interface{}, error) {
+func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) ([]byte , error) {
 	req, _ := http.NewRequest("POST", reqUrl, strings.NewReader(postData.Encode()));
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36");
@@ -45,11 +45,12 @@ func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) (map[
 		return nil, err;
 	}
 
-	var bodyDataMap map[string]interface{};
-	err = json.Unmarshal(bodyData, &bodyDataMap);
-	if err != nil {
-		return nil, err;
-	}
+	//var bodyDataMap map[string]interface{};
+	//err = json.Unmarshal(bodyData, &bodyDataMap);
+	//if err != nil {
+	//	println(string(bodyData));
+	//	return nil, err;
+	//}
 
-	return bodyDataMap, nil;
+	return bodyData , nil;
 }
