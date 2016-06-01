@@ -254,3 +254,45 @@ func (hb *HuoBi) GetOneOrder(orderId string, currency CurrencyPair) (*Order, err
 
 	return order, nil;
 }
+
+func (hb *HuoBi) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
+	postData := url.Values{};
+	postData.Set("method", "get_orders");
+
+	switch currency {
+	case BTC_CNY:
+		postData.Set("coin_type", "1");
+	case LTC_CNY:
+		postData.Set("coin_type", "2");
+	}
+
+	hb.buildPostForm(&postData);
+
+	bodyData, err := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
+	if err != nil {
+		return nil, err;
+	}
+
+	//println(string(bodyData))
+
+	var bodyDataMap []map[string]interface{};
+	err = json.Unmarshal(bodyData, &bodyDataMap);
+	if err != nil {
+		return nil, err;
+	}
+
+	var orders []Order;
+
+	for _, v := range bodyDataMap {
+		order := Order{};
+		order.Amount, _ = strconv.ParseFloat(v["order_amount"].(string), 64);
+		order.Price, _ = strconv.ParseFloat(v["order_price"].(string), 64);
+		order.DealAmount, _ = strconv.ParseFloat(v["processed_amount"].(string), 64);
+		order.OrderTime = int(v["order_time"].(float64));
+		order.OrderID = int(v["id"].(float64));
+		order.Side = TradeSide(v["type"].(float64));
+		orders = append(orders, order);
+	}
+
+	return orders, nil;
+}
