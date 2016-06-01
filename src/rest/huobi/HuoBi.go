@@ -12,6 +12,7 @@ import (
 
 const
 (
+	EXCHANGE_NAME = "huobi";
 	API_BASE_URL = "https://api.huobi.com/";
 	TICKER_URI = "staticmarket/ticker_%s_json.js";
 	DEPTH_URI = "staticmarket/depth_%s_%d.js";
@@ -45,6 +46,10 @@ func httpGet(uri string, client *http.Client) (map[string]interface{}, error) {
 	var bodyDataMap map[string]interface{};
 	json.Unmarshal(body, &bodyDataMap);
 	return bodyDataMap, nil;
+}
+
+func (hb *HuoBi) GetExchangeName() string {
+	return EXCHANGE_NAME;
 }
 
 func (hb *HuoBi) GetTicker(currency CurrencyPair) (*Ticker, error) {
