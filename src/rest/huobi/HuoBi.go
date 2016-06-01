@@ -162,8 +162,15 @@ func (hb *HuoBi) GetAccount() (*Account, error) {
 	postData.Set("sign", sign);
 	postData.Del("secret_key");
 
-	bodyDataMap, err := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
+	bodyData, err := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
 	if err != nil {
+		return nil, err;
+	}
+
+	var bodyDataMap map[string]interface{};
+	err = json.Unmarshal(bodyData, &bodyDataMap);
+	if err != nil {
+		println(string(bodyData));
 		return nil, err;
 	}
 
@@ -215,7 +222,15 @@ func (hb *HuoBi) GetOneOrder(orderId string, currency CurrencyPair) (*Order, err
 
 	hb.buildPostForm(&postData);
 
-	bodyDataMap, _ := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
+	bodyData, _ := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
+
+	var bodyDataMap map[string]interface{};
+	err := json.Unmarshal(bodyData, &bodyDataMap);
+	if err != nil {
+		println(string(bodyData));
+		return nil, err;
+	}
+
 	//fmt.Println(bodyDataMap);
 	order := new(Order);
 	order.OrderID, _ = strconv.Atoi(orderId);
