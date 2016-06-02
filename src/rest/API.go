@@ -3,9 +3,9 @@ package rest
 // api interface
 
 type API interface {
-	LimitBuy(amount, price string, currency CurrencyPair) (string, error); //if success return orderId
-	LimitSell(amount, price string, currency CurrencyPair) (string, error); //if success return orderId
-	CancelOrder(orderId string, currency CurrencyPair) (string, error);
+	LimitBuy(amount, price string, currency CurrencyPair) (*Order, error);
+	LimitSell(amount, price string, currency CurrencyPair) (*Order, error);
+	CancelOrder(orderId string, currency CurrencyPair) (bool, error);
 	GetOneOrder(orderId string, currency CurrencyPair) (*Order, error);
 	GetUnfinishOrders(currency CurrencyPair) ([]Order, error);
 
