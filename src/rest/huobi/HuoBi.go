@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"net/http"
 	"time"
+	"strings"
 )
 
 const
@@ -295,4 +296,115 @@ func (hb *HuoBi) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	}
 
 	return orders, nil;
+}
+
+func (hb *HuoBi) placeOrder(method, amount, price string, currency CurrencyPair) (*Order, error) {
+	postData := url.Values{};
+	postData.Set("method", method);
+	postData.Set("price", price);
+	postData.Set("amount", amount);
+
+	switch currency {
+	case BTC_CNY:
+		postData.Set("coin_type", "1");
+	case LTC_CNY:
+		postData.Set("coin_type", "2");
+	}
+
+	hb.buildPostForm(&postData);
+
+	bodyData, err := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
+	if err != nil {
+		return nil, err;
+	}
+
+	//{"result":"success","id":1321475746}
+	//println(string(bodyData))
+
+	var bodyDataMap map[string]interface{};
+	err = json.Unmarshal(bodyData, &bodyDataMap);
+
+	if err != nil {
+		return nil, err;
+	}
+
+	if bodyDataMap["code"] != nil {
+		return nil, errors.New(string(bodyData));
+	}
+
+	ret := bodyDataMap["result"].(string);
+
+	if strings.Compare(ret, "success") == 0 {
+		order := new(Order);
+		order.OrderID = int(bodyDataMap["id"].(float64));
+		order.Price, _ = strconv.ParseFloat(price, 64);
+		order.Amount, _ = strconv.ParseFloat(amount, 64);
+		order.Currency = currency;
+		order.Status = ORDER_UNFINISH;
+		return order, nil;
+	}
+
+	return nil, errors.New(fmt.Sprintf("Place Limit %s Order Fail.", method));
+}
+
+func (hb *HuoBi) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	order, err := hb.placeOrder("buy", amount, price, currency);
+
+	if err != nil {
+		return nil, err;
+	}
+
+	order.Side = BUY;
+
+	return order, nil;
+}
+
+func (hb *HuoBi) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	order, err := hb.placeOrder("sell", amount, price, currency);
+
+	if err != nil {
+		return nil, err;
+	}
+
+	order.Side = SELL;
+
+	return order, nil;
+}
+
+func (hb *HuoBi) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
+	//1321490762
+	postData := url.Values{};
+	postData.Set("method", "cancel_order");
+	postData.Set("id", orderId);
+
+	switch currency {
+	case BTC_CNY:
+		postData.Set("coin_type", "1");
+	case LTC_CNY:
+		postData.Set("coin_type", "2");
+	}
+
+	hb.buildPostForm(&postData);
+
+	bodyData, err := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
+	if err != nil {
+		return false, err;
+	}
+
+	//{"result":"success"}
+	//{"code":42,"msg":"该委托已经取消, 不能取消或修改","message":"该委托已经取消, 不能取消或修改"}
+	println(string(bodyData))
+
+	var bodyDataMap map[string]interface{};
+	err = json.Unmarshal(bodyData, &bodyDataMap);
+	if err != nil {
+		return false, err;
+	}
+
+	if bodyDataMap["code"] != nil {
+		return false, errors.New(string(bodyData));
+	}
+
+	ret := bodyDataMap["result"].(string);
+	return (strings.Compare(ret, "success") == 0), nil;
 }
