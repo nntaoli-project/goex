@@ -28,6 +28,26 @@ func HttpGet(url string) (map[string]interface{}, error) {
 	return bodyDataMap, nil;
 }
 
+func HttpPost(url string) (map[string]interface{}, error) {
+	resp, err := http.Post(url, "application/x-www-form-urlencoded", 
+		strings.NewReader("name=cjb"));
+	if err != nil {
+		return nil, err;
+	}
+	defer resp.Body.Close();
+	body, err := ioutil.ReadAll(resp.Body);
+	if err != nil {
+		return nil, err;
+	}
+	var bodyDataMap map[string]interface{};
+	fmt.Printf("\n%s\n", body);
+	err = json.Unmarshal(body, &bodyDataMap);
+	if err != nil {
+		return nil, err;
+	}
+	return bodyDataMap, nil;
+}
+
 func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) (map[string]interface{}, error) {
 	req, _ := http.NewRequest("POST", reqUrl, strings.NewReader(postData.Encode()));
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
