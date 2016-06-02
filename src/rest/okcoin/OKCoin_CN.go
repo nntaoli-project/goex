@@ -4,9 +4,12 @@ import
 (
 	. "rest"
 	"strconv"
-	"strings"
 	"errors"
-	"fmt"
+	"net/http"
+	"net/url"
+	"encoding/json"
+	"strings"
+	//"fmt"
 )
 
 const
@@ -24,6 +27,7 @@ const
 )
 
 type OKCoinCN_API struct{
+	client *http.Client
 	api_key string
 	secret_key string
 }
@@ -39,56 +43,89 @@ func currencyPair2String(currency CurrencyPair) string{
 	}
 }
 
-func New(api_key, secret_key string) * OKCoinCN_API{
-	return &OKCoinCN_API{api_key, secret_key};
+func New(client *http.Client, api_key, secret_key string) * OKCoinCN_API{
+	return &OKCoinCN_API{client, api_key, secret_key};
 }
 
-func (ctx * OKCoinCN_API) LimitBuy(amount, price string, currency CurrencyPair) (string, error){
-	param := "amount=" + amount + "&api_key=" + ctx.api_key + "&price=" + price +
-		"&symbol=" + currencyPair2String(currency) +
-		"&type=buy";
-	sign, err := GetParamMD5Sign("", param + "&secret_key=" + ctx.secret_key);
-	if err != nil{
-		return "", err;
+func (ctx *OKCoinCN_API) buildPostForm(postForm *url.Values) error {
+	postForm.Set("api_key", ctx.api_key);
+	//postForm.Set("secret_key", ctx.secret_key);
+
+	payload := postForm.Encode();
+	payload = payload + "&secret_key=" +ctx.secret_key;
+
+	sign, err := GetParamMD5Sign(ctx.secret_key, payload);
+	if err != nil {
+		return err;
 	}
-	url := url_trade + "?" + param + "&sign=" + strings.ToUpper(sign);
-	respMap, err := HttpPost(url);
-	fmt.Printf("%s", url);
+
+	postForm.Set("sign", strings.ToUpper(sign));
+	//postForm.Del("secret_key")
+	return nil;
+}
+
+func (ctx *OKCoinCN_API) placeOrder(side , amount , price string , currency CurrencyPair)(*Order ,error)  {
+	postData := url.Values{};
+	postData.Set("type" , side);
+	postData.Set("amount" , amount);
+	postData.Set("price" , price);
+	postData.Set("symbol" , currencyPair2String(currency));
+
+	err := ctx.buildPostForm(&postData);
+
 	if err != nil{
-		return "", err;
+		return nil, err;
 	}
+
+	body, err := HttpPostForm(ctx.client , url_trade , postData);
+
+	if err != nil{
+		return nil, err;
+	}
+
+	//println(string(body));
+
+	var respMap map[string]interface{};
+
+	err = json.Unmarshal(body , &respMap);
+
+	if err != nil {
+		return nil , err;
+	}
+
 	if !respMap["result"].(bool){
-		errcode := strconv.FormatFloat(respMap["error_code"].(float64), 'f', 0, 64);
-		return "", errors.New(errcode);
+		return nil , errors.New(string(body));
 	}
-	oderid := strconv.FormatFloat(respMap["order_id"].(float64), 'f', 0, 64);
-	return oderid, nil;
+
+	order := new(Order);
+	order.OrderID = int(respMap["order_id"].(float64));
+	order.Price, _ = strconv.ParseFloat(price, 64);
+	order.Amount, _ = strconv.ParseFloat(amount, 64);
+	order.Currency = currency;
+	order.Status = ORDER_UNFINISH;
+
+	switch side {
+	case "buy":
+		order.Side = BUY;
+	case "sell":
+		order.Side = SELL;
+	}
+
+	return  order , nil;
+
 }
 
-func (ctx * OKCoinCN_API) LimitSell(amount, price string, currency CurrencyPair) (string, error){
-	param := "amount=" + amount + "&api_key=" + ctx.api_key + "&price=" + price +
-		"&symbol=" + currencyPair2String(currency) +
-		"&type=sell";
-	sign, err := GetParamMD5Sign("", param + "&secret_key=" + ctx.secret_key);
-	if err != nil{
-		return "", err;
-	}
-	url := url_trade + "?" + param + "&sign=" + strings.ToUpper(sign);
-	respMap, err := HttpPost(url);
-	fmt.Printf("%s", url);
-	if err != nil{
-		return "", err;
-	}
-	if !respMap["result"].(bool){
-		errcode := strconv.FormatFloat(respMap["error_code"].(float64), 'f', 0, 64);
-		return "", errors.New(errcode);
-	}
-	oderid := strconv.FormatFloat(respMap["order_id"].(float64), 'f', 0, 64);
-	return oderid, nil;
+func (ctx * OKCoinCN_API) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error){
+	return ctx.placeOrder("buy" , amount ,price,currency);
 }
 
-func (ctx * OKCoinCN_API) CancelOrder(orderId string, currency CurrencyPair) (string, error){
-	return "", nil;
+
+func (ctx * OKCoinCN_API) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return ctx.placeOrder("sell" , amount ,price  ,currency);
+}
+
+func (ctx * OKCoinCN_API) CancelOrder(orderId string, currency CurrencyPair) (bool, error){
+	return false, nil;
 }
 
 func (ctx * OKCoinCN_API) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error){
@@ -100,20 +137,32 @@ func (ctx * OKCoinCN_API) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 }
 
 func (ctx * OKCoinCN_API) GetAccount() (*Account, error){
-	param := "api_key=" + ctx.api_key + "&secret_key=" + ctx.secret_key;
-	sign, err := GetParamMD5Sign("", param);
+	postData := url.Values{};
+	err := ctx.buildPostForm(&postData);
+
 	if err != nil{
 		return nil, err;
 	}
-	url := url_userinfo + "?api_key=" + ctx.api_key + "&sign=" + strings.ToUpper(sign);
-	respMap, err := HttpPost(url);
+
+	body, err := HttpPostForm(ctx.client , url_userinfo , postData);
+
 	if err != nil{
 		return nil, err;
 	}
+
+	var respMap map[string]interface{};
+
+	err = json.Unmarshal(body , &respMap);
+
+	if err != nil {
+		return nil , err;
+	}
+
 	if !respMap["result"].(bool){
 		errcode := strconv.FormatFloat(respMap["error_code"].(float64), 'f', 0, 64);
 		return nil, errors.New(errcode);
 	}
+
 	info := respMap["info"].(map[string]interface{});
 	funds := info["funds"].(map[string]interface{});
 	asset := funds["asset"].(map[string]interface{});
