@@ -90,7 +90,12 @@ func (hb *HuoBi) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	var tickerMap map[string]interface{};
 	var ticker Ticker;
 
-	tickerMap = bodyDataMap["ticker"].(map[string]interface{});
+	switch  bodyDataMap["ticker"].(type) {
+	case map[string]interface{}:
+		tickerMap = bodyDataMap["ticker"].(map[string]interface{});
+	default:
+		return nil, errors.New(fmt.Sprintf("Type Convert Error ? \n %s", bodyDataMap));
+	}
 
 	ticker.Date, _ = strconv.ParseUint(bodyDataMap["time"].(string), 10, 64);
 	ticker.Last = tickerMap["last"].(float64);
