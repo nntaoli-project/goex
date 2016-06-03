@@ -2,17 +2,12 @@ package haobtc
 
 import (
 	. "rest"
-	//"io/ioutil"
-	//"errors"
-	//"encoding/json"
-	//"strconv"
-	//"fmt"
-	//"net/url"
 	"net/http"
-	//"time"
-	//"strings"
 	"errors"
 	"fmt"
+	"net/url"
+	"encoding/json"
+	"strings"
 )
 
 const
@@ -21,6 +16,7 @@ const
 	API_BASE_URL = "https://haobtc.com/exchange/api/v1/";
 	TICKER_URI = "ticker";
 	DEPTH_URI = "depth?size=%d";
+	ACCOUNT_URI = "account_info";
 )
 
 type HaoBtc struct {
@@ -31,6 +27,23 @@ type HaoBtc struct {
 
 func New(httpClient *http.Client, accessKey, secretKey string) *HaoBtc {
 	return &HaoBtc{httpClient, accessKey, secretKey};
+}
+
+func (ctx *HaoBtc) buildPostForm(postForm *url.Values) error {
+	postForm.Set("api_key", ctx.accessKey);
+	//postForm.Set("secret_key", ctx.secret_key);
+
+	payload := postForm.Encode();
+	payload = payload + "&secret_key=" + ctx.secretKey;
+
+	sign, err := GetParamMD5Sign(ctx.secretKey, payload);
+	if err != nil {
+		return err;
+	}
+
+	postForm.Set("sign", strings.ToUpper(sign));
+	//postForm.Del("secret_key")
+	return nil;
 }
 
 func (ctx *HaoBtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
@@ -60,7 +73,7 @@ func (ctx *HaoBtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	return &ticker, nil;
 }
 
-func (hb *HaoBtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
+func (ctx *HaoBtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	var depthUri string;
 
 	switch currency {
@@ -105,4 +118,51 @@ func (hb *HaoBtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	}
 
 	return &depth, nil;
+}
+
+func (ctx *HaoBtc) GetAccount() (*Account, error) {
+	postData := url.Values{};
+	ctx.buildPostForm(&postData);
+
+	bodyData, err := HttpPostForm(ctx.httpClient, API_BASE_URL + ACCOUNT_URI, postData);
+	if err != nil {
+		return nil, err;
+	}
+
+	fmt.Println(string(bodyData));
+
+	var bodyDataMap map[string]interface{};
+	err = json.Unmarshal(bodyData, &bodyDataMap);
+	if err != nil {
+		println(string(bodyData));
+		return nil, err;
+	}
+
+	if bodyDataMap["code"] != nil {
+		return nil, errors.New(string(bodyData));
+	}
+
+	account := new(Account);
+	account.Exchange = ctx.GetExchangeName();
+
+	var btcSubAccount SubAccount;
+	var cnySubAccount SubAccount;
+
+	btcSubAccount.Currency = BTC;
+	btcSubAccount.Amount = bodyDataMap["exchange_btc"].(float64);
+	btcSubAccount.ForzenAmount = bodyDataMap["exchange_frozen_btc"].(float64);
+
+	cnySubAccount.Currency = CNY;
+	cnySubAccount.Amount = bodyDataMap["exchange_cny"].(float64);
+	cnySubAccount.ForzenAmount = bodyDataMap["exchange_frozen_cny"].(float64);
+
+	account.SubAccounts = make(map[Currency]SubAccount, 2);
+	account.SubAccounts[BTC] = btcSubAccount;
+	account.SubAccounts[CNY] = cnySubAccount;
+
+	return account, nil;
+}
+
+func (ctx *HaoBtc) GetExchangeName() string {
+	return EXCHANGE_NAME;
 }

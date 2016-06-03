@@ -27,3 +27,12 @@ func Test_GetDepth(t *testing.T) {
 	assert.NoError(t, err2);
 	t.Log(depth);
 }
+
+func Test_GetAcount(t *testing.T) {
+	api := haobtc.New(http.DefaultClient, "apikey", "secretkey");
+
+	account, err := api.GetAccount();
+	assert.NoError(t, err);
+
+	t.Log(account);
+}
