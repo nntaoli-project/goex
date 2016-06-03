@@ -54,3 +54,12 @@ type APIConfig struct {
 	AccessKey,
 	SecretKey  string;
 }
+
+type Kline struct  {
+	Timestamp int64;
+	Open,
+	Close,
+	High,
+	Low ,
+	Vol float64;
+}

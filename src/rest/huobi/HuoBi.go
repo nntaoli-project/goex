@@ -20,6 +20,7 @@ const
 	TRADE_API_V3 = API_BASE_URL + "apiv3";
 	TICKER_URI = "staticmarket/ticker_%s_json.js";
 	DEPTH_URI = "staticmarket/depth_%s_%d.js";
+	KLINE_URI = "staticmarket/%s_kline_%03d_json.js";
 )
 
 type HuoBi struct {
@@ -46,7 +47,7 @@ func httpGet(uri string, client *http.Client) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err;
 	}
-
+	//println(string(body))
 	var bodyDataMap map[string]interface{};
 	json.Unmarshal(body, &bodyDataMap);
 	return bodyDataMap, nil;
@@ -412,4 +413,63 @@ func (hb *HuoBi) CancelOrder(orderId string, currency CurrencyPair) (bool, error
 
 	ret := bodyDataMap["result"].(string);
 	return (strings.Compare(ret, "success") == 0), nil;
+}
+
+func (hb *HuoBi) GetKlineRecords(currency CurrencyPair , size, period, since int) ([]Kline , error){
+	klineUri := API_BASE_URL + KLINE_URI;
+	switch currency {
+	case BTC_CNY:
+		klineUri = fmt.Sprintf(klineUri , "btc" , period);
+	case LTC_CNY:
+		klineUri = fmt.Sprintf(klineUri , "ltc" , period);
+	default:
+		return nil , errors.New("Unsupport " + CurrencyPairSymbol[currency]);
+	}
+	//println(klineUri)
+	resp , err := http.Get(klineUri);
+
+	if err != nil {
+		return nil , err;
+	}
+
+	defer resp.Body.Close();
+
+	body , err := ioutil.ReadAll(resp.Body);
+
+	var klines [][]interface{};
+
+	err = json.Unmarshal(body , &klines);
+
+	if err != nil {
+		return nil , err;
+	}
+
+	var klineRecords []Kline;
+
+	for _ , record := range klines  {
+		r := Kline{};
+		for i , e := range record  {
+			switch i {
+			case 0:
+				d := e.(string);
+				if len(d) >= 12 {
+					t, _ := time.Parse("200601021504", d[0:12]);
+					r.Timestamp = t.Unix();
+				}
+			case 1:
+				r.Open = e.(float64);
+			case 2:
+				r.High = e.(float64);
+			case 3:
+				r.Low = e.(float64);
+			case 4:
+				r.Close = e.(float64);
+			case 5:
+				r.Vol = e.(float64);
+			}
+		}
+		klineRecords = append(klineRecords , r);
+	}
+
+	return klineRecords , nil
 }
