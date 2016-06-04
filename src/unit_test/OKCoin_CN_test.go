@@ -26,8 +26,6 @@ func Test_OKCoin_CN(t *testing.T) {
 }
 
 func Test_GetOnOrder(t *testing.T)  {
-	//8bdf9b3e-756e-11e4-acdf-00163e0238cc
-	//3A523ECEE1F5F59A23131CA030CFE116
 	api := okcoin.New(http.DefaultClient , "api_key" , "secret_key");
 	order , err := api.GetOneOrder("3503527666" , BTC_CNY);
 	assert.NoError(t , err);
@@ -36,8 +34,6 @@ func Test_GetOnOrder(t *testing.T)  {
 
 
 func Test_GetUnfinishOrder(t *testing.T)  {
-	//8bdf9b3e-756e-11e4-acdf-00163e0238cc
-	//3A523ECEE1F5F59A23131CA030CFE116
 	api := okcoin.New(http.DefaultClient , "api_key" , "secret_key");
 	order , err := api.GetUnfinishOrders(BTC_CNY);
 	assert.NoError(t , err);
@@ -56,4 +52,11 @@ func Test_CancelOrder(t *testing.T){
 	order , err := api.CancelOrder("3595088073" , BTC_CNY);
 	assert.NoError(t , err);
 	t.Log(order);
+}
+
+func Test_GetKlineRecords(t *testing.T)  {
+	api := okcoin.New(http.DefaultClient , "" , "");
+	kline , err := api.GetKlineRecords(BTC_CNY  , "1min" ,10 , -1);
+	assert.NoError(t , err);
+	t.Log(kline);
 }

@@ -9,6 +9,8 @@ import
 	"net/url"
 	"encoding/json"
 	"strings"
+	"io/ioutil"
+	"fmt"
 )
 
 const
@@ -17,7 +19,7 @@ const
 	url_ticker = "https://www.okcoin.cn/api/v1/ticker.do";
 	url_depth = "https://www.okcoin.cn/api/v1/depth.do";
 	url_trades = "https://www.okcoin.cn/api/v1/trades.do";
-	url_kline = "https://www.okcoin.cn/api/v1/kline.do";
+	url_kline = "https://www.okcoin.cn/api/v1/kline.do?symbol=%s&type=%s&size=%d&since=%s";
 
 	url_userinfo = "https://www.okcoin.cn/api/v1/userinfo.do";
 	url_trade = "https://www.okcoin.cn/api/v1/trade.do";
@@ -368,6 +370,50 @@ func (ctx * OKCoinCN_API) GetExchangeName() string{
 	return EXCHANGE_NAME;
 }
 
-func (ctx *OKCoinCN_API)GetKlineRecords(currency CurrencyPair , size, period, since int) ([]Kline , error){
-	return nil , nil;
+func (ctx *OKCoinCN_API)GetKlineRecords(currency CurrencyPair ,period string, size, since int) ([]Kline , error){
+
+	klineUrl := fmt.Sprintf(url_kline , currencyPair2String(currency) , period , size , since);
+
+	resp , err := http.Get(klineUrl);
+
+	if err != nil {
+		return nil , err;
+	}
+
+	defer resp.Body.Close();
+
+	body , err := ioutil.ReadAll(resp.Body);
+
+	var klines [][]interface{};
+
+	err = json.Unmarshal(body , &klines);
+
+	if err != nil {
+		return nil , err;
+	}
+
+	var klineRecords []Kline;
+
+	for _ , record := range klines  {
+		r := Kline{};
+		for i , e := range record  {
+			switch i {
+			case 0:
+				r.Timestamp = int64(e.(float64))/1000 ;//to unix timestramp
+			case 1:
+				r.Open = e.(float64);
+			case 2:
+				r.High = e.(float64);
+			case 3:
+				r.Low = e.(float64);
+			case 4:
+				r.Close = e.(float64);
+			case 5:
+				r.Vol = e.(float64);
+			}
+		}
+		klineRecords = append(klineRecords , r);
+	}
+
+	return klineRecords , nil;
 }
