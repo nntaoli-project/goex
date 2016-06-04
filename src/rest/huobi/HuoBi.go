@@ -20,7 +20,7 @@ const
 	TRADE_API_V3 = API_BASE_URL + "apiv3";
 	TICKER_URI = "staticmarket/ticker_%s_json.js";
 	DEPTH_URI = "staticmarket/depth_%s_%d.js";
-	KLINE_URI = "staticmarket/%s_kline_%03d_json.js";
+	KLINE_URI = "staticmarket/%s_kline_%03s_json.js";
 )
 
 type HuoBi struct {
@@ -415,8 +415,9 @@ func (hb *HuoBi) CancelOrder(orderId string, currency CurrencyPair) (bool, error
 	return (strings.Compare(ret, "success") == 0), nil;
 }
 
-func (hb *HuoBi) GetKlineRecords(currency CurrencyPair , size, period, since int) ([]Kline , error){
+func (hb *HuoBi) GetKlineRecords(currency CurrencyPair ,period string, size , since int) ([]Kline , error){
 	klineUri := API_BASE_URL + KLINE_URI;
+
 	switch currency {
 	case BTC_CNY:
 		klineUri = fmt.Sprintf(klineUri , "btc" , period);

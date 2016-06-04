@@ -13,7 +13,7 @@ type API interface {
 
 	GetTicker(currency CurrencyPair) (*Ticker, error);
 	GetDepth(size int, currency CurrencyPair) (*Depth, error);
-	GetKlineRecords(currency CurrencyPair , size, period, since int) ([]Kline , error);
+	GetKlineRecords(currency CurrencyPair ,period string, size , since int) ([]Kline , error);
 
 	GetExchangeName() string;
 }
