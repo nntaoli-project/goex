@@ -44,6 +44,7 @@ const
 	ORDER_FINISH
 	ORDER_CANCEL
 	ORDER_REJECT
+	ORDER_CANCEL_ING
 )
 
 var CurrencyPairSymbol = map[CurrencyPair]string{

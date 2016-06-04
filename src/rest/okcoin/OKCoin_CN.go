@@ -9,7 +9,6 @@ import
 	"net/url"
 	"encoding/json"
 	"strings"
-	//"fmt"
 )
 
 const
@@ -23,7 +22,8 @@ const
 	url_userinfo = "https://www.okcoin.cn/api/v1/userinfo.do";
 	url_trade = "https://www.okcoin.cn/api/v1/trade.do";
 	url_cancel_order = "https://www.okcoin.cn/api/v1/cancel_order.do";
-	url_order_info = "https://www.okcoin.cn/api/v1/order_info.do";	
+	url_order_info = "https://www.okcoin.cn/api/v1/order_info.do";
+	url_orders_info = "https://www.okcoin.cn/api/v1/orders_info.do"
 )
 
 type OKCoinCN_API struct{
@@ -125,15 +125,118 @@ func (ctx * OKCoinCN_API) LimitSell(amount, price string, currency CurrencyPair)
 }
 
 func (ctx * OKCoinCN_API) CancelOrder(orderId string, currency CurrencyPair) (bool, error){
-	return false, nil;
+	postData := url.Values{};
+	postData.Set("order_id" , orderId);
+	postData.Set("symbol" , currencyPair2String(currency));
+
+	ctx.buildPostForm(&postData);
+
+	body , err := HttpPostForm(ctx.client , url_cancel_order , postData);
+
+	if err != nil{
+		return false, err;
+	}
+
+	var respMap map[string]interface{};
+
+	err = json.Unmarshal(body , &respMap);
+
+	if err != nil {
+		return false , err;
+	}
+
+	if !respMap["result"].(bool) {
+		return false , errors.New(string(body));
+	}
+
+	return true, nil;
 }
 
-func (ctx * OKCoinCN_API) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error){
-	return nil, nil;
+func (ctx *OKCoinCN_API) getOrders(orderId string , currency CurrencyPair)([]Order , error){
+	postData := url.Values{};
+	postData.Set("order_id" , orderId);
+	postData.Set("symbol" , currencyPair2String(currency));
+
+	ctx.buildPostForm(&postData);
+
+	body, err := HttpPostForm(ctx.client , url_order_info , postData);
+
+	if err != nil{
+		return nil, err;
+	}
+
+	var respMap map[string]interface{};
+
+	err = json.Unmarshal(body , &respMap);
+
+	if err != nil {
+		return nil , err;
+	}
+
+	if !respMap["result"].(bool) {
+		return nil , errors.New(string(body));
+	}
+
+	orders := respMap["orders"].([]interface{});
+
+	var orderAr []Order;
+
+	for _ , v := range orders  {
+		orderMap := v.(map[string]interface{});
+
+		var order Order;
+		order.Currency = currency;
+		order.OrderID = int(orderMap["order_id"].(float64));
+		order.Amount = orderMap["amount"].(float64);
+		order.Price = orderMap["price"].(float64);
+		order.DealAmount = orderMap["deal_amount"].(float64);
+		order.AvgPrice = orderMap["avg_price"].(float64);
+		order.OrderTime = int(orderMap["create_date"].(float64));
+
+		//status:-1:已撤销  0:未成交  1:部分成交  2:完全成交 4:撤单处理中
+		switch int(orderMap["status"].(float64)) {
+		case -1:
+			order.Status = ORDER_CANCEL;
+		case 0:
+			order.Status = ORDER_UNFINISH;
+		case 1:
+			order.Status = ORDER_PART_FINISH;
+		case 2:
+			order.Status = ORDER_FINISH;
+		case 4:
+			order.Status = ORDER_CANCEL_ING;
+		}
+
+		switch orderMap["type"].(string) {
+		case "buy":
+			order.Side = BUY;
+		case "sell":
+			order.Side = SELL;
+		}
+
+		orderAr = append(orderAr , order);
+	}
+
+	//fmt.Println(orders);
+
+	return orderAr, nil;
+}
+
+func (ctx * OKCoinCN_API) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
+	orderAr , err := ctx.getOrders(orderId , currency);
+	if err != nil {
+		return nil , err;
+	}
+
+	if len(orderAr) == 0 {
+		return nil , nil;
+	}
+
+	return &orderAr[0] , nil;
 }
 
 func (ctx * OKCoinCN_API) GetUnfinishOrders(currency CurrencyPair) ([]Order, error){
-	return nil, nil;
+	return ctx.getOrders("-1" ,currency);
 }
 
 func (ctx * OKCoinCN_API) GetAccount() (*Account, error){
@@ -263,4 +366,8 @@ func (ctx * OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, err
 
 func (ctx * OKCoinCN_API) GetExchangeName() string{
 	return EXCHANGE_NAME;
+}
+
+func (ctx *OKCoinCN_API)GetKlineRecords(currency CurrencyPair , size, period, since int) ([]Kline , error){
+	return nil , nil;
 }
