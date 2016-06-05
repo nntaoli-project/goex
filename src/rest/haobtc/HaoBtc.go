@@ -17,6 +17,7 @@ const
 	API_BASE_URL = "https://haobtc.com/exchange/api/v1/";
 	TICKER_URI = "ticker";
 	TRADE_URI = "trade";
+	CANCEL_URI = "cancel_order";
 	DEPTH_URI = "depth?size=%d";
 	ACCOUNT_URI = "account_info";
 )
@@ -221,6 +222,39 @@ func (ctx *HaoBtc) LimitBuy(amount, price string, currency CurrencyPair) (*Order
 
 func (ctx *HaoBtc) LimitSell(amount, price string, currency CurrencyPair) (*Order, error){
 	return ctx.placeOrder("sell" , amount , price , currency);
+}
+
+func (ctx *HaoBtc) CancelOrder(orderId string, currency CurrencyPair) (bool, error)  {
+	postData := url.Values{};
+	postData.Set("order_id" , orderId);
+
+	ctx.buildPostForm(&postData);
+
+	bodyData, err := HttpPostForm(ctx.httpClient, API_BASE_URL + CANCEL_URI, postData);
+	if err != nil {
+		return false, err;
+	}
+
+	fmt.Println(string(bodyData));
+
+	var bodyDataMap map[string]interface{};
+	err = json.Unmarshal(bodyData, &bodyDataMap);
+	if err != nil {
+		println(string(bodyData));
+		return false, err;
+	}
+
+	if bodyDataMap["code"] != nil {
+		return false , errors.New(string(bodyData));
+	}
+
+	id := int(bodyDataMap["order_id"].(float64));
+
+	if id <= 0 {
+		return false , errors.New("Place Order Fail.");
+	}
+
+	return false , nil;
 }
 
 func (ctx *HaoBtc) GetExchangeName() string {
