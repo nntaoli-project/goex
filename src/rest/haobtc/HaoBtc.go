@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"encoding/json"
 	"strings"
+	"strconv"
 )
 
 const
@@ -15,6 +16,7 @@ const
 	EXCHANGE_NAME = "haobtc";
 	API_BASE_URL = "https://haobtc.com/exchange/api/v1/";
 	TICKER_URI = "ticker";
+	TRADE_URI = "trade";
 	DEPTH_URI = "depth?size=%d";
 	ACCOUNT_URI = "account_info";
 )
@@ -129,7 +131,7 @@ func (ctx *HaoBtc) GetAccount() (*Account, error) {
 		return nil, err;
 	}
 
-	fmt.Println(string(bodyData));
+	//fmt.Println(string(bodyData));
 
 	var bodyDataMap map[string]interface{};
 	err = json.Unmarshal(bodyData, &bodyDataMap);
@@ -161,6 +163,64 @@ func (ctx *HaoBtc) GetAccount() (*Account, error) {
 	account.SubAccounts[CNY] = cnySubAccount;
 
 	return account, nil;
+}
+
+func (ctx *HaoBtc) placeOrder(_type , amount , price string , currency CurrencyPair)(*Order , error){
+	postData := url.Values{};
+	postData.Set("type" , _type);
+	postData.Set("amount" , amount);
+	postData.Set("price" , price);
+
+	ctx.buildPostForm(&postData);
+
+	bodyData, err := HttpPostForm(ctx.httpClient, API_BASE_URL + TRADE_URI, postData);
+	if err != nil {
+		return nil, err;
+	}
+
+	fmt.Println(string(bodyData));
+
+	var bodyDataMap map[string]interface{};
+	err = json.Unmarshal(bodyData, &bodyDataMap);
+	if err != nil {
+		println(string(bodyData));
+		return nil, err;
+	}
+
+	if bodyDataMap["code"] != nil {
+		return nil, errors.New(string(bodyData));
+	}
+
+	id := int(bodyDataMap["order_id"].(float64));
+
+	if id <= 0 {
+		return nil , errors.New("Place Order Fail.");
+	}
+
+	order := new(Order);
+	order.OrderID = int(bodyDataMap["order_id"].(float64));
+	order.Price, _ = strconv.ParseFloat(price, 64);
+	order.Amount, _ = strconv.ParseFloat(amount, 64);
+	order.Currency = currency;
+	order.Status = ORDER_UNFINISH;
+
+	switch _type {
+	case "sell" ,"sell_market" , "sell_maker_only":
+		order.Side = SELL;
+	case "buy" , "buy_market" , "buy_maker_only":
+		order.Side = BUY;
+	}
+
+	return order , nil;
+}
+
+
+func (ctx *HaoBtc) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error){
+	return ctx.placeOrder("buy" , amount , price ,currency);
+}
+
+func (ctx *HaoBtc) LimitSell(amount, price string, currency CurrencyPair) (*Order, error){
+	return ctx.placeOrder("sell" , amount , price , currency);
 }
 
 func (ctx *HaoBtc) GetExchangeName() string {

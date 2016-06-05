@@ -36,3 +36,12 @@ func Test_GetAcount(t *testing.T) {
 
 	t.Log(account);
 }
+
+func Test_LimitSell(t *testing.T)  {
+	api := haobtc.New(http.DefaultClient, "7fef2f0a-6be4-4f7f-8715-b45ea830c2a2", "971cfbfc-1c27-4cb9-94c8-63a9032adaff");
+
+	order, err := api.LimitSell("0.01" , "3100" , rest.BTC_CNY);
+	assert.NoError(t, err);
+
+	t.Log(order);
+}
