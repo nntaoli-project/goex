@@ -16,6 +16,7 @@ import
 const
 (
 	EXCHANGE_NAME = "okcoin_cn";
+	api_base_url = "https://www.okcoin.cn/api/v1/";
 	url_ticker = "https://www.okcoin.cn/api/v1/ticker.do";
 	url_depth = "https://www.okcoin.cn/api/v1/depth.do";
 	url_trades = "https://www.okcoin.cn/api/v1/trades.do";
@@ -26,6 +27,7 @@ const
 	url_cancel_order = "https://www.okcoin.cn/api/v1/cancel_order.do";
 	url_order_info = "https://www.okcoin.cn/api/v1/order_info.do";
 	url_orders_info = "https://www.okcoin.cn/api/v1/orders_info.do"
+	order_history_uri = "order_history.do";
 )
 
 type OKCoinCN_API struct{
@@ -416,4 +418,80 @@ func (ctx *OKCoinCN_API)GetKlineRecords(currency CurrencyPair ,period string, si
 	}
 
 	return klineRecords , nil;
+}
+
+func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair , currentPage , pageSize int)([]Order , error){
+	orderHistoryUrl := api_base_url + order_history_uri;
+
+	postData := url.Values{};
+	postData.Set("status" , "1");
+	postData.Set("symbol" , CurrencyPairSymbol[currency]);
+	postData.Set("current_page" , fmt.Sprintf("%d" , currentPage));
+	postData.Set("page_length" , fmt.Sprintf("%d" , pageSize));
+
+	err := ctx.buildPostForm(&postData);
+
+	if err != nil{
+		return nil, err;
+	}
+
+	body, err := HttpPostForm(ctx.client , orderHistoryUrl , postData);
+
+	if err != nil{
+		return nil, err;
+	}
+
+	var respMap map[string]interface{};
+
+	err = json.Unmarshal(body , &respMap);
+
+	if err != nil {
+		return nil , err;
+	}
+
+	if !respMap["result"].(bool) {
+		return nil , errors.New(string(body));
+	}
+
+	orders := respMap["orders"].([]interface{});
+
+	var orderAr []Order;
+
+	for _ , v := range orders  {
+		orderMap := v.(map[string]interface{});
+
+		var order Order;
+		order.Currency = currency;
+		order.OrderID = int(orderMap["order_id"].(float64));
+		order.Amount = orderMap["amount"].(float64);
+		order.Price = orderMap["price"].(float64);
+		order.DealAmount = orderMap["deal_amount"].(float64);
+		order.AvgPrice = orderMap["avg_price"].(float64);
+		order.OrderTime = int(orderMap["create_date"].(float64));
+
+		//status:-1:已撤销  0:未成交  1:部分成交  2:完全成交 4:撤单处理中
+		switch int(orderMap["status"].(float64)) {
+		case -1:
+			order.Status = ORDER_CANCEL;
+		case 0:
+			order.Status = ORDER_UNFINISH;
+		case 1:
+			order.Status = ORDER_PART_FINISH;
+		case 2:
+			order.Status = ORDER_FINISH;
+		case 4:
+			order.Status = ORDER_CANCEL_ING;
+		}
+
+		switch orderMap["type"].(string) {
+		case "buy":
+			order.Side = BUY;
+		case "sell":
+			order.Side = SELL;
+		}
+
+		orderAr = append(orderAr , order);
+	}
+
+	return orderAr , nil;
 }

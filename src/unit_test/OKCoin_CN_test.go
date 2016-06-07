@@ -60,3 +60,11 @@ func Test_GetKlineRecords(t *testing.T)  {
 	assert.NoError(t , err);
 	t.Log(kline);
 }
+
+func Test_GetOrderHistorys(t *testing.T)  {
+	api := okcoin.New(http.DefaultClient , "" , "");
+	orders , err := api.GetOrderHistorys(LTC_CNY  , 1 , 100);
+	assert.NoError(t , err);
+	t.Log("size:" , len(orders));
+	t.Log(orders);
+}

@@ -8,7 +8,7 @@ type API interface {
 	CancelOrder(orderId string, currency CurrencyPair) (bool, error);
 	GetOneOrder(orderId string, currency CurrencyPair) (*Order, error);
 	GetUnfinishOrders(currency CurrencyPair) ([]Order, error);
-
+	GetOrderHistorys(currency CurrencyPair , currentPage , pageSize int)([]Order , error);
 	GetAccount() (*Account, error);
 
 	GetTicker(currency CurrencyPair) (*Ticker, error);
