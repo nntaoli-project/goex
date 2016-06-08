@@ -20,6 +20,9 @@ const
 	CANCEL_URI = "cancel_order";
 	DEPTH_URI = "depth?size=%d";
 	ACCOUNT_URI = "account_info";
+	ORDER_INFO = "order_info";
+	ORDERS_INFO = "orders_info";
+
 )
 
 type HaoBtc struct {
@@ -121,6 +124,10 @@ func (ctx *HaoBtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	}
 
 	return &depth, nil;
+}
+
+func (ctx *HaoBtc) GetKlineRecords(currency CurrencyPair ,period string, size , since int) ([]Kline , error){
+	return nil , errors.New("unimplement the method.");
 }
 
 func (ctx *HaoBtc) GetAccount() (*Account, error) {
@@ -235,12 +242,12 @@ func (ctx *HaoBtc) CancelOrder(orderId string, currency CurrencyPair) (bool, err
 		return false, err;
 	}
 
-	fmt.Println(string(bodyData));
+	//fmt.Println(string(bodyData));
 
 	var bodyDataMap map[string]interface{};
 	err = json.Unmarshal(bodyData, &bodyDataMap);
 	if err != nil {
-		println(string(bodyData));
+		//println(string(bodyData));
 		return false, err;
 	}
 
@@ -251,10 +258,139 @@ func (ctx *HaoBtc) CancelOrder(orderId string, currency CurrencyPair) (bool, err
 	id := int(bodyDataMap["order_id"].(float64));
 
 	if id <= 0 {
-		return false , errors.New("Place Order Fail.");
+		return false , errors.New("Cancel Order Fail.");
 	}
 
 	return false , nil;
+}
+
+func (ctx *HaoBtc) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error){
+	postData := url.Values{};
+	postData.Set("order_id" , orderId);
+
+	ctx.buildPostForm(&postData);
+
+	bodyData, err := HttpPostForm(ctx.httpClient, API_BASE_URL + ORDER_INFO, postData);
+	if err != nil {
+		return nil, err;
+	}
+
+	//fmt.Println(string(bodyData));
+
+	var bodyDataMap map[string]interface{};
+	err = json.Unmarshal(bodyData, &bodyDataMap);
+	if err != nil {
+		//println(string(bodyData));
+		return nil, err;
+	}
+
+	if bodyDataMap["code"] != nil {
+		return nil , errors.New(string(bodyData));
+	}
+
+	/*
+	 "status": "CANCELED",
+         "amount": 0.1,
+  	 "create_date": "2016-03-21T10:06:06.904Z",
+  	 "avg_price": 0,
+   	 "order_id": 57182,
+  	 "price": 3000,
+         "deal_size": 0,
+  	 "type": "LIMIT",
+  	 "side": "BUY"
+	 */
+
+	order := new(Order);
+	order.OrderID = int(bodyDataMap["order_id"].(float64));
+	order.Amount = bodyDataMap["amount"].(float64);
+	order.DealAmount = bodyDataMap["deal_size"].(float64);
+	order.Price =  bodyDataMap["price"].(float64);
+	order.AvgPrice = bodyDataMap["avg_price"].(float64);
+
+	status := bodyDataMap["status"].(string);
+	switch status {
+	case "CANCELED":
+		order.Status = ORDER_CANCEL;
+	case "CLOSE":
+		order.Status = ORDER_FINISH;
+	case "OPEN", "SUBMIT", "PENDING":
+		order.Status = ORDER_UNFINISH;
+	}
+
+	side := bodyDataMap["side"].(string);
+	switch side {
+	case "BUY":
+		order.Side = BUY;
+	case "SELL":
+		order.Side = SELL;
+	}
+
+	return order , nil;
+}
+
+func (ctx *HaoBtc) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
+	postData := url.Values{};
+
+	ctx.buildPostForm(&postData);
+
+	bodyData, err := HttpPostForm(ctx.httpClient, API_BASE_URL + ORDERS_INFO, postData);
+	if err != nil {
+		return nil, err;
+	}
+
+	fmt.Println(string(bodyData));
+
+	bodyStr := string(bodyData);
+	if strings.Contains("code", bodyStr) {
+		return nil, errors.New(bodyStr);
+	}
+
+	var ordersArray []interface{};
+	err = json.Unmarshal(bodyData, &ordersArray);
+	if err != nil {
+		//println(string(bodyData));
+		return nil, err;
+	}
+
+	var orders []Order;
+
+	for _, v := range ordersArray {
+		_map := v.(map[string]interface{});
+		order := Order{};
+		order.OrderID = int(_map["order_id"].(float64));
+		order.Amount = _map["amount"].(float64);
+		order.Price = _map["price"].(float64);
+		order.AvgPrice = _map["avg_price"].(float64);
+
+		remainsize := _map["remainsize"].(float64);
+		order.DealAmount = order.Amount - remainsize;
+
+		status := _map["status"].(string);
+		switch status {
+		case "Part deal":
+			order.Status = ORDER_PART_FINISH;
+		case "All deal":
+			order.Status = ORDER_FINISH;
+		case "No deal":
+			order.Status = ORDER_UNFINISH;
+		}
+
+		side := _map["type"].(string);
+		switch side {
+		case "BUY":
+			order.Side = BUY;
+		case "SELL":
+			order.Side = SELL;
+		}
+
+		orders = append(orders, order);
+	}
+
+	return orders, nil;
+}
+
+func (ctx *HaoBtc) GetOrderHistorys(currency CurrencyPair , currentPage , pageSize int)([]Order , error){
+	return nil , errors.New("unimplements the method");
 }
 
 func (ctx *HaoBtc) GetExchangeName() string {

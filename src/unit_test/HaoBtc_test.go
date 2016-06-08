@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"rest"
 	"github.com/stretchr/testify/assert"
+	"encoding/json"
 )
 
 func Test_GetTicker(t *testing.T) {
@@ -49,6 +50,20 @@ func Test_LimitSell(t *testing.T)  {
 func  Test_HaoBtc_CancelOrder(t *testing.T){
 	api := haobtc.New(http.DefaultClient, "apikey", "secret_key");
 	ret , err := api.CancelOrder("-1" , rest.BTC_CNY);
+	assert.NoError(t , err);
+	t.Log(ret);
+}
+
+func Test_HaoBtc_GetOnOrder(t *testing.T)  {
+	api := haobtc.New(http.DefaultClient, "", "");
+	ret , err := api.GetOneOrder("123" , rest.BTC_CNY);
+	assert.NoError(t , err);
+	t.Log(ret);
+}
+
+func Test_HaoBtc_GetUnfinishOrder(t *testing.T)  {
+	api := haobtc.New(http.DefaultClient, "", "");
+	ret , err := api.GetUnfinishOrders(rest.BTC_CNY);
 	assert.NoError(t , err);
 	t.Log(ret);
 }
