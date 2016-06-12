@@ -47,6 +47,14 @@ const
 	ORDER_CANCEL_ING
 )
 
+const
+(
+	OPEN_SELL = 1 + iota  //开空
+	OPEN_BUY              //开多
+	CLOSE_BUY             //平多
+	CLOSE_SELL           //平空
+)
+
 var CurrencyPairSymbol = map[CurrencyPair]string{
 	BTC_CNY : "btc_cny",
 	BTC_USD : "btc_usd",

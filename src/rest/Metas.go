@@ -63,3 +63,49 @@ type Kline struct  {
 	Low ,
 	Vol float64;
 }
+
+type FutureSubAccount struct {
+	Currency      Currency;
+	AccountRights float64; //账户权益
+	KeepDeposit   float64; //保证金
+	ProfitReal    float64; //已实现盈亏
+	ProfitUnreal  float64;
+	RiskRate      float64; //保证金率
+}
+
+type FutureAccount struct {
+	FutureSubAccounts map[Currency]FutureSubAccount;
+}
+
+type FutureOrder struct {
+	Price      float64;
+	Amount     float64;
+	AvgPrice   float64;
+	DealAmount float64;
+	OrderID    int64;
+	OrderTime  int64;
+	Status     TradeStatus;
+	Currency   CurrencyPair;
+	OType      int;//1：开多 2：开空 3：平多 4： 平空
+	LeverRate  int;     //倍数
+	Fee        float64; //手续费
+}
+
+type FuturePosition struct {
+	BuyAmount      float64;
+	BuyAvailable   float64;
+	BuyPriceAvg    float64;
+	BuyPriceCost   float64;
+	BuyProfitReal  float64;
+	CreateDate     int64;
+	LeverRate      int;
+	SellAmount     float64;
+	SellAvailable  float64;
+	SellPriceAvg   float64;
+	SellPriceCost  float64;
+	SellProfitReal float64;
+	Currency       CurrencyPair; //btc_usd:比特币,ltc_usd:莱特币
+	ContractType   string;
+	ContractId     int64;
+	ForceLiquPrice float64; //预估爆仓价
+}
