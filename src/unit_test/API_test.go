@@ -7,15 +7,18 @@ import (
 	"net/http"
 )
 
-func Test_HuoBiApi(t *testing.T)  {
+func Test_HuoBiApi(t *testing.T) {
 	client := http.DefaultClient;
-	hbCfg := APIConfig{client ,"http://api.huobi.com/","",""};
-	huobiApi := huobi.New(hbCfg);
-	ticker , err := huobiApi.GetTicker(LTC_CNY);
+	huobiApi := huobi.New(client, "", "");
+	ticker, err := huobiApi.GetTicker(LTC_CNY);
 	if err != nil {
 		t.Error(err);
-		return ;
+		return;
 	}
 
 	t.Log(ticker);
+
+	depth, err := huobiApi.GetDepth(3, LTC_CNY);
+	t.Log("bids:", depth.AskList);
+	t.Log("asks:", depth.AskList);
 }

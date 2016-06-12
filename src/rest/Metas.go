@@ -3,27 +3,29 @@ package rest
 import "net/http"
 
 type Order struct {
-	OrderID,
 	Price,
 	Amount,
 	AvgPrice,
-	DealAmount string;
-	OrderTime  int32;
+	DealAmount float64;
+	OrderID    int;
+	OrderTime  int;
 	Status     TradeStatus;
 	Currency   CurrencyPair;
-	side       TradeSide;
+	Side       TradeSide;
 }
 
 type SubAccount struct {
-	Currency     CurrencyPair;
-	Amount       string;
-	ForzenAmount string;
-	LoanAmount   string;
+	Currency   Currency;
+	Amount,
+	ForzenAmount,
+	LoanAmount float64;
 }
 
 type Account struct {
 	Exchange    string;
-	SubAccounts []SubAccount
+	Asset       float64; //总资产
+	NetAsset    float64; //净资产
+	SubAccounts map[Currency]SubAccount;
 }
 
 type Ticker struct {
@@ -38,7 +40,7 @@ type Ticker struct {
 
 type DepthRecord struct {
 	Price,
-	Amount string;
+	Amount float64;
 }
 
 type Depth struct {
@@ -50,5 +52,14 @@ type APIConfig struct {
 	HttpClient *http.Client;
 	ApiUrl,
 	AccessKey,
-	SecretKey string;
+	SecretKey  string;
+}
+
+type Kline struct  {
+	Timestamp int64;
+	Open,
+	Close,
+	High,
+	Low ,
+	Vol float64;
 }

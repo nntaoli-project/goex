@@ -2,9 +2,20 @@ package rest
 
 type CurrencyPair int;
 
+type Currency int;
+
 type TradeSide int;
 
 type TradeStatus int;
+
+const
+(
+	CNY = 1 + iota
+	USD
+	BTC
+	LTC
+	ETH
+)
 
 const
 (
@@ -33,4 +44,15 @@ const
 	ORDER_FINISH
 	ORDER_CANCEL
 	ORDER_REJECT
+	ORDER_CANCEL_ING
 )
+
+var CurrencyPairSymbol = map[CurrencyPair]string{
+	BTC_CNY : "btc_cny",
+	BTC_USD : "btc_usd",
+	BTC_LTC : "btc_ltc",
+	BTC_ETH : "btc_eth",
+	LTC_CNY : "ltc_cny",
+	LTC_USD : "ltc_usd",
+	ETH_CNY : "eth_cny",
+	ETH_USD : "eth_usd" };
