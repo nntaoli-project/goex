@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"net/url"
 	"strings"
-	"fmt"
 )
 
 func HttpGet(url string) (map[string]interface{}, error) {
@@ -20,7 +19,7 @@ func HttpGet(url string) (map[string]interface{}, error) {
 		return nil, err;
 	}
 	var bodyDataMap map[string]interface{};
-	fmt.Printf("\n%s\n", body);
+	//fmt.Printf("\n%s\n", body);
 	err = json.Unmarshal(body, &bodyDataMap);
 	if err != nil {
 		return nil, err;
@@ -40,7 +39,7 @@ func HttpPost(url string) (map[string]interface{}, error) {
 		return nil, err;
 	}
 	var bodyDataMap map[string]interface{};
-	fmt.Printf("\n%s\n", body);
+	//fmt.Printf("\n%s\n", body);
 	err = json.Unmarshal(body, &bodyDataMap);
 	if err != nil {
 		return nil, err;
