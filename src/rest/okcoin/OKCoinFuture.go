@@ -301,7 +301,67 @@ func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractTyp
 }
 
 func (ok *OKCoinFuture) GetFutureOrders(orderId int64, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
-	return nil, nil
+	postData := url.Values{};
+	postData.Set("order_id" , fmt.Sprintf("%d" , orderId));
+	postData.Set("contract_type" , contractType);
+	postData.Set("symbol" , CurrencyPairSymbol[currencyPair]);
+
+	ok.buildPostForm(&postData);
+
+	body , err := HttpPostForm(ok.client , FUTURE_API_BASE_URL + FUTURE_ORDERS_INFO_URI , postData);
+	if err != nil {
+		return nil , err;
+	}
+
+	respMap := make(map[string]interface{});
+
+	err = json.Unmarshal(body , &respMap);
+	if err != nil {
+		return nil , err;
+	}
+
+	if !respMap["result"].(bool) {
+		return nil , errors.New(string(body));
+	}
+
+	var orders []interface{};
+	orders = respMap["orders"].([]interface{});
+
+	var futureOrders []FutureOrder;
+
+	for _ , v := range orders  {
+		vv := v.(map[string]interface{});
+		futureOrder := FutureOrder{};
+		futureOrder.OrderID = orderId;
+		futureOrder.Amount = vv["amount"].(float64);
+		futureOrder.Price = vv["price"].(float64);
+		futureOrder.AvgPrice = vv["price_avg"].(float64);
+		futureOrder.DealAmount = vv["deal_amount"].(float64);
+		futureOrder.Fee = vv["fee"].(float64);
+		futureOrder.OType = int(vv["type"].(float64));
+		futureOrder.OrderTime = int64(vv["create_date"].(float64));
+		futureOrder.LeverRate = int(vv["lever_rate"].(float64));
+		futureOrder.Currency = currencyPair;
+
+		switch s := int(vv["status"].(float64)); s {
+		case 0:
+			futureOrder.Status = ORDER_UNFINISH;
+		case 1:
+			futureOrder.Status = ORDER_PART_FINISH;
+		case 2:
+			futureOrder.Status = ORDER_FINISH;
+		case 4:
+			futureOrder.Status = ORDER_CANCEL_ING;
+		case -1:
+			futureOrder.Status = ORDER_CANCEL;
+
+		}
+		
+		futureOrders = append(futureOrders , futureOrder);
+	}
+
+	//println(string(body));
+	return futureOrders, nil
 }
 
 func (ok *OKCoinFuture) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {

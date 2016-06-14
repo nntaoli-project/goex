@@ -51,3 +51,10 @@ func Test_OKCoin_Future_PlaceOrder(t *testing.T)  {
 	assert.NoError(t , err);
 	t.Log(pos);
 }
+
+func Test_OKCoin_Future_GetOrder(t *testing.T)  {
+	api := okcoin.NewFuture(http.DefaultClient, "", "");
+	order , err := api.GetFutureOrders(1991135170 , rest.LTC_USD , "this_week");
+	assert.NoError(t , err);
+	t.Log(order);
+}
