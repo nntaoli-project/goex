@@ -203,7 +203,59 @@ func (ok *OKCoinFuture) FutureCancelOrder(currencyPair CurrencyPair, contractTyp
 }
 
 func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractType string) (*FuturePosition, error) {
-	return nil, nil
+	/*
+	# Response
+{
+    "force_liqu_price": "0.07",
+    "holding": [
+        {
+            "buy_amount": 1,
+            "buy_available": 0,
+            "buy_price_avg": 422.78,
+            "buy_price_cost": 422.78,
+            "buy_profit_real": -0.00007096,
+            "contract_id": 20141219012,
+            "contract_type": "this_week",
+            "create_date": 1418113356000,
+            "lever_rate": 10,
+            "sell_amount": 0,
+            "sell_available": 0,
+            "sell_price_avg": 0,
+            "sell_price_cost": 0,
+            "sell_profit_real": 0,
+            "symbol": "btc_usd"
+        }
+    ],
+    "result": true
+}
+	 */
+	positionUrl := FUTURE_API_BASE_URL + FUTURE_POSITION_URI;
+
+	postData := url.Values{};
+	postData.Set("contract_type" , contractType);
+	postData.Set("symbol" , CurrencyPairSymbol[currencyPair]);
+
+	ok.buildPostForm(&postData);
+
+	body , err := HttpPostForm(ok.client , positionUrl , postData);
+
+	if err != nil {
+		return nil , err;
+	}
+
+	respMap := make(map[string]interface{} , 3);
+
+	json.Unmarshal(body , &respMap);
+
+	if !respMap["result"].(bool) {
+		return nil , errors.New(string(body));
+	}
+
+	pos := new(FuturePosition);
+	pos.ForceLiquPrice , _ = strconv.ParseFloat( respMap["force_liqu_price"].(string) , 64);
+	println(string(body))
+
+	return pos, nil
 }
 
 func (ok *OKCoinFuture) GetFutureOrders(orderId int64, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
