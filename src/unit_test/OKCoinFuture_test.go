@@ -22,3 +22,10 @@ func Test_OKCoin_Future_GetDepth(t *testing.T) {
 	t.Log(depth)
 }
 
+func Test_OKCoin_Future_GetUserInfo(t *testing.T)  {
+	api := okcoin.NewFuture(http.DefaultClient, "" , "");
+	user , err := api.GetFutureUserinfo();
+	assert.NoError(t , err);
+	t.Log(user);
+}
+

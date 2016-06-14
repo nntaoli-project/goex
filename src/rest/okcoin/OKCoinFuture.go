@@ -7,6 +7,9 @@ import (
 	"net/http"
 	. "rest"
 	"strconv"
+	"net/url"
+	"strings"
+	"errors"
 )
 
 const (
@@ -32,6 +35,23 @@ func NewFuture(client *http.Client, api_key, secret_key string) *OKCoinFuture {
 	ok.apiSecretKey = secret_key
 	ok.client = client
 	return ok
+}
+
+func (ok *OKCoinFuture) buildPostForm(postForm *url.Values) error {
+	postForm.Set("api_key", ok.apiKey);
+	//postForm.Set("secret_key", ctx.secret_key);
+
+	payload := postForm.Encode();
+	payload = payload + "&secret_key=" + ok.apiSecretKey;
+
+	sign, err := GetParamMD5Sign(ok.apiSecretKey, payload);
+	if err != nil {
+		return err;
+	}
+
+	postForm.Set("sign", strings.ToUpper(sign));
+	//postForm.Del("secret_key")
+	return nil;
 }
 
 func (ok *OKCoinFuture) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
@@ -135,8 +155,43 @@ func (ok *OKCoinFuture) GetFutureIndex(currencyPair CurrencyPair) (float64, erro
 	return 0, nil
 }
 
+type futureUserInfoResponse struct {
+	Info   struct {
+		       Btc map[string]float64 `json:btc`
+		       Ltc map[string]float64 `json:ltc`
+	       } `json:info`
+	Result bool `json:"result,bool"`
+}
+
 func (ok *OKCoinFuture) GetFutureUserinfo() (*FutureAccount, error) {
-	return nil, nil
+	userInfoUrl := FUTURE_API_BASE_URL + FUTURE_USERINFO_URI;
+
+	postData := url.Values{};
+	ok.buildPostForm(&postData);
+
+	body , err := HttpPostForm(ok.client , userInfoUrl , postData);
+
+	if err != nil {
+		return nil , err;
+	}
+
+	//println(string(body));
+	resp := futureUserInfoResponse{};
+	json.Unmarshal(body , &resp)
+	if !resp.Result {
+		return nil , errors.New(string(body));
+	}
+
+	account := new(FutureAccount);
+	account.FutureSubAccounts = make(map[Currency]FutureSubAccount , 2);
+
+	btcMap := resp.Info.Btc;
+	ltcMap := resp.Info.Ltc;
+
+	account.FutureSubAccounts[BTC] = FutureSubAccount{BTC, btcMap["account_rights"], btcMap["keep_deposit"], btcMap["profit_real"], btcMap["profit_unreal"], btcMap["risk_rate"]};
+	account.FutureSubAccounts[LTC] = FutureSubAccount{LTC, ltcMap["account_rights"], ltcMap["keep_deposit"], ltcMap["profit_real"], ltcMap["profit_unreal"], ltcMap["risk_rate"]};
+
+	return account, nil
 }
 
 func (ok *OKCoinFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount, openType, matchPrice string) (string, error) {
