@@ -31,8 +31,23 @@ func Test_OKCoin_Future_GetUserInfo(t *testing.T)  {
 
 func Test_OKCoin_Future_GetFuturePosition(t *testing.T)  {
 	api := okcoin.NewFuture(http.DefaultClient, "", "");
-	pos , err := api.GetFuturePosition(rest.BTC_USD , "this_week");
+	pos , err := api.GetFuturePosition(rest.LTC_USD , "this_week");
 	assert.NoError(t , err);
 	t.Log(pos);
 }
 
+
+func Test_OKCoin_Future_CancelOrder(t *testing.T)  {
+	api := okcoin.NewFuture(http.DefaultClient, "", "");
+	pos , err := api.FutureCancelOrder(rest.LTC_USD , "this_week" , "1991174604");
+	assert.NoError(t , err);
+	t.Log(pos);
+}
+
+
+func Test_OKCoin_Future_PlaceOrder(t *testing.T)  {
+	api := okcoin.NewFuture(http.DefaultClient, "", "");
+	pos , err := api.PlaceFutureOrder(rest.LTC_USD , "this_week" , "5.1" , "1" , rest.OPEN_BUY , 0 , 10);
+	assert.NoError(t , err);
+	t.Log(pos);
+}

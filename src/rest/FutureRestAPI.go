@@ -36,7 +36,7 @@ type FutureRestAPI interface {
 	 * @param openType   1:开多   2:开空   3:平多   4:平空
 	 * @param matchPrice  是否为对手价 0:不是    1:是   ,当取值为1时,price无效
 	 */
-	PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount, openType, matchPrice string) (string, error)
+	PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string , openType, matchPrice , leverRate int) (string, error)
 
 	/**
 	 * 取消订单

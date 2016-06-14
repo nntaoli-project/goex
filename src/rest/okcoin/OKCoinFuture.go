@@ -21,6 +21,7 @@ const (
 	FUTURE_ORDER_INFO_URI  = "future_order_info.do"
 	FUTURE_ORDERS_INFO_URI = "future_orders_info.do"
 	FUTURE_POSITION_URI    = "future_position.do"
+	FUTURE_TRADE_URI       = "future_trade.do"
 )
 
 type OKCoinFuture struct {
@@ -51,6 +52,7 @@ func (ok *OKCoinFuture) buildPostForm(postForm *url.Values) error {
 
 	postForm.Set("sign", strings.ToUpper(sign));
 	//postForm.Del("secret_key")
+	fmt.Println(postForm)
 	return nil;
 }
 
@@ -194,41 +196,63 @@ func (ok *OKCoinFuture) GetFutureUserinfo() (*FutureAccount, error) {
 	return account, nil
 }
 
-func (ok *OKCoinFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount, openType, matchPrice string) (string, error) {
-	return "", nil
+func (ok *OKCoinFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice , leverRate int) (string, error) {
+	postData := url.Values{};
+	postData.Set("symbol" , CurrencyPairSymbol[currencyPair]);
+	postData.Set("price" , price);
+	postData.Set("contract_type" , contractType);
+	postData.Set("amount" , amount);
+	postData.Set("type" , strconv.Itoa(openType));
+	postData.Set("lever_rate" , strconv.Itoa(leverRate))
+	postData.Set("match_price" , strconv.Itoa(matchPrice));
+
+	ok.buildPostForm(&postData);
+
+	placeOrderUrl := FUTURE_API_BASE_URL + FUTURE_TRADE_URI;
+	body , err := HttpPostForm(ok.client , placeOrderUrl , postData);
+
+	if err != nil {
+		return "" , err;
+	}
+
+	respMap := make(map[string]interface{});
+	json.Unmarshal(body , &respMap);
+
+	println(string(body));
+
+	if !respMap["result"].(bool) {
+		return "" , errors.New(string(body));
+	}
+
+	return fmt.Sprintf("%.0f" , respMap["order_id"].(float64)) , nil
 }
 
 func (ok *OKCoinFuture) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
-	return false, nil
+	postData := url.Values{};
+	postData.Set("symbol" , CurrencyPairSymbol[currencyPair]);
+	postData.Set("order_id" , orderId);
+	postData.Set("contract_type" , contractType);
+
+	ok.buildPostForm(&postData);
+
+	cancelUrl := FUTURE_API_BASE_URL + FUTURE_CANCEL_URI;
+
+	body , err := HttpPostForm(ok.client , cancelUrl , postData);
+	if err != nil {
+		return false , err;
+	}
+
+	respMap := make(map[string]interface{});
+	json.Unmarshal(body , &respMap);
+
+	if respMap["result"] != nil && !respMap["result"].(bool) {
+		return false , errors.New(string(body));
+	}
+
+	return true, nil
 }
 
 func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractType string) (*FuturePosition, error) {
-	/*
-	# Response
-{
-    "force_liqu_price": "0.07",
-    "holding": [
-        {
-            "buy_amount": 1,
-            "buy_available": 0,
-            "buy_price_avg": 422.78,
-            "buy_price_cost": 422.78,
-            "buy_profit_real": -0.00007096,
-            "contract_id": 20141219012,
-            "contract_type": "this_week",
-            "create_date": 1418113356000,
-            "lever_rate": 10,
-            "sell_amount": 0,
-            "sell_available": 0,
-            "sell_price_avg": 0,
-            "sell_price_cost": 0,
-            "sell_profit_real": 0,
-            "symbol": "btc_usd"
-        }
-    ],
-    "result": true
-}
-	 */
 	positionUrl := FUTURE_API_BASE_URL + FUTURE_POSITION_URI;
 
 	postData := url.Values{};
@@ -243,18 +267,36 @@ func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractTyp
 		return nil , err;
 	}
 
-	respMap := make(map[string]interface{} , 3);
+	respMap := make(map[string]interface{});
 
 	json.Unmarshal(body , &respMap);
 
 	if !respMap["result"].(bool) {
 		return nil , errors.New(string(body));
 	}
-
-	pos := new(FuturePosition);
-	pos.ForceLiquPrice , _ = strconv.ParseFloat( respMap["force_liqu_price"].(string) , 64);
 	println(string(body))
 
+	pos := new(FuturePosition);
+	pos.ForceLiquPrice , _ = strconv.ParseFloat(respMap["force_liqu_price"].(string) , 64);
+
+	/*
+	holding := respMap["holding"].([]interface{});
+	pos.LeverRate = holding["lever_rate"].(int);
+	pos.ContractType = holding["contract_type"].(string);
+	pos.ContractId = holding["contract_id"].(int64);
+	pos.BuyAmount = holding["buy_amount"].(float64);
+	pos.BuyAvailable = holding["buy_available"].(float64);
+	pos.BuyPriceAvg = holding["buy_price_avg"].(float64);
+	pos.BuyPriceCost = holding["buy_price_cost"].(float64);
+	pos.BuyProfitReal = holding["buy_profit_real"].(float64);
+	pos.SellAmount = holding["sell_amount"].(float64);
+	pos.SellAvailable = holding["sell_available"].(float64);
+	pos.SellPriceAvg = holding["sell_price_avg"].(float64);
+	pos.SellPriceCost = holding["sell_price_cost"].(float64);
+	pos.SellProfitReal = holding["sell_profit_real"].(float64);
+	pos.CreateDate = holding["create_date"].(int64);
+	pos.Symbol = currencyPair;
+        */
 	return pos, nil
 }
 

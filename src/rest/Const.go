@@ -49,8 +49,8 @@ const
 
 const
 (
-	OPEN_SELL = 1 + iota  //开空
-	OPEN_BUY              //开多
+	OPEN_BUY = 1 + iota  //开多
+	OPEN_SELL              //开空
 	CLOSE_BUY             //平多
 	CLOSE_SELL           //平空
 )

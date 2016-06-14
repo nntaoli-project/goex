@@ -104,7 +104,7 @@ type FuturePosition struct {
 	SellPriceAvg   float64;
 	SellPriceCost  float64;
 	SellProfitReal float64;
-	Currency       CurrencyPair; //btc_usd:比特币,ltc_usd:莱特币
+	Symbol         CurrencyPair; //btc_usd:比特币,ltc_usd:莱特币
 	ContractType   string;
 	ContractId     int64;
 	ForceLiquPrice float64; //预估爆仓价
