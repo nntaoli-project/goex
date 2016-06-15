@@ -300,28 +300,16 @@ func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractTyp
 	return pos, nil
 }
 
-func (ok *OKCoinFuture) GetFutureOrders(orderId int64, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
-	postData := url.Values{};
-	postData.Set("order_id" , fmt.Sprintf("%d" , orderId));
-	postData.Set("contract_type" , contractType);
-	postData.Set("symbol" , CurrencyPairSymbol[currencyPair]);
-
-	ok.buildPostForm(&postData);
-
-	body , err := HttpPostForm(ok.client , FUTURE_API_BASE_URL + FUTURE_ORDERS_INFO_URI , postData);
-	if err != nil {
-		return nil , err;
-	}
-
+func (ok *OKCoinFuture) parseOrders(body []byte , currencyPair CurrencyPair) ([]FutureOrder, error) {
 	respMap := make(map[string]interface{});
 
-	err = json.Unmarshal(body , &respMap);
+	err := json.Unmarshal(body, &respMap);
 	if err != nil {
-		return nil , err;
+		return nil, err;
 	}
 
 	if !respMap["result"].(bool) {
-		return nil , errors.New(string(body));
+		return nil, errors.New(string(body));
 	}
 
 	var orders []interface{};
@@ -329,10 +317,10 @@ func (ok *OKCoinFuture) GetFutureOrders(orderId int64, currencyPair CurrencyPair
 
 	var futureOrders []FutureOrder;
 
-	for _ , v := range orders  {
+	for _, v := range orders {
 		vv := v.(map[string]interface{});
 		futureOrder := FutureOrder{};
-		futureOrder.OrderID = orderId;
+		futureOrder.OrderID = int64(vv["order_id"].(float64));
 		futureOrder.Amount = vv["amount"].(float64);
 		futureOrder.Price = vv["price"].(float64);
 		futureOrder.AvgPrice = vv["price_avg"].(float64);
@@ -356,14 +344,45 @@ func (ok *OKCoinFuture) GetFutureOrders(orderId int64, currencyPair CurrencyPair
 			futureOrder.Status = ORDER_CANCEL;
 
 		}
-		
-		futureOrders = append(futureOrders , futureOrder);
+
+		futureOrders = append(futureOrders, futureOrder);
+	}
+	return futureOrders , nil;
+}
+
+func (ok *OKCoinFuture) GetFutureOrders(orderId int64, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
+	postData := url.Values{};
+	postData.Set("order_id" , fmt.Sprintf("%d" , orderId));
+	postData.Set("contract_type" , contractType);
+	postData.Set("symbol" , CurrencyPairSymbol[currencyPair]);
+
+	ok.buildPostForm(&postData);
+
+	body , err := HttpPostForm(ok.client , FUTURE_API_BASE_URL + FUTURE_ORDERS_INFO_URI , postData);
+	if err != nil {
+		return nil , err;
 	}
 
-	//println(string(body));
-	return futureOrders, nil
+	return ok.parseOrders(body ,currencyPair);
 }
 
 func (ok *OKCoinFuture) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
-	return nil, nil
+	postData := url.Values{};
+	postData.Set("order_id" , "-1");
+	postData.Set("contract_type" , contractType);
+	postData.Set("symbol" , CurrencyPairSymbol[currencyPair]);
+	postData.Set("status" , "1");
+	postData.Set("current_page" , "1");
+	postData.Set("page_length" , "50");
+
+	ok.buildPostForm(&postData);
+
+	body , err := HttpPostForm(ok.client , FUTURE_API_BASE_URL + FUTURE_ORDER_INFO_URI , postData);
+	if err != nil {
+		return nil , err;
+	}
+
+	println(string(body))
+
+	return ok.parseOrders(body , currencyPair);
 }
