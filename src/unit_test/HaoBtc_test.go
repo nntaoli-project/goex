@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"rest"
 	"github.com/stretchr/testify/assert"
-	"encoding/json"
+//	"encoding/json"
 )
 
 func Test_GetTicker(t *testing.T) {
