@@ -52,7 +52,7 @@ func (ok *OKCoinFuture) buildPostForm(postForm *url.Values) error {
 
 	postForm.Set("sign", strings.ToUpper(sign));
 	//postForm.Del("secret_key")
-	fmt.Println(postForm)
+	//fmt.Println(postForm)
 	return nil;
 }
 
@@ -252,7 +252,7 @@ func (ok *OKCoinFuture) FutureCancelOrder(currencyPair CurrencyPair, contractTyp
 	return true, nil
 }
 
-func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractType string) (*FuturePosition, error) {
+func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error) {
 	positionUrl := FUTURE_API_BASE_URL + FUTURE_POSITION_URI;
 
 	postData := url.Values{};
@@ -269,35 +269,47 @@ func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractTyp
 
 	respMap := make(map[string]interface{});
 
-	json.Unmarshal(body , &respMap);
+	err = json.Unmarshal(body , &respMap);
+	if err != nil {
+		return nil , err
+	}
 
 	if !respMap["result"].(bool) {
 		return nil , errors.New(string(body));
 	}
+
 	println(string(body))
 
-	pos := new(FuturePosition);
-	pos.ForceLiquPrice , _ = strconv.ParseFloat(respMap["force_liqu_price"].(string) , 64);
+	var posAr []FuturePosition;
 
-	/*
-	holding := respMap["holding"].([]interface{});
-	pos.LeverRate = holding["lever_rate"].(int);
-	pos.ContractType = holding["contract_type"].(string);
-	pos.ContractId = holding["contract_id"].(int64);
-	pos.BuyAmount = holding["buy_amount"].(float64);
-	pos.BuyAvailable = holding["buy_available"].(float64);
-	pos.BuyPriceAvg = holding["buy_price_avg"].(float64);
-	pos.BuyPriceCost = holding["buy_price_cost"].(float64);
-	pos.BuyProfitReal = holding["buy_profit_real"].(float64);
-	pos.SellAmount = holding["sell_amount"].(float64);
-	pos.SellAvailable = holding["sell_available"].(float64);
-	pos.SellPriceAvg = holding["sell_price_avg"].(float64);
-	pos.SellPriceCost = holding["sell_price_cost"].(float64);
-	pos.SellProfitReal = holding["sell_profit_real"].(float64);
-	pos.CreateDate = holding["create_date"].(int64);
-	pos.Symbol = currencyPair;
-        */
-	return pos, nil
+	forceLiquPrice , _ := strconv.ParseFloat(respMap["force_liqu_price"].(string) , 64);
+
+	holdings := respMap["holding"].([]interface{});
+	for _ , v := range holdings  {
+		holdingMap := v.(map[string]interface{});
+
+		pos := FuturePosition{};
+		pos.ForceLiquPrice = forceLiquPrice;
+		pos.LeverRate = int(holdingMap["lever_rate"].(float64));
+		pos.ContractType = holdingMap["contract_type"].(string);
+		pos.ContractId = int64(holdingMap["contract_id"].(float64));
+		pos.BuyAmount = holdingMap["buy_amount"].(float64);
+		pos.BuyAvailable = holdingMap["buy_available"].(float64);
+		pos.BuyPriceAvg = holdingMap["buy_price_avg"].(float64);
+		pos.BuyPriceCost = holdingMap["buy_price_cost"].(float64);
+		pos.BuyProfitReal = holdingMap["buy_profit_real"].(float64);
+		pos.SellAmount = holdingMap["sell_amount"].(float64);
+		pos.SellAvailable = holdingMap["sell_available"].(float64);
+		pos.SellPriceAvg = holdingMap["sell_price_avg"].(float64);
+		pos.SellPriceCost = holdingMap["sell_price_cost"].(float64);
+		pos.SellProfitReal = holdingMap["sell_profit_real"].(float64);
+		pos.CreateDate = int64(holdingMap["create_date"].(float64));
+		pos.Symbol = currencyPair;
+		posAr = append(posAr , pos);
+
+	}
+
+	return posAr, nil
 }
 
 func (ok *OKCoinFuture) parseOrders(body []byte , currencyPair CurrencyPair) ([]FutureOrder, error) {

@@ -53,7 +53,7 @@ type FutureRestAPI interface {
 	 * @param contractType   合约类型: this_week:当周   next_week:下周   month:当月   quarter:季度
 	 * @return
 	 */
-	GetFuturePosition(currencyPair CurrencyPair, contractType string) (*FuturePosition, error)
+	GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error)
 
 	/**
 	 *获取订单信息

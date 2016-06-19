@@ -46,15 +46,15 @@ func Test_OKCoin_Future_CancelOrder(t *testing.T)  {
 
 
 func Test_OKCoin_Future_PlaceOrder(t *testing.T)  {
-	api := okcoin.NewFuture(http.DefaultClient,  "", "");
+	api := okcoin.NewFuture(http.DefaultClient,"", "");
 	pos , err := api.PlaceFutureOrder(rest.LTC_USD , "this_week" , "5" , "1" , rest.OPEN_BUY , 0 , 10);
 	assert.NoError(t , err);
 	t.Log(pos);
 }
 
 func Test_OKCoin_Future_GetOrder(t *testing.T)  {
-	api := okcoin.NewFuture(http.DefaultClient,  "", "");
-	order , err := api.GetFutureOrders(1995856933 , rest.LTC_USD , "this_week");
+	api := okcoin.NewFuture(http.DefaultClient,"", "");
+	order , err := api.GetFutureOrders(2027122589 , rest.LTC_USD , "this_week");
 	assert.NoError(t , err);
 	t.Log(order);
 }
