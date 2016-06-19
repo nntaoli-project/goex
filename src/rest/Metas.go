@@ -89,6 +89,7 @@ type FutureOrder struct {
 	OType      int;//1：开多 2：开空 3：平多 4： 平空
 	LeverRate  int;     //倍数
 	Fee        float64; //手续费
+	ContractName string;
 }
 
 type FuturePosition struct {

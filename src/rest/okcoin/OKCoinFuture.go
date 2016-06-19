@@ -341,6 +341,7 @@ func (ok *OKCoinFuture) parseOrders(body []byte , currencyPair CurrencyPair) ([]
 		futureOrder.OType = int(vv["type"].(float64));
 		futureOrder.OrderTime = int64(vv["create_date"].(float64));
 		futureOrder.LeverRate = int(vv["lever_rate"].(float64));
+		futureOrder.ContractName = vv["contract_name"].(string);
 		futureOrder.Currency = currencyPair;
 
 		switch s := int(vv["status"].(float64)); s {
