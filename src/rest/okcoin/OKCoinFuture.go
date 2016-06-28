@@ -56,6 +56,11 @@ func (ok *OKCoinFuture) buildPostForm(postForm *url.Values) error {
 	return nil;
 }
 
+
+func (ok *OKCoinFuture) GetExchangeName() string {
+	return "okcoin_com"
+}
+
 func (ok *OKCoinFuture) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
 	url := FUTURE_API_BASE_URL + FUTURE_TICKER_URI
 	//fmt.Println(fmt.Sprintf(url, CurrencyPairSymbol[currencyPair], contractType));
