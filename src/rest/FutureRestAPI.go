@@ -7,6 +7,11 @@ type FutureRestAPI interface {
 	GetExchangeName() string
 
 	/**
+	 *获取交割预估价
+	 */
+	GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64 , error)
+
+	/**
 	 * 期货行情
 	 * @param currency_pair   btc_usd:比特币    ltc_usd :莱特币
 	 * @param contractType  合约类型: this_week:当周   next_week:下周   month:当月   quarter:季度

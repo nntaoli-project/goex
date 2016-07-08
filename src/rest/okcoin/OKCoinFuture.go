@@ -22,6 +22,7 @@ const (
 	FUTURE_ORDERS_INFO_URI = "future_orders_info.do"
 	FUTURE_POSITION_URI    = "future_position.do"
 	FUTURE_TRADE_URI       = "future_trade.do"
+	FUTURE_ESTIMATED_PRICE = "future_estimated_price.do?symbol=%s"
 )
 
 type OKCoinFuture struct {
@@ -59,6 +60,31 @@ func (ok *OKCoinFuture) buildPostForm(postForm *url.Values) error {
 
 func (ok *OKCoinFuture) GetExchangeName() string {
 	return "okcoin_com"
+}
+
+func (ok *OKCoinFuture) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64,error) {
+	resp , err := ok.client.Get(fmt.Sprintf(FUTURE_API_BASE_URL+FUTURE_ESTIMATED_PRICE , CurrencyPairSymbol[currencyPair]))
+	if err != nil {
+		return 0 , err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return 0, err
+	}
+
+	bodyMap := make(map[string]interface{})
+
+	err = json.Unmarshal(body, &bodyMap)
+	if err != nil {
+		return 0, err
+	}
+
+	//println(string(body))
+	return bodyMap["forecast_price"].(float64) , nil
 }
 
 func (ok *OKCoinFuture) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
