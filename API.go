@@ -1,4 +1,4 @@
-package rest
+package coinapi
 
 // api interface
 

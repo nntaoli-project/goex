@@ -1,7 +1,7 @@
 package huobi
 
 import (
-	. "rest"
+	. "../"
 	"io/ioutil"
 	"errors"
 	"encoding/json"

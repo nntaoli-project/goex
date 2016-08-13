@@ -2,8 +2,8 @@ package unit
 
 import (
 	"testing"
-	"rest/huobi"
-	. "rest"
+	"../huobi"
+	. "../"
 	"net/http"
 )
 

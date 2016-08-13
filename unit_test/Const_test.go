@@ -1,7 +1,7 @@
 package unit
 
 import (
-	. "rest"
+	. "../"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

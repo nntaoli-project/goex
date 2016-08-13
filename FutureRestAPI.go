@@ -1,4 +1,4 @@
-package rest
+package coinapi
 
 type FutureRestAPI interface {
 	/**

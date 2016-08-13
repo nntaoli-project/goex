@@ -1,4 +1,4 @@
-package rest
+package coinapi
 
 import (
 	"crypto/md5"

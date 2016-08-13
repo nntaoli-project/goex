@@ -3,21 +3,21 @@ package unit
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
-	"rest/okcoin"
+	"../okcoin"
 	"net/http"
-	"rest"
+	. "../"
 )
 
 func Test_OKCoin_Future_GetTicker(t *testing.T) {
 	api := okcoin.NewFuture(http.DefaultClient, "", "");
-	ticker, err := api.GetFutureTicker(rest.BTC_USD, "this_week");
+	ticker, err := api.GetFutureTicker(BTC_USD, "this_week");
 	assert.NoError(t, err);
 	t.Log(ticker)
 }
 
 func Test_OKCoin_Future_GetDepth(t *testing.T) {
 	api := okcoin.NewFuture(http.DefaultClient, "", "");
-	depth, err := api.GetFutureDepth(rest.BTC_USD, "this_week");
+	depth, err := api.GetFutureDepth(BTC_USD, "this_week");
 	assert.NoError(t, err);
 	t.Log(depth)
 }
@@ -31,7 +31,7 @@ func Test_OKCoin_Future_GetUserInfo(t *testing.T)  {
 
 func Test_OKCoin_Future_GetFuturePosition(t *testing.T)  {
 	api := okcoin.NewFuture(http.DefaultClient,"", "");
-	pos , err := api.GetFuturePosition(rest.LTC_USD , "this_week");
+	pos , err := api.GetFuturePosition(LTC_USD , "this_week");
 	assert.NoError(t , err);
 	t.Log(pos);
 }
@@ -39,7 +39,7 @@ func Test_OKCoin_Future_GetFuturePosition(t *testing.T)  {
 
 func Test_OKCoin_Future_CancelOrder(t *testing.T)  {
 	api := okcoin.NewFuture(http.DefaultClient, "", "");
-	pos , err := api.FutureCancelOrder(rest.LTC_USD , "this_week" , "1991174604");
+	pos , err := api.FutureCancelOrder(LTC_USD , "this_week" , "1991174604");
 	assert.NoError(t , err);
 	t.Log(pos);
 }
@@ -47,21 +47,21 @@ func Test_OKCoin_Future_CancelOrder(t *testing.T)  {
 
 func Test_OKCoin_Future_PlaceOrder(t *testing.T)  {
 	api := okcoin.NewFuture(http.DefaultClient,"", "");
-	pos , err := api.PlaceFutureOrder(rest.LTC_USD , "this_week" , "5" , "1" , rest.OPEN_BUY , 0 , 10);
+	pos , err := api.PlaceFutureOrder(LTC_USD , "this_week" , "5" , "1" , OPEN_BUY , 0 , 10);
 	assert.NoError(t , err);
 	t.Log(pos);
 }
 
 func Test_OKCoin_Future_GetOrder(t *testing.T)  {
 	api := okcoin.NewFuture(http.DefaultClient,"", "");
-	order , err := api.GetFutureOrders(2027122589 , rest.LTC_USD , "this_week");
+	order , err := api.GetFutureOrders(2027122589 , LTC_USD , "this_week");
 	assert.NoError(t , err);
 	t.Log(order);
 }
 
 func Test_OKCoin_Future_GetUnfinishOrder(t *testing.T)  {
 	api := okcoin.NewFuture(http.DefaultClient,  "", "");
-	order , err := api.GetUnfinishFutureOrders(rest.LTC_USD , "this_week");
+	order , err := api.GetUnfinishFutureOrders(LTC_USD , "this_week");
 	assert.NoError(t , err);
 	t.Log(order);
 }

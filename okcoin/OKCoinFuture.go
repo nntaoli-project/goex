@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	. "rest"
+	. "../"
 	"strconv"
 	"net/url"
 	"strings"

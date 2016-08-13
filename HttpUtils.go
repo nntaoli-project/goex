@@ -1,4 +1,4 @@
-package rest
+package coinapi
 //http request 工具函数
 import (
 	"net/http"

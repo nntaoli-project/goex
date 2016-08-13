@@ -1,7 +1,7 @@
 package haobtc
 
 import (
-	. "rest"
+	. "../"
 	"net/http"
 	"errors"
 	"fmt"

@@ -2,7 +2,7 @@ package okcoin
 
 import
 (
-	. "rest"
+	. "../"
 	"strconv"
 	"errors"
 	"net/http"
