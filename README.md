@@ -2,11 +2,10 @@
 (the crypto_coin_api is crypto coin trade api wrap)   
 -----------------
 
-<<<<<<< HEAD
-=======
 ### 教程
-> go get github.com/nntaoli/crypto_coin_api
+* 第一步安装api库:  
+> go get github.com/nntaoli/crypto_coin_api 
+* 第二步`import`
 
->>>>>>> dev
 ### unit test
 切换到`unit_test`目录,执行`go test`
