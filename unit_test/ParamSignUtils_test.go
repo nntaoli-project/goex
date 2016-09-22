@@ -24,5 +24,9 @@ func Test_appendParamSign(t *testing.T) {
 	assert.Equal(t, hmacSha512Sign,
 		"46b7c47269ead767a7ce2d4b385cba52f0450e2ea6ffb68c11ce620453a7a3ab62e36082775c94bd6859fccba1f9819a83cc94dbfb416c7c8c510882463ce3a2",
 		"hmac sha512 sign fail");
+
+	secretSHA, _ := GetSHA(secret);
+	hmacMD5Sign, _ := GetParamHmacMD5Sign(secretSHA, params);
+	assert.Equal(t, "f60000cefb83b9848464666e82311306", hmacMD5Sign)
 }
 
