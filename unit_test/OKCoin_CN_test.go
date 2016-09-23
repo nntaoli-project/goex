@@ -21,7 +21,7 @@ func Test_OKCoin_CN(t *testing.T) {
 
 	depth, err := api.GetDepth(3, LTC_CNY);
 	assert.True(t, err == nil);
-	t.Log("bids:", depth.AskList);
+	t.Log("bids:", depth.BidList);
 	t.Log("asks:", depth.AskList);
 }
 
