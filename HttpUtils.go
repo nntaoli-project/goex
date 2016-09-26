@@ -48,16 +48,19 @@ func HttpPost(url string) (map[string]interface{}, error) {
 }
 
 func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) ([]byte, error) {
-	headers := map[string]string{
-		"Content-Type" : "application/x-www-form-urlencoded",
-		"User-Agent" : "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36"};
+	headers := map[string]string{};
 	return HttpPostForm2(client, reqUrl, postData, headers);
 }
 
 func HttpPostForm2(client *http.Client, reqUrl string, postData url.Values, requstHeaders map[string]string) ([]byte, error) {
 	req, _ := http.NewRequest("POST", reqUrl, strings.NewReader(postData.Encode()));
-	for k, v := range requstHeaders {
-		req.Header.Add(k, v);
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded");
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36");
+	if requstHeaders != nil {
+		for k, v := range requstHeaders {
+			req.Header.Add(k, v);
+		}
 	}
 
 	resp, err := client.Do(req);
