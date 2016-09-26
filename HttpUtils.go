@@ -28,7 +28,7 @@ func HttpGet(url string) (map[string]interface{}, error) {
 }
 
 func HttpPost(url string) (map[string]interface{}, error) {
-	resp, err := http.Post(url, "application/x-www-form-urlencoded", 
+	resp, err := http.Post(url, "application/x-www-form-urlencoded",
 		strings.NewReader("name=cjb"));
 	if err != nil {
 		return nil, err;
@@ -47,10 +47,18 @@ func HttpPost(url string) (map[string]interface{}, error) {
 	return bodyDataMap, nil;
 }
 
-func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) ([]byte , error) {
+func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) ([]byte, error) {
+	headers := map[string]string{
+		"Content-Type" : "application/x-www-form-urlencoded",
+		"User-Agent" : "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36"};
+	return HttpPostForm2(client, reqUrl, postData, headers);
+}
+
+func HttpPostForm2(client *http.Client, reqUrl string, postData url.Values, requstHeaders map[string]string) ([]byte, error) {
 	req, _ := http.NewRequest("POST", reqUrl, strings.NewReader(postData.Encode()));
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36");
+	for k, v := range requstHeaders {
+		req.Header.Add(k, v);
+	}
 
 	resp, err := client.Do(req);
 	if err != nil {
@@ -71,5 +79,5 @@ func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) ([]by
 	//	return nil, err;
 	//}
 
-	return bodyData , nil;
+	return bodyData, nil;
 }
