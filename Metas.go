@@ -29,13 +29,13 @@ type Account struct {
 }
 
 type Ticker struct {
-	Last float64;
-	Buy  float64;
-	Sell float64;
-	High float64;
-	Low  float64;
-	Vol  float64;
-	Date uint64;
+	Last float64 `json:"last"`;
+	Buy  float64 `json:"buy"`;
+	Sell float64 `json:"sell"`;
+	High float64 `json:"high"`;
+	Low  float64 `json:"low"`;
+	Vol  float64 `json:"vol"`;
+	Date uint64 `json:"date"`;
 }
 
 type DepthRecord struct {
@@ -55,13 +55,13 @@ type APIConfig struct {
 	SecretKey  string;
 }
 
-type Kline struct  {
+type Kline struct {
 	Timestamp int64;
 	Open,
 	Close,
 	High,
-	Low ,
-	Vol float64;
+	Low,
+	Vol       float64;
 }
 
 type FutureSubAccount struct {
@@ -78,17 +78,17 @@ type FutureAccount struct {
 }
 
 type FutureOrder struct {
-	Price      float64;
-	Amount     float64;
-	AvgPrice   float64;
-	DealAmount float64;
-	OrderID    int64;
-	OrderTime  int64;
-	Status     TradeStatus;
-	Currency   CurrencyPair;
-	OType      int;//1：开多 2：开空 3：平多 4： 平空
-	LeverRate  int;     //倍数
-	Fee        float64; //手续费
+	Price        float64;
+	Amount       float64;
+	AvgPrice     float64;
+	DealAmount   float64;
+	OrderID      int64;
+	OrderTime    int64;
+	Status       TradeStatus;
+	Currency     CurrencyPair;
+	OType        int;     //1：开多 2：开空 3：平多 4： 平空
+	LeverRate    int;     //倍数
+	Fee          float64; //手续费
 	ContractName string;
 }
 
@@ -108,5 +108,5 @@ type FuturePosition struct {
 	Symbol         CurrencyPair; //btc_usd:比特币,ltc_usd:莱特币
 	ContractType   string;
 	ContractId     int64;
-	ForceLiquPrice float64; //预估爆仓价
+	ForceLiquPrice float64;      //预估爆仓价
 }
