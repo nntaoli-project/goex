@@ -34,6 +34,9 @@ const
 	ETC_CNY
 	ETC_USD
 	ETC_BTC
+
+	XCN_BTC
+	SYS_BTC
 )
 
 const
