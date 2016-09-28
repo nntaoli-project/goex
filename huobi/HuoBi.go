@@ -1,7 +1,7 @@
 package huobi
 
 import (
-	. "../"
+	. "github.com/nntaoli/crypto_coin_api"
 	"io/ioutil"
 	"errors"
 	"encoding/json"
@@ -473,4 +473,8 @@ func (hb *HuoBi) GetKlineRecords(currency CurrencyPair ,period string, size , si
 	}
 
 	return klineRecords , nil
+}
+
+func (hb *HuoBi)GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+	return nil, nil
 }

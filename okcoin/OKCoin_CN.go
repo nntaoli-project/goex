@@ -2,7 +2,7 @@ package okcoin
 
 import
 (
-	. "../"
+	. "github.com/nntaoli/crypto_coin_api"
 	"strconv"
 	"errors"
 	"net/http"
