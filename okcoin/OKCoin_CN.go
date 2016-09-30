@@ -20,7 +20,7 @@ const
 	url_ticker = "https://www.okcoin.cn/api/v1/ticker.do";
 	url_depth = "https://www.okcoin.cn/api/v1/depth.do";
 	url_trades = "https://www.okcoin.cn/api/v1/trades.do";
-	url_kline = "https://www.okcoin.cn/api/v1/kline.do?symbol=%s&type=%s&size=%d&since=%s";
+	url_kline = "https://www.okcoin.cn/api/v1/kline.do?symbol=%s&type=%s&size=%d&since=%d";
 
 	url_userinfo = "https://www.okcoin.cn/api/v1/userinfo.do";
 	url_trade = "https://www.okcoin.cn/api/v1/trade.do";
@@ -275,7 +275,7 @@ func (ctx * OKCoinCN_API) GetAccount() (*Account, error){
 	asset := funds["asset"].(map[string]interface{});
 	free := funds["free"].(map[string]interface{});
 	freezed := funds["freezed"].(map[string]interface{});
-	
+
 	account := new(Account);
 	account.Exchange = ctx.GetExchangeName();
 	account.Asset, _ = strconv.ParseFloat(asset["total"].(string), 64);
@@ -311,7 +311,7 @@ func (ctx * OKCoinCN_API) GetAccount() (*Account, error){
 func (ctx * OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error){
 	var tickerMap map[string]interface{};
 	var ticker Ticker;
-	
+
 	url := url_ticker + "?symbol=" + currencyPair2String(currency);
 	bodyDataMap, err := HttpGet(url);
 	if err != nil{
@@ -332,7 +332,7 @@ func (ctx * OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error){
 
 func (ctx * OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, error){
 	var depth Depth;
-	
+
 	url := url_depth + "?symbol=" + currencyPair2String(currency) + "&size=" + strconv.Itoa(size);
 	bodyDataMap, err := HttpGet(url);
 	if err != nil {
