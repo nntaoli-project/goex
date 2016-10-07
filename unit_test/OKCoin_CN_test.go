@@ -1,10 +1,10 @@
 package unit
 
 import (
-	. "../"
+	. "github.com/nntaoli/crypto_coin_api"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"../okcoin"
+	"github.com/nntaoli/crypto_coin_api/okcoin"
 	"net/http"
 )
 
