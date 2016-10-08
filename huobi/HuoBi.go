@@ -470,6 +470,11 @@ func (hb *HuoBi) GetKlineRecords(currency CurrencyPair ,period string, size , si
 				r.Vol = e.(float64);
 			}
 		}
+
+		if r.Timestamp < int64(since/1000) {
+			continue;
+		}
+
 		klineRecords = append(klineRecords , r);
 	}
 
