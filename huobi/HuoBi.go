@@ -445,6 +445,7 @@ func (hb *HuoBi) GetKlineRecords(currency CurrencyPair ,period string, size , si
 		return nil , err;
 	}
 
+	loc , _ := time.LoadLocation("Local");//获取本地时区
 	var klineRecords []Kline;
 
 	for _ , record := range klines  {
@@ -454,7 +455,7 @@ func (hb *HuoBi) GetKlineRecords(currency CurrencyPair ,period string, size , si
 			case 0:
 				d := e.(string);
 				if len(d) >= 12 {
-					t, _ := time.Parse("200601021504", d[0:12]);
+					t, _ := time.ParseInLocation("200601021504", d[0:12] , loc);
 					r.Timestamp = t.Unix();
 				}
 			case 1:
