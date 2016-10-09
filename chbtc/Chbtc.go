@@ -119,7 +119,7 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 	params := url.Values{};
 	params.Set("method", "getAccountInfo");
 	chbtc.buildPostForm(&params);
-	log.Println(params.Encode())
+	//log.Println(params.Encode())
 	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL + GET_ACCOUNT_API, params);
 	if err != nil {
 		return nil, err;
@@ -139,6 +139,7 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 	resultmap := respmap["result"].(map[string]interface{});
 	balancemap := resultmap["balance"].(map[string]interface{});
 	frozenmap := resultmap["frozen"].(map[string]interface{});
+	p2pmap := resultmap["p2p"].(map[string]interface{});
 
 	for t, v := range balancemap {
 		vv := v.(map[string]interface{});
@@ -150,22 +151,27 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 			subAcc.Currency = CNY;
 			cnyfrozen := frozenmap["CNY"].(map[string]interface{});
 			subAcc.ForzenAmount = cnyfrozen["amount"].(float64);
+			subAcc.LoanAmount = p2pmap["inCNY"].(float64);
 		case "BTC":
 			subAcc.Currency = BTC;
 			btcfrozen := frozenmap["BTC"].(map[string]interface{});
 			subAcc.ForzenAmount = btcfrozen["amount"].(float64);
+			subAcc.LoanAmount = p2pmap["inBTC"].(float64);
 		case "LTC":
 			subAcc.Currency = LTC;
 			ltcfrozen := frozenmap["LTC"].(map[string]interface{});
 			subAcc.ForzenAmount = ltcfrozen["amount"].(float64);
+			subAcc.LoanAmount = p2pmap["inLTC"].(float64);
 		case "ETH":
 			subAcc.Currency = ETH;
 			ethfrozen := frozenmap["ETH"].(map[string]interface{});
 			subAcc.ForzenAmount = ethfrozen["amount"].(float64);
+			subAcc.LoanAmount = p2pmap["inETH"].(float64);
 		case "ETC":
 			subAcc.Currency = ETC;
 			etcfrozen := frozenmap["ETC"].(map[string]interface{});
 			subAcc.ForzenAmount = etcfrozen["amount"].(float64);
+			subAcc.LoanAmount = p2pmap["inETC"].(float64);
 		default:
 			log.Println("unknown ", t);
 
@@ -173,8 +179,8 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 		acc.SubAccounts[subAcc.Currency] = subAcc;
 	}
 
-	log.Println(string(resp))
-	log.Println(acc)
+	//log.Println(string(resp))
+	//log.Println(acc)
 
 	return acc, nil;
 }
