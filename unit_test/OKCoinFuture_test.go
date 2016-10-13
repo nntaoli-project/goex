@@ -17,7 +17,7 @@ func Test_OKCoin_Future_GetTicker(t *testing.T) {
 
 func Test_OKCoin_Future_GetDepth(t *testing.T) {
 	api := okcoin.NewFuture(http.DefaultClient, "", "");
-	depth, err := api.GetFutureDepth(BTC_USD, "this_week");
+	depth, err := api.GetFutureDepth(BTC_USD, "this_week" , 2);
 	assert.NoError(t, err);
 	t.Log(depth)
 }
