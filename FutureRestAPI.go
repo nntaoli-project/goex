@@ -22,9 +22,10 @@ type FutureRestAPI interface {
 	 * 期货深度
 	 * @param currencyPair  btc_usd:比特币    ltc_usd :莱特币
 	 * @param contractType  合约类型: this_week:当周   next_week:下周   month:当月   quarter:季度
+	 * @param size 获取深度档数
 	 * @return
 	 */
-	GetFutureDepth(currencyPair CurrencyPair, contractType string) (*Depth, error)
+	GetFutureDepth(currencyPair CurrencyPair, contractType string , size int) (*Depth, error)
 
 	/**
 	 * 期货指数
