@@ -140,6 +140,11 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 	balancemap := resultmap["balance"].(map[string]interface{});
 	frozenmap := resultmap["frozen"].(map[string]interface{});
 	p2pmap := resultmap["p2p"].(map[string]interface{});
+	netAssets := resultmap["netAssets"].(float64);
+	asset := resultmap["totalAssets"].(float64);
+
+	acc.NetAsset = netAssets;
+	acc.Asset = asset;
 
 	for t, v := range balancemap {
 		vv := v.(map[string]interface{});
