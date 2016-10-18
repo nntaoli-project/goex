@@ -75,3 +75,11 @@ var CurrencyPairSymbol = map[CurrencyPair]string{
 	ETC_CNY : "etc_cny",
 	ETC_USD : "etc_usd",
 	ETC_BTC : "etc_btc"};
+
+var
+(
+	THIS_WEEK_CONTRACT = "this_week";//周合约
+	NEXT_WEEK_CONTRACT = "next_week";//次周合约
+	QUARTER_CONTRACT = "quarter";//季度合约
+)
+
