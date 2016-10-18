@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"time"
 	"strings"
+	"log"
 )
 
 const
@@ -123,8 +124,13 @@ func (hb *HuoBi) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	bodyDataMap, err := httpGet(depthUri, hb.httpClient);
 
-	if err != nil {
+	if err != nil{
 		return nil, err;
+	}
+
+	if bodyDataMap["code"] != nil {
+		log.Println(bodyDataMap);
+		return nil, errors.New(fmt.Sprintf("%s" ,bodyDataMap));
 	}
 
 	var depth Depth;
@@ -170,7 +176,7 @@ func (hb *HuoBi) GetAccount() (*Account, error) {
 	postData.Del("secret_key");
 
 	bodyData, err := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
-	if err != nil {
+	if err != nil{
 		return nil, err;
 	}
 
@@ -181,7 +187,9 @@ func (hb *HuoBi) GetAccount() (*Account, error) {
 		return nil, err;
 	}
 
-	//fmt.Println(bodyDataMap);
+	if bodyDataMap["code"] != nil {
+		return nil, errors.New(fmt.Sprintf("%s" , bodyDataMap));
+	}
 
 	account := new(Account);
 	account.Exchange = hb.GetExchangeName();
@@ -229,13 +237,21 @@ func (hb *HuoBi) GetOneOrder(orderId string, currency CurrencyPair) (*Order, err
 
 	hb.buildPostForm(&postData);
 
-	bodyData, _ := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
+	bodyData, err := HttpPostForm(hb.httpClient, TRADE_API_V3, postData);
+	if err != nil {
+		log.Println(err);
+		return nil , err;
+	}
 
 	var bodyDataMap map[string]interface{};
-	err := json.Unmarshal(bodyData, &bodyDataMap);
+	err = json.Unmarshal(bodyData, &bodyDataMap);
 	if err != nil {
 		println(string(bodyData));
 		return nil, err;
+	}
+
+	if bodyDataMap["code"] != nil {
+		return nil , errors.New(string(bodyData));
 	}
 
 	//fmt.Println(bodyDataMap);
@@ -280,6 +296,9 @@ func (hb *HuoBi) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 		return nil, err;
 	}
 
+	if strings.Contains(string(bodyData) , "code") {
+		return nil, errors.New(string(bodyData));
+	}
 	//println(string(bodyData))
 
 	var bodyDataMap []map[string]interface{};
@@ -399,7 +418,7 @@ func (hb *HuoBi) CancelOrder(orderId string, currency CurrencyPair) (bool, error
 
 	//{"result":"success"}
 	//{"code":42,"msg":"该委托已经取消, 不能取消或修改","message":"该委托已经取消, 不能取消或修改"}
-	println(string(bodyData))
+	//println(string(bodyData))
 
 	var bodyDataMap map[string]interface{};
 	err = json.Unmarshal(bodyData, &bodyDataMap);
