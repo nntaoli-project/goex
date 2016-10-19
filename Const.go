@@ -2,11 +2,21 @@ package coinapi
 
 type CurrencyPair int;
 
+func (c CurrencyPair) String() string {
+	return currencyPairSymbol[c - 1];
+}
+
 type Currency int;
+
+func (c Currency) String() string {
+	return currencySymbol[c - 1];
+}
 
 type TradeSide int;
 
 type TradeStatus int;
+
+var currencySymbol = [...]string{"cny" , "usd" , "btc" , "ltc" , "eth" , "etc"};
 
 const
 (
@@ -18,11 +28,13 @@ const
 	ETC
 )
 
+var currencyPairSymbol = [...]string{"btc_cny", "btc_usd", "ltc_cny", "ltc_usd", "eth_cny",
+	"eth_usd", "eth_btc", "etc_cny", "etc_usd", "etc_btc", "xcn_btc", "sys_btc"};
+
 const
 (
 	BTC_CNY = 1 + iota
 	BTC_USD
-	BTC_LTC
 
 	LTC_CNY
 	LTC_USD
@@ -66,7 +78,6 @@ const
 var CurrencyPairSymbol = map[CurrencyPair]string{
 	BTC_CNY : "btc_cny",
 	BTC_USD : "btc_usd",
-	BTC_LTC : "btc_ltc",
 	LTC_CNY : "ltc_cny",
 	LTC_USD : "ltc_usd",
 	ETH_CNY : "eth_cny",
