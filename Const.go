@@ -14,7 +14,22 @@ func (c Currency) String() string {
 
 type TradeSide int;
 
+func (ts TradeSide)String() string {
+	switch ts {
+	case 1:
+		return "BUY";
+	case 2:
+		return "SELL";
+	default:
+		return "UNKNOWN";
+	}
+}
+
 type TradeStatus int;
+
+func (ts TradeStatus) String() string  {
+	return orderStatusSymbol[ts];
+}
 
 var currencySymbol = [...]string{"cny" , "usd" , "btc" , "ltc" , "eth" , "etc"};
 
@@ -56,6 +71,8 @@ const
 	BUY = 1 + iota
 	SELL
 )
+
+var orderStatusSymbol = [...]string{"UNFINISH" , "PART_FINISH" , "FINISH" , "CANCEL" , "REJECT" , "CANCEL_ING"}
 
 const
 (
