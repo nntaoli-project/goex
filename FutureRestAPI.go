@@ -75,4 +75,24 @@ type FutureRestAPI interface {
 	 *获取未完成订单信息
 	 */
 	GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType string) ([]FutureOrder, error)
+
+	/**
+	 *获取交易费
+	 */
+	GetFee() (float64, error);
+
+	/**
+	 *获取交易所的美元人民币汇率
+	 */
+	GetExchangeRate() (float64, error);
+
+	/**
+	 *获取每张合约价值
+	 */
+	GetContractValue(currencyPair CurrencyPair) (float64, error);
+
+	/**
+	 *获取交割时间 星期(0,1,2,3,4,5,6)，小时，分，秒
+	 */
+	GetDeliveryTime() (int, int, int, int);
 }
