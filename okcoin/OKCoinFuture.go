@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 	"errors"
+	"log"
 )
 
 const (
@@ -23,6 +24,7 @@ const (
 	FUTURE_POSITION_URI    = "future_position.do"
 	FUTURE_TRADE_URI       = "future_trade.do"
 	FUTURE_ESTIMATED_PRICE = "future_estimated_price.do?symbol=%s"
+	_EXCHANGE_RATE_URI     = "exchange_rate.do"
 )
 
 type OKCoinFuture struct {
@@ -150,6 +152,11 @@ func (ok *OKCoinFuture) GetFutureDepth(currencyPair CurrencyPair, contractType s
 	err = json.Unmarshal(body, &bodyMap)
 	if err != nil {
 		return nil, err
+	}
+
+	if bodyMap["error_code"] != nil{
+		log.Println(bodyMap)
+		return nil , errors.New(string(body))
 	}
 
 	depth := new(Depth)
@@ -324,11 +331,13 @@ func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractTyp
 		return nil , errors.New(string(body));
 	}
 
-	println(string(body))
+	//println(string(body))
 
 	var posAr []FuturePosition;
 
-	forceLiquPrice , _ := strconv.ParseFloat(respMap["force_liqu_price"].(string) , 64);
+	forceLiquPriceStr := respMap["force_liqu_price"].(string)
+	forceLiquPriceStr = strings.Replace(forceLiquPriceStr , "," , "" , 1)
+	forceLiquPrice , err := strconv.ParseFloat(forceLiquPriceStr , 64);
 
 	holdings := respMap["holding"].([]interface{});
 	for _ , v := range holdings  {
@@ -444,4 +453,39 @@ func (ok *OKCoinFuture) GetUnfinishFutureOrders(currencyPair CurrencyPair, contr
 	println(string(body))
 
 	return ok.parseOrders(body , currencyPair);
+}
+
+func (ok *OKCoinFuture) GetFee() (float64, error) {
+	return 0.03 , nil; //期货固定0.03%手续费
+}
+
+func (ok *OKCoinFuture) GetExchangeRate() (float64, error) {
+	respMap, err := HttpGet(FUTURE_API_BASE_URL + _EXCHANGE_RATE_URI);
+
+	if err != nil {
+		log.Println(respMap);
+		return -1, err
+	}
+
+	if respMap["rate"] == nil {
+		log.Println(respMap);
+		return -1 , errors.New("error");
+	}
+
+	return respMap["rate"].(float64), nil
+}
+
+func (ok *OKCoinFuture) GetContractValue(currencyPair CurrencyPair) (float64, error) {
+	switch currencyPair {
+	case BTC_USD:
+		return 100, nil;
+	case LTC_USD:
+		return 10, nil;
+	}
+
+	return -1 , errors.New("error");
+}
+
+func (ok *OKCoinFuture) GetDeliveryTime() (int, int, int, int) {
+	return 4 , 16 , 0 , 0; //星期五，下午4点交割
 }
