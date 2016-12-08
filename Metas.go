@@ -6,12 +6,13 @@ type Order struct {
 	Price,
 	Amount,
 	AvgPrice,
-	DealAmount float64;
-	OrderID    int;
-	OrderTime  int;
-	Status     TradeStatus;
-	Currency   CurrencyPair;
-	Side       TradeSide;
+	DealAmount,
+	Fee       float64;
+	OrderID   int;
+	OrderTime int;
+	Status    TradeStatus;
+	Currency  CurrencyPair;
+	Side      TradeSide;
 }
 
 type SubAccount struct {

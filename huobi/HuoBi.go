@@ -256,6 +256,7 @@ func (hb *HuoBi) GetOneOrder(orderId string, currency CurrencyPair) (*Order, err
 
 	//fmt.Println(bodyDataMap);
 	order := new(Order);
+	order.Currency = currency
 	order.OrderID, _ = strconv.Atoi(orderId);
 	order.Side = TradeSide(bodyDataMap["type"].(float64));
 	order.Amount, _ = strconv.ParseFloat(bodyDataMap["order_amount"].(string), 64);
@@ -274,7 +275,7 @@ func (hb *HuoBi) GetOneOrder(orderId string, currency CurrencyPair) (*Order, err
 	case 3:
 		order.Status = ORDER_CANCEL;
 	}
-
+	//fmt.Println(order)
 	return order, nil;
 }
 
@@ -311,6 +312,7 @@ func (hb *HuoBi) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 
 	for _, v := range bodyDataMap {
 		order := Order{};
+		order.Currency = currency;
 		order.Amount, _ = strconv.ParseFloat(v["order_amount"].(string), 64);
 		order.Price, _ = strconv.ParseFloat(v["order_price"].(string), 64);
 		order.DealAmount, _ = strconv.ParseFloat(v["processed_amount"].(string), 64);
