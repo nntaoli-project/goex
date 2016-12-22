@@ -383,8 +383,109 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 	return acc, nil
 }
 
+func (p *Poloniex) Withdraw(amount string, currency Currency, fees, receiveAddr, safePwd string) (string, error) {
+	params := url.Values{}
+	params.Add("command", "withdraw")
+	params.Add("address", receiveAddr)
+	params.Add("amount", amount)
+	params.Add("currency", strings.ToUpper(currency.String()));
+
+	sign, err := p.buildPostForm(&params)
+	if err != nil {
+		return "", err
+	}
+
+	headers := map[string]string{
+		"Key":  p.accessKey,
+		"Sign": sign}
+
+	resp, err := HttpPostForm2(p.client, TRADE_API, params, headers)
+
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	println(string(resp))
+
+	respMap := make(map[string]interface{})
+
+	err = json.Unmarshal(resp, &respMap)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	if respMap["error"] == nil {
+		return string(resp), nil
+	}
+
+	return "", errors.New(string(resp))
+}
+
+type PoloniexDepositsWithdrawals struct {
+	Deposits    []struct {
+		Currency      string    `json:"currency"`
+		Address       string    `json:"address"`
+		Amount        float64   `json:"amount,string"`
+		Confirmations int       `json:"confirmations"`
+		TransactionID string    `json:"txid"`
+		Timestamp     time.Time `json:"timestamp"`
+		Status        string    `json:"status"`
+	} `json:"deposits"`
+	Withdrawals []struct {
+		WithdrawalNumber int64     `json:"withdrawalNumber"`
+		Currency         string    `json:"currency"`
+		Address          string    `json:"address"`
+		Amount           float64   `json:"amount,string"`
+		Confirmations    int       `json:"confirmations"`
+		TransactionID    string    `json:"txid"`
+		Timestamp        time.Time `json:"timestamp"`
+		Status           string    `json:"status"`
+		IPAddress        string    `json:"ipAddress"`
+	} `json:"withdrawals"`
+}
+
+func (poloniex *Poloniex) GetDepositsWithdrawals(start, end string) (*PoloniexDepositsWithdrawals, error) {
+	params := url.Values{}
+	params.Set("command", "returnDepositsWithdrawals")
+	println(start)
+	if start != "" {
+		params.Set("start", start)
+	} else {
+		params.Set("start", "0")
+	}
+
+	if end != "" {
+		params.Set("end", end)
+	} else {
+		params.Set("end", strconv.FormatInt(time.Now().Unix(), 10))
+	}
+
+	sign, err := poloniex.buildPostForm(&params)
+	if err != nil {
+		return nil, err
+	}
+
+	headers := map[string]string{
+		"Key":  poloniex.accessKey,
+		"Sign": sign}
+
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, params, headers)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	println(string(resp))
+
+	records := new(PoloniexDepositsWithdrawals)
+	err = json.Unmarshal(resp, records)
+
+	return records, err
+}
+
 func (poloniex *Poloniex) buildPostForm(postForm *url.Values) (string, error) {
-	postForm.Add("nonce", fmt.Sprintf("%d", time.Now().UnixNano()/1000000))
+	postForm.Add("nonce", fmt.Sprintf("%d", time.Now().UnixNano() / 1000000))
 	payload := postForm.Encode()
 	//println(payload)
 	sign, err := GetParamHmacSHA512Sign(poloniex.secretKey, payload)

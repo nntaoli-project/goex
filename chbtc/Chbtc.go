@@ -25,6 +25,8 @@ const
 	GET_UNFINISHED_ORDERS_API = "getUnfinishedOrdersIgnoreTradeType"
 	CANCEL_ORDER_API = "cancelOrder"
 	PLACE_ORDER_API = "order"
+	WITHDRAW_API = "withdraw"
+	CANCELWITHDRAW_API = "cancelWithdraw"
 )
 
 type Chbtc struct {
@@ -377,4 +379,62 @@ func (chbtc *Chbtc) GetOrderHistorys(currency CurrencyPair, currentPage, pageSiz
 
 func (chbtc *Chbtc) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
 	return nil, nil;
+}
+
+func (chbtc *Chbtc) Withdraw(amount string, currency Currency, fees, receiveAddr, safePwd string) (string, error) {
+	params := url.Values{};
+	params.Set("method", "withdraw");
+	params.Set("currency", strings.ToLower(currency.String()));
+	params.Set("amount", amount);
+	params.Set("fees", fees);
+	params.Set("receiveAddr", receiveAddr);
+	params.Set("safePwd", safePwd);
+	chbtc.buildPostForm(&params);
+
+	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL + WITHDRAW_API, params)
+	if err != nil {
+		log.Println("withdraw fail.", err)
+		return "", err
+	}
+
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
+	if err != nil {
+		log.Println(err, string(resp))
+		return "", err
+	}
+
+	if respMap["code"].(float64) == 1000 {
+		return respMap["id"].(string), nil;
+	}
+
+	return "", errors.New(string(resp))
+}
+
+func (chbtc *Chbtc) CancelWithdraw(id string, currency Currency, safePwd string) (bool, error) {
+	params := url.Values{};
+	params.Set("method", "cancelWithdraw");
+	params.Set("currency", strings.ToLower(currency.String()));
+	params.Set("downloadId", id);
+	params.Set("safePwd", safePwd);
+	chbtc.buildPostForm(&params);
+
+	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL + CANCELWITHDRAW_API, params)
+	if err != nil {
+		log.Println("cancel withdraw fail.", err)
+		return false, err
+	}
+
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
+	if err != nil {
+		log.Println(err, string(resp))
+		return false, err
+	}
+
+	if respMap["code"].(float64) == 1000 {
+		return true, nil;
+	}
+
+	return false, errors.New(string(resp))
 }
