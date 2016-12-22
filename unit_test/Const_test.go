@@ -9,7 +9,6 @@ import (
 func Test_Const(t *testing.T) {
 	assert.Equal(t, BTC_CNY, 1);
 	assert.Equal(t, BTC_USD, 2);
-	assert.Equal(t, BTC_LTC, 3);
 
 	var currency CurrencyPair;
 	currency = BTC_CNY;
