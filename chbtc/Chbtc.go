@@ -42,7 +42,7 @@ func (chbtc *Chbtc)GetExchangeName() string {
 }
 
 func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	resp, err := HttpGet(MARKET_URL + fmt.Sprintf(TICKER_API, CurrencyPairSymbol[currency]));
+	resp, err := HttpGet(chbtc.httpClient , MARKET_URL + fmt.Sprintf(TICKER_API, CurrencyPairSymbol[currency]));
 	if err != nil {
 		return nil, err;
 	}
@@ -62,7 +62,7 @@ func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	resp, err := HttpGet(MARKET_URL + fmt.Sprintf(DEPTH_API, CurrencyPairSymbol[currency]));
+	resp, err := HttpGet(chbtc.httpClient , MARKET_URL + fmt.Sprintf(DEPTH_API, CurrencyPairSymbol[currency]));
 	if err != nil {
 		return nil, err
 	}

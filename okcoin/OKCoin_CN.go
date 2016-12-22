@@ -313,7 +313,7 @@ func (ctx * OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error){
 	var ticker Ticker;
 
 	url := url_ticker + "?symbol=" + currencyPair2String(currency);
-	bodyDataMap, err := HttpGet(url);
+	bodyDataMap, err := HttpGet(ctx.client , url);
 	if err != nil{
 		return nil, err;
 	}
@@ -334,7 +334,7 @@ func (ctx * OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, err
 	var depth Depth;
 
 	url := url_depth + "?symbol=" + currencyPair2String(currency) + "&size=" + strconv.Itoa(size);
-	bodyDataMap, err := HttpGet(url);
+	bodyDataMap, err := HttpGet(ctx.client,url);
 	if err != nil {
 		return nil, err;
 	}

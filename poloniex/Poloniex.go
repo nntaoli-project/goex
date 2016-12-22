@@ -45,7 +45,7 @@ func (poloniex *Poloniex) GetExchangeName() string {
 }
 
 func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	respmap, err := HttpGet2(poloniex.client, PUBLIC_URL + TICKER_API)
+	respmap, err := HttpGet(poloniex.client, PUBLIC_URL + TICKER_API)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -66,7 +66,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	return ticker, nil
 }
 func (poloniex *Poloniex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	respmap, err := HttpGet2(poloniex.client ,  PUBLIC_URL + fmt.Sprintf(ORDER_BOOK_API, _CURRENCYPAIR_TO_SYMBOL[currency], size))
+	respmap, err := HttpGet(poloniex.client ,  PUBLIC_URL + fmt.Sprintf(ORDER_BOOK_API, _CURRENCYPAIR_TO_SYMBOL[currency], size))
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -119,7 +119,7 @@ func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currenc
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
 
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API, "POST" , postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API , postData, headers)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -174,7 +174,7 @@ func (poloniex *Poloniex) CancelOrder(orderId string, currency CurrencyPair) (bo
 	headers := map[string]string{
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API, "POST" , postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API , postData, headers)
 	if err != nil {
 		log.Println(err)
 		return false, err
@@ -209,7 +209,7 @@ func (poloniex *Poloniex) GetOneOrder(orderId string, currency CurrencyPair) (*O
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
 
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API, "POST" , postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, postData, headers)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -281,7 +281,7 @@ func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 	headers := map[string]string{
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API, "POST" , postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API , postData, headers)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -333,7 +333,7 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 	headers := map[string]string{
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API, "POST", postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, postData, headers)
 
 	if err != nil {
 		log.Println(err)

@@ -34,26 +34,6 @@ func New(httpClient *http.Client, accessKey, secretKey string) *HuoBi {
 	return &HuoBi{httpClient, accessKey, secretKey};
 }
 
-func httpGet(uri string, client *http.Client) (map[string]interface{}, error) {
-	url := API_BASE_URL + uri;
-	//println(url);
-	resp, err := client.Get(url);
-	if err != nil {
-		return nil, err;
-	}
-
-	defer resp.Body.Close();
-
-	body, err := ioutil.ReadAll(resp.Body);
-	if err != nil {
-		return nil, err;
-	}
-	//println(string(body))
-	var bodyDataMap map[string]interface{};
-	json.Unmarshal(body, &bodyDataMap);
-	return bodyDataMap, nil;
-}
-
 func (hb *HuoBi) buildPostForm(postForm *url.Values) error {
 	postForm.Set("created", fmt.Sprintf("%d", time.Now().Unix()));
 	postForm.Set("access_key", hb.accessKey);
@@ -83,7 +63,7 @@ func (hb *HuoBi) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		return nil, errors.New("Unsupport The CurrencyPair");
 	}
 
-	bodyDataMap, err := httpGet(tickerUri, hb.httpClient);
+	bodyDataMap, err := HttpGet(hb.httpClient , tickerUri);
 
 	if err != nil {
 		return nil, err;
@@ -122,7 +102,7 @@ func (hb *HuoBi) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		return nil, errors.New("Unsupport The CurrencyPair");
 	}
 
-	bodyDataMap, err := httpGet(depthUri, hb.httpClient);
+	bodyDataMap, err := HttpGet(hb.httpClient , depthUri);
 
 	if err != nil{
 		return nil, err;
