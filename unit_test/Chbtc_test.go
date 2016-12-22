@@ -24,7 +24,7 @@ func Test_Chbtc_GetDepth(t *testing.T) {
 	chbtc := chbtc.New(http.DefaultClient, "", "")
 	depth, err := chbtc.GetDepth(1, coinapi.BTC_CNY)
 	assert.Empty(t, err)
-	t.Log(depth)
+	t.Log(depth.BidList[0].Amount , depth.BidList[0].Price)
 }
 
 func Test_Chbtc_GetAcoount(t *testing.T) {

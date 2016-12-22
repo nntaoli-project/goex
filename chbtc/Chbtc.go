@@ -69,21 +69,21 @@ func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		return nil, err
 	}
 
-	//log.Println(resp);
+	log.Println(resp);
 
 	asks := resp["asks"].([]interface{});
 	bids := resp["bids"].([]interface{});
 
-	log.Println(asks)
-	log.Println(bids)
+	//log.Println(asks)
+	//log.Println(bids)
 
 	depth := new(Depth)
 
 	for _, e := range bids {
 		var r DepthRecord;
 		ee := e.([]interface{});
-		r.Amount = ee[0].(float64);
-		r.Price = ee[1].(float64);
+		r.Amount = ee[1].(float64);
+		r.Price = ee[0].(float64);
 
 		depth.BidList = append(depth.BidList, r);
 	}
@@ -91,8 +91,8 @@ func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	for _, e := range asks {
 		var r DepthRecord;
 		ee := e.([]interface{});
-		r.Amount = ee[0].(float64);
-		r.Price = ee[1].(float64);
+		r.Amount = ee[1].(float64);
+		r.Price = ee[0].(float64);
 
 		depth.AskList = append(depth.AskList, r);
 	}
