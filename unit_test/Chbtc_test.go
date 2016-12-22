@@ -22,7 +22,7 @@ func Test_Chbtc_GetTicker(t *testing.T) {
 
 func Test_Chbtc_GetDepth(t *testing.T) {
 	chbtc := chbtc.New(http.DefaultClient, "", "")
-	depth, err := chbtc.GetDepth(10, coinapi.BTC_CNY)
+	depth, err := chbtc.GetDepth(1, coinapi.BTC_CNY)
 	assert.Empty(t, err)
 	t.Log(depth)
 }

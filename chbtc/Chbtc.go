@@ -17,7 +17,7 @@ const
 (
 	MARKET_URL = "http://api.chbtc.com/data/v1/"
 	TICKER_API = "ticker?currency=%s"
-	DEPTH_API = "depth?currency=%s"
+	DEPTH_API = "depth?currency=%s&size=%d"
 
 	TRADE_URL = "https://trade.chbtc.com/api/"
 	GET_ACCOUNT_API = "getAccountInfo"
@@ -64,12 +64,12 @@ func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	resp, err := HttpGet(chbtc.httpClient , MARKET_URL + fmt.Sprintf(DEPTH_API, CurrencyPairSymbol[currency]));
+	resp, err := HttpGet(chbtc.httpClient , MARKET_URL + fmt.Sprintf(DEPTH_API, CurrencyPairSymbol[currency], size));
 	if err != nil {
 		return nil, err
 	}
 
-	log.Println(resp);
+	//log.Println(resp);
 
 	asks := resp["asks"].([]interface{});
 	bids := resp["bids"].([]interface{});
