@@ -20,6 +20,10 @@ func (ts TradeSide)String() string {
 		return "BUY";
 	case 2:
 		return "SELL";
+	case 3:
+		return "BUY_MARKET";
+	case 4:
+		return "SELL_MARKET";
 	default:
 		return "UNKNOWN";
 	}
@@ -70,6 +74,8 @@ const
 (
 	BUY = 1 + iota
 	SELL
+	BUY_MARKET
+	SELL_MARKET
 )
 
 var orderStatusSymbol = [...]string{"UNFINISH" , "PART_FINISH" , "FINISH" , "CANCEL" , "REJECT" , "CANCEL_ING"}

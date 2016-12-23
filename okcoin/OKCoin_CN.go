@@ -71,8 +71,15 @@ func (ctx *OKCoinCN_API) buildPostForm(postForm *url.Values) error {
 func (ctx *OKCoinCN_API) placeOrder(side , amount , price string , currency CurrencyPair)(*Order ,error)  {
 	postData := url.Values{};
 	postData.Set("type" , side);
-	postData.Set("amount" , amount);
-	postData.Set("price" , price);
+
+	if side != "buy_market"{
+		postData.Set("amount" , amount);
+	}
+
+	if side != "sell_market"{
+		postData.Set("price" , price);
+	}
+
 	postData.Set("symbol" , currencyPair2String(currency));
 
 	err := ctx.buildPostForm(&postData);
@@ -128,6 +135,14 @@ func (ctx * OKCoinCN_API) LimitSell(amount, price string, currency CurrencyPair)
 	return ctx.placeOrder("sell" , amount ,price  ,currency);
 }
 
+func (ctx *OKCoinCN_API) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	return ctx.placeOrder("buy_market", amount, price, currency);
+}
+
+func (ctx *OKCoinCN_API) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return ctx.placeOrder("sell_market", amount, price, currency);
+}
+
 func (ctx * OKCoinCN_API) CancelOrder(orderId string, currency CurrencyPair) (bool, error){
 	postData := url.Values{};
 	postData.Set("order_id" , orderId);
@@ -164,7 +179,7 @@ func (ctx *OKCoinCN_API) getOrders(orderId string , currency CurrencyPair)([]Ord
 	ctx.buildPostForm(&postData);
 
 	body, err := HttpPostForm(ctx.client , url_order_info , postData);
-
+	//println(string(body))
 	if err != nil{
 		return nil, err;
 	}
@@ -216,6 +231,10 @@ func (ctx *OKCoinCN_API) getOrders(orderId string , currency CurrencyPair)([]Ord
 			order.Side = BUY;
 		case "sell":
 			order.Side = SELL;
+		case "buy_market":
+			order.Side = BUY_MARKET;
+		case "sell_market":
+			order.Side = SELL_MARKET;
 		}
 
 		orderAr = append(orderAr , order);

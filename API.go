@@ -5,6 +5,8 @@ package coinapi
 type API interface {
 	LimitBuy(amount, price string, currency CurrencyPair) (*Order, error);
 	LimitSell(amount, price string, currency CurrencyPair) (*Order, error);
+	MarketBuy(amount, price string, currency CurrencyPair) (*Order, error)
+	MarketSell(amount, price string, currency CurrencyPair) (*Order, error)
 	CancelOrder(orderId string, currency CurrencyPair) (bool, error);
 	GetOneOrder(orderId string, currency CurrencyPair) (*Order, error);
 	GetUnfinishOrders(currency CurrencyPair) ([]Order, error);
