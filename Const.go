@@ -31,11 +31,11 @@ func (ts TradeSide)String() string {
 
 type TradeStatus int;
 
-func (ts TradeStatus) String() string  {
+func (ts TradeStatus) String() string {
 	return orderStatusSymbol[ts];
 }
 
-var currencySymbol = [...]string{"cny" , "usd" , "btc" , "ltc" , "eth" , "etc"};
+var currencySymbol = [...]string{"cny", "usd", "btc", "ltc", "eth", "etc" , "zec" , "sc"};
 
 const
 (
@@ -45,10 +45,12 @@ const
 	LTC
 	ETH
 	ETC
+	ZEC
+	SC
 )
 
 var currencyPairSymbol = [...]string{"btc_cny", "btc_usd", "ltc_cny", "ltc_usd", "eth_cny",
-	"eth_usd", "eth_btc", "etc_cny", "etc_usd", "etc_btc", "xcn_btc", "sys_btc"};
+	"eth_usd", "eth_btc", "etc_cny", "etc_usd", "etc_btc", "xcn_btc", "sys_btc" , "zec_cny" , "zec_usd" , "zec_btc"};
 
 const
 (
@@ -68,6 +70,10 @@ const
 
 	XCN_BTC
 	SYS_BTC
+
+	ZEC_CNY
+	ZEC_USD
+	ZEC_BTC
 )
 
 const
@@ -78,7 +84,7 @@ const
 	SELL_MARKET
 )
 
-var orderStatusSymbol = [...]string{"UNFINISH" , "PART_FINISH" , "FINISH" , "CANCEL" , "REJECT" , "CANCEL_ING"}
+var orderStatusSymbol = [...]string{"UNFINISH", "PART_FINISH", "FINISH", "CANCEL", "REJECT", "CANCEL_ING"}
 
 const
 (
@@ -112,8 +118,8 @@ var CurrencyPairSymbol = map[CurrencyPair]string{
 
 var
 (
-	THIS_WEEK_CONTRACT = "this_week";//周合约
-	NEXT_WEEK_CONTRACT = "next_week";//次周合约
-	QUARTER_CONTRACT = "quarter";//季度合约
+	THIS_WEEK_CONTRACT = "this_week"; //周合约
+	NEXT_WEEK_CONTRACT = "next_week"; //次周合约
+	QUARTER_CONTRACT = "quarter"; //季度合约
 )
 
