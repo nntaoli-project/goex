@@ -17,7 +17,7 @@ const
 (
 	MARKET_URL = "http://api.chbtc.com/data/v1/"
 	TICKER_API = "ticker?currency=%s"
-	DEPTH_API = "depth?currency=%s"
+	DEPTH_API = "depth?currency=%s&size=%d"
 
 	TRADE_URL = "https://trade.chbtc.com/api/"
 	GET_ACCOUNT_API = "getAccountInfo"
@@ -25,6 +25,8 @@ const
 	GET_UNFINISHED_ORDERS_API = "getUnfinishedOrdersIgnoreTradeType"
 	CANCEL_ORDER_API = "cancelOrder"
 	PLACE_ORDER_API = "order"
+	WITHDRAW_API = "withdraw"
+	CANCELWITHDRAW_API = "cancelWithdraw"
 )
 
 type Chbtc struct {
@@ -42,7 +44,7 @@ func (chbtc *Chbtc)GetExchangeName() string {
 }
 
 func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	resp, err := HttpGet(MARKET_URL + fmt.Sprintf(TICKER_API, CurrencyPairSymbol[currency]));
+	resp, err := HttpGet(chbtc.httpClient , MARKET_URL + fmt.Sprintf(TICKER_API, CurrencyPairSymbol[currency]));
 	if err != nil {
 		return nil, err;
 	}
@@ -62,7 +64,7 @@ func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	resp, err := HttpGet(MARKET_URL + fmt.Sprintf(DEPTH_API, CurrencyPairSymbol[currency]));
+	resp, err := HttpGet(chbtc.httpClient , MARKET_URL + fmt.Sprintf(DEPTH_API, CurrencyPairSymbol[currency], size));
 	if err != nil {
 		return nil, err
 	}
@@ -72,16 +74,16 @@ func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	asks := resp["asks"].([]interface{});
 	bids := resp["bids"].([]interface{});
 
-	log.Println(asks)
-	log.Println(bids)
+	//log.Println(asks)
+	//log.Println(bids)
 
 	depth := new(Depth)
 
 	for _, e := range bids {
 		var r DepthRecord;
 		ee := e.([]interface{});
-		r.Amount = ee[0].(float64);
-		r.Price = ee[1].(float64);
+		r.Amount = ee[1].(float64);
+		r.Price = ee[0].(float64);
 
 		depth.BidList = append(depth.BidList, r);
 	}
@@ -89,8 +91,8 @@ func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	for _, e := range asks {
 		var r DepthRecord;
 		ee := e.([]interface{});
-		r.Amount = ee[0].(float64);
-		r.Price = ee[1].(float64);
+		r.Amount = ee[1].(float64);
+		r.Price = ee[0].(float64);
 
 		depth.AskList = append(depth.AskList, r);
 	}
@@ -377,4 +379,62 @@ func (chbtc *Chbtc) GetOrderHistorys(currency CurrencyPair, currentPage, pageSiz
 
 func (chbtc *Chbtc) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
 	return nil, nil;
+}
+
+func (chbtc *Chbtc) Withdraw(amount string, currency Currency, fees, receiveAddr, safePwd string) (string, error) {
+	params := url.Values{};
+	params.Set("method", "withdraw");
+	params.Set("currency", strings.ToLower(currency.String()));
+	params.Set("amount", amount);
+	params.Set("fees", fees);
+	params.Set("receiveAddr", receiveAddr);
+	params.Set("safePwd", safePwd);
+	chbtc.buildPostForm(&params);
+
+	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL + WITHDRAW_API, params)
+	if err != nil {
+		log.Println("withdraw fail.", err)
+		return "", err
+	}
+
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
+	if err != nil {
+		log.Println(err, string(resp))
+		return "", err
+	}
+
+	if respMap["code"].(float64) == 1000 {
+		return respMap["id"].(string), nil;
+	}
+
+	return "", errors.New(string(resp))
+}
+
+func (chbtc *Chbtc) CancelWithdraw(id string, currency Currency, safePwd string) (bool, error) {
+	params := url.Values{};
+	params.Set("method", "cancelWithdraw");
+	params.Set("currency", strings.ToLower(currency.String()));
+	params.Set("downloadId", id);
+	params.Set("safePwd", safePwd);
+	chbtc.buildPostForm(&params);
+
+	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL + CANCELWITHDRAW_API, params)
+	if err != nil {
+		log.Println("cancel withdraw fail.", err)
+		return false, err
+	}
+
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
+	if err != nil {
+		log.Println(err, string(resp))
+		return false, err
+	}
+
+	if respMap["code"].(float64) == 1000 {
+		return true, nil;
+	}
+
+	return false, errors.New(string(resp))
 }

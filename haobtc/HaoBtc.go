@@ -62,7 +62,7 @@ func (ctx *HaoBtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 
 	url := API_BASE_URL + TICKER_URI;
 
-	bodyDataMap, err := HttpGet(url);
+	bodyDataMap, err := HttpGet(ctx.httpClient, url);
 	if err != nil {
 		return nil, err;
 	}
@@ -89,7 +89,7 @@ func (ctx *HaoBtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		return nil, errors.New("Unsupport The CurrencyPair " + CurrencyPairSymbol[currency]);
 	}
 
-	bodyDataMap, err := HttpGet(depthUri);
+	bodyDataMap, err := HttpGet(ctx.httpClient,depthUri);
 
 	if err != nil {
 		return nil, err;

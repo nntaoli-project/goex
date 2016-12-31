@@ -460,7 +460,7 @@ func (ok *OKCoinFuture) GetFee() (float64, error) {
 }
 
 func (ok *OKCoinFuture) GetExchangeRate() (float64, error) {
-	respMap, err := HttpGet(FUTURE_API_BASE_URL + _EXCHANGE_RATE_URI);
+	respMap, err := HttpGet(ok.client , FUTURE_API_BASE_URL + _EXCHANGE_RATE_URI);
 
 	if err != nil {
 		log.Println(respMap);

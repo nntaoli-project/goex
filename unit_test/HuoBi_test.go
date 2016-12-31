@@ -11,6 +11,7 @@ import (
 func Test_Huobi_GetKline(t *testing.T) {
 	var hb coinapi.API;
 	hb = huobi.New(http.DefaultClient, "", "");
+	hb.GetTicker(coinapi.BTC_CNY)
 	klines, _ := hb.GetKlineRecords(coinapi.BTC_CNY, "1", 100, -1);
 	for _, v := range klines {
 		t.Log(time.Unix(v.Timestamp, 0));
