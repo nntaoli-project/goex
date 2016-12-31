@@ -56,9 +56,9 @@ func (hb *HuoBi) GetTicker(currency CurrencyPair) (*Ticker, error) {
 
 	switch currency {
 	case BTC_CNY:
-		tickerUri = fmt.Sprintf(TICKER_URI, "btc");
+		tickerUri = fmt.Sprintf(API_BASE_URL+TICKER_URI, "btc");
 	case LTC_CNY:
-		tickerUri = fmt.Sprintf(TICKER_URI, "ltc");
+		tickerUri = fmt.Sprintf(API_BASE_URL+TICKER_URI, "ltc");
 	default:
 		return nil, errors.New("Unsupport The CurrencyPair");
 	}
@@ -95,9 +95,9 @@ func (hb *HuoBi) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	switch currency {
 	case BTC_CNY:
-		depthUri = fmt.Sprintf(DEPTH_URI, "btc", size);
+		depthUri = fmt.Sprintf(API_BASE_URL+DEPTH_URI, "btc", size);
 	case LTC_CNY:
-		depthUri = fmt.Sprintf(DEPTH_URI, "ltc", size);
+		depthUri = fmt.Sprintf(API_BASE_URL+DEPTH_URI, "ltc", size);
 	default:
 		return nil, errors.New("Unsupport The CurrencyPair");
 	}
