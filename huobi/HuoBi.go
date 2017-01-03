@@ -308,8 +308,16 @@ func (hb *HuoBi) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 func (hb *HuoBi) placeOrder(method, amount, price string, currency CurrencyPair) (*Order, error) {
 	postData := url.Values{};
 	postData.Set("method", method);
-	postData.Set("price", price);
-	postData.Set("amount", amount);
+
+	switch method {
+	case "buy", "sell":
+		postData.Set("amount", amount)
+		postData.Set("price", price)
+	case "buy_market":
+		postData.Set("amount", price)
+	case "sell_market":
+		postData.Set("amount", amount)
+	}
 
 	switch currency {
 	case BTC_CNY:
@@ -376,6 +384,26 @@ func (hb *HuoBi) LimitSell(amount, price string, currency CurrencyPair) (*Order,
 	order.Side = SELL;
 
 	return order, nil;
+}
+
+func (hb *HuoBi)MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	order, err := hb.placeOrder("buy_market", amount, price, currency)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	order.Side = BUY
+	return order, nil
+}
+
+func (hb *HuoBi)MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	order, err := hb.placeOrder("sell_market", amount, price, currency)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	order.Side = SELL
+	return order, nil
 }
 
 func (hb *HuoBi) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
