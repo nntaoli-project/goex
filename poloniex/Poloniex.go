@@ -28,7 +28,8 @@ var _CURRENCYPAIR_TO_SYMBOL = map[CurrencyPair]string{
 	ETH_BTC: "BTC_ETH",
 	ETC_BTC: "BTC_ETC",
 	XCN_BTC: "BTC_XCN",
-	SYS_BTC: "BTC_SYS"}
+	SYS_BTC: "BTC_SYS",
+	ZEC_BTC: "BTC_ZEC"}
 
 type Poloniex struct {
 	accessKey,
@@ -70,6 +71,17 @@ func (poloniex *Poloniex) GetDepth(size int, currency CurrencyPair) (*Depth, err
 	if err != nil {
 		log.Println(err)
 		return nil, err
+	}
+
+	if respmap["asks"] == nil {
+		log.Println(respmap)
+		return nil, errors.New(fmt.Sprintf("%+v", respmap))
+	}
+
+	_, isOK := respmap["asks"].([]interface{})
+	if !isOK {
+		log.Println(respmap)
+		return nil, errors.New(fmt.Sprintf("%+v", respmap))
 	}
 
 	var depth Depth
@@ -485,7 +497,7 @@ func (poloniex *Poloniex) GetDepositsWithdrawals(start, end string) (*PoloniexDe
 }
 
 func (poloniex *Poloniex) buildPostForm(postForm *url.Values) (string, error) {
-	postForm.Add("nonce", fmt.Sprintf("%d", time.Now().UnixNano() / 1000000))
+	postForm.Add("nonce", fmt.Sprintf("%d", time.Now().UnixNano() ))
 	payload := postForm.Encode()
 	//println(payload)
 	sign, err := GetParamHmacSHA512Sign(poloniex.secretKey, payload)
