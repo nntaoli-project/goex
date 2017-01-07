@@ -69,7 +69,7 @@ func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		return nil, err
 	}
 
-	log.Println(resp);
+	//log.Println(resp);
 
 	asks := resp["asks"].([]interface{});
 	bids := resp["bids"].([]interface{});
