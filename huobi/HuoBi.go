@@ -115,9 +115,17 @@ func (hb *HuoBi) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	var depth Depth;
 
-	for _, v := range bodyDataMap["asks"].([]interface{}) {
+	asks, isOK := bodyDataMap["asks"].([]interface{})
+	if !isOK {
+		return nil, errors.New("asks assert error")
+	}
+
+	i := len(asks) - 1
+
+	for ; i >= 0; i-- {
+		ask := asks[i]
 		var dr DepthRecord;
-		for i, vv := range v.([]interface{}) {
+		for i, vv := range ask.([]interface{}) {
 			switch i {
 			case 0:
 				dr.Price = vv.(float64);
