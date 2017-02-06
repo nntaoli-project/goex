@@ -251,6 +251,7 @@ func (hb *HuoBi) GetOneOrder(orderId string, currency CurrencyPair) (*Order, err
 	order.DealAmount, _ = strconv.ParseFloat(bodyDataMap["processed_amount"].(string), 64);
 	order.Price, _ = strconv.ParseFloat(bodyDataMap["order_price"].(string), 64);
 	order.AvgPrice, _ = strconv.ParseFloat(bodyDataMap["processed_price"].(string), 64);
+	order.Fee , _ = strconv.ParseFloat(bodyDataMap["fee"].(string) , 64);
 
 	tradeStatus := TradeStatus(bodyDataMap["status"].(float64));
 	switch tradeStatus {
