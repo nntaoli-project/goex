@@ -22,7 +22,7 @@ const (
 
 	url_userinfo      = "userinfo.do"
 	url_trade         = "trade.do"
-	url_cancel_order  = "v1/cancel_order.do"
+	url_cancel_order  = "cancel_order.do"
 	url_order_info    = "order_info.do"
 	url_orders_info   = "orders_info.do"
 	order_history_uri = "order_history.do"
