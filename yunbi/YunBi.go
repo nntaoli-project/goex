@@ -13,7 +13,7 @@ import (
 	"errors"
 )
 
-const _EXCHANGE_NAME = "yunbi"
+const _EXCHANGE_NAME = "yunbi.com"
 
 var (
 	API_URL = "https://yunbi.com"
