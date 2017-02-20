@@ -62,7 +62,7 @@ func (ok *OKCoinFuture) buildPostForm(postForm *url.Values) error {
 
 
 func (ok *OKCoinFuture) GetExchangeName() string {
-	return "okcoin_com"
+	return "okcoin.com_future"
 }
 
 func (ok *OKCoinFuture) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64,error) {

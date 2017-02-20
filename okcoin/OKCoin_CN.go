@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	EXCHANGE_NAME_CN = "okcoin_cn"
+	EXCHANGE_NAME_CN = "okcoin.cn"
 	url_ticker       = "ticker.do"
 	url_depth        = "depth.do"
 	url_trades       = "trades.do"

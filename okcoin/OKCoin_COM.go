@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	EXCHANGE_NAME_COM = "okcoin_com"
+	EXCHANGE_NAME_COM = "okcoin.com"
 )
 
 type OKCoinCOM_API struct {
