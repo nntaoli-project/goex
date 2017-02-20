@@ -65,6 +65,11 @@ type Kline struct {
 	Vol       float64;
 }
 
+type FutureKline struct {
+	*Kline
+	Vol2 float64 //个数
+}
+
 type FutureSubAccount struct {
 	Currency      Currency;
 	AccountRights float64; //账户权益

@@ -95,4 +95,9 @@ type FutureRestAPI interface {
 	 *获取交割时间 星期(0,1,2,3,4,5,6)，小时，分，秒
 	 */
 	GetDeliveryTime() (int, int, int, int);
+
+	/**
+	 * 获取K线数据
+	 */
+	GetKlineRecords(contract_type string, currency CurrencyPair, period string, size, since int)([]FutureKline , error);
 }

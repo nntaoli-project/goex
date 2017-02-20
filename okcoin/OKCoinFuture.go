@@ -25,6 +25,7 @@ const (
 	FUTURE_TRADE_URI       = "future_trade.do"
 	FUTURE_ESTIMATED_PRICE = "future_estimated_price.do?symbol=%s"
 	_EXCHANGE_RATE_URI     = "exchange_rate.do"
+	_GET_KLINE_URI         = "future_kline.do"
 )
 
 type OKCoinFuture struct {
@@ -488,4 +489,59 @@ func (ok *OKCoinFuture) GetContractValue(currencyPair CurrencyPair) (float64, er
 
 func (ok *OKCoinFuture) GetDeliveryTime() (int, int, int, int) {
 	return 4 , 16 , 0 , 0; //星期五，下午4点交割
+}
+
+func (ok *OKCoinFuture) GetKlineRecords(contract_type string, currency CurrencyPair, period string, size, since int) ([]FutureKline, error) {
+	params := url.Values{}
+	params.Set("symbol", CurrencyPairSymbol[currency])
+	params.Set("type", period)
+	params.Set("contract_type", contract_type)
+	params.Set("size", fmt.Sprintf("%d", size))
+	params.Set("since", fmt.Sprintf("%d", since))
+	log.Println(params.Encode())
+	resp, err := ok.client.Get(FUTURE_API_BASE_URL + _GET_KLINE_URI + "?" + params.Encode())
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	//log.Println(string(body))
+
+	var klines [][]interface{};
+	err = json.Unmarshal(body, &klines);
+	if err != nil {
+		return nil, err;
+	}
+
+	var klineRecords []FutureKline;
+	for _, record := range klines {
+		r := FutureKline{};
+		r.Kline = new(Kline)
+		for i, e := range record {
+			switch i {
+			case 0:
+				r.Timestamp = int64(e.(float64)) / 1000; //to unix timestramp
+			case 1:
+				r.Open = e.(float64);
+			case 2:
+				r.High = e.(float64);
+			case 3:
+				r.Low = e.(float64);
+			case 4:
+				r.Close = e.(float64);
+			case 5:
+				r.Vol = e.(float64);
+			case 6:
+				r.Vol2 = e.(float64)
+			}
+		}
+		klineRecords = append(klineRecords, r);
+	}
+
+	return klineRecords, nil
 }
