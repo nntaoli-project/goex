@@ -26,6 +26,7 @@ const (
 	url_order_info    = "order_info.do"
 	url_orders_info   = "orders_info.do"
 	order_history_uri = "order_history.do"
+	trade_uri 	  = "trade_history.do"
 )
 
 type OKCoinCN_API struct {
@@ -491,4 +492,30 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 	}
 
 	return orderAr, nil
+}
+
+func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair , since int64) ([]Trade , error){
+	tradeUrl := ok.api_base_url + trade_uri
+	postData := url.Values{}
+	postData.Set("symbol", CurrencyPairSymbol[currencyPair])
+	postData.Set("since", fmt.Sprintf("%d", since))
+
+	err := ok.buildPostForm(&postData)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := HttpPostForm(ok.client, tradeUrl, postData)
+	if err != nil {
+		return nil, err
+	}
+	//println(string(body))
+
+	var trades []Trade
+	err = json.Unmarshal(body , &trades)
+	if err != nil {
+		return nil , err
+	}
+
+	return  trades , nil
 }

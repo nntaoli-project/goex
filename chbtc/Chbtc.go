@@ -438,3 +438,7 @@ func (chbtc *Chbtc) CancelWithdraw(id string, currency Currency, safePwd string)
 
 	return false, errors.New(string(resp))
 }
+
+func (chbtc *Chbtc) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error){
+	panic("unimplements")
+}

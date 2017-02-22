@@ -320,6 +320,10 @@ func (yunbi *YunBi) GetKlineRecords(currency CurrencyPair, period string, size, 
 	return nil, nil
 }
 
+func (yunbi *YunBi) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	panic("unimplements")
+}
+
 func (yunbi *YunBi)parseOrder(orderMap map[string]interface{}) Order {
 	ord := Order{}
 	ord.OrderID = int(orderMap["id"].(float64))

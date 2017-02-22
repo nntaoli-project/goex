@@ -507,3 +507,7 @@ func (poloniex *Poloniex) buildPostForm(postForm *url.Values) (string, error) {
 	//log.Println(sign)
 	return sign, nil
 }
+
+func (poloniex *Poloniex) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error){
+	panic("unimplements")
+}

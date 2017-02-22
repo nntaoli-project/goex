@@ -545,3 +545,7 @@ func (ok *OKCoinFuture) GetKlineRecords(contract_type string, currency CurrencyP
 
 	return klineRecords, nil
 }
+
+func (okFuture *OKCoinFuture) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error){
+	panic("unimplements")
+}

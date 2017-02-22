@@ -22,6 +22,7 @@ const
 	TICKER_URI = "staticmarket/ticker_%s_json.js";
 	DEPTH_URI = "staticmarket/depth_%s_%d.js";
 	KLINE_URI = "staticmarket/%s_kline_%03s_json.js";
+	trade_url = "staticmarket/detail_%s_json.js"
 )
 
 type HuoBi struct {
@@ -521,4 +522,70 @@ func (hb *HuoBi) GetKlineRecords(currency CurrencyPair ,period string, size , si
 
 func (hb *HuoBi)GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
 	return nil, nil
+}
+
+/**
+ * 获取全站最近的交易记录
+ */
+func (hb *HuoBi) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	tradeUrl := API_BASE_URL + trade_url
+	switch currencyPair {
+	case BTC_CNY:
+		tradeUrl = fmt.Sprintf(tradeUrl, "btc")
+	case LTC_CNY:
+		tradeUrl = fmt.Sprintf(tradeUrl, "ltc")
+	default:
+		return nil, errors.New("unsupport " + currencyPair.String())
+	}
+
+	var respmap map[string]interface{}
+
+	resp, err := http.Get(tradeUrl);
+	if err != nil {
+		return nil, err;
+	}
+
+	defer resp.Body.Close();
+	body, err := ioutil.ReadAll(resp.Body);
+	err = json.Unmarshal(body, &respmap)
+	if err != nil {
+		return nil, err
+	}
+
+	tradesmap, isOK := respmap["trades"].([]interface{})
+	if !isOK {
+		return nil, errors.New("assert error")
+	}
+
+	now := time.Now()
+	var trades []Trade
+	for _, t := range tradesmap {
+		tr := t.(map[string]interface{})
+		trade := Trade{}
+		trade.Amount = tr["amount"].(float64)
+		trade.Price = tr["price"].(float64)
+		trade.Type = tr["type"].(string)
+		timeStr := tr["time"].(string)
+		timeMeta := strings.Split(timeStr , ":")
+		h , _:= strconv.Atoi(timeMeta[0])
+		m , _ := strconv.Atoi(timeMeta[1])
+		s , _ := strconv.Atoi(timeMeta[2])
+		//临界点处理
+		if now.Hour() == 0 {
+			if h <= 23 && h >= 20 {
+				pre := now.AddDate( 0 , 0 , -1)
+				trade.Date = time.Date(pre.Year() , pre.Month() , pre.Day() , h , m , s , 0 , time.Local).Unix()*1000
+			}else if h == 0 {
+				trade.Date = time.Date(now.Year() , now.Month() , now.Day() , h , m , s , 0 , time.Local).Unix()*1000
+			}
+		}else {
+			trade.Date = time.Date(now.Year(), now.Month(), now.Day(), h, m, s, 0, time.Local).Unix() * 1000
+		}
+		//fmt.Println(time.Unix(trade.Date/1000 , 0))
+		trades = append(trades, trade)
+	}
+
+	//fmt.Println(tradesmap)
+
+	return trades, nil
 }
