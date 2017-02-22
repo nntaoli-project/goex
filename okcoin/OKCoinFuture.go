@@ -115,6 +115,10 @@ func (ok *OKCoinFuture) GetFutureTicker(currencyPair CurrencyPair, contractType 
 		return nil, err
 	}
 
+	if !bodyMap["result"].(bool) {
+		return nil , errors.New(string(body))
+	}
+
 	tickerMap := bodyMap["ticker"].(map[string]interface{})
 
 	ticker := new(Ticker)
@@ -451,7 +455,7 @@ func (ok *OKCoinFuture) GetUnfinishFutureOrders(currencyPair CurrencyPair, contr
 		return nil , err;
 	}
 
-	println(string(body))
+	//println(string(body))
 
 	return ok.parseOrders(body , currencyPair);
 }
@@ -515,6 +519,7 @@ func (ok *OKCoinFuture) GetKlineRecords(contract_type string, currency CurrencyP
 	var klines [][]interface{};
 	err = json.Unmarshal(body, &klines);
 	if err != nil {
+		log.Println(string(body))
 		return nil, err;
 	}
 
