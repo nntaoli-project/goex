@@ -1,7 +1,8 @@
+/*注意:haobtc已经下线交易所*/
 package haobtc
 
 import (
-	. "../"
+	. "github.com/nntaoli/crypto_coin_api"
 	"net/http"
 	"errors"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 
 const
 (
-	EXCHANGE_NAME = "haobtc";
+	EXCHANGE_NAME = "haobtc.com";
 	API_BASE_URL = "https://haobtc.com/exchange/api/v1/";
 	TICKER_URI = "ticker";
 	TRADE_URI = "trade";

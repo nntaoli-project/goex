@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const EXCHANGE_NAME = "poloniex"
+const EXCHANGE_NAME = "poloniex.com"
 
 const (
 	BASE_URL       = "https://poloniex.com/"

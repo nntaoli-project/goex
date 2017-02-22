@@ -16,7 +16,7 @@ import (
 
 const
 (
-	EXCHANGE_NAME = "huobi";
+	EXCHANGE_NAME = "huobi.com";
 	API_BASE_URL = "https://api.huobi.com/";
 	TRADE_API_V3 = API_BASE_URL + "apiv3";
 	TICKER_URI = "staticmarket/ticker_%s_json.js";

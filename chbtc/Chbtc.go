@@ -40,7 +40,7 @@ func New(httpClient *http.Client, accessKey, secretKey string) *Chbtc {
 }
 
 func (chbtc *Chbtc)GetExchangeName() string {
-	return "chbtc";
+	return "chbtc.com";
 }
 
 func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
