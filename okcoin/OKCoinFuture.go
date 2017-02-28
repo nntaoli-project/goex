@@ -237,7 +237,11 @@ func (ok *OKCoinFuture) GetFutureUserinfo() (*FutureAccount, error) {
 
 	//println(string(body));
 	resp := futureUserInfoResponse{};
-	json.Unmarshal(body , &resp)
+	err = json.Unmarshal(body , &resp)
+	if err != nil {
+		return nil , err
+	}
+
 	if !resp.Result {
 		return nil , errors.New(string(body));
 	}
@@ -274,9 +278,12 @@ func (ok *OKCoinFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType
 	}
 
 	respMap := make(map[string]interface{});
-	json.Unmarshal(body , &respMap);
+	err = json.Unmarshal(body , &respMap);
+	if err != nil {
+		return "" , err
+	}
 
-	println(string(body));
+	//println(string(body));
 
 	if !respMap["result"].(bool) {
 		return "" , errors.New(string(body));
@@ -301,7 +308,10 @@ func (ok *OKCoinFuture) FutureCancelOrder(currencyPair CurrencyPair, contractTyp
 	}
 
 	respMap := make(map[string]interface{});
-	json.Unmarshal(body , &respMap);
+	err = json.Unmarshal(body , &respMap);
+	if err != nil {
+		return false , err
+	}
 
 	if respMap["result"] != nil && !respMap["result"].(bool) {
 		return false , errors.New(string(body));
@@ -502,7 +512,7 @@ func (ok *OKCoinFuture) GetKlineRecords(contract_type string, currency CurrencyP
 	params.Set("contract_type", contract_type)
 	params.Set("size", fmt.Sprintf("%d", size))
 	params.Set("since", fmt.Sprintf("%d", since))
-	log.Println(params.Encode())
+	//log.Println(params.Encode())
 	resp, err := ok.client.Get(FUTURE_API_BASE_URL + _GET_KLINE_URI + "?" + params.Encode())
 	if err != nil {
 		log.Println(err)

@@ -344,6 +344,10 @@ func (ctx *OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, erro
 		return nil, err
 	}
 
+	if bodyDataMap["result"] != nil && !bodyDataMap["result"].(bool) {
+		return nil , errors.New(fmt.Sprintf("%.0f" , bodyDataMap["error_code"].(float64)))
+	}
+
 	for _, v := range bodyDataMap["asks"].([]interface{}) {
 		var dr DepthRecord
 		for i, vv := range v.([]interface{}) {
