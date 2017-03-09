@@ -42,6 +42,10 @@ func currencyPair2String(currency CurrencyPair) string {
 		return "btc_cny"
 	case LTC_CNY:
 		return "ltc_cny"
+	case BTC_USD:
+		return "btc_usd"
+	case LTC_USD:
+		return "ltc_usd"
 	default:
 		return ""
 	}
