@@ -21,7 +21,7 @@ const
 	TRADE_API_V3 = API_BASE_URL + "apiv3";
 	TICKER_URI = "staticmarket/ticker_%s_json.js";
 	DEPTH_URI = "staticmarket/depth_%s_%d.js";
-	KLINE_URI = "staticmarket/%s_kline_%03s_json.js";
+	KLINE_URI = "staticmarket/%s_kline_%03s_json.js?length=%d";
 	trade_url = "staticmarket/detail_%s_json.js"
 )
 
@@ -459,9 +459,9 @@ func (hb *HuoBi) GetKlineRecords(currency CurrencyPair ,period string, size , si
 
 	switch currency {
 	case BTC_CNY:
-		klineUri = fmt.Sprintf(klineUri , "btc" , period);
+		klineUri = fmt.Sprintf(klineUri , "btc" , period , size);
 	case LTC_CNY:
-		klineUri = fmt.Sprintf(klineUri , "ltc" , period);
+		klineUri = fmt.Sprintf(klineUri , "ltc" , period , size);
 	default:
 		return nil , errors.New("Unsupport " + CurrencyPairSymbol[currency]);
 	}
