@@ -3,12 +3,18 @@ package coinapi
 type CurrencyPair int;
 
 func (c CurrencyPair) String() string {
+	if c == 0 {
+		return "nil"
+	}
 	return currencyPairSymbol[c - 1];
 }
 
 type Currency int;
 
 func (c Currency) String() string {
+	if c == 0 {
+		return "nil"
+	}
 	return currencySymbol[c - 1];
 }
 
@@ -35,7 +41,7 @@ func (ts TradeStatus) String() string {
 	return orderStatusSymbol[ts];
 }
 
-var currencySymbol = [...]string{"cny", "usd", "btc", "ltc", "eth", "etc" , "zec" , "sc"};
+var currencySymbol = [...]string{"cny", "usd", "btc", "ltc", "eth", "etc", "zec", "sc"};
 
 const
 (
@@ -49,13 +55,15 @@ const
 	SC
 )
 
-var currencyPairSymbol = [...]string{"btc_cny", "btc_usd", "ltc_cny", "ltc_usd", "eth_cny",
-	"eth_usd", "eth_btc", "etc_cny", "etc_usd", "etc_btc", "xcn_btc", "sys_btc" , "zec_cny" , "zec_usd" , "zec_btc"};
+var currencyPairSymbol = [...]string{"btc_cny", "btc_usd", "btc_jpy", "fx_btc_jpy", "ltc_cny", "ltc_usd", "eth_cny",
+	"eth_usd", "eth_btc", "etc_cny", "etc_usd", "etc_btc", "xcn_btc", "sys_btc", "zec_cny", "zec_usd", "zec_btc"};
 
 const
 (
 	BTC_CNY = 1 + iota
 	BTC_USD
+	BTC_JPY
+	FX_BTC_JPY
 
 	LTC_CNY
 	LTC_USD
