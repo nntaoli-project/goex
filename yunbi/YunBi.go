@@ -133,6 +133,13 @@ func (yunbi *YunBi)GetAccount() (*Account, error) {
 	}
 	
 	//log.Println(resp)
+	if resp["error"] != nil{
+		errmap := resp["error"].(map[string]interface{})
+		errcode := errmap["code"].(float64)
+		errmsg := errmap["message"].(string)
+		return nil , errors.New(fmt.Sprintf("%.0f:%s" , errcode , errmsg))
+	}
+
 	acc := new(Account)
 	acc.SubAccounts = make(map[Currency]SubAccount)
 	
@@ -358,7 +365,7 @@ func (yunbi *YunBi) buildPostForm(httpMethod, apiURI string, postForm *url.Value
 	
 	params := postForm.Encode();
 	payload := httpMethod + "|" + apiURI + "|" + params
-	println(payload)
+	//println(payload)
 	
 	sign, err := GetParamHmacSHA256Sign(yunbi.secretKey, payload);
 	if err != nil {
