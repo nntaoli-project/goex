@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"log"
 )
 
 func _httpRequest(client *http.Client, reqType string, reqUrl string, postData url.Values, requstHeaders map[string]string) ([]byte, error) {
@@ -53,6 +54,7 @@ func HttpGet(client *http.Client, reqUrl string) (map[string]interface{}, error)
 	//fmt.Printf("\n%s\n", respData);
 	err = json.Unmarshal(respData, &bodyDataMap)
 	if err != nil {
+		log.Println(string(respData))
 		return nil, err
 	}
 	return bodyDataMap, nil
