@@ -59,7 +59,8 @@ func (yunbi *YunBi)GetTicker(currency CurrencyPair) (*Ticker, error) {
 		log.Println(err)
 		return nil, err
 	}
-	
+	defer resp.Body.Close()
+
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Println(err)
@@ -68,7 +69,10 @@ func (yunbi *YunBi)GetTicker(currency CurrencyPair) (*Ticker, error) {
 	
 	//println(string(respData))
 	tickerResp := new(_TickerResponse)
-	json.Unmarshal(respData, tickerResp)
+	err = json.Unmarshal(respData, tickerResp)
+	if err != nil {
+		return nil , err
+	}
 	
 	ticker := new(Ticker)
 	ticker.Date = tickerResp.At
