@@ -106,3 +106,49 @@ func (cc *Coincheck) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	return &depth, nil
 }
+
+
+func (cc *Coincheck) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	return nil, nil
+}
+
+func (cc *Coincheck) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return nil, nil
+}
+
+func (cc *Coincheck) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	return nil, nil
+}
+
+func (cc *Coincheck) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return nil, nil
+}
+
+func (cc *Coincheck) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
+	return false, nil
+}
+
+func (cc *Coincheck) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
+	return nil, nil
+}
+
+func (cc *Coincheck) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
+	return nil, nil
+}
+
+func (cc *Coincheck) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+	return nil, nil
+}
+
+func (cc *Coincheck) GetAccount() (*Account, error) {
+	return nil, nil
+}
+
+func (cc *Coincheck) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+	return nil, nil
+}
+
+//非个人，整个交易所的交易记录
+func (cc *Coincheck) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	return nil, nil
+}

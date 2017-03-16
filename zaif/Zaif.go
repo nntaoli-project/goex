@@ -106,3 +106,48 @@ func (zf *Zaif) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	return &depth, nil
 }
+
+func (zf *Zaif) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	return nil, nil
+}
+
+func (zf *Zaif) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return nil, nil
+}
+
+func (zf *Zaif) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	return nil, nil
+}
+
+func (zf *Zaif) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return nil, nil
+}
+
+func (zf *Zaif) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
+	return false, nil
+}
+
+func (zf *Zaif) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
+	return nil, nil
+}
+
+func (zf *Zaif) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
+	return nil, nil
+}
+
+func (zf *Zaif) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+	return nil, nil
+}
+
+func (zf *Zaif) GetAccount() (*Account, error) {
+	return nil, nil
+}
+
+func (zf *Zaif) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+	return nil, nil
+}
+
+//非个人，整个交易所的交易记录
+func (zf *Zaif) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	return nil, nil
+}
