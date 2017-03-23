@@ -134,6 +134,10 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 		return nil, err;
 	}
 
+	if respmap["code"].(float64) != 1000 {
+		return nil , errors.New(string(resp))
+	}
+
 	acc := new(Account);
 	acc.Exchange = "chbtc";
 	acc.SubAccounts = make(map[Currency]SubAccount);
@@ -207,7 +211,7 @@ func (chbtc *Chbtc) placeOrder(amount, price string, currency CurrencyPair, trad
 		return nil, err;
 	}
 
-	log.Println(string(resp));
+	//log.Println(string(resp));
 
 	respmap := make(map[string]interface{});
 	err = json.Unmarshal(resp, &respmap);
