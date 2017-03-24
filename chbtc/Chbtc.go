@@ -280,7 +280,7 @@ func (chbtc *Chbtc) CancelOrder(orderId string, currency CurrencyPair) (bool, er
 		return true, nil;
 	}
 
-	log.Println(respmap)
+	//log.Println(respmap)
 	return false, errors.New(fmt.Sprintf("%.0f", code));
 }
 
@@ -290,6 +290,7 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 	order.Amount = ordermap["total_amount"].(float64);
 	order.DealAmount = ordermap["trade_amount"].(float64);
 	order.Price = ordermap["price"].(float64);
+	order.Fee = ordermap["fees"].(float64)
 	if order.DealAmount > 0 {
 		order.AvgPrice = ordermap["trade_money"].(float64) / order.DealAmount;
 	} else {
@@ -322,7 +323,7 @@ func (chbtc *Chbtc) GetOneOrder(orderId string, currency CurrencyPair) (*Order, 
 		log.Println(err);
 		return nil, err;
 	}
-
+	//println(string(resp))
 	ordermap := make(map[string]interface{});
 	err = json.Unmarshal(resp, &ordermap);
 	if err != nil {
