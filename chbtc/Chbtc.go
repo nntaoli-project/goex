@@ -296,7 +296,7 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 	} else {
 		order.AvgPrice = 0;
 	}
-	order.Status = TradeStatus(ordermap["status"].(float64));
+
 	order.OrderTime = int(ordermap["trade_date"].(float64));
 
 	orType := ordermap["type"].(float64);
@@ -307,6 +307,19 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 		order.Side = BUY;
 	default:
 		log.Printf("unknown order type %f", orType);
+	}
+
+	_status := TradeStatus(ordermap["status"].(float64));
+	switch _status {
+	case 0:
+		order.Status = ORDER_UNFINISH
+	case 1:
+		order.Status = ORDER_CANCEL
+	case 2:
+		order.Status = ORDER_FINISH
+	case 3:
+		order.Status = ORDER_PART_FINISH
+
 	}
 
 }
