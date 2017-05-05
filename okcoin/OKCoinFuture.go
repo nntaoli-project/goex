@@ -48,8 +48,9 @@ func (ok *OKCoinFuture) buildPostForm(postForm *url.Values) error {
 
 	payload := postForm.Encode();
 	payload = payload + "&secret_key=" + ok.apiSecretKey;
-
-	sign, err := GetParamMD5Sign(ok.apiSecretKey, payload);
+	payload2, _ := url.QueryUnescape(payload) // can't escape for sign
+	//
+	sign, err := GetParamMD5Sign(ok.apiSecretKey, payload2);
 	if err != nil {
 		return err;
 	}
@@ -115,8 +116,8 @@ func (ok *OKCoinFuture) GetFutureTicker(currencyPair CurrencyPair, contractType 
 		return nil, err
 	}
 
-	if !bodyMap["result"].(bool) {
-		return nil , errors.New(string(body))
+	if bodyMap["result"] != nil && !bodyMap["result"].(bool) {
+		return nil, errors.New(string(body))
 	}
 
 	tickerMap := bodyMap["ticker"].(map[string]interface{})
@@ -433,12 +434,11 @@ func (ok *OKCoinFuture) parseOrders(body []byte , currencyPair CurrencyPair) ([]
 	return futureOrders , nil;
 }
 
-func (ok *OKCoinFuture) GetFutureOrders(orderId int64, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
+func (ok *OKCoinFuture) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
 	postData := url.Values{};
-	postData.Set("order_id" , fmt.Sprintf("%d" , orderId));
+	postData.Set("order_id" , strings.Join(orderIds,","));
 	postData.Set("contract_type" , contractType);
 	postData.Set("symbol" , CurrencyPairSymbol[currencyPair]);
-
 	ok.buildPostForm(&postData);
 
 	body , err := HttpPostForm(ok.client , FUTURE_API_BASE_URL + FUTURE_ORDERS_INFO_URI , postData);

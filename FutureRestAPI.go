@@ -69,7 +69,7 @@ type FutureRestAPI interface {
 	/**
 	 *获取订单信息
 	 */
-	GetFutureOrders(orderId int64, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error)
+	GetFutureOrders(orderIds []string, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error)
 
 	/**
 	 *获取未完成订单信息
