@@ -508,6 +508,14 @@ func (poloniex *Poloniex) buildPostForm(postForm *url.Values) (string, error) {
 	return sign, nil
 }
 
-func (poloniex *Poloniex) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error){
+func (poloniex *Poloniex) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("unimplements")
+}
+
+func (poloniex *Poloniex) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	panic("unsupport the market order")
+}
+
+func (poloniex *Poloniex) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	panic("unsupport the market order")
 }
