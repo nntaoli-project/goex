@@ -4,10 +4,10 @@ package coinapi
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
-	"log"
 )
 
 func _httpRequest(client *http.Client, reqType string, reqUrl string, postData url.Values, requstHeaders map[string]string) ([]byte, error) {
@@ -26,14 +26,14 @@ func _httpRequest(client *http.Client, reqType string, reqUrl string, postData u
 	if err != nil {
 		return nil, err
 	}
-
+	//	fmt.Println("resp:", resp)
 	defer resp.Body.Close()
 
 	bodyData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-
+	//	fmt.Println("bodyData:", bodyData)
 	//var bodyDataMap map[string]interface{};
 	//err = json.Unmarshal(bodyData, &bodyDataMap);
 	//if err != nil {
