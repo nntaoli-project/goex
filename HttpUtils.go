@@ -4,10 +4,10 @@ package coinapi
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
-	"log"
 )
 
 func _httpRequest(client *http.Client, reqType string, reqUrl string, postData url.Values, requstHeaders map[string]string) ([]byte, error) {

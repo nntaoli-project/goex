@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli/crypto_coin_api"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli/crypto_coin_api"
 )
 
 const EXCHANGE_NAME = "poloniex.com"
@@ -26,10 +27,18 @@ const (
 var _CURRENCYPAIR_TO_SYMBOL = map[CurrencyPair]string{
 	//BTC_LTC : "BTC_LTC",
 	ETH_BTC: "BTC_ETH",
+	ETC_ETH: "ETH_ETC",
 	ETC_BTC: "BTC_ETC",
+	LTC_BTC: "BTC_LTC",
 	XCN_BTC: "BTC_XCN",
 	SYS_BTC: "BTC_SYS",
-	ZEC_BTC: "BTC_ZEC"}
+	ZEC_BTC: "BTC_ZEC",
+	BTS_BTC: "BTC_BTS",
+	SC_BTC: "BTC_SC",
+	GNT_BTC: "BTC_GNT",
+	REP_ETH: "ETH_REP",
+	REP_BTC: "BTC_REP",
+}
 
 type Poloniex struct {
 	accessKey,
@@ -46,14 +55,17 @@ func (poloniex *Poloniex) GetExchangeName() string {
 }
 
 func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	respmap, err := HttpGet(poloniex.client, PUBLIC_URL + TICKER_API)
+	respmap, err := HttpGet(poloniex.client, PUBLIC_URL+TICKER_API)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
+	cur := currency.String()
+	s := strings.Split(cur, "_")
+	ss := fmt.Sprintf("%s_%s", strings.ToUpper(s[1]), strings.ToUpper(s[0]))
 
-	tickermap := respmap[_CURRENCYPAIR_TO_SYMBOL[currency]].(map[string]interface{})
-
+	//	tickermap := respmap[_CURRENCYPAIR_TO_SYMBOL[currency]].(map[string]interface{})
+	tickermap := respmap[ss].(map[string]interface{})
 	ticker := new(Ticker)
 	ticker.High, _ = strconv.ParseFloat(tickermap["high24hr"].(string), 64)
 	ticker.Low, _ = strconv.ParseFloat(tickermap["low24hr"].(string), 64)
@@ -62,12 +74,12 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.Sell, _ = strconv.ParseFloat(tickermap["lowestAsk"].(string), 64)
 	ticker.Vol, _ = strconv.ParseFloat(tickermap["quoteVolume"].(string), 64)
 
-	log.Println(tickermap)
+	//	log.Println(tickermap)
 
 	return ticker, nil
 }
 func (poloniex *Poloniex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	respmap, err := HttpGet(poloniex.client ,  PUBLIC_URL + fmt.Sprintf(ORDER_BOOK_API, _CURRENCYPAIR_TO_SYMBOL[currency], size))
+	respmap, err := HttpGet(poloniex.client, PUBLIC_URL+fmt.Sprintf(ORDER_BOOK_API, _CURRENCYPAIR_TO_SYMBOL[currency], size))
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -131,7 +143,7 @@ func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currenc
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
 
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API , postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, postData, headers)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -186,7 +198,7 @@ func (poloniex *Poloniex) CancelOrder(orderId string, currency CurrencyPair) (bo
 	headers := map[string]string{
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API , postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, postData, headers)
 	if err != nil {
 		log.Println(err)
 		return false, err
@@ -236,7 +248,7 @@ func (poloniex *Poloniex) GetOneOrder(orderId string, currency CurrencyPair) (*O
 
 			for _, ord := range ords {
 				if ord.OrderID == _ordId {
-					return &ord , nil
+					return &ord, nil
 				}
 			}
 		}
@@ -261,7 +273,7 @@ func (poloniex *Poloniex) GetOneOrder(orderId string, currency CurrencyPair) (*O
 		vv := v.(map[string]interface{})
 		_amount, _ := strconv.ParseFloat(vv["amount"].(string), 64)
 		_rate, _ := strconv.ParseFloat(vv["rate"].(string), 64)
-		_fee , _ := strconv.ParseFloat(vv["fee"].(string) , 64)
+		_fee, _ := strconv.ParseFloat(vv["fee"].(string), 64)
 
 		order.DealAmount += _amount
 		total += (_amount * _rate)
@@ -293,7 +305,7 @@ func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 	headers := map[string]string{
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API , postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, postData, headers)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -333,7 +345,54 @@ func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 func (Poloniex *Poloniex) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
 	return nil, nil
 }
+func (poloniex *Poloniex) GetAvailableAccount() (*Account, error) {
+	postData := url.Values{}
+	postData.Add("command", "returnBalances")
+	sign, err := poloniex.buildPostForm(&postData)
+	if err != nil {
+		return nil, err
+	}
 
+	headers := map[string]string{
+		"Key":  poloniex.accessKey,
+		"Sign": sign}
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, postData, headers)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	respmap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respmap)
+	//	fmt.Println("respS:", string(resp))
+
+	//	fmt.Println("respmap:", respmap)
+
+	if err != nil || respmap["error"] != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	acc := new(Account)
+	acc.Exchange = EXCHANGE_NAME
+	acc.SubAccounts = make(map[Currency]SubAccount)
+
+	for k, v := range respmap {
+		var currency Currency
+		cur := SymbolCurrency(k)
+		currency = (Currency)(cur)
+		fmt.Println("k:", k)
+		fmt.Println("v:", v)
+		if currency > 0 {
+			subAcc := SubAccount{}
+			subAcc.Currency = currency
+			subAcc.Amount, _ = strconv.ParseFloat(respmap[k].(string), 64)
+			acc.SubAccounts[subAcc.Currency] = subAcc
+		}
+	}
+	return acc, nil
+}
 func (poloniex *Poloniex) GetAccount() (*Account, error) {
 	postData := url.Values{}
 	postData.Add("command", "returnCompleteBalances")
@@ -355,6 +414,7 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 
+
 	if err != nil || respmap["error"] != nil {
 		log.Println(err)
 		return nil, err
@@ -366,22 +426,8 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 
 	for k, v := range respmap {
 		var currency Currency
-
-		switch k {
-		case "BTC":
-			currency = BTC
-		case "LTC":
-			currency = LTC
-		case "ETH":
-			currency = ETH
-		case "ETC":
-			currency = ETC
-		case "USD":
-			currency = USD
-		default:
-			currency = -1
-		}
-
+		cur := SymbolCurrency(k)
+		currency = (Currency)(cur)
 		if currency > 0 {
 			vv := v.(map[string]interface{})
 			subAcc := SubAccount{}
@@ -390,6 +436,7 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 			subAcc.ForzenAmount, _ = strconv.ParseFloat(vv["onOrders"].(string), 64)
 			acc.SubAccounts[subAcc.Currency] = subAcc
 		}
+
 	}
 
 	return acc, nil
@@ -400,7 +447,7 @@ func (p *Poloniex) Withdraw(amount string, currency Currency, fees, receiveAddr,
 	params.Add("command", "withdraw")
 	params.Add("address", receiveAddr)
 	params.Add("amount", amount)
-	params.Add("currency", strings.ToUpper(currency.String()));
+	params.Add("currency", strings.ToUpper(currency.String()))
 
 	sign, err := p.buildPostForm(&params)
 	if err != nil {
@@ -435,7 +482,7 @@ func (p *Poloniex) Withdraw(amount string, currency Currency, fees, receiveAddr,
 }
 
 type PoloniexDepositsWithdrawals struct {
-	Deposits    []struct {
+	Deposits []struct {
 		Currency      string    `json:"currency"`
 		Address       string    `json:"address"`
 		Amount        float64   `json:"amount,string"`
@@ -497,7 +544,7 @@ func (poloniex *Poloniex) GetDepositsWithdrawals(start, end string) (*PoloniexDe
 }
 
 func (poloniex *Poloniex) buildPostForm(postForm *url.Values) (string, error) {
-	postForm.Add("nonce", fmt.Sprintf("%d", time.Now().UnixNano() ))
+	postForm.Add("nonce", fmt.Sprintf("%d", time.Now().UnixNano()))
 	payload := postForm.Encode()
 	//println(payload)
 	sign, err := GetParamHmacSHA512Sign(poloniex.secretKey, payload)
