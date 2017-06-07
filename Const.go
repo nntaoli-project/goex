@@ -412,9 +412,9 @@ func SymbolPairCurrency(s string) int {
 }
 
 var currencyPairSymbol = [...]string{"btc_cny", "btc_usd", "btc_jpy", "fx_btc_jpy", "ltc_cny", "ltc_usd", "ltc_btc", "eth_cny", "eth_usd",
-	"eth_btc", "etc_cny", "etc_usd", "etc_btc", "zec_cny", "zec_usd", "zec_btc", "xrp_cny", "xrp_usd", "xrp_btc", "doge_cny", "doge_usd",
+	"eth_btc", "etc_cny", "etc_usd", "etc_btc", "etc_eth", "zec_cny", "zec_usd", "zec_btc", "rep_cny", "rep_eth", "rep_btc", "xrp_cny", "xrp_usd", "xrp_btc", "doge_cny", "doge_usd",
 	"doge_btc", "blk_cny", "blk_usd", "blk_btc", "lsk_cny", "lsk_usd", "lsk_btc", "game_cny", "game_usd", "game_btc", "sc_cny", "sc_usd",
-	"sc_btc", "bts_cny", "bts_usd", "bts_btc", "hlb_cny", "hlb_usd", "hlb_btc", "xpm_cny", "xpm_usd", "xpm_btc", "ric_cny", "ric_usd",
+	"sc_btc", "gnt_btc", "gnt_cny", "bts_cny", "bts_usd", "bts_btc", "hlb_cny", "hlb_usd", "hlb_btc", "xpm_cny", "xpm_usd", "xpm_btc", "ric_cny", "ric_usd",
 	"ric_btc", "xem_cny", "xem_usd", "xem_btc", "eac_cny", "eac_usd", "eac_btc", "ppc_cny", "ppc_usd", "ppc_btc", "plc_cny", "plc_usd", "plc_btc",
 	"vtc_cny", "vtc_usd", "vtc_btc", "vrc_cny", "vrc_usd", "vrc_btc", "nxt_cny", "nxt_usd", "nxt_btc", "zcc_cny", "zcc_usd", "zcc_btc",
 	"wdc_cny", "wdc_usd", "wdc_btc", "sys_cny", "sys_usd", "sys_btc", "dash_cny", "dash_usd", "dash_btc", "ybc_cny", "ybc_usd", "ybc_btc", "xcn_btc"}
@@ -436,10 +436,14 @@ const (
 	ETC_CNY
 	ETC_USD
 	ETC_BTC
+	ETC_ETH
 
 	ZEC_CNY
 	ZEC_USD
 	ZEC_BTC
+	REP_CNY
+	REP_ETH
+	REP_BTC
 
 	XRP_CNY
 	XRP_USD
@@ -464,6 +468,8 @@ const (
 	SC_CNY
 	SC_USD
 	SC_BTC
+	GNT_BTC
+	GNT_CNY
 
 	BTS_CNY
 	BTS_USD
@@ -562,6 +568,7 @@ var CurrencyPairSymbol = map[CurrencyPair]string{
 	BTC_USD: "btc_usd",
 	LTC_CNY: "ltc_cny",
 	LTC_USD: "ltc_usd",
+	LTC_BTC : "ltc_btc",
 	ETH_CNY: "eth_cny",
 	ETH_USD: "eth_usd",
 	ETH_BTC: "eth_btc",

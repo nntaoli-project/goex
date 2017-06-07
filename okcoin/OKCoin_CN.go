@@ -27,6 +27,7 @@ const (
 	url_orders_info   = "orders_info.do"
 	order_history_uri = "order_history.do"
 	trade_uri 	  = "trade_history.do"
+	withdraw 	  = "withdraw.do"
 )
 
 type OKCoinCN_API struct {
@@ -46,6 +47,8 @@ func currencyPair2String(currency CurrencyPair) string {
 		return "btc_usd"
 	case LTC_USD:
 		return "ltc_usd"
+    case ETH_CNY:
+        return "eth_cny"
 	default:
 		return ""
 	}
@@ -526,4 +529,32 @@ func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair , since int64) ([]Tr
 	}
 
 	return  trades , nil
+}
+func (ok *OKCoinCN_API) Withdraw(amount string, currency CurrencyPair, fees, receiveAddr, safePwd string) (string, error){
+	tradeUrl := ok.api_base_url + withdraw
+	postData := url.Values{}
+	postData.Set("symbol", strings.ToLower(currency.String()))
+    postData.Set("withdraw_amount", amount);
+    postData.Set("chargefee", fees);
+    postData.Set("withdraw_address", receiveAddr);
+    postData.Set("trade_pwd", safePwd);
+	err := ok.buildPostForm(&postData)
+	if err != nil {
+		return "", err
+	}
+	body, err := HttpPostForm(ok.client, tradeUrl, postData)
+	if err != nil {
+        fmt.Println("withdraw fail.", err)
+		return "", err
+	}
+    respMap := make(map[string]interface{})
+    err = json.Unmarshal(body, &respMap)
+    if err != nil {
+        fmt.Println(err, string(body))
+        return "", err
+    }
+    if respMap["result"].(bool) {
+        return fmt.Sprintf("%.6f", respMap["withdraw_id"].(float64)), nil;
+    }
+    return "", errors.New(string(body))
 }

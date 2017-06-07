@@ -27,10 +27,18 @@ const (
 var _CURRENCYPAIR_TO_SYMBOL = map[CurrencyPair]string{
 	//BTC_LTC : "BTC_LTC",
 	ETH_BTC: "BTC_ETH",
+	ETC_ETH: "ETH_ETC",
 	ETC_BTC: "BTC_ETC",
+	LTC_BTC: "BTC_LTC",
 	XCN_BTC: "BTC_XCN",
 	SYS_BTC: "BTC_SYS",
-	ZEC_BTC: "BTC_ZEC"}
+	ZEC_BTC: "BTC_ZEC",
+	BTS_BTC: "BTC_BTS",
+	SC_BTC: "BTC_SC",
+	GNT_BTC: "BTC_GNT",
+	REP_ETH: "ETH_REP",
+	REP_BTC: "BTC_REP",
+}
 
 type Poloniex struct {
 	accessKey,
@@ -55,9 +63,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	cur := currency.String()
 	s := strings.Split(cur, "_")
 	ss := fmt.Sprintf("%s_%s", strings.ToUpper(s[1]), strings.ToUpper(s[0]))
-	//	fmt.Println(s)
-	//	fmt.Println(s[0])
-	fmt.Println(ss)
+
 	//	tickermap := respmap[_CURRENCYPAIR_TO_SYMBOL[currency]].(map[string]interface{})
 	tickermap := respmap[ss].(map[string]interface{})
 	ticker := new(Ticker)
@@ -68,7 +74,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.Sell, _ = strconv.ParseFloat(tickermap["lowestAsk"].(string), 64)
 	ticker.Vol, _ = strconv.ParseFloat(tickermap["quoteVolume"].(string), 64)
 
-	log.Println(tickermap)
+	//	log.Println(tickermap)
 
 	return ticker, nil
 }
@@ -407,10 +413,7 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
-	//	fmt.Println("resp:", resp)
-	//	fmt.Println("respS:", string(resp))
 
-	//	fmt.Println("respmap:", respmap)
 
 	if err != nil || respmap["error"] != nil {
 		log.Println(err)

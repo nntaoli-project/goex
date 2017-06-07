@@ -391,6 +391,16 @@ func convertCurrencyPair(currencyPair CurrencyPair) string {
 		return "etccny"
 	case ZEC_CNY:
 		return "zeccny"
+	case LTC_CNY:
+		return "ltccny"
+	case BTS_CNY:
+		return "btscny"
+	case SC_CNY:
+		return "sccny"
+	case GNT_CNY:
+		return "gntcny"
+	case REP_CNY:
+		return "repcny"
 	}
 	return "btccny"
 }
