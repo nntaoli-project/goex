@@ -183,6 +183,11 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 			etcfrozen := frozenmap["ETC"].(map[string]interface{});
 			subAcc.ForzenAmount = etcfrozen["amount"].(float64);
 			subAcc.LoanAmount = p2pmap["inETC"].(float64);
+		case "BTS":
+			subAcc.Currency = BTS;
+			btsfrozen := frozenmap["BTS"].(map[string]interface{});
+			subAcc.ForzenAmount = btsfrozen["amount"].(float64);
+			subAcc.LoanAmount = p2pmap["inBTS"].(float64);
 		default:
 			log.Println("unknown ", t);
 
@@ -359,7 +364,7 @@ func (chbtc *Chbtc) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params.Set("pageIndex", "1");
 	params.Set("pageSize", "100");
 	chbtc.buildPostForm(&params);
-
+	
 	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL + GET_UNFINISHED_ORDERS_API, params);
 	if err != nil {
 		log.Println(err);
