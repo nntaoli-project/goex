@@ -24,12 +24,13 @@ const (
 )
 
 var _CURRENCYPAIR_TO_SYMBOL = map[CurrencyPair]string{
-	//BTC_LTC : "BTC_LTC",
+	LTC_BTC: "BTC_LTC",
 	ETH_BTC: "BTC_ETH",
 	ETC_BTC: "BTC_ETC",
 	XCN_BTC: "BTC_XCN",
 	SYS_BTC: "BTC_SYS",
-	ZEC_BTC: "BTC_ZEC"}
+	ZEC_BTC: "BTC_ZEC",
+	ETC_ETH: "ETH_ETC"}
 
 type Poloniex struct {
 	accessKey,

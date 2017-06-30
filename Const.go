@@ -57,8 +57,9 @@ const
 	BTS
 )
 
-var currencyPairSymbol = [...]string{"btc_cny", "btc_usd", "btc_jpy", "fx_btc_jpy", "ltc_cny", "ltc_usd", "eth_cny",
-	"eth_usd", "eth_btc", "etc_cny", "etc_usd", "etc_btc", "xcn_btc", "sys_btc", "zec_cny", "zec_usd", "zec_btc" , "bts_cny","bts_btc"};
+var currencyPairSymbol = [...]string{"btc_cny", "btc_usd", "btc_jpy", "fx_btc_jpy", "ltc_cny", "ltc_usd","ltc_btc", "eth_cny",
+	"eth_usd", "eth_btc", "etc_cny", "etc_usd", "etc_btc","etc_eth","xcn_btc", "sys_btc", "zec_cny", "zec_usd", "zec_btc" , "bts_cny","bts_btc" ,
+	"sc_cny"};
 
 const
 (
@@ -69,6 +70,7 @@ const
 
 	LTC_CNY
 	LTC_USD
+	LTC_BTC
 
 	ETH_CNY
 	ETH_USD
@@ -77,6 +79,7 @@ const
 	ETC_CNY
 	ETC_USD
 	ETC_BTC
+	ETC_ETH
 
 	XCN_BTC
 	SYS_BTC
@@ -87,6 +90,8 @@ const
 
 	BTS_CNY
 	BTS_BTC
+
+	SC_CNY
 )
 
 const
@@ -128,7 +133,8 @@ var CurrencyPairSymbol = map[CurrencyPair]string{
 	ETC_CNY : "etc_cny",
 	ETC_USD : "etc_usd",
 	ETC_BTC : "etc_btc",
-	BTS_CNY : "bts_cny"};
+	BTS_CNY : "bts_cny",
+	SC_CNY  : "sc_cny"};
 
 var
 (
