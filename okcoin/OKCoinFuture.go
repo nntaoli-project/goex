@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	FUTURE_API_BASE_URL    = "https://www.okcoin.com/api/v1/"
+	FUTURE_API_BASE_URL    = "https://www.okex.com/api/v1/"
 	FUTURE_TICKER_URI      = "future_ticker.do?symbol=%s&contract_type=%s"
 	FUTURE_DEPTH_URI       = "future_depth.do?symbol=%s&contract_type=%s"
 	FUTURE_USERINFO_URI    = "future_userinfo.do"
@@ -63,7 +63,7 @@ func (ok *OKCoinFuture) buildPostForm(postForm *url.Values) error {
 
 
 func (ok *OKCoinFuture) GetExchangeName() string {
-	return "okcoin.com_future"
+	return "okex.com"
 }
 
 func (ok *OKCoinFuture) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64,error) {
