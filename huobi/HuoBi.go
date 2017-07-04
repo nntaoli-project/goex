@@ -454,6 +454,9 @@ func (hb *HuoBi) CancelOrder(orderId string, currency CurrencyPair) (bool, error
 	return (strings.Compare(ret, "success") == 0), nil;
 }
 
+/**
+ * 具体参数详解: https://github.com/huobiapi/API_Docs/wiki/REST-Interval
+ */
 func (hb *HuoBi) GetKlineRecords(currency CurrencyPair ,period string, size , since int) ([]Kline , error){
 	klineUri := API_BASE_URL + KLINE_URI;
 
