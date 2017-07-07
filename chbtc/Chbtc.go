@@ -69,7 +69,7 @@ func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		return nil, err
 	}
 
-	//log.Println(resp);
+	log.Println(resp);
 
 	asks := resp["asks"].([]interface{});
 	bids := resp["bids"].([]interface{});
@@ -133,6 +133,7 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 		log.Println("json unmarshal error");
 		return nil, err;
 	}
+
 	//log.Println(respmap)
 	if respmap["code"] != nil && respmap["code"].(float64) != 1000 {
 		return nil, errors.New(string(resp))
@@ -188,6 +189,11 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 			btsfrozen := frozenmap["BTS"].(map[string]interface{});
 			subAcc.ForzenAmount = btsfrozen["amount"].(float64);
 			subAcc.LoanAmount = p2pmap["inBTS"].(float64);
+		case "EOS":
+			subAcc.Currency = EOS;
+			btsfrozen := frozenmap["EOS"].(map[string]interface{});
+			subAcc.ForzenAmount = btsfrozen["amount"].(float64);
+			subAcc.LoanAmount = p2pmap["inEOS"].(float64);
 		default:
 			log.Println("unknown ", t);
 
@@ -372,6 +378,8 @@ func (chbtc *Chbtc) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	}
 
 	respstr := string(resp);
+	//println(respstr)
+
 	if strings.Contains(respstr, "\"code\":3001") {
 		log.Println(respstr);
 		return nil, nil;

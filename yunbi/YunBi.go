@@ -173,6 +173,10 @@ func (yunbi *YunBi)GetAccount() (*Account, error) {
 			currency = ZEC
 		case "sc":
 			currency = SC
+		case "bts":
+			currency = BTS
+		case "eos":
+			currency = EOS
 		default:
 			skip = true
 		}
@@ -395,6 +399,8 @@ func convertCurrencyPair(currencyPair CurrencyPair) string {
 		return "btscny"
 	case SC_CNY:
 		return "sccny"
+	case EOS_CNY:
+		return "eoscny"
 	}
 	return "btccny"
 }

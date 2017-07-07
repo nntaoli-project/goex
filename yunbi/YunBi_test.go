@@ -13,4 +13,5 @@ var (
 func TestYunBi_GetTicker(t *testing.T) {
 	t.Log(yb.GetTicker(coinapi.BTS_CNY))
 	t.Log(yb.GetTicker(coinapi.SC_CNY))
+	t.Log(yb.GetTicker(coinapi.EOS_CNY))
 }

@@ -42,7 +42,7 @@ func (ts TradeStatus) String() string {
 }
 
 /*currencySymbol array*/
-var currencySymbol = [...]string{"cny", "usd", "btc", "ltc", "eth", "etc", "zec", "sc" , "bts"};
+var currencySymbol = [...]string{"cny", "usd", "btc", "ltc", "eth", "etc", "zec", "sc" , "bts" , "eos"};
 
 const
 (
@@ -55,11 +55,12 @@ const
 	ZEC
 	SC
 	BTS
+	EOS
 )
 
 var currencyPairSymbol = [...]string{"btc_cny", "btc_usd", "btc_jpy", "fx_btc_jpy", "ltc_cny", "ltc_usd","ltc_btc", "eth_cny",
 	"eth_usd", "eth_btc", "etc_cny", "etc_usd", "etc_btc","etc_eth","xcn_btc", "sys_btc", "zec_cny", "zec_usd", "zec_btc" , "bts_cny","bts_btc" ,
-	"sc_cny"};
+	"sc_cny" , "eos_cny"};
 
 const
 (
@@ -92,6 +93,8 @@ const
 	BTS_BTC
 
 	SC_CNY
+
+	EOS_CNY
 )
 
 const
@@ -134,7 +137,8 @@ var CurrencyPairSymbol = map[CurrencyPair]string{
 	ETC_USD : "etc_usd",
 	ETC_BTC : "etc_btc",
 	BTS_CNY : "bts_cny",
-	SC_CNY  : "sc_cny"};
+	SC_CNY  : "sc_cny",
+	EOS_CNY : "eos_cny"};
 
 var
 (
