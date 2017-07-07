@@ -26,7 +26,7 @@ const (
 	url_order_info    = "order_info.do"
 	url_orders_info   = "orders_info.do"
 	order_history_uri = "order_history.do"
-	trade_uri 	  = "trade_history.do"
+	trade_uri         = "trade_history.do"
 )
 
 type OKCoinCN_API struct {
@@ -356,7 +356,7 @@ func (ctx *OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, erro
 	}
 
 	if bodyDataMap["result"] != nil && !bodyDataMap["result"].(bool) {
-		return nil , errors.New(fmt.Sprintf("%.0f" , bodyDataMap["error_code"].(float64)))
+		return nil, errors.New(fmt.Sprintf("%.0f", bodyDataMap["error_code"].(float64)))
 	}
 
 	for _, v := range bodyDataMap["asks"].([]interface{}) {
@@ -509,7 +509,7 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 	return orderAr, nil
 }
 
-func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair , since int64) ([]Trade , error){
+func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	tradeUrl := ok.api_base_url + trade_uri
 	postData := url.Values{}
 	postData.Set("symbol", CurrencyPairSymbol[currencyPair])
@@ -527,10 +527,10 @@ func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair , since int64) ([]Tr
 	//println(string(body))
 
 	var trades []Trade
-	err = json.Unmarshal(body , &trades)
+	err = json.Unmarshal(body, &trades)
 	if err != nil {
-		return nil , err
+		return nil, err
 	}
 
-	return  trades , nil
+	return trades, nil
 }
