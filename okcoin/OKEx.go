@@ -28,21 +28,21 @@ const (
 	_GET_KLINE_URI         = "future_kline.do"
 )
 
-type OKCoinFuture struct {
+type OKEx struct {
 	apiKey,
 	apiSecretKey string
 	client *http.Client
 }
 
-func NewFuture(client *http.Client, api_key, secret_key string) *OKCoinFuture {
-	ok := new(OKCoinFuture)
+func NewOKEx(client *http.Client, api_key, secret_key string) *OKEx {
+	ok := new(OKEx)
 	ok.apiKey = api_key
 	ok.apiSecretKey = secret_key
 	ok.client = client
 	return ok
 }
 
-func (ok *OKCoinFuture) buildPostForm(postForm *url.Values) error {
+func (ok *OKEx) buildPostForm(postForm *url.Values) error {
 	postForm.Set("api_key", ok.apiKey)
 	//postForm.Set("secret_key", ctx.secret_key);
 
@@ -61,11 +61,11 @@ func (ok *OKCoinFuture) buildPostForm(postForm *url.Values) error {
 	return nil
 }
 
-func (ok *OKCoinFuture) GetExchangeName() string {
+func (ok *OKEx) GetExchangeName() string {
 	return "okex.com"
 }
 
-func (ok *OKCoinFuture) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, error) {
+func (ok *OKEx) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, error) {
 	resp, err := ok.client.Get(fmt.Sprintf(FUTURE_API_BASE_URL+FUTURE_ESTIMATED_PRICE, CurrencyPairSymbol[currencyPair]))
 	if err != nil {
 		return 0, err
@@ -90,7 +90,7 @@ func (ok *OKCoinFuture) GetFutureEstimatedPrice(currencyPair CurrencyPair) (floa
 	return bodyMap["forecast_price"].(float64), nil
 }
 
-func (ok *OKCoinFuture) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
+func (ok *OKEx) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
 	url := FUTURE_API_BASE_URL + FUTURE_TICKER_URI
 	//fmt.Println(fmt.Sprintf(url, CurrencyPairSymbol[currencyPair], contractType));
 	resp, err := ok.client.Get(fmt.Sprintf(url, CurrencyPairSymbol[currencyPair], contractType))
@@ -134,7 +134,7 @@ func (ok *OKCoinFuture) GetFutureTicker(currencyPair CurrencyPair, contractType 
 	return ticker, nil
 }
 
-func (ok *OKCoinFuture) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
+func (ok *OKEx) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
 	url := FUTURE_API_BASE_URL + FUTURE_DEPTH_URI
 	//fmt.Println(fmt.Sprintf(url, CurrencyPairSymbol[currencyPair], contractType));
 	resp, err := ok.client.Get(fmt.Sprintf(url, CurrencyPairSymbol[currencyPair], contractType))
@@ -211,7 +211,7 @@ func (ok *OKCoinFuture) GetFutureDepth(currencyPair CurrencyPair, contractType s
 	return depth, nil
 }
 
-func (ok *OKCoinFuture) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
+func (ok *OKEx) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
 	return 0, nil
 }
 
@@ -223,7 +223,7 @@ type futureUserInfoResponse struct {
 	Result bool `json:"result,bool"`
 }
 
-func (ok *OKCoinFuture) GetFutureUserinfo() (*FutureAccount, error) {
+func (ok *OKEx) GetFutureUserinfo() (*FutureAccount, error) {
 	userInfoUrl := FUTURE_API_BASE_URL + FUTURE_USERINFO_URI
 
 	postData := url.Values{}
@@ -258,7 +258,7 @@ func (ok *OKCoinFuture) GetFutureUserinfo() (*FutureAccount, error) {
 	return account, nil
 }
 
-func (ok *OKCoinFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+func (ok *OKEx) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
 	postData := url.Values{}
 	postData.Set("symbol", CurrencyPairSymbol[currencyPair])
 	postData.Set("price", price)
@@ -292,7 +292,7 @@ func (ok *OKCoinFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType
 	return fmt.Sprintf("%.0f", respMap["order_id"].(float64)), nil
 }
 
-func (ok *OKCoinFuture) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
+func (ok *OKEx) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
 	postData := url.Values{}
 	postData.Set("symbol", CurrencyPairSymbol[currencyPair])
 	postData.Set("order_id", orderId)
@@ -320,7 +320,7 @@ func (ok *OKCoinFuture) FutureCancelOrder(currencyPair CurrencyPair, contractTyp
 	return true, nil
 }
 
-func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error) {
+func (ok *OKEx) GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error) {
 	positionUrl := FUTURE_API_BASE_URL + FUTURE_POSITION_URI
 
 	postData := url.Values{}
@@ -382,7 +382,7 @@ func (ok *OKCoinFuture) GetFuturePosition(currencyPair CurrencyPair, contractTyp
 	return posAr, nil
 }
 
-func (ok *OKCoinFuture) parseOrders(body []byte, currencyPair CurrencyPair) ([]FutureOrder, error) {
+func (ok *OKEx) parseOrders(body []byte, currencyPair CurrencyPair) ([]FutureOrder, error) {
 	respMap := make(map[string]interface{})
 
 	err := json.Unmarshal(body, &respMap)
@@ -433,7 +433,7 @@ func (ok *OKCoinFuture) parseOrders(body []byte, currencyPair CurrencyPair) ([]F
 	return futureOrders, nil
 }
 
-func (ok *OKCoinFuture) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
+func (ok *OKEx) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
 	postData := url.Values{}
 	postData.Set("order_id", strings.Join(orderIds, ","))
 	postData.Set("contract_type", contractType)
@@ -448,7 +448,7 @@ func (ok *OKCoinFuture) GetFutureOrders(orderIds []string, currencyPair Currency
 	return ok.parseOrders(body, currencyPair)
 }
 
-func (ok *OKCoinFuture) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
+func (ok *OKEx) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
 	postData := url.Values{}
 	postData.Set("order_id", "-1")
 	postData.Set("contract_type", contractType)
@@ -469,11 +469,11 @@ func (ok *OKCoinFuture) GetUnfinishFutureOrders(currencyPair CurrencyPair, contr
 	return ok.parseOrders(body, currencyPair)
 }
 
-func (ok *OKCoinFuture) GetFee() (float64, error) {
+func (ok *OKEx) GetFee() (float64, error) {
 	return 0.03, nil //期货固定0.03%手续费
 }
 
-func (ok *OKCoinFuture) GetExchangeRate() (float64, error) {
+func (ok *OKEx) GetExchangeRate() (float64, error) {
 	respMap, err := HttpGet(ok.client, FUTURE_API_BASE_URL+_EXCHANGE_RATE_URI)
 
 	if err != nil {
@@ -489,7 +489,7 @@ func (ok *OKCoinFuture) GetExchangeRate() (float64, error) {
 	return respMap["rate"].(float64), nil
 }
 
-func (ok *OKCoinFuture) GetContractValue(currencyPair CurrencyPair) (float64, error) {
+func (ok *OKEx) GetContractValue(currencyPair CurrencyPair) (float64, error) {
 	switch currencyPair {
 	case BTC_USD:
 		return 100, nil
@@ -500,11 +500,11 @@ func (ok *OKCoinFuture) GetContractValue(currencyPair CurrencyPair) (float64, er
 	return -1, errors.New("error")
 }
 
-func (ok *OKCoinFuture) GetDeliveryTime() (int, int, int, int) {
+func (ok *OKEx) GetDeliveryTime() (int, int, int, int) {
 	return 4, 16, 0, 0 //星期五，下午4点交割
 }
 
-func (ok *OKCoinFuture) GetKlineRecords(contract_type string, currency CurrencyPair, period string, size, since int) ([]FutureKline, error) {
+func (ok *OKEx) GetKlineRecords(contract_type string, currency CurrencyPair, period string, size, since int) ([]FutureKline, error) {
 	params := url.Values{}
 	params.Set("symbol", CurrencyPairSymbol[currency])
 	params.Set("type", period)
@@ -560,6 +560,6 @@ func (ok *OKCoinFuture) GetKlineRecords(contract_type string, currency CurrencyP
 	return klineRecords, nil
 }
 
-func (okFuture *OKCoinFuture) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+func (okFuture *OKEx) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("unimplements")
 }
