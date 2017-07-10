@@ -1,19 +1,19 @@
 package builder
 
 import (
-	. "github.com/nntaoli/crypto_coin_api"
-	"github.com/nntaoli/crypto_coin_api/chbtc"
-	"github.com/nntaoli/crypto_coin_api/coincheck"
+	. "github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/chbtc"
+	"github.com/nntaoli-project/GoEx/coincheck"
 	"context"
-	"github.com/nntaoli/crypto_coin_api/huobi"
-	"github.com/nntaoli/crypto_coin_api/okcoin"
-	"github.com/nntaoli/crypto_coin_api/poloniex"
-	"github.com/nntaoli/crypto_coin_api/yunbi"
-	"github.com/nntaoli/crypto_coin_api/zaif"
-	"github.com/qiniu/log"
+	"github.com/nntaoli-project/GoEx/huobi"
+	"github.com/nntaoli-project/GoEx/okcoin"
+	"github.com/nntaoli-project/GoEx/poloniex"
+	"github.com/nntaoli-project/GoEx/yunbi"
+	"github.com/nntaoli-project/GoEx/zaif"
 	"net"
 	"net/http"
 	"time"
+	"log"
 )
 
 type APIBuilder struct {

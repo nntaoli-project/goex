@@ -2,7 +2,7 @@ package zaif
 
 import (
 	"fmt"
-	. "github.com/nntaoli/crypto_coin_api"
+	. "github.com/nntaoli-project/GoEx"
 	"log"
 	"net/http"
 	"sort"

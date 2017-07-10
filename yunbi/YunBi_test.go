@@ -3,7 +3,7 @@ package yunbi
 import (
 	"testing"
 	"net/http"
-	"github.com/nntaoli/crypto_coin_api"
+	. "github.com/nntaoli-project/GoEx"
 )
 
 var (
@@ -11,7 +11,7 @@ var (
 )
 
 func TestYunBi_GetTicker(t *testing.T) {
-	t.Log(yb.GetTicker(coinapi.BTS_CNY))
-	t.Log(yb.GetTicker(coinapi.SC_CNY))
-	t.Log(yb.GetTicker(coinapi.EOS_CNY))
+	t.Log(yb.GetTicker(BTS_CNY))
+	t.Log(yb.GetTicker(SC_CNY))
+	t.Log(yb.GetTicker(EOS_CNY))
 }

@@ -1,4 +1,4 @@
-package coinapi
+package goex
 
 // api interface
 

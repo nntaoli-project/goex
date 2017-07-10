@@ -1,4 +1,4 @@
-package coinapi
+package goex
 
 //http request 工具函数
 import (

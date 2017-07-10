@@ -2,7 +2,7 @@ package coincheck
 
 import (
 	"fmt"
-	. "github.com/nntaoli/crypto_coin_api"
+	. "github.com/nntaoli-project/GoEx"
 	"log"
 	"net/http"
 	//"strconv"
@@ -33,7 +33,7 @@ func (cc *Coincheck) GetExchangeName() string {
 func (cc *Coincheck) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	tickerUrl := fmt.Sprintf(cc.baseUrl + "api/ticker")
 
-	println(tickerUrl)
+	//println(tickerUrl)
 	resp, err := HttpGet(cc.client, tickerUrl)
 	if err != nil {
 		log.Print(err)
@@ -47,7 +47,7 @@ func (cc *Coincheck) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.High = resp["high"].(float64)
 	ticker.Low = resp["low"].(float64)
 	ticker.Date = uint64(resp["timestamp"].(float64))
-	ticker.Vol, _ = strconv.ParseFloat(resp["volume"].(string), 64)
+	ticker.Vol = resp["volume"].(float64)
 	return ticker, nil
 }
 

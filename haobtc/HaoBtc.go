@@ -2,7 +2,7 @@
 package haobtc
 
 import (
-	. "github.com/nntaoli/crypto_coin_api"
+	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"errors"
 	"fmt"
