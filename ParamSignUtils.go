@@ -67,3 +67,13 @@ func GetParamHmacMD5Sign(secret, params string) (string, error) {
 	}
 	return hex.EncodeToString(mac.Sum(nil)), nil
 }
+
+/*for bitfinex.com*/
+func GetParamHmacSha384Sign(secret, params string) (string, error) {
+	mac := hmac.New(sha512.New384, []byte(secret))
+	_, err := mac.Write([]byte(params))
+	if err != nil {
+		return "", nil
+	}
+	return hex.EncodeToString(mac.Sum(nil)), nil
+}
