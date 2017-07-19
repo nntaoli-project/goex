@@ -13,7 +13,15 @@ func (c CurrencyPair) String() string {
 	}
 	return currencyPairSymbol[c-1]
 }
-func (c CurrencyPair) UnderlineString() string {
+func (c CurrencyPair) DeleteUnderLineString() string {
+	if c == 0 {
+		return "nil"
+	}
+	cur := c.String()
+	s := strings.Replace(cur, "_", "", -1)
+	return s
+}
+func (c CurrencyPair) SwitchString() string {
 	if c == 0 {
 		return "nil"
 	}
@@ -22,7 +30,7 @@ func (c CurrencyPair) UnderlineString() string {
 	ss := fmt.Sprintf("%s_%s", strings.ToUpper(s[1]), strings.ToUpper(s[0]))
 	return ss
 }
-func (c CurrencyPair) CrossedString() string {
+func (c CurrencyPair) CrossedLineString() string {
 	if c == 0 {
 		return "nil"
 	}
