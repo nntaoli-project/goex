@@ -5,7 +5,10 @@ import (
 	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"strconv"
-	"strings"
+//	"strings"
+	"log"
+	"errors"
+	"encoding/json"
 )
 
 type Bitfinex struct {
@@ -15,6 +18,8 @@ type Bitfinex struct {
 }
 
 const (
+	EXCHANGE_NAME = "bitfinex.com"
+	
 	BASE_URL = "https://api.bitfinex.com/v1"
 )
 
@@ -32,15 +37,26 @@ func New(client *http.Client, accessKey, secretKey string) *Bitfinex {
 }
 
 func (bfx *Bitfinex) GetExchangeName() string {
-	return "bitfinex.com"
+	return EXCHANGE_NAME
 }
 
 func (bfx *Bitfinex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	//pubticker
-	apiUrl := fmt.Sprintf("%s/pubticker/%s", BASE_URL, CURRENCYPAIR_TO_SYMBOL[currency])
+	cur := currency.DeleteUnderLineString()
+	if cur == "nil" {
+		log.Println("Unsupport The CurrencyPair")
+		return nil, errors.New("Unsupport The CurrencyPair")
+	}
+	apiUrl := fmt.Sprintf("%s/pubticker/%s", BASE_URL, cur)
 	resp, err := HttpGet(bfx.httpClient, apiUrl)
 	if err != nil {
 		return nil, err
+	}
+	str, _ := json.Marshal(resp)
+	//	fmt.Println("str:", string(str))
+	if string(str) == "{\"error\":\"ERR_RATE_LIMIT\"}" {
+		fmt.Println("err", "{\"error\":\"ERR_RATE_LIMIT\"}")
+		return nil, errors.New("ERR_RATE_LIMIT")
 	}
 	//fmt.Println(resp)
 	ticker := new(Ticker)
@@ -50,14 +66,16 @@ func (bfx *Bitfinex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.Low, _ = strconv.ParseFloat(resp["low"].(string), 64)
 	ticker.Sell, _ = strconv.ParseFloat(resp["ask"].(string), 64)
 	ticker.Buy, _ = strconv.ParseFloat(resp["bid"].(string), 64)
-	dateStr := resp["timestamp"].(string)
-	dataMeta := strings.Split(dateStr, ".")
-	ticker.Date, _ = strconv.ParseUint(dataMeta[0], 10, 64)
+	date, _ := strconv.ParseFloat(resp["timestamp"].(string), 64)
+	ticker.Date = uint64(date)
+	//dateStr := resp["timestamp"].(string)
+	//dataMeta := strings.Split(dateStr, ".")
+	//ticker.Date, _ = strconv.ParseUint(dataMeta[0], 10, 64)
 	return ticker, nil
 }
 
 func (bfx *Bitfinex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	apiUrl := fmt.Sprintf("%s/book/%s?limit_bids=%d&limit_asks=%d", BASE_URL, CURRENCYPAIR_TO_SYMBOL[currency], size, size)
+	apiUrl := fmt.Sprintf("%s/book/%s?limit_bids=%d&limit_asks=%d", BASE_URL, currency.DeleteUnderLineString(), size, size)
 	resp, err := HttpGet(bfx.httpClient, apiUrl)
 	if err != nil {
 		return nil, err
