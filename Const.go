@@ -73,7 +73,7 @@ func (ts TradeStatus) String() string {
 }
 
 /*currencySymbol array*/
-var currencySymbol = [...]string{"cny", "usd", "btc", "ltc", "eth", "etc", "zec", "sc", "xpm", "xrp", "zcc", "mec", "anc", "bec", "ppc",
+var currencySymbol = [...]string{"cny", "usd", "btc", "ltc", "eth", "etc", "zec", "sc","eos","xpm", "xrp", "zcc", "mec", "anc", "bec", "ppc",
 	"src", "tag", "bts", "wdc", "xlm", "dgc", "qrk", "doge", "ybc", "ric", "bost", "nxt", "blk", "nrs", "med", "ncs", "eac", "xcn", "sys", "xem",
 	"vash", "dash", "emc", "hlb", "ardr", "xzc", "mgc", "tmc", "bns", "corg", "neos", "xst", "1cr", "bdc", "drkc", "frac", "srcc", "cc", "dao",
 	"etok", "nav", "trust", "aur", "dime", "exp", "game", "ioc", "blu", "fac", "gemz", "cyc", "emo", "jlh", "xbc", "xdp", "gap", "smc", "xhc",
@@ -100,6 +100,7 @@ const (
 	ETC
 	ZEC
 	SC
+	EOS
 	XPM
 	XRP
 	ZCC
