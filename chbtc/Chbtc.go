@@ -43,7 +43,7 @@ func (chbtc *Chbtc) GetExchangeName() string {
 }
 
 func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	resp, err := HttpGet(chbtc.httpClient, MARKET_URL+fmt.Sprintf(TICKER_API, CurrencyPairSymbol[currency]))
+	resp, err := HttpGet(chbtc.httpClient, MARKET_URL+fmt.Sprintf(TICKER_API, strings.ToLower(currency.ToSymbol("_"))))
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	resp, err := HttpGet(chbtc.httpClient, MARKET_URL+fmt.Sprintf(DEPTH_API, CurrencyPairSymbol[currency], size))
+	resp, err := HttpGet(chbtc.httpClient, MARKET_URL+fmt.Sprintf(DEPTH_API, currency.ToSymbol("_"), size))
 	if err != nil {
 		return nil, err
 	}
@@ -146,8 +146,8 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 	balancemap := resultmap["balance"].(map[string]interface{})
 	frozenmap := resultmap["frozen"].(map[string]interface{})
 	p2pmap := resultmap["p2p"].(map[string]interface{})
-	netAssets := resultmap["netAssets"].(float64)
-	asset := resultmap["totalAssets"].(float64)
+	netAssets := ToFloat64(resultmap["netAssets"])
+	asset := ToFloat64(resultmap["totalAssets"])
 
 	acc.NetAsset = netAssets
 	acc.Asset = asset
@@ -155,43 +155,43 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 	for t, v := range balancemap {
 		vv := v.(map[string]interface{})
 		subAcc := SubAccount{}
-		subAcc.Amount = vv["amount"].(float64)
+		subAcc.Amount = ToFloat64(vv["amount"])
 
 		switch t {
 		case "CNY":
 			subAcc.Currency = CNY
 			cnyfrozen := frozenmap["CNY"].(map[string]interface{})
-			subAcc.ForzenAmount = cnyfrozen["amount"].(float64)
+			subAcc.ForzenAmount = ToFloat64(cnyfrozen["amount"])
 			subAcc.LoanAmount = p2pmap["inCNY"].(float64)
 		case "BTC":
 			subAcc.Currency = BTC
 			btcfrozen := frozenmap["BTC"].(map[string]interface{})
-			subAcc.ForzenAmount = btcfrozen["amount"].(float64)
+			subAcc.ForzenAmount = ToFloat64(btcfrozen["amount"])
 			subAcc.LoanAmount = p2pmap["inBTC"].(float64)
 		case "LTC":
 			subAcc.Currency = LTC
 			ltcfrozen := frozenmap["LTC"].(map[string]interface{})
-			subAcc.ForzenAmount = ltcfrozen["amount"].(float64)
+			subAcc.ForzenAmount = ToFloat64(ltcfrozen["amount"])
 			subAcc.LoanAmount = p2pmap["inLTC"].(float64)
 		case "ETH":
 			subAcc.Currency = ETH
 			ethfrozen := frozenmap["ETH"].(map[string]interface{})
-			subAcc.ForzenAmount = ethfrozen["amount"].(float64)
+			subAcc.ForzenAmount = ToFloat64(ethfrozen["amount"])
 			subAcc.LoanAmount = p2pmap["inETH"].(float64)
 		case "ETC":
 			subAcc.Currency = ETC
 			etcfrozen := frozenmap["ETC"].(map[string]interface{})
-			subAcc.ForzenAmount = etcfrozen["amount"].(float64)
+			subAcc.ForzenAmount = ToFloat64(etcfrozen["amount"])
 			subAcc.LoanAmount = p2pmap["inETC"].(float64)
 		case "BTS":
 			subAcc.Currency = BTS
 			btsfrozen := frozenmap["BTS"].(map[string]interface{})
-			subAcc.ForzenAmount = btsfrozen["amount"].(float64)
+			subAcc.ForzenAmount = ToFloat64(btsfrozen["amount"])
 			subAcc.LoanAmount = p2pmap["inBTS"].(float64)
 		case "EOS":
 			subAcc.Currency = EOS
 			btsfrozen := frozenmap["EOS"].(map[string]interface{})
-			subAcc.ForzenAmount = btsfrozen["amount"].(float64)
+			subAcc.ForzenAmount = ToFloat64(btsfrozen["amount"])
 			subAcc.LoanAmount = p2pmap["inEOS"].(float64)
 		default:
 			log.Println("unknown ", t)
@@ -211,7 +211,7 @@ func (chbtc *Chbtc) placeOrder(amount, price string, currency CurrencyPair, trad
 	params.Set("method", "order")
 	params.Set("price", price)
 	params.Set("amount", amount)
-	params.Set("currency", CurrencyPairSymbol[currency])
+	params.Set("currency", currency.ToSymbol("_"))
 	params.Set("tradeType", fmt.Sprintf("%d", tradeType))
 	chbtc.buildPostForm(&params)
 
@@ -268,7 +268,7 @@ func (chbtc *Chbtc) CancelOrder(orderId string, currency CurrencyPair) (bool, er
 	params := url.Values{}
 	params.Set("method", "cancelOrder")
 	params.Set("id", orderId)
-	params.Set("currency", CurrencyPairSymbol[currency])
+	params.Set("currency", currency.ToSymbol("_"))
 	chbtc.buildPostForm(&params)
 
 	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+CANCEL_ORDER_API, params)
@@ -338,7 +338,7 @@ func (chbtc *Chbtc) GetOneOrder(orderId string, currency CurrencyPair) (*Order, 
 	params := url.Values{}
 	params.Set("method", "getOrder")
 	params.Set("id", orderId)
-	params.Set("currency", CurrencyPairSymbol[currency])
+	params.Set("currency", currency.ToSymbol("_"))
 	chbtc.buildPostForm(&params)
 
 	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+GET_ORDER_API, params)
@@ -365,7 +365,7 @@ func (chbtc *Chbtc) GetOneOrder(orderId string, currency CurrencyPair) (*Order, 
 func (chbtc *Chbtc) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params := url.Values{}
 	params.Set("method", "getUnfinishedOrdersIgnoreTradeType")
-	params.Set("currency", CurrencyPairSymbol[currency])
+	params.Set("currency", currency.ToSymbol("_"))
 	params.Set("pageIndex", "1")
 	params.Set("pageSize", "100")
 	chbtc.buildPostForm(&params)

@@ -465,7 +465,7 @@ func (hb *HuoBi) GetKlineRecords(currency CurrencyPair, period string, size, sin
 	case LTC_CNY:
 		klineUri = fmt.Sprintf(klineUri, "ltc", period, size)
 	default:
-		return nil, errors.New("Unsupport " + CurrencyPairSymbol[currency])
+		return nil, errors.New("Unsupport " + currency.String())
 	}
 	//println(klineUri)
 	resp, err := http.Get(klineUri)

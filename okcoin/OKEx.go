@@ -66,7 +66,7 @@ func (ok *OKEx) GetExchangeName() string {
 }
 
 func (ok *OKEx) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, error) {
-	resp, err := ok.client.Get(fmt.Sprintf(FUTURE_API_BASE_URL+FUTURE_ESTIMATED_PRICE, CurrencyPairSymbol[currencyPair]))
+	resp, err := ok.client.Get(fmt.Sprintf(FUTURE_API_BASE_URL+FUTURE_ESTIMATED_PRICE, strings.ToLower(currencyPair.ToSymbol("_"))))
 	if err != nil {
 		return 0, err
 	}
@@ -92,8 +92,8 @@ func (ok *OKEx) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, err
 
 func (ok *OKEx) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
 	url := FUTURE_API_BASE_URL + FUTURE_TICKER_URI
-	//fmt.Println(fmt.Sprintf(url, CurrencyPairSymbol[currencyPair], contractType));
-	resp, err := ok.client.Get(fmt.Sprintf(url, CurrencyPairSymbol[currencyPair], contractType))
+	//fmt.Println(fmt.Sprintf(url, strings.ToLower(currencyPair.ToSymbol("_")), contractType));
+	resp, err := ok.client.Get(fmt.Sprintf(url, strings.ToLower(currencyPair.ToSymbol("_")), contractType))
 	if err != nil {
 		return nil, err
 	}
@@ -136,8 +136,8 @@ func (ok *OKEx) GetFutureTicker(currencyPair CurrencyPair, contractType string) 
 
 func (ok *OKEx) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
 	url := FUTURE_API_BASE_URL + FUTURE_DEPTH_URI
-	//fmt.Println(fmt.Sprintf(url, CurrencyPairSymbol[currencyPair], contractType));
-	resp, err := ok.client.Get(fmt.Sprintf(url, CurrencyPairSymbol[currencyPair], contractType))
+	//fmt.Println(fmt.Sprintf(url, strings.ToLower(currencyPair.ToSymbol("_")), contractType));
+	resp, err := ok.client.Get(fmt.Sprintf(url, strings.ToLower(strings.ToLower(currencyPair.ToSymbol("_"))), contractType))
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +260,7 @@ func (ok *OKEx) GetFutureUserinfo() (*FutureAccount, error) {
 
 func (ok *OKEx) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
 	postData := url.Values{}
-	postData.Set("symbol", CurrencyPairSymbol[currencyPair])
+	postData.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
 	postData.Set("price", price)
 	postData.Set("contract_type", contractType)
 	postData.Set("amount", amount)
@@ -294,7 +294,7 @@ func (ok *OKEx) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 
 func (ok *OKEx) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
 	postData := url.Values{}
-	postData.Set("symbol", CurrencyPairSymbol[currencyPair])
+	postData.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
 	postData.Set("order_id", orderId)
 	postData.Set("contract_type", contractType)
 
@@ -325,7 +325,7 @@ func (ok *OKEx) GetFuturePosition(currencyPair CurrencyPair, contractType string
 
 	postData := url.Values{}
 	postData.Set("contract_type", contractType)
-	postData.Set("symbol", CurrencyPairSymbol[currencyPair])
+	postData.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
 
 	ok.buildPostForm(&postData)
 
@@ -437,7 +437,7 @@ func (ok *OKEx) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, co
 	postData := url.Values{}
 	postData.Set("order_id", strings.Join(orderIds, ","))
 	postData.Set("contract_type", contractType)
-	postData.Set("symbol", CurrencyPairSymbol[currencyPair])
+	postData.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
 	ok.buildPostForm(&postData)
 
 	body, err := HttpPostForm(ok.client, FUTURE_API_BASE_URL+FUTURE_ORDERS_INFO_URI, postData)
@@ -452,7 +452,7 @@ func (ok *OKEx) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType 
 	postData := url.Values{}
 	postData.Set("order_id", "-1")
 	postData.Set("contract_type", contractType)
-	postData.Set("symbol", CurrencyPairSymbol[currencyPair])
+	postData.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
 	postData.Set("status", "1")
 	postData.Set("current_page", "1")
 	postData.Set("page_length", "50")
@@ -504,9 +504,9 @@ func (ok *OKEx) GetDeliveryTime() (int, int, int, int) {
 	return 4, 16, 0, 0 //星期五，下午4点交割
 }
 
-func (ok *OKEx) GetKlineRecords(contract_type string, currency CurrencyPair, period string, size, since int) ([]FutureKline, error) {
+func (ok *OKEx) GetKlineRecords(contract_type string, currencyPair CurrencyPair, period string, size, since int) ([]FutureKline, error) {
 	params := url.Values{}
-	params.Set("symbol", CurrencyPairSymbol[currency])
+	params.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
 	params.Set("type", period)
 	params.Set("contract_type", contract_type)
 	params.Set("size", fmt.Sprintf("%d", size))

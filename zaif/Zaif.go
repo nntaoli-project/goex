@@ -6,11 +6,8 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strings"
 )
-
-var ToCurrency = map[CurrencyPair]string{
-	BTC_JPY: "btc",
-}
 
 type Zaif struct {
 	client *http.Client
@@ -33,7 +30,7 @@ func (zf *Zaif) GetExchangeName() string {
 }
 
 func (zf *Zaif) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	tickerUrl := fmt.Sprintf(zf.baseUrl+"1/ticker/%s_jpy", ToCurrency[currency])
+	tickerUrl := fmt.Sprintf(zf.baseUrl+"1/ticker/%s_jpy", strings.ToLower(currency.CurrencyA.Symbol))
 	//println(tickerUrl)
 	resp, err := HttpGet(zf.client, tickerUrl)
 	if err != nil {
@@ -52,7 +49,7 @@ func (zf *Zaif) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (zf *Zaif) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	depthUrl := fmt.Sprintf(zf.baseUrl+"1/depth/%s_jpy", ToCurrency[currency])
+	depthUrl := fmt.Sprintf(zf.baseUrl+"1/depth/%s_jpy", strings.ToLower(currency.CurrencyA.Symbol))
 	resp, err := HttpGet(zf.client, depthUrl)
 	if err != nil {
 		log.Println(err)
