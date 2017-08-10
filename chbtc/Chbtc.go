@@ -43,7 +43,7 @@ func (chbtc *Chbtc) GetExchangeName() string {
 }
 
 func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	resp, err := HttpGet(chbtc.httpClient, MARKET_URL+fmt.Sprintf(TICKER_API, CurrencyPairSymbol[currency]))
+	resp, err := HttpGet(chbtc.httpClient, MARKET_URL+fmt.Sprintf(TICKER_API, strings.ToLower(currency.ToSymbol("_"))))
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	resp, err := HttpGet(chbtc.httpClient, MARKET_URL+fmt.Sprintf(DEPTH_API, CurrencyPairSymbol[currency], size))
+	resp, err := HttpGet(chbtc.httpClient, MARKET_URL+fmt.Sprintf(DEPTH_API, currency.ToSymbol("_"), size))
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (chbtc *Chbtc) placeOrder(amount, price string, currency CurrencyPair, trad
 	params.Set("method", "order")
 	params.Set("price", price)
 	params.Set("amount", amount)
-	params.Set("currency", CurrencyPairSymbol[currency])
+	params.Set("currency", currency.ToSymbol("_"))
 	params.Set("tradeType", fmt.Sprintf("%d", tradeType))
 	chbtc.buildPostForm(&params)
 
@@ -268,7 +268,7 @@ func (chbtc *Chbtc) CancelOrder(orderId string, currency CurrencyPair) (bool, er
 	params := url.Values{}
 	params.Set("method", "cancelOrder")
 	params.Set("id", orderId)
-	params.Set("currency", CurrencyPairSymbol[currency])
+	params.Set("currency", currency.ToSymbol("_"))
 	chbtc.buildPostForm(&params)
 
 	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+CANCEL_ORDER_API, params)
@@ -338,7 +338,7 @@ func (chbtc *Chbtc) GetOneOrder(orderId string, currency CurrencyPair) (*Order, 
 	params := url.Values{}
 	params.Set("method", "getOrder")
 	params.Set("id", orderId)
-	params.Set("currency", CurrencyPairSymbol[currency])
+	params.Set("currency", currency.ToSymbol("_"))
 	chbtc.buildPostForm(&params)
 
 	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+GET_ORDER_API, params)
@@ -365,7 +365,7 @@ func (chbtc *Chbtc) GetOneOrder(orderId string, currency CurrencyPair) (*Order, 
 func (chbtc *Chbtc) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params := url.Values{}
 	params.Set("method", "getUnfinishedOrdersIgnoreTradeType")
-	params.Set("currency", CurrencyPairSymbol[currency])
+	params.Set("currency", currency.ToSymbol("_"))
 	params.Set("pageIndex", "1")
 	params.Set("pageSize", "100")
 	chbtc.buildPostForm(&params)

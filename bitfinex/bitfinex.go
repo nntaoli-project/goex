@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"net/http"
+	"strings"
 )
 
 type Bitfinex struct {
@@ -20,15 +20,6 @@ const (
 	BASE_URL = "https://api.bitfinex.com/v1"
 )
 
-var CURRENCYPAIR_TO_SYMBOL = map[CurrencyPair]string{
-	BTC_USD: "btcusd",
-	LTC_USD: "ltcusd",
-	LTC_BTC: "ltcbtc",
-	ETH_BTC: "ethbtc",
-	ETC_BTC: "etcbtc",
-	ETC_USD: "etcusd",
-}
-
 func New(client *http.Client, accessKey, secretKey string) *Bitfinex {
 	return &Bitfinex{client, accessKey, secretKey}
 }
@@ -37,15 +28,9 @@ func (bfx *Bitfinex) GetExchangeName() string {
 	return EXCHANGE_NAME
 }
 
-func (bfx *Bitfinex) GetTicker(currency CurrencyPair) (*Ticker, error) {
+func (bfx *Bitfinex) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	//pubticker
-	cur := currency.DeleteUnderLineString()
-	if cur == "nil" {
-		log.Println("Unsupport The CurrencyPair")
-		return nil, errors.New("Unsupport The CurrencyPair")
-	}
-
-	apiUrl := fmt.Sprintf("%s/pubticker/%s", BASE_URL, cur)
+	apiUrl := fmt.Sprintf("%s/pubticker/%s", BASE_URL, bfx.currencyPairToSymbol(currencyPair))
 	resp, err := HttpGet(bfx.httpClient, apiUrl)
 	if err != nil {
 		return nil, err
@@ -70,8 +55,8 @@ func (bfx *Bitfinex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	return ticker, nil
 }
 
-func (bfx *Bitfinex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	apiUrl := fmt.Sprintf("%s/book/%s?limit_bids=%d&limit_asks=%d", BASE_URL, currency.DeleteUnderLineString(), size, size)
+func (bfx *Bitfinex) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
+	apiUrl := fmt.Sprintf("%s/book/%s?limit_bids=%d&limit_asks=%d", BASE_URL, bfx.currencyPairToSymbol(currencyPair), size, size)
 	resp, err := HttpGet(bfx.httpClient, apiUrl)
 	if err != nil {
 		return nil, err
@@ -101,7 +86,7 @@ func (bfx *Bitfinex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return depth, nil
 }
 
-func (bfx *Bitfinex) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+func (bfx *Bitfinex) GetKlineRecords(currencyPair CurrencyPair, period string, size, since int) ([]Kline, error) {
 	panic("not implement")
 }
 
@@ -115,34 +100,38 @@ func (bfx *Bitfinex) GetAccount() (*Account, error) {
 	return nil, nil
 }
 
-func (bfx *Bitfinex) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bfx *Bitfinex) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
 	return nil, nil
 }
 
-func (bfx *Bitfinex) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bfx *Bitfinex) LimitSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
 	return nil, nil
 }
 
-func (bfx *Bitfinex) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bfx *Bitfinex) MarketBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
 	panic("not implement.")
 }
 
-func (bfx *Bitfinex) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bfx *Bitfinex) MarketSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
 	panic("not implement.")
 }
 
-func (bfx *Bitfinex) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
+func (bfx *Bitfinex) CancelOrder(orderId string, currencyPair CurrencyPair) (bool, error) {
 	return false, nil
 }
 
-func (bfx *Bitfinex) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
+func (bfx *Bitfinex) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, error) {
 	return nil, nil
 }
 
-func (bfx *Bitfinex) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
+func (bfx *Bitfinex) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error) {
 	return nil, nil
 }
 
-func (bfx *Bitfinex) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (bfx *Bitfinex) GetOrderHistorys(currencyPair CurrencyPair, currentPage, pageSize int) ([]Order, error) {
 	return nil, nil
+}
+
+func (bfx *Bitfinex) currencyPairToSymbol(currencyPair CurrencyPair) string {
+	return strings.ToLower(currencyPair.ToSymbol(""))
 }

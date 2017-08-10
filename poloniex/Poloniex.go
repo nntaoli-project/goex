@@ -23,15 +23,6 @@ const (
 	ORDER_BOOK_API = "?command=returnOrderBook&currencyPair=%s&depth=%d"
 )
 
-var _CURRENCYPAIR_TO_SYMBOL = map[CurrencyPair]string{
-	LTC_BTC: "BTC_LTC",
-	ETH_BTC: "BTC_ETH",
-	ETC_BTC: "BTC_ETC",
-	XCN_BTC: "BTC_XCN",
-	SYS_BTC: "BTC_SYS",
-	ZEC_BTC: "BTC_ZEC",
-	ETC_ETH: "ETH_ETC"}
-
 type Poloniex struct {
 	accessKey,
 	secretKey string
@@ -53,7 +44,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		return nil, err
 	}
 
-	tickermap := respmap[_CURRENCYPAIR_TO_SYMBOL[currency]].(map[string]interface{})
+	tickermap := respmap[currency.ToSymbol2("_")].(map[string]interface{})
 
 	ticker := new(Ticker)
 	ticker.High, _ = strconv.ParseFloat(tickermap["high24hr"].(string), 64)
@@ -68,7 +59,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	return ticker, nil
 }
 func (poloniex *Poloniex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	respmap, err := HttpGet(poloniex.client ,  PUBLIC_URL + fmt.Sprintf(ORDER_BOOK_API, _CURRENCYPAIR_TO_SYMBOL[currency], size))
+	respmap, err := HttpGet(poloniex.client ,  PUBLIC_URL + fmt.Sprintf(ORDER_BOOK_API, currency.ToSymbol2("_"), size))
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -122,7 +113,7 @@ func (Poloniex *Poloniex) GetKlineRecords(currency CurrencyPair, period string, 
 func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currency CurrencyPair) (*Order, error) {
 	postData := url.Values{}
 	postData.Set("command", command)
-	postData.Set("currencyPair", _CURRENCYPAIR_TO_SYMBOL[currency])
+	postData.Set("currencyPair", currency.ToSymbol2("_"))
 	postData.Set("rate", price)
 	postData.Set("amount", amount)
 
@@ -283,7 +274,7 @@ func (poloniex *Poloniex) GetOneOrder(orderId string, currency CurrencyPair) (*O
 func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	postData := url.Values{}
 	postData.Set("command", "returnOpenOrders")
-	postData.Set("currencyPair", _CURRENCYPAIR_TO_SYMBOL[currency])
+	postData.Set("currencyPair", currency.ToSymbol2("_"))
 
 	sign, err := poloniex.buildPostForm(&postData)
 	if err != nil {
@@ -380,10 +371,10 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 		case "USD":
 			currency = USD
 		default:
-			currency = -1
+			currency = UNKNOWN
 		}
 
-		if currency > 0 {
+		if currency == UNKNOWN {
 			vv := v.(map[string]interface{})
 			subAcc := SubAccount{}
 			subAcc.Currency = currency
