@@ -11,4 +11,4 @@
 
 ### 欢迎为作者付一碗面钱
 
-![GoEx/wx_pay.JPG] (GoEx/wx_pay.JPG)
+![一碗面钱](https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG)
