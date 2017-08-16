@@ -3,6 +3,10 @@ package goex
 import "strconv"
 
 func ToFloat64(v interface{}) float64 {
+	if v == nil {
+		return 0.0
+	}
+
 	switch v.(type) {
 	case float64:
 		return v.(float64)

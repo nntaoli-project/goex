@@ -146,53 +146,37 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 	balancemap := resultmap["balance"].(map[string]interface{})
 	frozenmap := resultmap["frozen"].(map[string]interface{})
 	p2pmap := resultmap["p2p"].(map[string]interface{})
-	netAssets := ToFloat64(resultmap["netAssets"])
-	asset := ToFloat64(resultmap["totalAssets"])
 
-	acc.NetAsset = netAssets
-	acc.Asset = asset
+	acc.NetAsset = ToFloat64(resultmap["netAssets"])
+	acc.Asset = ToFloat64(resultmap["totalAssets"])
 
 	for t, v := range balancemap {
 		vv := v.(map[string]interface{})
+		frozen := frozenmap["CNY"].(map[string]interface{})
 		subAcc := SubAccount{}
 		subAcc.Amount = ToFloat64(vv["amount"])
+		subAcc.ForzenAmount = ToFloat64(frozen["amount"])
+		subAcc.LoanAmount = ToFloat64(p2pmap[fmt.Sprintf("in%s", t)])
 
 		switch t {
 		case "CNY":
 			subAcc.Currency = CNY
-			cnyfrozen := frozenmap["CNY"].(map[string]interface{})
-			subAcc.ForzenAmount = ToFloat64(cnyfrozen["amount"])
-			subAcc.LoanAmount = p2pmap["inCNY"].(float64)
 		case "BTC":
 			subAcc.Currency = BTC
-			btcfrozen := frozenmap["BTC"].(map[string]interface{})
-			subAcc.ForzenAmount = ToFloat64(btcfrozen["amount"])
-			subAcc.LoanAmount = p2pmap["inBTC"].(float64)
 		case "LTC":
 			subAcc.Currency = LTC
-			ltcfrozen := frozenmap["LTC"].(map[string]interface{})
-			subAcc.ForzenAmount = ToFloat64(ltcfrozen["amount"])
-			subAcc.LoanAmount = p2pmap["inLTC"].(float64)
 		case "ETH":
 			subAcc.Currency = ETH
-			ethfrozen := frozenmap["ETH"].(map[string]interface{})
-			subAcc.ForzenAmount = ToFloat64(ethfrozen["amount"])
-			subAcc.LoanAmount = p2pmap["inETH"].(float64)
 		case "ETC":
 			subAcc.Currency = ETC
-			etcfrozen := frozenmap["ETC"].(map[string]interface{})
-			subAcc.ForzenAmount = ToFloat64(etcfrozen["amount"])
-			subAcc.LoanAmount = p2pmap["inETC"].(float64)
 		case "BTS":
 			subAcc.Currency = BTS
-			btsfrozen := frozenmap["BTS"].(map[string]interface{})
-			subAcc.ForzenAmount = ToFloat64(btsfrozen["amount"])
-			subAcc.LoanAmount = p2pmap["inBTS"].(float64)
 		case "EOS":
 			subAcc.Currency = EOS
-			btsfrozen := frozenmap["EOS"].(map[string]interface{})
-			subAcc.ForzenAmount = ToFloat64(btsfrozen["amount"])
-			subAcc.LoanAmount = p2pmap["inEOS"].(float64)
+		case "BCC":
+			subAcc.Currency = BCC
+		case "QTUM":
+			subAcc.Currency = QTUM
 		default:
 			log.Println("unknown ", t)
 
