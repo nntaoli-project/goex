@@ -7,8 +7,8 @@ Provide a standard wrapper for difference crpto coin trade platforms
 - [x] chbtc
 - [x] haobtc
 - [x] yunbi
-- [x] huobi
-- [x] okcoin
+- [x] huobi(com,pro)
+- [x] okcoin(cn,com,ex)
 - [x] poloniex
 - [x] zaif
 
@@ -17,6 +17,12 @@ Provide a standard wrapper for difference crpto coin trade platforms
 - [ ] binance
 - [ ] btc9
 - [ ] bittrex
+- [ ] bter
+- [ ] liqui
+- [ ] jubi
+- [ ] btc38
+
+
 
 ### Notice
 1. Suggest to gogland idea for development.
