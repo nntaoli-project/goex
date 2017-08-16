@@ -8,3 +8,7 @@
 
 -----------------
 ### 交流QQ群：574829125
+
+### 欢迎为作者付一碗面钱
+
+![一碗面钱](https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG)
