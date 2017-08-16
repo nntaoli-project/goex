@@ -6,12 +6,11 @@ import (
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
 	"io/ioutil"
-	"log"
+//	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-	"github.com/thrasher-/gocryptotrader/exchanges/ticker"
 )
 
 const (
@@ -98,12 +97,12 @@ func (ctx *OKExC) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	if err != nil {
 		return nil, err
 	}
-	if(bodyDataMap["code"].(uint64) != 0){
+	if(bodyDataMap["code"].(float64) != 0){
 		return nil, errors.New("response code is not 0")
 	}
 
 	tickerMap = bodyDataMap["data"].(map[string]interface{})
-	ticker.Date = tickerMap["createdDate"].(uint64)
+	ticker.Date = (uint64)(tickerMap["createdDate"].(float64))
 	ticker.Last, _ = strconv.ParseFloat(tickerMap["last"].(string), 64)
 	ticker.Buy, _ = strconv.ParseFloat(tickerMap["buy"].(string), 64)
 	ticker.Sell, _ = strconv.ParseFloat(tickerMap["sell"].(string), 64)
@@ -121,19 +120,21 @@ func (ctx *OKExC) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	if err != nil {
 		return nil, err
 	}
-	if(respDataMap["code"].(uint64) != 0){
+	if(respDataMap["code"].(float64) != 0){
 		return nil, errors.New("response code is not 0")
 	}
 	bodyDataMap := respDataMap["data"].(map[string]interface{})
+	fmt.Println("okexc respDataMap:", respDataMap)
+	fmt.Println("okexc bodyDataMap:", bodyDataMap)
 
 	for _, v := range bodyDataMap["asks"].([]interface{}) {
 		var dr DepthRecord
-		for i, vv := range v.([]interface{}) {
+		for i, vv := range v.(map[string]interface {}) {
 			switch i {
-			case 0:
-				dr.Price = vv.(float64)
-			case 1:
-				dr.Amount = vv.(float64)
+			case "price":
+				dr.Price,_ = strconv.ParseFloat(vv.(string), 64)
+			case "totalSize":
+				dr.Amount,_ = strconv.ParseFloat(vv.(string), 64)
 			}
 		}
 		depth.AskList = append(depth.AskList, dr)
@@ -141,13 +142,14 @@ func (ctx *OKExC) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	for _, v := range bodyDataMap["bids"].([]interface{}) {
 		var dr DepthRecord
-		for i, vv := range v.([]interface{}) {
+		for i, vv := range v.(map[string]interface {}) {
 			switch i {
-			case 0:
-				dr.Price = vv.(float64)
-			case 1:
-				dr.Amount = vv.(float64)
+			case "price":
+				dr.Price,_ = strconv.ParseFloat(vv.(string), 64)
+			case "totalSize":
+				dr.Amount,_ = strconv.ParseFloat(vv.(string), 64)
 			}
+
 		}
 		depth.BidList = append(depth.BidList, dr)
 	}
@@ -160,47 +162,7 @@ func (ctx *OKExC) GetExchangeName() string {
 }
 
 func (ctx *OKExC) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
-	klineUrl := API_URL_V2 + fmt.Sprintf(KLINE_URL,strings.ToLower(currency.ToSymbol("_")), period, since)
-	resp, err := http.Get(klineUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-
-	var klines [][]interface{}
-
-	err = json.Unmarshal(body, &klines)
-	if err != nil {
-		return nil, err
-	}
-
-	var klineRecords []Kline
-
-	for _, record := range klines {
-		r := Kline{}
-		for i, e := range record {
-			switch i {
-			case 0:
-				r.Timestamp = int64(e.(float64)) / 1000 //to unix timestramp
-			case 1:
-				r.Open = e.(float64)
-			case 2:
-				r.High = e.(float64)
-			case 3:
-				r.Low = e.(float64)
-			case 4:
-				r.Close = e.(float64)
-			case 5:
-				r.Vol = e.(float64)
-			}
-		}
-		klineRecords = append(klineRecords, r)
-	}
-
-	return klineRecords, nil
+	panic("unimplements")
 }
 
 func (ctx *OKExC) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
