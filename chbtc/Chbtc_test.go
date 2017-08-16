@@ -18,7 +18,7 @@ func TestChbtc_GetAccount(t *testing.T) {
 }
 
 func TestChbtc_GetTicker(t *testing.T) {
-	ticker, _ := chbtc.GetTicker(goex.BTC_CNY)
+	ticker, _ := chbtc.GetTicker(goex.BCC_CNY)
 	t.Log(ticker)
 }
 
