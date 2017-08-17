@@ -10,10 +10,10 @@ import (
 	"strings"
 )
 
-func _httpRequest(client *http.Client, reqType string, reqUrl string, postData url.Values, requstHeaders map[string]string) ([]byte, error) {
-	req, _ := http.NewRequest(reqType, reqUrl, strings.NewReader(postData.Encode()))
+func _httpRequest(client *http.Client, reqType string, reqUrl string, postData string, requstHeaders map[string]string) ([]byte, error) {
+	req, _ := http.NewRequest(reqType, reqUrl, strings.NewReader(postData))
 
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	//req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36")
 
 	if requstHeaders != nil {
@@ -45,7 +45,7 @@ func _httpRequest(client *http.Client, reqType string, reqUrl string, postData u
 }
 
 func HttpGet(client *http.Client, reqUrl string) (map[string]interface{}, error) {
-	respData, err := _httpRequest(client, "GET", reqUrl, url.Values{}, nil)
+	respData, err := _httpRequest(client, "GET", reqUrl, "", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +61,19 @@ func HttpGet(client *http.Client, reqUrl string) (map[string]interface{}, error)
 }
 
 func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) ([]byte, error) {
-	return _httpRequest(client, "POST", reqUrl, postData, nil)
+	headers := map[string]string{
+		"Content-Type": "application/x-www-form-urlencoded"}
+	return _httpRequest(client, "POST", reqUrl, postData.Encode(), headers)
 }
 
 func HttpPostForm2(client *http.Client, reqUrl string, postData url.Values, headers map[string]string) ([]byte, error) {
+	if headers == nil {
+		headers = map[string]string{}
+	}
+	headers["Content-Type"] = "application/x-www-form-urlencoded"
+	return _httpRequest(client, "POST", reqUrl, postData.Encode(), headers)
+}
+
+func HttpPostForm3(client *http.Client, reqUrl string, postData string, headers map[string]string) ([]byte, error) {
 	return _httpRequest(client, "POST", reqUrl, postData, headers)
 }
