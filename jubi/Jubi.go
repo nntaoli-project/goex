@@ -3,17 +3,16 @@ package jubi
 import (
 	//	"encoding/json"
 
-	"encoding/json"
+	//"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
-	//	"strings"
 	"time"
 
-	. "github.com/nntaoli/crypto_coin_api"
+	. "github.com/nntaoli-project/GoEx"
 )
 
 const (
@@ -65,21 +64,20 @@ func (jubi *Jubi) GetAllTicker() error {
 	return nil
 }
 func (jubi *Jubi) GetTickerInBuf(currency CurrencyPair) (*Ticker, error) {
-	cur := currency.String()
+	cur := strings.ToLower(currency.CurrencyA.String())
 	if cur == "nil" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")
 	}
-	s := strings.Split(cur, "_")
 
 	if AllTickerMap == nil {
 		return nil, errors.New("Ticker buffer is nil")
 	}
 	var ticker Ticker
 
-	switch AllTickerMap[s[0]].(type) {
+	switch AllTickerMap[cur].(type) {
 	case map[string]interface{}:
-		tickerMap := AllTickerMap[s[0]].(map[string]interface{})
+		tickerMap := AllTickerMap[cur].(map[string]interface{})
 		ticker.Date = uint64(timeStampAllTicker)
 		ticker.Last, _ = tickerMap["last"].(float64)
 		ticker.Buy, _ = tickerMap["buy"].(float64)
@@ -94,13 +92,14 @@ func (jubi *Jubi) GetTickerInBuf(currency CurrencyPair) (*Ticker, error) {
 
 }
 func (jubi *Jubi) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	cur := currency.String()
+	cur := strings.ToLower(currency.CurrencyA.String())
+	//	money := currency.CurrencyB.String()
 	if cur == "nil" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")
 	}
-	s := strings.Split(cur, "_")
-	tickerUri := API_V1 + fmt.Sprintf(TICKER_URI, s[0])
+	tickerUri := API_V1 + fmt.Sprintf(TICKER_URI, cur)
+	//fmt.Println("tickerUrl:",tickerUri)
 	timestamp := time.Now().Unix()
 	bodyDataMap, err := HttpGet(jubi.httpClient, tickerUri)
 	if err != nil {
@@ -110,6 +109,7 @@ func (jubi *Jubi) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	var tickerMap map[string]interface{} = bodyDataMap
 	var ticker Ticker
 
+	//fmt.Println(bodyDataMap)
 	ticker.Date = uint64(timestamp)
 	ticker.Last, _ = strconv.ParseFloat(tickerMap["last"].(string), 64)
 
@@ -125,13 +125,12 @@ func (jubi *Jubi) GetTicker(currency CurrencyPair) (*Ticker, error) {
 func (jubi *Jubi) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	var depthUri string
 
-	cur := currency.String()
+	cur := strings.ToLower(currency.CurrencyA.String())
 	if cur == "nil" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")
 	}
-	s := strings.Split(cur, "_")
-	depthUri = API_V1 + fmt.Sprintf(DEPTH_URI, s[0])
+	depthUri = API_V1 + fmt.Sprintf(DEPTH_URI, cur)
 
 	bodyDataMap, err := HttpGet(jubi.httpClient, depthUri)
 
@@ -186,14 +185,15 @@ func (jubi *Jubi) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 /**
  * 获取全站最近的交易记录
  */
+/*
 func (jubi *Jubi) GetTrades(currency CurrencyPair, since int64) ([]Trade2, error) {
-	cur := currency.String()
+	cur := currency.CurrencyA.String()
 	if cur == "nil" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")
 	}
 	s := strings.Split(cur, "_")
-	tradeUrl := API_V1 + fmt.Sprintf(TRADES_URI, s[0])
+	tradeUrl := API_V1 + fmt.Sprintf(TRADES_URI, cur)
 
 	bodyDataMap, err := HttpGet2(jubi.httpClient, tradeUrl)
 	fmt.Println("bodyDataMap:", string(bodyDataMap))
@@ -207,4 +207,8 @@ func (jubi *Jubi) GetTrades(currency CurrencyPair, since int64) ([]Trade2, error
 	fmt.Println("trades:", trades)
 
 	return trades, nil
+
+	panic("unimplements")
+
 }
+*/

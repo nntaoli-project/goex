@@ -293,7 +293,7 @@ func (btc38 *Btc38) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 
 	for _, v := range bodyDataMap {
 		order := Order{}
-		cur := fmt.Sprintf("%s_cny", v["coinname"].(string))
+		//cur := fmt.Sprintf("%s_cny", v["coinname"].(string))
 		order.Currency = currency
 		order.Amount, _ = strconv.ParseFloat(v["amount"].(string), 64)
 		order.Price, _ = strconv.ParseFloat(v["price"].(string), 64)
@@ -351,8 +351,9 @@ func (btc38 *Btc38) GetOrderHistorys(currency CurrencyPair, currentPage, pageSiz
  * 获取全站最近的交易记录
  */
 func (btc38 *Btc38) GetTrades(currency CurrencyPair, since int64) ([]Trade, error) {
+	cur := currency.CurrencyA.String()
+	money := currency.CurrencyB.String()
 
-	cur, money := convertCurrencyPair(currency)
 	if cur == "err" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")

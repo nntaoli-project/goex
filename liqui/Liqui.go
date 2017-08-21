@@ -6,7 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	. "github.com/nntaoli/crypto_coin_api"
+	. "github.com/nntaoli-project/GoEx"
+	"strings"
 )
 
 const (
@@ -32,16 +33,15 @@ func (liqui *Liqui) GetExchangeName() string {
 }
 
 func (liqui *Liqui) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	cur := currency.String()
+	cur:= strings.ToLower(currency.ToSymbol("_"))
 	if cur == "nil" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")
 	}
 	tickerUri := API_V1 + fmt.Sprintf(TICKER_URI, cur)
 	bodyDataMap, err := HttpGet(liqui.httpClient, tickerUri)
-	//	fmt.Println("tickerUri:", tickerUri)
-	//	log.Println("Liqui bodyDataMap:", bodyDataMap)
-
+	//fmt.Println("tickerUri:", tickerUri)
+	//fmt.Println("Liqui bodyDataMap:", bodyDataMap)
 	if err != nil {
 		log.Println(err)
 		return nil, err

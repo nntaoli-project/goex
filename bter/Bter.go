@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	. "github.com/nntaoli/crypto_coin_api"
+	. "github.com/nntaoli-project/GoEx"
+	"strings"
 )
 
 const (
@@ -49,7 +50,7 @@ func (bter *Bter) GetAllTicker() error {
 	return nil
 }
 func (bter *Bter) GetTickerInBuf(currency CurrencyPair) (*Ticker, error) {
-	cur := currency.String()
+	cur:= strings.ToLower(currency.ToSymbol("_"))
 	if cur == "nil" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")
@@ -77,7 +78,7 @@ func (bter *Bter) GetTickerInBuf(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (bter *Bter) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	cur := currency.String()
+	cur:= strings.ToLower(currency.ToSymbol("_"))
 	if cur == "nil" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")
@@ -92,7 +93,7 @@ func (bter *Bter) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	}
 	var tickerMap map[string]interface{} = bodyDataMap
 	var ticker Ticker
-fmt.Println("bter tickerMap:",bodyDataMap)
+	fmt.Println("bter tickerMap:", bodyDataMap)
 	ticker.Date = uint64(timestamp)
 	ticker.Last, _ = tickerMap["last"].(float64)
 
