@@ -279,8 +279,8 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 		return nil, errors.New(errcode)
 	}
 
-	//info := respMap["info"].(map[string]interface{})
-	funds := respMap["funds"].(map[string]interface{})
+	info := respMap["info"].(map[string]interface{})
+	funds := info["funds"].(map[string]interface{})
 	asset := funds["asset"].(map[string]interface{})
 	free := funds["free"].(map[string]interface{})
 	freezed := funds["freezed"].(map[string]interface{})
