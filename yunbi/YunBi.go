@@ -332,7 +332,7 @@ func (yunbi *YunBi) GetOrderHistorys(currency CurrencyPair, currentPage, pageSiz
 	return nil, nil
 }
 
-func (yunbi *YunBi) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+func (yunbi *YunBi) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
 	return nil, nil
 }
 

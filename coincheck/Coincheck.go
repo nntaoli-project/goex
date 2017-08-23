@@ -144,7 +144,7 @@ func (cc *Coincheck) GetAccount() (*Account, error) {
 	return nil, nil
 }
 
-func (cc *Coincheck) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+func (cc *Coincheck) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
 	return nil, nil
 }
 

@@ -86,7 +86,7 @@ func (bfx *Bitfinex) GetDepth(size int, currencyPair CurrencyPair) (*Depth, erro
 	return depth, nil
 }
 
-func (bfx *Bitfinex) GetKlineRecords(currencyPair CurrencyPair, period string, size, since int) ([]Kline, error) {
+func (bfx *Bitfinex) GetKlineRecords(currencyPair CurrencyPair, period , size, since int) ([]Kline, error) {
 	panic("not implement")
 }
 

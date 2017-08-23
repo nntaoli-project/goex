@@ -30,6 +30,16 @@ type HuoBi struct {
 	secretKey string
 }
 
+var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
+	KLINE_PERIOD_1MIN:  "001",
+	KLINE_PERIOD_5MIN:  "005",
+	KLINE_PERIOD_15MIN: "015",
+	KLINE_PERIOD_30MIN: "030",
+	KLINE_PERIOD_60MIN: "060",
+	KLINE_PERIOD_1DAY:  "100",
+	KLINE_PERIOD_1WEEK: "200",
+}
+
 func New(httpClient *http.Client, accessKey, secretKey string) *HuoBi {
 	return &HuoBi{httpClient, accessKey, secretKey}
 }
@@ -456,14 +466,19 @@ func (hb *HuoBi) CancelOrder(orderId string, currency CurrencyPair) (bool, error
 /**
  * 具体参数详解: https://github.com/huobiapi/API_Docs/wiki/REST-Interval
  */
-func (hb *HuoBi) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+func (hb *HuoBi) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
 	klineUri := API_BASE_URL + KLINE_URI
+
+	_period := _INERNAL_KLINE_PERIOD_CONVERTER[period]
+	if _period == "" {
+		return nil, errors.New("unsupport the kline period")
+	}
 
 	switch currency {
 	case BTC_CNY:
-		klineUri = fmt.Sprintf(klineUri, "btc", period, size)
+		klineUri = fmt.Sprintf(klineUri, "btc", _period, size)
 	case LTC_CNY:
-		klineUri = fmt.Sprintf(klineUri, "ltc", period, size)
+		klineUri = fmt.Sprintf(klineUri, "ltc", _period, size)
 	default:
 		return nil, errors.New("Unsupport " + currency.String())
 	}

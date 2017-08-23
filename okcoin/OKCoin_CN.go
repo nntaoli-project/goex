@@ -36,6 +36,17 @@ type OKCoinCN_API struct {
 	api_base_url string
 }
 
+var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
+	KLINE_PERIOD_1MIN:  "1min",
+	KLINE_PERIOD_5MIN:  "5min",
+	KLINE_PERIOD_15MIN: "15min",
+	KLINE_PERIOD_30MIN: "30min",
+	KLINE_PERIOD_60MIN: "1hour",
+	KLINE_PERIOD_4H:    "4hour",
+	KLINE_PERIOD_1DAY:  "1day",
+	KLINE_PERIOD_1WEEK: "1week",
+}
+
 //func currencyPair2String(currency CurrencyPair) string {
 //	switch currency {
 //	case BTC_CNY:
@@ -393,8 +404,11 @@ func (ctx *OKCoinCN_API) GetExchangeName() string {
 	return EXCHANGE_NAME_CN
 }
 
-func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
-	klineUrl := ctx.api_base_url + fmt.Sprintf(url_kline, strings.ToLower(currency.ToSymbol("_")), period, size, since)
+func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
+
+	klineUrl := ctx.api_base_url + fmt.Sprintf(url_kline,
+		strings.ToLower(currency.ToSymbol("_")),
+		_INERNAL_KLINE_PERIOD_CONVERTER[period], size, since)
 
 	resp, err := http.Get(klineUrl)
 	if err != nil {
@@ -513,7 +527,7 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	tradeUrl := ok.api_base_url + trade_uri
 	postData := url.Values{}
-	postData.Set("symbol",strings.ToLower(currencyPair.ToSymbol("_")))
+	postData.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
 	postData.Set("since", fmt.Sprintf("%d", since))
 
 	err := ok.buildPostForm(&postData)
