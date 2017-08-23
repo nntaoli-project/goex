@@ -391,7 +391,7 @@ func (chbtc *Chbtc) GetOrderHistorys(currency CurrencyPair, currentPage, pageSiz
 	return nil, nil
 }
 
-func (chbtc *Chbtc) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+func (chbtc *Chbtc) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
 	return nil, nil
 }
 

@@ -106,7 +106,7 @@ func (poloniex *Poloniex) GetDepth(size int, currency CurrencyPair) (*Depth, err
 
 	return &depth, nil
 }
-func (Poloniex *Poloniex) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+func (Poloniex *Poloniex) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
 	return nil, nil
 }
 
