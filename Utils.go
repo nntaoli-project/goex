@@ -1,6 +1,8 @@
 package goex
 
-import "strconv"
+import (
+	"strconv"
+)
 
 func ToFloat64(v interface{}) float64 {
 	if v == nil {
@@ -36,5 +38,23 @@ func ToInt(v interface{}) int {
 		return int(vF)
 	default:
 		panic("to int error.")
+	}
+}
+
+func ToUint64(v interface{}) uint64 {
+	if v == nil {
+		return 0
+	}
+
+	switch v.(type) {
+	case int:
+		return uint64(v.(int))
+	case float64:
+		return uint64((v.(float64)))
+	case string:
+		uV, _ := strconv.ParseUint(v.(string), 10, 64)
+		return uV
+	default:
+		panic("to uint64 error.")
 	}
 }

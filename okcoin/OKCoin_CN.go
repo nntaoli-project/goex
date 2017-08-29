@@ -290,7 +290,11 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 		return nil, errors.New(errcode)
 	}
 
-	info := respMap["info"].(map[string]interface{})
+	info, ok := respMap["info"].(map[string]interface{})
+	if !ok {
+		return nil, errors.New(string(body))
+	}
+
 	funds := info["funds"].(map[string]interface{})
 	asset := funds["asset"].(map[string]interface{})
 	free := funds["free"].(map[string]interface{})
@@ -305,6 +309,8 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 	var ltcSubAccount SubAccount
 	var cnySubAccount SubAccount
 	var ethSubAccount SubAccount
+	var etcSubAccount SubAccount
+	var bccSubAccount SubAccount
 
 	btcSubAccount.Currency = BTC
 	btcSubAccount.Amount, _ = strconv.ParseFloat(free["btc"].(string), 64)
@@ -321,6 +327,16 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 	ethSubAccount.LoanAmount = 0
 	ethSubAccount.ForzenAmount, _ = strconv.ParseFloat(freezed["eth"].(string), 64)
 
+	etcSubAccount.Currency = ETC
+	etcSubAccount.Amount = ToFloat64(free["etc"])
+	etcSubAccount.LoanAmount = 0
+	etcSubAccount.ForzenAmount = ToFloat64(freezed["etc"])
+
+	bccSubAccount.Currency = BCC
+	bccSubAccount.Amount = ToFloat64(free["bcc"])
+	bccSubAccount.LoanAmount = 0
+	bccSubAccount.ForzenAmount = ToFloat64(freezed["bcc"])
+
 	cnySubAccount.Currency = CNY
 	cnySubAccount.Amount, _ = strconv.ParseFloat(free["cny"].(string), 64)
 	cnySubAccount.LoanAmount = 0
@@ -331,6 +347,8 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 	account.SubAccounts[LTC] = ltcSubAccount
 	account.SubAccounts[CNY] = cnySubAccount
 	account.SubAccounts[ETH] = ethSubAccount
+	account.SubAccounts[ETC] = etcSubAccount
+	account.SubAccounts[BCC] = bccSubAccount
 
 	return account, nil
 }
@@ -404,7 +422,7 @@ func (ctx *OKCoinCN_API) GetExchangeName() string {
 	return EXCHANGE_NAME_CN
 }
 
-func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
+func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 
 	klineUrl := ctx.api_base_url + fmt.Sprintf(url_kline,
 		strings.ToLower(currency.ToSymbol("_")),
