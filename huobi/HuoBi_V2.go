@@ -2,6 +2,7 @@ package huobi
 
 import (
 	"errors"
+	"fmt"
 	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"strings"
@@ -48,4 +49,60 @@ func (hbV2 *HuoBi_V2) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	ticker.Date = ToUint64(respmap["ts"])
 
 	return ticker, nil
+}
+
+func (hbV2 *HuoBi_V2) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
+	url := hbV2.baseUrl + "/market/depth?symbol=%s&type=step0"
+	respmap, err := HttpGet(hbV2.httpClient, fmt.Sprintf(url, strings.ToLower(currency.ToSymbol(""))))
+	if err != nil {
+		return nil, err
+	}
+
+	if "ok" != respmap["status"].(string) {
+		return nil, errors.New(respmap["err-msg"].(string))
+	}
+
+	tick, _ := respmap["tick"].(map[string]interface{})
+	bids, _ := tick["bids"].([]interface{})
+	asks, _ := tick["asks"].([]interface{})
+
+	depth := new(Depth)
+	_size := size
+	for _, r := range asks {
+		var dr DepthRecord
+		rr := r.([]interface{})
+		dr.Price = ToFloat64(rr[0])
+		dr.Amount = ToFloat64(rr[1])
+		depth.AskList = append(depth.AskList, dr)
+
+		_size--
+		if _size == 0 {
+			break
+		}
+	}
+
+	_size = size
+	for _, r := range bids {
+		var dr DepthRecord
+		rr := r.([]interface{})
+		dr.Price = ToFloat64(rr[0])
+		dr.Amount = ToFloat64(rr[1])
+		depth.BidList = append(depth.BidList, dr)
+
+		_size--
+		if _size == 0 {
+			break
+		}
+	}
+
+	return depth, nil
+}
+
+func (hbV2 *HuoBi_V2) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+	panic("not implement")
+}
+
+//非个人，整个交易所的交易记录
+func (hbV2 *HuoBi_V2) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	panic("not implement")
 }
