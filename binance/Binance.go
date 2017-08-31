@@ -50,7 +50,7 @@ func (ba *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	if err != nil {
 		return nil, err
 	}
-		fmt.Println("Btc38 bodyDataMap:", bodyDataMap)
+	fmt.Println("binance bodyDataMap:", currency, bodyDataMap)
 	var tickerMap map[string]interface{} = bodyDataMap
 	var ticker Ticker
 

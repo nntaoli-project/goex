@@ -50,10 +50,11 @@ func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	}
 	//log.Println(resp)
 	str, _ := json.Marshal(resp)
-	if string(str) == "{\"message\":\"·şÎñ¶ËÃ¦Âµ\",\"result\":false}" {
-		fmt.Println("err:", "{\"message\":\"·şÎñ¶ËÃ¦Âµ\",\"result\":false}")
+	if string(str) == "{\"message\":\"æœåŠ¡ç«¯å¿™ç¢Œ\",\"result\":false}" {
+		fmt.Println("err:", "{\"message\":\"æœåŠ¡ç«¯å¿™ç¢Œ\",\"result\":false}")
 		return nil, errors.New("server busy")
 	}
+
 	tickermap := resp["ticker"].(map[string]interface{})
 
 	ticker := new(Ticker)

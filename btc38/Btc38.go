@@ -63,7 +63,7 @@ func (btc38 *Btc38) buildPostForm(postForm *url.Values) error {
 func (btc38 *Btc38) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	cur:= currency.CurrencyA.String()
 	money := currency.CurrencyB.String()
-	if cur == "err" {
+	if cur == "UNKNOWN" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")
 	}
