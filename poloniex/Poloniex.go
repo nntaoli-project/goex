@@ -44,15 +44,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		return nil, err
 	}
 
-	var tickermap map[string]interface{}
-	cur := currency.ToSymbol2("_")
-	switch respmap[cur].(type) {
-	case map[string]interface{}:
-		tickermap = respmap[cur].(map[string]interface{})
-	default:
-		return nil, errors.New(fmt.Sprintf("Type Convert Error ? \n %s", respmap))
-	}
-	
+	tickermap := respmap[currency.ToSymbol2("_")].(map[string]interface{})
 
 	ticker := new(Ticker)
 	ticker.High, _ = strconv.ParseFloat(tickermap["high24hr"].(string), 64)
@@ -62,7 +54,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.Sell, _ = strconv.ParseFloat(tickermap["lowestAsk"].(string), 64)
 	ticker.Vol, _ = strconv.ParseFloat(tickermap["quoteVolume"].(string), 64)
 
-	//log.Println(tickermap)
+	log.Println(tickermap)
 
 	return ticker, nil
 }

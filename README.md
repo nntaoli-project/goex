@@ -1,40 +1,14 @@
-### Golang Library for Crypto Coin Trade Platform 
+### 数字资产交易平台Go API库
+(the crypto_coin_api is crypto coin trade api wrap)   
 
-Provide a standard wrapper for difference crpto coin trade platforms
-
-## Supported Exchanges
-- [x] bitfinex
-- [x] chbtc
-- [x] haobtc
-- [x] yunbi
-- [x] huobi(com,pro)
-- [x] okcoin(cn,com,ex)
-- [x] poloniex
-- [x] zaif
-
-## Next TODO
-- [ ] viabtc
-- [ ] binance
-- [ ] btc9
-- [ ] bittrex
-- [ ] bter
-- [ ] liqui
-- [ ] jubi
-- [ ] btc38
-
-
-
-### Notice
-1. Suggest to gogland idea for development.
-2. Disable automatic format function in IDE.
-3. Do NOT format old files.
+### 注意事项
+1. 推荐使用gogland idea 开发。
+2. 推荐关闭自动格式化功能。
+3. 不建议对现已存在的文件进行重新格式化，这样会导致commit特别糟糕。
 
 -----------------
-### QQ group: 574829125
+### 交流QQ群：574829125
 
-### Donations
-If this framework helped you in any way, or you would like to support the developers working on it, please donate ETH to: 0x5629f439bCC9e6B9d75286B4901D781221DFD837
+### 欢迎为作者付一碗面钱
 
-<div align=center><img width="330" height="550" src="https://raw.githubusercontent.com/huzhihao2002/GoEx/dev/eth_wallet.PNG"/></div>
-Wechat pay:
-<div align=center><img width="400" height="550" src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG"/></div>
+![一碗面钱](https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG)
