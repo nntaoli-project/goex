@@ -279,12 +279,13 @@ func (chbtc *Chbtc) CancelOrder(orderId string, currency CurrencyPair) (bool, er
 }
 
 func parseOrder(order *Order, ordermap map[string]interface{}) {
+	//log.Println(ordermap)
 	//order.Currency = currency;
 	order.OrderID, _ = strconv.Atoi(ordermap["id"].(string))
 	order.Amount = ordermap["total_amount"].(float64)
 	order.DealAmount = ordermap["trade_amount"].(float64)
 	order.Price = ordermap["price"].(float64)
-	order.Fee = ordermap["fees"].(float64)
+//	order.Fee = ordermap["fees"].(float64)
 	if order.DealAmount > 0 {
 		order.AvgPrice = ordermap["trade_money"].(float64) / order.DealAmount
 	} else {
