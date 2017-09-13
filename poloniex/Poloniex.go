@@ -374,7 +374,7 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 			currency = UNKNOWN
 		}
 
-		if currency == UNKNOWN {
+		if currency != UNKNOWN {
 			vv := v.(map[string]interface{})
 			subAcc := SubAccount{}
 			subAcc.Currency = currency
