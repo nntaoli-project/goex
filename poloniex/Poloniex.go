@@ -38,13 +38,18 @@ func (poloniex *Poloniex) GetExchangeName() string {
 }
 
 func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	respmap, err := HttpGet(poloniex.client, PUBLIC_URL + TICKER_API)
+	//log.Println(poloniex.adaptCurrencyPair(currency).ToSymbol2("_"))
+	respmap, err := HttpGet(poloniex.client, PUBLIC_URL+TICKER_API)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	tickermap := respmap[currency.ToSymbol2("_")].(map[string]interface{})
+	pair := poloniex.adaptCurrencyPair(currency).ToSymbol2("_")
+	tickermap, ok := respmap[pair].(map[string]interface{})
+	if !ok {
+		return new(Ticker), errors.New("not found")
+	}
 
 	ticker := new(Ticker)
 	ticker.High, _ = strconv.ParseFloat(tickermap["high24hr"].(string), 64)
@@ -59,7 +64,9 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	return ticker, nil
 }
 func (poloniex *Poloniex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	respmap, err := HttpGet(poloniex.client ,  PUBLIC_URL + fmt.Sprintf(ORDER_BOOK_API, currency.ToSymbol2("_"), size))
+	respmap, err := HttpGet(poloniex.client, PUBLIC_URL+
+		fmt.Sprintf(ORDER_BOOK_API, poloniex.adaptCurrencyPair(currency).ToSymbol2("_"), size))
+
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -106,14 +113,14 @@ func (poloniex *Poloniex) GetDepth(size int, currency CurrencyPair) (*Depth, err
 
 	return &depth, nil
 }
-func (Poloniex *Poloniex) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
+func (Poloniex *Poloniex) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	return nil, nil
 }
 
 func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currency CurrencyPair) (*Order, error) {
 	postData := url.Values{}
 	postData.Set("command", command)
-	postData.Set("currencyPair", currency.ToSymbol2("_"))
+	postData.Set("currencyPair", poloniex.adaptCurrencyPair(currency).ToSymbol2("_"))
 	postData.Set("rate", price)
 	postData.Set("amount", amount)
 
@@ -123,7 +130,7 @@ func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currenc
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
 
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API , postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, postData, headers)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -178,7 +185,7 @@ func (poloniex *Poloniex) CancelOrder(orderId string, currency CurrencyPair) (bo
 	headers := map[string]string{
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API , postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, postData, headers)
 	if err != nil {
 		log.Println(err)
 		return false, err
@@ -228,7 +235,7 @@ func (poloniex *Poloniex) GetOneOrder(orderId string, currency CurrencyPair) (*O
 
 			for _, ord := range ords {
 				if ord.OrderID == _ordId {
-					return &ord , nil
+					return &ord, nil
 				}
 			}
 		}
@@ -253,7 +260,7 @@ func (poloniex *Poloniex) GetOneOrder(orderId string, currency CurrencyPair) (*O
 		vv := v.(map[string]interface{})
 		_amount, _ := strconv.ParseFloat(vv["amount"].(string), 64)
 		_rate, _ := strconv.ParseFloat(vv["rate"].(string), 64)
-		_fee , _ := strconv.ParseFloat(vv["fee"].(string) , 64)
+		_fee, _ := strconv.ParseFloat(vv["fee"].(string), 64)
 
 		order.DealAmount += _amount
 		total += (_amount * _rate)
@@ -274,7 +281,7 @@ func (poloniex *Poloniex) GetOneOrder(orderId string, currency CurrencyPair) (*O
 func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	postData := url.Values{}
 	postData.Set("command", "returnOpenOrders")
-	postData.Set("currencyPair", currency.ToSymbol2("_"))
+	postData.Set("currencyPair", poloniex.adaptCurrencyPair(currency).ToSymbol2("_"))
 
 	sign, err := poloniex.buildPostForm(&postData)
 	if err != nil {
@@ -285,7 +292,7 @@ func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 	headers := map[string]string{
 		"Key":  poloniex.accessKey,
 		"Sign": sign}
-	resp, err := HttpPostForm2(poloniex.client, TRADE_API , postData, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, postData, headers)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -370,6 +377,11 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 			currency = ETC
 		case "USD":
 			currency = USD
+		case "USDT":
+			currency = USD
+		case "BCH":
+			currency = BCC
+
 		default:
 			currency = UNKNOWN
 		}
@@ -388,11 +400,14 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 }
 
 func (p *Poloniex) Withdraw(amount string, currency Currency, fees, receiveAddr, safePwd string) (string, error) {
+	if currency == BCC {
+		currency = BCH
+	}
 	params := url.Values{}
 	params.Add("command", "withdraw")
 	params.Add("address", receiveAddr)
 	params.Add("amount", amount)
-	params.Add("currency", strings.ToUpper(currency.String()));
+	params.Add("currency", strings.ToUpper(currency.String()))
 
 	sign, err := p.buildPostForm(&params)
 	if err != nil {
@@ -427,7 +442,7 @@ func (p *Poloniex) Withdraw(amount string, currency Currency, fees, receiveAddr,
 }
 
 type PoloniexDepositsWithdrawals struct {
-	Deposits    []struct {
+	Deposits []struct {
 		Currency      string    `json:"currency"`
 		Address       string    `json:"address"`
 		Amount        float64   `json:"amount,string"`
@@ -489,7 +504,7 @@ func (poloniex *Poloniex) GetDepositsWithdrawals(start, end string) (*PoloniexDe
 }
 
 func (poloniex *Poloniex) buildPostForm(postForm *url.Values) (string, error) {
-	postForm.Add("nonce", fmt.Sprintf("%d", time.Now().UnixNano() ))
+	postForm.Add("nonce", fmt.Sprintf("%d", time.Now().UnixNano()))
 	payload := postForm.Encode()
 	//println(payload)
 	sign, err := GetParamHmacSHA512Sign(poloniex.secretKey, payload)
@@ -498,6 +513,25 @@ func (poloniex *Poloniex) buildPostForm(postForm *url.Values) (string, error) {
 	}
 	//log.Println(sign)
 	return sign, nil
+}
+
+func (poloniex *Poloniex) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
+	var currencyA Currency
+	var currencyB Currency
+
+	if pair.CurrencyA == BCC {
+		currencyA = BCH
+	} else {
+		currencyA = pair.CurrencyA
+	}
+
+	if pair.CurrencyB == USD {
+		currencyB = NewCurrency("USDT", "")
+	} else {
+		currencyB = pair.CurrencyB
+	}
+
+	return NewCurrencyPair(currencyA, currencyB)
 }
 
 func (poloniex *Poloniex) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
