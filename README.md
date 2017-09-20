@@ -11,6 +11,12 @@ Provide a standard wrapper for difference crpto coin trade platforms
 - [x] okcoin(cn,com,ex)
 - [x] poloniex
 - [x] zaif
+- [x] binance
+- [x] bittrex
+- [x] bter
+- [x] liqui
+- [x] jubi
+- [x] btc38
 
 ## Next TODO
 - [ ] viabtc
