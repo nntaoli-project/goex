@@ -14,13 +14,20 @@ Provide a standard wrapper for difference crpto coin trade platforms
 
 ## Next TODO
 - [ ] viabtc
-- [ ] binance
 - [ ] btc9
-- [ ] bittrex
-- [ ] bter
-- [ ] liqui
-- [ ] jubi
-- [ ] btc38
+- [ ] bitflyer
+- [ ] allcoin
+- [ ] lhang
+- [ ] gdax
+- [ ] gemini
+- [ ] itbit
+- [ ] kraken
+- [ ] lakebtc
+- [ ] localbitcoins
+- [ ] wex
+- [ ] bitstamp
+- [ ] kkex
+- [ ] bitstar
 
 
 
