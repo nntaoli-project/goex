@@ -23,6 +23,7 @@ var (
 	USD     = Currency{"USD", "USA dollar"}
 	BTC     = Currency{"BTC", "bitcoin.org"}
 	BCC     = Currency{"BCC", "bitcoin-abc"}
+	BCH     = Currency{"BCH","bitcoin-abc"}
 	LTC     = Currency{"LTC", "litecoin.org"}
 	ETH     = Currency{"ETH", ""}
 	ETC     = Currency{"ETC", ""}
@@ -32,6 +33,7 @@ var (
 	SC      = Currency{"SC", "sia.tech"}
 	ANS     = Currency{"ANS", "www.antshares.org"}
 	ZEC     = Currency{"ZEC", ""}
+	DCR     = Currency{"DCR", ""}
 
 	//currency pair
 
@@ -51,11 +53,15 @@ var (
 	LTC_USD = CurrencyPair{LTC, USD}
 	ETH_USD = CurrencyPair{ETH, USD}
 	ETC_USD = CurrencyPair{ETC, USD}
+	BCH_USD = CurrencyPair{BCH, USD}
+	BCC_USD = CurrencyPair{BCC, USD}
 
 	LTC_BTC = CurrencyPair{LTC, BTC}
 	ETH_BTC = CurrencyPair{ETH, BTC}
 	ETC_BTC = CurrencyPair{ETC, BTC}
 	BCC_BTC = CurrencyPair{BCC, BTC}
+	BCH_BTC = CurrencyPair{BCH, BTC}
+	DCR_BTC = CurrencyPair{DCR, BTC}
 
 	ETC_ETH = CurrencyPair{ETC, ETH}
 	EOS_ETH = CurrencyPair{EOS, ETH}
