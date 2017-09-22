@@ -55,7 +55,10 @@ func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		return nil, errors.New("server busy")
 	}
 
-	tickermap := resp["ticker"].(map[string]interface{})
+	tickermap,ok := resp["ticker"].(map[string]interface{})
+	if ok != true{
+		return nil, errors.New("no ticker")
+	}
 
 	ticker := new(Ticker)
 	ticker.Date, _ = strconv.ParseUint(resp["date"].(string), 10, 64)
