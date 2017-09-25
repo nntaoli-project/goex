@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"time"
 	"log"
+	"github.com/nntaoli-project/GoEx/bitstamp"
 )
 
 type APIBuilder struct {
@@ -21,6 +22,7 @@ type APIBuilder struct {
 	httpTimeout time.Duration
 	apiKey      string
 	secretkey   string
+	clientId    string
 }
 
 func NewAPIBuilder() (builder *APIBuilder) {
@@ -40,6 +42,11 @@ func (builder *APIBuilder) APIKey(key string) (_builder *APIBuilder) {
 
 func (builder *APIBuilder) APISecretkey(key string) (_builder *APIBuilder) {
 	builder.secretkey = key
+	return builder
+}
+
+func (builder *APIBuilder) ClientID(id string) (_builder *APIBuilder) {
+	builder.clientId = id
 	return builder
 }
 
@@ -76,6 +83,8 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = coincheck.New(builder.client, builder.apiKey, builder.secretkey)
 	case "zaif.jp":
 		_api = zaif.New(builder.client, builder.apiKey, builder.secretkey)
+	case "bitstamp.net":
+		_api = bitstamp.NewBitstamp(builder.client , builder.apiKey , builder.secretkey , builder.clientId)
 	default:
 		log.Println("error")
 
