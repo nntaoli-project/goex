@@ -1,5 +1,5 @@
 ### 数字资产交易平台Go API库
-(the crypto_coin_api is crypto coin trade api wrap)   
+(The GoEx Project is crypto coin trading api wrap)   
 
 ### 注意事项
 1. 推荐使用gogland idea 开发。
@@ -11,4 +11,4 @@
 
 ### 欢迎为作者付一碗面钱
 
-![一碗面钱](https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG)
+<img src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG" width="250" alt="一碗面钱">
