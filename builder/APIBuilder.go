@@ -1,20 +1,20 @@
 package builder
 
 import (
+	"context"
 	. "github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/bitstamp"
 	"github.com/nntaoli-project/GoEx/chbtc"
 	"github.com/nntaoli-project/GoEx/coincheck"
-	"context"
 	"github.com/nntaoli-project/GoEx/huobi"
 	"github.com/nntaoli-project/GoEx/okcoin"
 	"github.com/nntaoli-project/GoEx/poloniex"
 	"github.com/nntaoli-project/GoEx/yunbi"
 	"github.com/nntaoli-project/GoEx/zaif"
+	"log"
 	"net"
 	"net/http"
 	"time"
-	"log"
-	"github.com/nntaoli-project/GoEx/bitstamp"
 )
 
 type APIBuilder struct {
@@ -84,7 +84,9 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 	case "zaif.jp":
 		_api = zaif.New(builder.client, builder.apiKey, builder.secretkey)
 	case "bitstamp.net":
-		_api = bitstamp.NewBitstamp(builder.client , builder.apiKey , builder.secretkey , builder.clientId)
+		_api = bitstamp.NewBitstamp(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
+	case "huobi.pro":
+		_api = huobi.NewHuobiPro(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
 	default:
 		log.Println("error")
 
