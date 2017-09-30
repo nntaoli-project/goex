@@ -84,7 +84,7 @@ func (jubi *Jubi) GetTickerInBuf(currency CurrencyPair) (*Ticker, error) {
 		ticker.Sell, _ = tickerMap["sell"].(float64)
 		ticker.Low, _ = tickerMap["low"].(float64)
 		ticker.High, _ = tickerMap["high"].(float64)
-		ticker.Vol = tickerMap["vol"].(float64)
+		ticker.Vol, _ = tickerMap["vol"].(float64)
 		return &ticker, nil
 	default:
 		return nil, errors.New(fmt.Sprintf("Type Convert Error ? \n %s", AllTickerMap))

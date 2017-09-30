@@ -78,6 +78,7 @@ func GetParamHmacSha384Sign(secret, params string) (string, error) {
 	}
 	return hex.EncodeToString(mac.Sum(nil)), nil
 }
+
 func GetParamHmacSHA256Base64Sign(secret, params string) (string, error) {
 	mac := hmac.New(sha256.New, []byte(secret))
 	_, err := mac.Write([]byte(params))

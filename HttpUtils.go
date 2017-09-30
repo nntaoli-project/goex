@@ -3,6 +3,8 @@ package goex
 //http request 工具函数
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -28,6 +30,10 @@ func _httpRequest(client *http.Client, reqType string, reqUrl string, postData s
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, errors.New(fmt.Sprintf("HttpStatusCode:%d ,Desc:%s", resp.StatusCode, resp.Status))
+	}
 
 	bodyData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

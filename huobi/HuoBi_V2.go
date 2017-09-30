@@ -1,105 +1,351 @@
 package huobi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
+	"log"
 	"net/http"
-	"strings"
 	"net/url"
-	"strconv"
+	"strings"
 	"time"
-)
-
-const (
-	EXCHANGE_NAME_V2 = "huobi.pro/huobi.com"
-	BE_API_BASE_URL  = "https://be.huobi.com"
-	PRO_API_BASE_URL = "https://api.huobi.pro"
-
-	V2_TICKER_URI_MERGED = "/market/detail/merged?symbol=%s"
-	V2_TICKER_URI        = "/market/trade?symbol=%s"
-
-	DEPTH_URL        = "/market/depth?symbol=%s&type=step1"
-	GET_ACCOUNT_API  = "/v1/account/accounts/%s/balance"
-	CREATE_ORDER_API = "/v1/order/orders"
-	PLACE_ORDER_API  = "/v1/order/orders/%d/place"
-
-	API_URL    = "https://be.huobi.com"
-	TICKER_URL = "/market/kline?symbol=%s&period=1min"
 )
 
 type HuoBi_V2 struct {
 	httpClient *http.Client
+	accountId,
 	baseUrl,
 	accessKey,
-	secretKey,
-	id string
+	secretKey string
 }
 
-var _V2_INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
-	KLINE_PERIOD_1MIN:   "1min",
-	KLINE_PERIOD_5MIN:   "5min",
-	KLINE_PERIOD_15MIN:  "15min",
-	KLINE_PERIOD_30MIN:  "30min",
-	KLINE_PERIOD_60MIN:  "60min",
-	KLINE_PERIOD_1DAY:   "1day",
-	KLINE_PERIOD_1WEEK:  "1week",
-	KLINE_PERIOD_1MONTH: "1mon",
-	KLINE_PERIOD_1YEAR:  "1year",
+type response struct {
+	Status  string          `json:"status"`
+	Data    json.RawMessage `json:"data"`
+	Errmsg  string          `json:"err-msg"`
+	Errcode string          `json:"err-code"`
 }
 
-func (hbV2 *HuoBi_V2) buildPostForm(reqMethod, path string, postForm *url.Values) error {
-	postForm.Set("AccessKeyId", hbV2.accessKey)
-	postForm.Set("SignatureMethod", "HmacSHA256")
-	postForm.Set("SignatureVersion", "2")
-	postForm.Set("Timestamp", time.Now().UTC().Format("2006-01-02T15:04:05"))
-	url := strings.Split(hbV2.baseUrl, "//")[1]
-	domain := strings.Split(url, "/")[0]
-	payload := fmt.Sprintf("%s\n%s\n%s\n%s", reqMethod, domain, path, postForm.Encode())
-	sign, _ := GetParamHmacSHA256Base64Sign(hbV2.secretKey, payload)
-	postForm.Set("Signature", sign)
-
-	return nil
+func NewV2(httpClient *http.Client, accessKey, secretKey, clientId string) *HuoBi_V2 {
+	return &HuoBi_V2{httpClient, clientId, "https://be.huobi.com", accessKey, secretKey}
 }
 
-func (hbV2 *HuoBi_V2) GetAccountID() (string, error) {
+func (hbV2 *HuoBi_V2) GetAccountId() (string, error) {
 	path := "/v1/account/accounts"
 	params := &url.Values{}
 	hbV2.buildPostForm("GET", path, params)
+
+	log.Println(hbV2.baseUrl + path + "?" + params.Encode())
 
 	respmap, err := HttpGet(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode())
 	if err != nil {
 		return "", err
 	}
+	//log.Println(respmap)
 	if respmap["status"].(string) != "ok" {
-		return "", errors.New(respmap["err-msg"].(string))
+		return "", errors.New(respmap["err-code"].(string))
 	}
-	userdata, isOK := respmap["data"].([]interface{})
-	if isOK == false {
-		return "", errors.New("No userid")
-	}
-	u := userdata[0].(map[string]interface{})
-	id := strconv.Itoa(int(u["id"].(float64)))
-	return id, nil
+
+	data := respmap["data"].([]interface{})
+	accountIdMap := data[0].(map[string]interface{})
+	hbV2.accountId = fmt.Sprintf("%.f", accountIdMap["id"].(float64))
+
+	//log.Println(respmap)
+	return hbV2.accountId, nil
 }
 
-func NewV2(httpClient *http.Client, url, accessKey, secretKey string) *HuoBi_V2 {
-	var id string = ""
-	hbV2 := &HuoBi_V2{httpClient, url, accessKey, secretKey, id}
-	id, err := hbV2.GetAccountID()
-	if err == nil {
-		hbV2.id = id
-		return hbV2
+func (hbV2 *HuoBi_V2) GetAccount() (*Account, error) {
+	path := fmt.Sprintf("/v1/account/accounts/%s/balance", hbV2.accountId)
+	params := &url.Values{}
+	params.Set("accountId-id", hbV2.accountId)
+	hbV2.buildPostForm("GET", path, params)
+
+	urlStr := hbV2.baseUrl + path + "?" + params.Encode()
+	//println(urlStr)
+	respmap, err := HttpGet(hbV2.httpClient, urlStr)
+
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	//log.Println(respmap)
+
+	if respmap["status"].(string) != "ok" {
+		return nil, errors.New(respmap["err-code"].(string))
+	}
+
+	datamap := respmap["data"].(map[string]interface{})
+	if datamap["state"].(string) != "working" {
+		return nil, errors.New(datamap["state"].(string))
+	}
+
+	list := datamap["list"].([]interface{})
+	acc := new(Account)
+	acc.SubAccounts = make(map[Currency]SubAccount, 3)
+	var (
+		cnySubAcc SubAccount
+		bccSubAcc SubAccount
+		etcSubAcc SubAccount
+		ethSubAcc SubAccount
+		btcSubAcc SubAccount
+	)
+
+	for _, v := range list {
+		balancemap := v.(map[string]interface{})
+		currency := balancemap["currency"].(string)
+		typeStr := balancemap["type"].(string)
+		balance := ToFloat64(balancemap["balance"])
+		switch currency {
+		case "cny":
+			if typeStr == "trade" {
+				cnySubAcc.Amount = balance
+			} else {
+				cnySubAcc.ForzenAmount = balance
+			}
+		case "bcc":
+			if typeStr == "trade" {
+				bccSubAcc.Amount = balance
+			} else {
+				bccSubAcc.ForzenAmount = balance
+			}
+		case "etc":
+			if typeStr == "trade" {
+				etcSubAcc.Amount = balance
+			} else {
+				etcSubAcc.ForzenAmount = balance
+			}
+		case "eth":
+			if typeStr == "trade" {
+				ethSubAcc.Amount = balance
+			} else {
+				ethSubAcc.ForzenAmount = balance
+			}
+		case "btc":
+			if typeStr == "trade" {
+				btcSubAcc.Amount = balance
+			} else {
+				btcSubAcc.ForzenAmount = balance
+			}
+		}
+	}
+
+	acc.SubAccounts[CNY] = cnySubAcc
+	acc.SubAccounts[BCC] = bccSubAcc
+	acc.SubAccounts[ETC] = etcSubAcc
+	acc.SubAccounts[ETH] = ethSubAcc
+	acc.SubAccounts[BTC] = btcSubAcc
+
+	return acc, nil
 }
 
-//func NewV2(httpClient *http.Client, url, accessKey, secretKey string) *HuoBi_V2 {
-//	return &HuoBi_V2{httpClient, url, accessKey, secretKey, ""}
-//}
+func (hbV2 *HuoBi_V2) placeOrder(amount, price string, pair CurrencyPair, orderType string) (string, error) {
+	path := "/v1/order/orders/place"
+	params := url.Values{}
+	params.Set("account-id", hbV2.accountId)
+	params.Set("amount", amount)
+	params.Set("symbol", strings.ToLower(pair.ToSymbol("")))
+	params.Set("type", orderType)
+
+	switch orderType {
+	case "buy-limit", "sell-limit":
+		params.Set("price", price)
+	}
+
+	hbV2.buildPostForm("POST", path, &params)
+
+	resp, err := HttpPostForm3(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode(), hbV2.toJson(params),
+		map[string]string{"Content-Type": "application/json", "Accept-Language": "zh-cn"})
+	if err != nil {
+		return "", err
+	}
+
+	respmap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respmap)
+	if err != nil {
+		return "", err
+	}
+
+	if respmap["status"].(string) != "ok" {
+		return "", errors.New(respmap["err-code"].(string))
+	}
+
+	return respmap["data"].(string), nil
+}
+
+func (hbV2 *HuoBi_V2) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	orderId, err := hbV2.placeOrder(amount, price, currency, "buy-limit")
+	if err != nil {
+		return nil, err
+	}
+	return &Order{
+		Currency: currency,
+		OrderID:  ToInt(orderId),
+		Amount:   ToFloat64(amount),
+		Price:    ToFloat64(price),
+		Side:     BUY}, nil
+}
+
+func (hbV2 *HuoBi_V2) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	orderId, err := hbV2.placeOrder(amount, price, currency, "sell-limit")
+	if err != nil {
+		return nil, err
+	}
+	return &Order{
+		Currency: currency,
+		OrderID:  ToInt(orderId),
+		Amount:   ToFloat64(amount),
+		Price:    ToFloat64(price),
+		Side:     SELL}, nil
+}
+
+func (hbV2 *HuoBi_V2) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	orderId, err := hbV2.placeOrder(amount, price, currency, "buy-market")
+	if err != nil {
+		return nil, err
+	}
+	return &Order{
+		Currency: currency,
+		OrderID:  ToInt(orderId),
+		Amount:   ToFloat64(amount),
+		Price:    ToFloat64(price),
+		Side:     BUY_MARKET}, nil
+}
+
+func (hbV2 *HuoBi_V2) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	orderId, err := hbV2.placeOrder(amount, price, currency, "sell-market")
+	if err != nil {
+		return nil, err
+	}
+	return &Order{
+		Currency: currency,
+		OrderID:  ToInt(orderId),
+		Amount:   ToFloat64(amount),
+		Price:    ToFloat64(price),
+		Side:     SELL_MARKET}, nil
+}
+
+func (hbV2 *HuoBi_V2) parseOrder(ordmap map[string]interface{}) Order {
+	ord := Order{
+		OrderID:    ToInt(ordmap["id"]),
+		Amount:     ToFloat64(ordmap["amount"]),
+		Price:      ToFloat64(ordmap["price"]),
+		DealAmount: ToFloat64(ordmap["field-amount"]),
+		Fee:        ToFloat64(ordmap["field-fees"]),
+		OrderTime:  ToInt(ordmap["created-at"]),
+	}
+
+	state := ordmap["state"].(string)
+	switch state {
+	case "submitted":
+		ord.Status = ORDER_UNFINISH
+	case "filled":
+		ord.Status = ORDER_FINISH
+	case "partial-filled":
+		ord.Status = ORDER_PART_FINISH
+	case "canceled", "partial-canceled":
+		ord.Status = ORDER_CANCEL
+	default:
+		ord.Status = ORDER_UNFINISH
+	}
+
+	if ord.DealAmount > 0.0 {
+		ord.AvgPrice = ToFloat64(ordmap["field-cash-amount"]) / ord.DealAmount
+	}
+
+	typeS := ordmap["type"].(string)
+	switch typeS {
+	case "buy-limit":
+		ord.Side = BUY
+	case "buy-market":
+		ord.Side = BUY_MARKET
+	case "sell-limit":
+		ord.Side = SELL
+	case "sell-market":
+		ord.Side = SELL_MARKET
+	}
+	return ord
+}
+
+func (hbV2 *HuoBi_V2) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
+	path := "/v1/order/orders/" + orderId
+	params := url.Values{}
+	hbV2.buildPostForm("GET", path, &params)
+	respmap, err := HttpGet(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode())
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(string) != "ok" {
+		return nil, errors.New(respmap["err-code"].(string))
+	}
+
+	datamap := respmap["data"].(map[string]interface{})
+	order := hbV2.parseOrder(datamap)
+	order.Currency = currency
+	//log.Println(respmap)
+	return &order, nil
+}
+
+func (hbV2 *HuoBi_V2) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
+	path := "/v1/order/orders"
+	params := url.Values{}
+	params.Set("symbol", strings.ToLower(currency.ToSymbol("")))
+	params.Set("states", "submitted")
+	hbV2.buildPostForm("GET", path, &params)
+	respmap, err := HttpGet(hbV2.httpClient, fmt.Sprintf("%s%s?%s", hbV2.baseUrl, path, params.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(string) != "ok" {
+		return nil, errors.New(respmap["err-code"].(string))
+	}
+
+	datamap := respmap["data"].([]interface{})
+	var orders []Order
+	for _, v := range datamap {
+		ordmap := v.(map[string]interface{})
+		ord := hbV2.parseOrder(ordmap)
+		ord.Currency = currency
+		orders = append(orders, ord)
+	}
+
+	//resp, err := HttpPostForm3(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode(), hbV2.toJson(params),
+	//	map[string]string{"Content-Type": "application/json", "Accept-Language": "zh-cn"})
+	//log.Println(respmap)
+	return orders, nil
+}
+
+func (hbV2 *HuoBi_V2) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
+	path := fmt.Sprintf("/v1/order/orders/%s/submitcancel", orderId)
+	params := url.Values{}
+	hbV2.buildPostForm("POST", path, &params)
+	resp, err := HttpPostForm3(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode(), hbV2.toJson(params),
+		map[string]string{"Content-Type": "application/json", "Accept-Language": "zh-cn"})
+	if err != nil {
+		return false, err
+	}
+
+	var respmap map[string]interface{}
+	err = json.Unmarshal(resp, &respmap)
+	if err != nil {
+		return false, err
+	}
+
+	if respmap["status"].(string) != "ok" {
+		return false, errors.New(string(resp))
+	}
+
+	return true, nil
+}
+
+func (hbV2 *HuoBi_V2) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+	panic("not implement")
+}
 
 func (hbV2 *HuoBi_V2) GetExchangeName() string {
-	return EXCHANGE_NAME_V2
+	return "huobi.com"
 }
 
 func (hbV2 *HuoBi_V2) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
@@ -130,9 +376,9 @@ func (hbV2 *HuoBi_V2) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	return ticker, nil
 }
 
-func (hbV2 *HuoBi_V2) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
-	depthUri := hbV2.baseUrl + "/market/depth?symbol=" + strings.ToLower(currencyPair.ToSymbol("")) + "&type=step0"
-	respmap, err := HttpGet(hbV2.httpClient, depthUri)
+func (hbV2 *HuoBi_V2) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
+	url := hbV2.baseUrl + "/market/depth?symbol=%s&type=step0"
+	respmap, err := HttpGet(hbV2.httpClient, fmt.Sprintf(url, strings.ToLower(currency.ToSymbol(""))))
 	if err != nil {
 		return nil, err
 	}
@@ -178,175 +424,31 @@ func (hbV2 *HuoBi_V2) GetDepth(size int, currencyPair CurrencyPair) (*Depth, err
 }
 
 func (hbV2 *HuoBi_V2) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	_period := _V2_INERNAL_KLINE_PERIOD_CONVERTER[period]
-	if _period == "" {
-		return nil, errors.New("unsupport the kline period")
-	}
-	klineUri := hbV2.baseUrl + "/market/history/kline?symbol=" + strings.ToLower(currency.ToSymbol("")) + "&period=" + _period + "&size=" + strconv.Itoa(size)
-
-	bodyDataMap, err := HttpGet(hbV2.httpClient, klineUri)
-	if err != nil {
-		return nil, err
-	}
-	if "ok" != bodyDataMap["status"].(string) {
-		return nil, errors.New(bodyDataMap["err-msg"].(string))
-	}
-
-	klines, isOK := bodyDataMap["data"].([]interface{})
-	if isOK == false {
-		return nil, errors.New("No kline")
-	}
-	fmt.Println(isOK, klines)
-	ts := (int64)(bodyDataMap["ts"].(float64))
-
-	var klineRecords []Kline
-	for _, record := range klines {
-		r := Kline{}
-		r.Timestamp = ts
-		rec := record.(map[string]interface{})
-		r.Open = ToFloat64(rec["open"])
-		r.Close = ToFloat64(rec["close"])
-		r.High = ToFloat64(rec["high"])
-		r.Low = ToFloat64(rec["low"])
-		r.Vol = ToFloat64(rec["vol"])
-		klineRecords = append(klineRecords, r)
-	}
-
-	return klineRecords, nil
+	panic("not implement")
 }
 
-
-func (hbV2 *HuoBi_V2) GetAccount() (*Account, error) {
-	id, _ := hbV2.GetAccountID()
-	path := fmt.Sprintf("/v1/account/accounts/%s/balance", id)
-	params := &url.Values{}
-	hbV2.buildPostForm("GET", path, params)
-
-	respmap, err := HttpGet(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode())
-	if err != nil {
-		return nil, err
-	}
-
-	account := new(Account)
-	account.Exchange = hbV2.GetExchangeName()
-	//account.Asset, _ = strconv.ParseFloat(bodyDataMap["total"].(string), 64)
-	//account.NetAsset, _ = strconv.ParseFloat(bodyDataMap["net_asset"].(string), 64)
-
-	data, isOK := respmap["data"].(map[string]interface{})
-	if isOK == false {
-		return nil, errors.New("No account asset")
-	}
-
-	list, isOK := data["list"].([]interface{})
-	if isOK == false {
-		return nil, errors.New("No account asset")
-	}
-
-	var btcSubAccount SubAccount
-	var ltcSubAccount SubAccount
-	var bccSubAccount SubAccount
-	var etcSubAccount SubAccount
-	var ethSubAccount SubAccount
-
-	for _, cur := range list {
-		balance := cur.(map[string]interface{})
-		switch balance["currency"].(string) {
-		case "btc":
-			btcSubAccount.Currency = BTC
-			if balance["type"].(string) == "frozen" {
-				btcSubAccount.ForzenAmount, _= strconv.ParseFloat(balance["balance"].(string), 64)
-			}
-			if balance["type"].(string) == "trade" {
-				btcSubAccount.Amount, _= strconv.ParseFloat(balance["balance"].(string), 64)
-			}
-		case "ltc":
-			btcSubAccount.Currency = LTC
-			if balance["type"].(string) == "frozen" {
-				ltcSubAccount.ForzenAmount, _= strconv.ParseFloat(balance["balance"].(string), 64)
-			}
-			if balance["type"].(string) == "trade" {
-				ltcSubAccount.Amount, _= strconv.ParseFloat(balance["balance"].(string), 64)
-			}
-
-		case "etc":
-			etcSubAccount.Currency = ETC
-			if balance["type"].(string) == "frozen" {
-				etcSubAccount.ForzenAmount, _= strconv.ParseFloat(balance["balance"].(string), 64)
-			}
-			if balance["type"].(string) == "trade" {
-				etcSubAccount.Amount, _= strconv.ParseFloat(balance["balance"].(string), 64)
-			}
-
-		case "bcc":
-			bccSubAccount.Currency = BCC
-			if balance["type"].(string) == "frozen" {
-				bccSubAccount.ForzenAmount, _= strconv.ParseFloat(balance["balance"].(string), 64)
-			}
-			if balance["type"].(string) == "trade" {
-				bccSubAccount.Amount, _= strconv.ParseFloat(balance["balance"].(string), 64)
-			}
-
-		case "eth":
-			ethSubAccount.Currency = ETH
-			if balance["type"].(string) == "frozen" {
-				ethSubAccount.ForzenAmount, _= strconv.ParseFloat(balance["balance"].(string), 64)
-			}
-			if balance["type"].(string) == "trade" {
-				ethSubAccount.Amount, _= strconv.ParseFloat(balance["balance"].(string), 64)
-			}
-		}
-	}
-	account.SubAccounts = make(map[Currency]SubAccount, 5)
-	account.SubAccounts[BTC] = btcSubAccount
-	account.SubAccounts[LTC] = ltcSubAccount
-	account.SubAccounts[BCC] = bccSubAccount
-	account.SubAccounts[ETC] = etcSubAccount
-	account.SubAccounts[ETH] = ethSubAccount
-	return account, nil
-}
-
-
-func (hbV2 *HuoBi_V2) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
-	panic("unimplements")
-}
-
-func (hbV2 *HuoBi_V2) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
-	panic("unimplements")
-}
-
-func (hbV2 *HuoBi_V2) placeOrder(method, amount, price string, currency CurrencyPair) (*Order, error) {
-	panic("unimplements")
-}
-
-func (hbV2 *HuoBi_V2) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	panic("unimplements")
-}
-
-func (hbV2 *HuoBi_V2) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-
-	panic("unimplements")
-}
-
-func (hbV2 *HuoBi_V2) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	panic("unimplements")
-}
-
-func (hbV2 *HuoBi_V2) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	panic("unimplements")
-}
-
-func (hbV2 *HuoBi_V2) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
-	panic("unimplements")
-}
-
-
-func (hbV2 *HuoBi_V2) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
-	panic("unimplements")
-}
-
-/**
- * 获取全站最近的交易记录
- */
+//非个人，整个交易所的交易记录
 func (hbV2 *HuoBi_V2) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	panic("unimplements")
+	panic("not implement")
+}
+
+func (hbV2 *HuoBi_V2) buildPostForm(reqMethod, path string, postForm *url.Values) error {
+	postForm.Set("AccessKeyId", hbV2.accessKey)
+	postForm.Set("SignatureMethod", "HmacSHA256")
+	postForm.Set("SignatureVersion", "2")
+	postForm.Set("Timestamp", time.Now().UTC().Format("2006-01-02T15:04:05"))
+	domain := strings.Replace(hbV2.baseUrl, "https://", "", len(hbV2.baseUrl))
+	payload := fmt.Sprintf("%s\n%s\n%s\n%s", reqMethod, domain, path, postForm.Encode())
+	sign, _ := GetParamHmacSHA256Base64Sign(hbV2.secretKey, payload)
+	postForm.Set("Signature", sign)
+	return nil
+}
+
+func (hbV2 *HuoBi_V2) toJson(params url.Values) string {
+	parammap := make(map[string]string)
+	for k, v := range params {
+		parammap[k] = v[0]
+	}
+	jsonData, _ := json.Marshal(parammap)
+	return string(jsonData)
 }

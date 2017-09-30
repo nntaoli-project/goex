@@ -17,21 +17,21 @@ Provide a standard wrapper for difference crpto coin trade platforms
 - [x] liqui
 - [x] jubi
 - [x] btc38
+- [x] wex
+- [x] bitstamp
+- [x] kraken
+- [x] btcmarkets
 
 ## Next TODO
 - [ ] viabtc
 - [ ] btc9
 - [ ] bitflyer
 - [ ] allcoin
-- [ ] lhang
 - [ ] gdax
 - [ ] gemini
 - [ ] itbit
-- [ ] kraken
 - [ ] lakebtc
 - [ ] localbitcoins
-- [ ] wex
-- [ ] bitstamp
 - [ ] kkex
 - [ ] bitstar
 

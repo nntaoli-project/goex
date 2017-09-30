@@ -16,4 +16,5 @@ func TestAPIBuilder_Build(t *testing.T) {
 	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("poloniex.com").GetExchangeName(), "poloniex.com")
 	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("coincheck.com").GetExchangeName(), "coincheck.com")
 	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("zaif.jp").GetExchangeName(), "zaif.jp")
+	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("huobi.pro").GetExchangeName(), "huobi.pro")
 }

@@ -50,7 +50,7 @@ func (bter *Bter) GetAllTicker() error {
 	return nil
 }
 func (bter *Bter) GetTickerInBuf(currency CurrencyPair) (*Ticker, error) {
-	cur:= strings.ToLower(currency.ToSymbol("_"))
+	cur := strings.ToLower(currency.ToSymbol("_"))
 	if cur == "nil" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")
@@ -70,7 +70,7 @@ func (bter *Bter) GetTickerInBuf(currency CurrencyPair) (*Ticker, error) {
 		ticker.Sell, _ = tickerMap["lowestAsk"].(float64)
 		ticker.Low, _ = tickerMap["low24hr"].(float64)
 		ticker.High, _ = tickerMap["high24hr"].(float64)
-		ticker.Vol = tickerMap["baseVolume"].(float64)
+		ticker.Vol, _ = tickerMap["baseVolume"].(float64)
 		return &ticker, nil
 	default:
 		return nil, errors.New(fmt.Sprintf("Type Convert Error ? \n %s", AllTickerMap))
@@ -78,7 +78,7 @@ func (bter *Bter) GetTickerInBuf(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (bter *Bter) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	cur:= strings.ToLower(currency.ToSymbol("_"))
+	cur := strings.ToLower(currency.ToSymbol("_"))
 	if cur == "nil" {
 		log.Println("Unsupport The CurrencyPair")
 		return nil, errors.New("Unsupport The CurrencyPair")
