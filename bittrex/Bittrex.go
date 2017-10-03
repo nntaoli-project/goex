@@ -2,8 +2,8 @@ package bittrex
 
 import (
 	"errors"
-	"fmt"
 	. "github.com/nntaoli-project/GoEx"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -40,7 +40,7 @@ func New(httpClient *http.Client, accessKey, secretKey string) *Bittrex {
 // GetCurrencies is used to get all supported currencies at Bittrex along with other meta data.
 func (b *Bittrex) GetCurrencies() ([]Currencys, error) {
 	curl := API_BASE + API_VERSION + "/public/getcurrencies"
-	fmt.Println(curl)
+	//log.Println(curl)
 	r, err := HttpGet(b.httpClient, curl)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,6 @@ func (b *Bittrex) GetCurrencies() ([]Currencys, error) {
 // GetTicker is used to get the current ticker values for a market.
 func (b *Bittrex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	r, err := HttpGet(b.httpClient, API_BASE+API_VERSION+"public/getmarketsummary?market="+strings.ToUpper(currency.ToSymbol2("-")))
-	fmt.Println(r, err)
 	if err != nil {
 		return nil, err
 	}
@@ -90,10 +89,7 @@ func (b *Bittrex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.Low, _ = tickerMap["Low"].(float64)
 	ticker.Vol, _ = tickerMap["Volume"].(float64)
 
-	//ticker.High, _ = strconv.ParseFloat(tickermap["high"].(string), 64)
-	//ticker.Low, _ = strconv.ParseFloat(tickermap["low"].(string), 64)
-	//ticker.Vol, _ = strconv.ParseFloat(tickermap["vol"].(string), 64)
-	fmt.Println(ticker)
+	log.Println(ticker)
 
 	return ticker, nil
 

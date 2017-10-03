@@ -117,7 +117,7 @@ func (jubi *Jubi) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.Sell, _ = strconv.ParseFloat(tickerMap["sell"].(string), 64)
 	ticker.Low, _ = strconv.ParseFloat(tickerMap["low"].(string), 64)
 	ticker.High, _ = strconv.ParseFloat(tickerMap["high"].(string), 64)
-	ticker.Vol = tickerMap["vol"].(float64)
+	ticker.Vol, _ = tickerMap["vol"].(float64)
 
 	return &ticker, nil
 }

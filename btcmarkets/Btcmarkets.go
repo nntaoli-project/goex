@@ -33,9 +33,7 @@ func (btcm *Btcmarkets) GetExchangeName() string {
 
 func (btcm *Btcmarkets) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	tickerUri := fmt.Sprintf(API_BASE_URL+TICKER_URI, currency.CurrencyA.String(), currency.CurrencyB.String())
-	//log.Println("tickerUrl:", tickerUri)
 	bodyDataMap, err := HttpGet(btcm.httpClient, tickerUri)
-	//log.Println("Btcmarkets bodyDataMap:", tickerUri, bodyDataMap)
 
 	timestamp := time.Now().Unix()
 	if err != nil {
@@ -51,7 +49,6 @@ func (btcm *Btcmarkets) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	var tickerMap map[string]interface{} = bodyDataMap
 	var ticker Ticker
 
-	//fmt.Println(bodyDataMap)
 	ticker.Date = uint64(timestamp)
 	ticker.Last, _ = tickerMap["lastPrice"].(float64)
 
