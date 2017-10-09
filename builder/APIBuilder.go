@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/http"
 	"time"
+	"github.com/nntaoli-project/GoEx/bitfinex"
 )
 
 type APIBuilder struct {
@@ -87,6 +88,8 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = bitstamp.NewBitstamp(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
 	case "huobi.pro":
 		_api = huobi.NewHuobiPro(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
+	case "bitfinex.com":
+		_api = bitfinex.New(builder.client, builder.apiKey, builder.secretkey)
 	default:
 		log.Println("error")
 
