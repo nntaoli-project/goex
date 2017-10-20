@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	. "github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/bitfinex"
 	"github.com/nntaoli-project/GoEx/bitstamp"
 	"github.com/nntaoli-project/GoEx/chbtc"
 	"github.com/nntaoli-project/GoEx/coincheck"
@@ -15,7 +16,6 @@ import (
 	"net"
 	"net/http"
 	"time"
-	"github.com/nntaoli-project/GoEx/bitfinex"
 )
 
 type APIBuilder struct {
@@ -90,10 +90,11 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = huobi.NewHuobiPro(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
 	case "bitfinex.com":
 		_api = bitfinex.New(builder.client, builder.apiKey, builder.secretkey)
+	case "binance.com":
+		_api = bitfinex.New(builder.client, builder.apiKey, builder.secretkey)
 	default:
 		log.Println("error")
 
 	}
 	return _api
 }
-
