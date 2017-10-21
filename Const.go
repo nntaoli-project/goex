@@ -1,24 +1,13 @@
 package goex
 
-type CurrencyPair int
-
-func (c CurrencyPair) String() string {
-	if c == 0 {
-		return "nil"
-	}
-	return currencyPairSymbol[c-1]
-}
-
-type Currency int
-
-func (c Currency) String() string {
-	if c == 0 {
-		return "nil"
-	}
-	return currencySymbol[c-1]
-}
-
 type TradeSide int
+
+const (
+	BUY         = 1 + iota
+	SELL
+	BUY_MARKET
+	SELL_MARKET
+)
 
 func (ts TradeSide) String() string {
 	switch ts {
@@ -38,74 +27,13 @@ func (ts TradeSide) String() string {
 type TradeStatus int
 
 func (ts TradeStatus) String() string {
-	return orderStatusSymbol[ts]
+	return tradeStatusSymbol[ts]
 }
 
-/*currencySymbol array*/
-var currencySymbol = [...]string{"cny", "usd", "btc", "ltc", "eth", "etc", "zec", "sc", "bts", "eos"}
+var tradeStatusSymbol = [...]string{"UNFINISH", "PART_FINISH", "FINISH", "CANCEL", "REJECT", "CANCEL_ING"}
 
 const (
-	CNY = 1 + iota
-	USD
-	BTC
-	LTC
-	ETH
-	ETC
-	ZEC
-	SC
-	BTS
-	EOS
-)
-
-var currencyPairSymbol = [...]string{"btc_cny", "btc_usd", "btc_jpy", "fx_btc_jpy", "ltc_cny", "ltc_usd", "ltc_btc", "eth_cny",
-	"eth_usd", "eth_btc", "etc_cny", "etc_usd", "etc_btc", "etc_eth", "xcn_btc", "sys_btc", "zec_cny", "zec_usd", "zec_btc", "bts_cny", "bts_btc",
-	"sc_cny", "eos_cny"}
-
-const (
-	BTC_CNY = 1 + iota
-	BTC_USD
-	BTC_JPY
-	FX_BTC_JPY
-
-	LTC_CNY
-	LTC_USD
-	LTC_BTC
-
-	ETH_CNY
-	ETH_USD
-	ETH_BTC
-
-	ETC_CNY
-	ETC_USD
-	ETC_BTC
-	ETC_ETH
-
-	XCN_BTC
-	SYS_BTC
-
-	ZEC_CNY
-	ZEC_USD
-	ZEC_BTC
-
-	BTS_CNY
-	BTS_BTC
-
-	SC_CNY
-
-	EOS_CNY
-)
-
-const (
-	BUY = 1 + iota
-	SELL
-	BUY_MARKET
-	SELL_MARKET
-)
-
-var orderStatusSymbol = [...]string{"UNFINISH", "PART_FINISH", "FINISH", "CANCEL", "REJECT", "CANCEL_ING"}
-
-const (
-	ORDER_UNFINISH = iota
+	ORDER_UNFINISH    = iota
 	ORDER_PART_FINISH
 	ORDER_FINISH
 	ORDER_CANCEL
@@ -120,20 +48,17 @@ const (
 	CLOSE_SELL            //平空
 )
 
-var CurrencyPairSymbol = map[CurrencyPair]string{
-	BTC_CNY: "btc_cny",
-	BTC_USD: "btc_usd",
-	LTC_CNY: "ltc_cny",
-	LTC_USD: "ltc_usd",
-	ETH_CNY: "eth_cny",
-	ETH_USD: "eth_usd",
-	ETH_BTC: "eth_btc",
-	ETC_CNY: "etc_cny",
-	ETC_USD: "etc_usd",
-	ETC_BTC: "etc_btc",
-	BTS_CNY: "bts_cny",
-	SC_CNY:  "sc_cny",
-	EOS_CNY: "eos_cny"}
+//k线周期
+const (
+	KLINE_PERIOD_1MIN  = 1 + iota
+	KLINE_PERIOD_5MIN
+	KLINE_PERIOD_15MIN
+	KLINE_PERIOD_30MIN
+	KLINE_PERIOD_60MIN
+	KLINE_PERIOD_4H
+	KLINE_PERIOD_1DAY
+	KLINE_PERIOD_1WEEK
+)
 
 var (
 	THIS_WEEK_CONTRACT = "this_week" //周合约

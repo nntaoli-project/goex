@@ -36,6 +36,17 @@ type OKCoinCN_API struct {
 	api_base_url string
 }
 
+var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
+	KLINE_PERIOD_1MIN:  "1min",
+	KLINE_PERIOD_5MIN:  "5min",
+	KLINE_PERIOD_15MIN: "15min",
+	KLINE_PERIOD_30MIN: "30min",
+	KLINE_PERIOD_60MIN: "1hour",
+	KLINE_PERIOD_4H:    "4hour",
+	KLINE_PERIOD_1DAY:  "1day",
+	KLINE_PERIOD_1WEEK: "1week",
+}
+
 //func currencyPair2String(currency CurrencyPair) string {
 //	switch currency {
 //	case BTC_CNY:
@@ -82,7 +93,7 @@ func (ctx *OKCoinCN_API) placeOrder(side, amount, price string, currency Currenc
 	if side != "sell_market" {
 		postData.Set("price", price)
 	}
-	postData.Set("symbol", CurrencyPairSymbol[currency])
+	postData.Set("symbol", strings.ToLower(currency.ToSymbol("_")))
 
 	err := ctx.buildPostForm(&postData)
 	if err != nil {
@@ -143,7 +154,7 @@ func (ctx *OKCoinCN_API) MarketSell(amount, price string, currency CurrencyPair)
 func (ctx *OKCoinCN_API) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
 	postData := url.Values{}
 	postData.Set("order_id", orderId)
-	postData.Set("symbol", CurrencyPairSymbol[currency])
+	postData.Set("symbol", strings.ToLower(currency.ToSymbol("_")))
 
 	ctx.buildPostForm(&postData)
 
@@ -170,7 +181,7 @@ func (ctx *OKCoinCN_API) CancelOrder(orderId string, currency CurrencyPair) (boo
 func (ctx *OKCoinCN_API) getOrders(orderId string, currency CurrencyPair) ([]Order, error) {
 	postData := url.Values{}
 	postData.Set("order_id", orderId)
-	postData.Set("symbol", CurrencyPairSymbol[currency])
+	postData.Set("symbol", strings.ToLower(currency.ToSymbol("_")))
 
 	ctx.buildPostForm(&postData)
 
@@ -279,7 +290,11 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 		return nil, errors.New(errcode)
 	}
 
-	info := respMap["info"].(map[string]interface{})
+	info, ok := respMap["info"].(map[string]interface{})
+	if !ok {
+		return nil, errors.New(string(body))
+	}
+
 	funds := info["funds"].(map[string]interface{})
 	asset := funds["asset"].(map[string]interface{})
 	free := funds["free"].(map[string]interface{})
@@ -294,6 +309,8 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 	var ltcSubAccount SubAccount
 	var cnySubAccount SubAccount
 	var ethSubAccount SubAccount
+	var etcSubAccount SubAccount
+	var bccSubAccount SubAccount
 
 	btcSubAccount.Currency = BTC
 	btcSubAccount.Amount, _ = strconv.ParseFloat(free["btc"].(string), 64)
@@ -310,6 +327,16 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 	ethSubAccount.LoanAmount = 0
 	ethSubAccount.ForzenAmount, _ = strconv.ParseFloat(freezed["eth"].(string), 64)
 
+	etcSubAccount.Currency = ETC
+	etcSubAccount.Amount = ToFloat64(free["etc"])
+	etcSubAccount.LoanAmount = 0
+	etcSubAccount.ForzenAmount = ToFloat64(freezed["etc"])
+
+	bccSubAccount.Currency = BCC
+	bccSubAccount.Amount = ToFloat64(free["bcc"])
+	bccSubAccount.LoanAmount = 0
+	bccSubAccount.ForzenAmount = ToFloat64(freezed["bcc"])
+
 	cnySubAccount.Currency = CNY
 	cnySubAccount.Amount, _ = strconv.ParseFloat(free["cny"].(string), 64)
 	cnySubAccount.LoanAmount = 0
@@ -320,6 +347,8 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 	account.SubAccounts[LTC] = ltcSubAccount
 	account.SubAccounts[CNY] = cnySubAccount
 	account.SubAccounts[ETH] = ethSubAccount
+	account.SubAccounts[ETC] = etcSubAccount
+	account.SubAccounts[BCC] = bccSubAccount
 
 	return account, nil
 }
@@ -328,7 +357,7 @@ func (ctx *OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	var tickerMap map[string]interface{}
 	var ticker Ticker
 
-	url := ctx.api_base_url + url_ticker + "?symbol=" + CurrencyPairSymbol[currency]
+	url := ctx.api_base_url + url_ticker + "?symbol=" + strings.ToLower(currency.ToSymbol("_"))
 	bodyDataMap, err := HttpGet(ctx.client, url)
 	if err != nil {
 		return nil, err
@@ -349,7 +378,8 @@ func (ctx *OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error) {
 func (ctx *OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	var depth Depth
 
-	url := ctx.api_base_url + url_depth + "?symbol=" + CurrencyPairSymbol[currency] + "&size=" + strconv.Itoa(size)
+	url := ctx.api_base_url + url_depth + "?symbol=" + strings.ToLower(currency.ToSymbol("_")) + "&size=" + strconv.Itoa(size)
+	//fmt.Println(url)
 	bodyDataMap, err := HttpGet(ctx.client, url)
 	if err != nil {
 		return nil, err
@@ -392,8 +422,11 @@ func (ctx *OKCoinCN_API) GetExchangeName() string {
 	return EXCHANGE_NAME_CN
 }
 
-func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
-	klineUrl := ctx.api_base_url + fmt.Sprintf(url_kline, CurrencyPairSymbol[currency], period, size, since)
+func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+
+	klineUrl := ctx.api_base_url + fmt.Sprintf(url_kline,
+		strings.ToLower(currency.ToSymbol("_")),
+		_INERNAL_KLINE_PERIOD_CONVERTER[period], size, since)
 
 	resp, err := http.Get(klineUrl)
 	if err != nil {
@@ -442,7 +475,7 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 
 	postData := url.Values{}
 	postData.Set("status", "1")
-	postData.Set("symbol", CurrencyPairSymbol[currency])
+	postData.Set("symbol", strings.ToLower(currency.ToSymbol("_")))
 	postData.Set("current_page", fmt.Sprintf("%d", currentPage))
 	postData.Set("page_length", fmt.Sprintf("%d", pageSize))
 
@@ -512,7 +545,7 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	tradeUrl := ok.api_base_url + trade_uri
 	postData := url.Values{}
-	postData.Set("symbol", CurrencyPairSymbol[currencyPair])
+	postData.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
 	postData.Set("since", fmt.Sprintf("%d", since))
 
 	err := ok.buildPostForm(&postData)

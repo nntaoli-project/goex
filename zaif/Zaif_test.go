@@ -1,13 +1,14 @@
 package zaif
 
 import (
-	. "github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 )
 
 var api = New(http.DefaultClient, "", "")
+var BTC_JPY = goex.NewCurrencyPair(goex.BTC, goex.NewCurrency("JPY", ""))
 
 func TestZaif_GetTicker(t *testing.T) {
 	ticker, err := api.GetTicker(BTC_JPY)

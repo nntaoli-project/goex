@@ -11,6 +11,7 @@ import (
 	"time"
 	"net/url"
 	"errors"
+	"strings"
 )
 
 const _EXCHANGE_NAME = "yunbi.com"
@@ -331,7 +332,7 @@ func (yunbi *YunBi) GetOrderHistorys(currency CurrencyPair, currentPage, pageSiz
 	return nil, nil
 }
 
-func (yunbi *YunBi) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+func (yunbi *YunBi) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
 	return nil, nil
 }
 
@@ -386,21 +387,5 @@ func (yunbi *YunBi) buildPostForm(httpMethod, apiURI string, postForm *url.Value
 }
 
 func convertCurrencyPair(currencyPair CurrencyPair) string {
-	switch currencyPair {
-	case BTC_CNY:
-		return "btccny"
-	case ETH_CNY:
-		return "ethcny"
-	case ETC_CNY:
-		return "etccny"
-	case ZEC_CNY:
-		return "zeccny"
-	case BTS_CNY:
-		return "btscny"
-	case SC_CNY:
-		return "sccny"
-	case EOS_CNY:
-		return "eoscny"
-	}
-	return "btccny"
+	return strings.ToLower(currencyPair.ToSymbol(""))
 }
