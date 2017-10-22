@@ -66,6 +66,43 @@ func HttpGet(client *http.Client, reqUrl string) (map[string]interface{}, error)
 	return bodyDataMap, nil
 }
 
+func HttpGet2(client *http.Client, reqUrl string, headers map[string]string) (map[string]interface{}, error) {
+	if headers == nil {
+		headers = map[string]string{}
+	}
+	headers["Content-Type"] = "application/x-www-form-urlencoded"
+	respData, err := _httpRequest(client, "GET", reqUrl, "", headers)
+	if err != nil {
+		return nil, err
+	}
+
+	var bodyDataMap map[string]interface{}
+	err = json.Unmarshal(respData, &bodyDataMap)
+	if err != nil {
+		log.Println("respData", string(respData))
+		return nil, err
+	}
+	return bodyDataMap, nil
+}
+
+func HttpGet3(client *http.Client, reqUrl string, headers map[string]string) ([]interface{}, error) {
+	if headers == nil {
+		headers = map[string]string{}
+	}
+	headers["Content-Type"] = "application/x-www-form-urlencoded"
+	respData, err := _httpRequest(client, "GET", reqUrl, "", headers)
+	if err != nil {
+		return nil, err
+	}
+
+	var bodyDataMap []interface{}
+	err = json.Unmarshal(respData, &bodyDataMap)
+	if err != nil {
+		log.Println("respData", string(respData))
+		return nil, err
+	}
+	return bodyDataMap, nil
+}
 func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) ([]byte, error) {
 	headers := map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded"}
@@ -82,4 +119,12 @@ func HttpPostForm2(client *http.Client, reqUrl string, postData url.Values, head
 
 func HttpPostForm3(client *http.Client, reqUrl string, postData string, headers map[string]string) ([]byte, error) {
 	return _httpRequest(client, "POST", reqUrl, postData, headers)
+}
+
+func HttpDeleteForm(client *http.Client, reqUrl string, postData url.Values, headers map[string]string) ([]byte, error) {
+	if headers == nil {
+		headers = map[string]string{}
+	}
+	headers["Content-Type"] = "application/x-www-form-urlencoded"
+	return _httpRequest(client, "DELETE", reqUrl, postData.Encode(), headers)
 }
