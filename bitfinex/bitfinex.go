@@ -62,7 +62,7 @@ func (bfx *Bitfinex) GetDepth(size int, currencyPair CurrencyPair) (*Depth, erro
 	if err != nil {
 		return nil, err
 	}
-
+	println("resp:", resp)
 	bids := resp["bids"].([]interface{})
 	asks := resp["asks"].([]interface{})
 
@@ -103,7 +103,7 @@ func (bfx *Bitfinex) GetAccount() (*Account, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	//log.Println(respmap)
 	currencymap := make(map[Currency]*SubAccount, 1)
 
 	for _, v := range respmap {
@@ -293,12 +293,12 @@ func (bfx *Bitfinex) doAuthenticatedRequest(method, path string, payload map[str
 	if err != nil {
 		return err
 	}
-
+	//println(string(p))
 	encoded := base64.StdEncoding.EncodeToString(p)
 	sign, _ := GetParamHmacSha384Sign(bfx.secretKey, encoded)
 	//log.Println(BASE_URL + "/" + path)
 
-	resp, err := HttpPostForm3(bfx.httpClient, BASE_URL+"/"+path, "", map[string]string{
+	resp, err := NewHttpRequest(bfx.httpClient, method, BASE_URL+"/"+path, "", map[string]string{
 		"Content-Type":    "application/json",
 		"Accept":          "application/json",
 		"X-BFX-APIKEY":    bfx.accessKey,
@@ -308,9 +308,8 @@ func (bfx *Bitfinex) doAuthenticatedRequest(method, path string, payload map[str
 	if err != nil {
 		return err
 	}
-	//println(string(resp))
-	err = json.Unmarshal(resp, ret)
 
+	err = json.Unmarshal(resp, ret)
 	return err
 }
 
