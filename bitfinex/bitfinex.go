@@ -62,7 +62,7 @@ func (bfx *Bitfinex) GetDepth(size int, currencyPair CurrencyPair) (*Depth, erro
 	if err != nil {
 		return nil, err
 	}
-
+	println("resp:", resp)
 	bids := resp["bids"].([]interface{})
 	asks := resp["asks"].([]interface{})
 
@@ -97,17 +97,20 @@ func (bfx *Bitfinex) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade,
 	panic("not implement")
 }
 
-func (bfx *Bitfinex) GetAccount() (*Account, error) {
+func (bfx *Bitfinex) GetWalletBalances() (map[string]*Account, error) {
 	var respmap []interface{}
 	err := bfx.doAuthenticatedRequest("GET", "balances", map[string]interface{}{}, &respmap)
 	if err != nil {
 		return nil, err
 	}
+	//log.Println(respmap)
 
-	currencymap := make(map[Currency]*SubAccount, 1)
+	walletmap := make(map[string]*Account, 1)
 
 	for _, v := range respmap {
 		subacc := v.(map[string]interface{})
+		typeStr := subacc["type"].(string)
+
 		currency := UNKNOWN
 		switch subacc["currency"].(string) {
 		case "eth":
@@ -129,28 +132,36 @@ func (bfx *Bitfinex) GetAccount() (*Account, error) {
 		}
 
 		//typeS := subacc["type"].(string)
-		amount := subacc["amount"].(string)
-		available := subacc["available"].(string)
+		amount := ToFloat64(subacc["amount"])
+		available := ToFloat64(subacc["available"])
 
-		subAccount := currencymap[currency]
-		if subAccount == nil {
-			subAccount = new(SubAccount)
+		account := walletmap[typeStr]
+		if account == nil {
+			account = new(Account)
+			account.SubAccounts = make(map[Currency]SubAccount, 6)
 		}
 
-		subAccount.Currency = currency
-		subAccount.Amount += ToFloat64(available)
-		subAccount.ForzenAmount += ToFloat64(amount) - subAccount.Amount
-		currencymap[currency] = subAccount
+		account.NetAsset = amount
+		account.Asset = amount
+		account.SubAccounts[currency] = SubAccount{
+			Currency:     currency,
+			Amount:       available,
+			ForzenAmount: amount - available,
+			LoanAmount:   0}
+
+		walletmap[typeStr] = account
 	}
 
-	acc := new(Account)
-	acc.SubAccounts = make(map[Currency]SubAccount, 1)
-	acc.Exchange = bfx.GetExchangeName()
-	for k, v := range currencymap {
-		acc.SubAccounts[k] = *v
-	}
+	return walletmap, nil
+}
 
-	return acc, nil
+/*defalut only return exchange wallet balance*/
+func (bfx *Bitfinex) GetAccount() (*Account, error) {
+	wallets, err := bfx.GetWalletBalances()
+	if err != nil {
+		return nil, err
+	}
+	return wallets["exchange"], nil
 }
 
 func (bfx *Bitfinex) placeOrder(orderType, side, amount, price string, pair CurrencyPair) (*Order, error) {
@@ -293,12 +304,12 @@ func (bfx *Bitfinex) doAuthenticatedRequest(method, path string, payload map[str
 	if err != nil {
 		return err
 	}
-
+	//println(string(p))
 	encoded := base64.StdEncoding.EncodeToString(p)
 	sign, _ := GetParamHmacSha384Sign(bfx.secretKey, encoded)
 	//log.Println(BASE_URL + "/" + path)
 
-	resp, err := HttpPostForm3(bfx.httpClient, BASE_URL+"/"+path, "", map[string]string{
+	resp, err := NewHttpRequest(bfx.httpClient, method, BASE_URL+"/"+path, "", map[string]string{
 		"Content-Type":    "application/json",
 		"Accept":          "application/json",
 		"X-BFX-APIKEY":    bfx.accessKey,
@@ -308,9 +319,8 @@ func (bfx *Bitfinex) doAuthenticatedRequest(method, path string, payload map[str
 	if err != nil {
 		return err
 	}
-	//println(string(resp))
+	//print(string(resp))
 	err = json.Unmarshal(resp, ret)
-
 	return err
 }
 
