@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func _httpRequest(client *http.Client, reqType string, reqUrl string, postData string, requstHeaders map[string]string) ([]byte, error) {
+func NewHttpRequest(client *http.Client, reqType string, reqUrl string, postData string, requstHeaders map[string]string) ([]byte, error) {
 	req, _ := http.NewRequest(reqType, reqUrl, strings.NewReader(postData))
 
 	//req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -30,10 +30,6 @@ func _httpRequest(client *http.Client, reqType string, reqUrl string, postData s
 	}
 
 	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, errors.New(fmt.Sprintf("HttpStatusCode:%d ,Desc:%s", resp.StatusCode, resp.Status))
-	}
 
 	bodyData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -55,7 +51,7 @@ func _httpRequest(client *http.Client, reqType string, reqUrl string, postData s
 }
 
 func HttpGet(client *http.Client, reqUrl string) (map[string]interface{}, error) {
-	respData, err := _httpRequest(client, "GET", reqUrl, "", nil)
+	respData, err := NewHttpRequest(client, "GET", reqUrl, "", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +71,7 @@ func HttpGet2(client *http.Client, reqUrl string, headers map[string]string) (ma
 		headers = map[string]string{}
 	}
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
-	respData, err := _httpRequest(client, "GET", reqUrl, "", headers)
+	respData, err := NewHttpRequest(client, "GET", reqUrl, "", headers)
 	if err != nil {
 		return nil, err
 	}
@@ -88,12 +84,13 @@ func HttpGet2(client *http.Client, reqUrl string, headers map[string]string) (ma
 	}
 	return bodyDataMap, nil
 }
+
 func HttpGet3(client *http.Client, reqUrl string, headers map[string]string) ([]interface{}, error) {
 	if headers == nil {
 		headers = map[string]string{}
 	}
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
-	respData, err := _httpRequest(client, "GET", reqUrl, "", headers)
+	respData, err := NewHttpRequest(client, "GET", reqUrl, "", headers)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +104,9 @@ func HttpGet3(client *http.Client, reqUrl string, headers map[string]string) ([]
 	return bodyDataMap, nil
 }
 func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) ([]byte, error) {
-	headers := map[string]string{"Content-Type": "application/x-www-form-urlencoded"}
-	return _httpRequest(client, "POST", reqUrl, postData.Encode(), headers)
+	headers := map[string]string{
+		"Content-Type": "application/x-www-form-urlencoded"}
+	return NewHttpRequest(client, "POST", reqUrl, postData.Encode(), headers)
 }
 
 func HttpPostForm2(client *http.Client, reqUrl string, postData url.Values, headers map[string]string) ([]byte, error) {
@@ -116,11 +114,11 @@ func HttpPostForm2(client *http.Client, reqUrl string, postData url.Values, head
 		headers = map[string]string{}
 	}
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
-	return _httpRequest(client, "POST", reqUrl, postData.Encode(), headers)
+	return NewHttpRequest(client, "POST", reqUrl, postData.Encode(), headers)
 }
 
 func HttpPostForm3(client *http.Client, reqUrl string, postData string, headers map[string]string) ([]byte, error) {
-	return _httpRequest(client, "POST", reqUrl, postData, headers)
+	return NewHttpRequest(client, "POST", reqUrl, postData, headers)
 }
 
 func HttpDeleteForm(client *http.Client, reqUrl string, postData url.Values, headers map[string]string) ([]byte, error) {
@@ -128,5 +126,5 @@ func HttpDeleteForm(client *http.Client, reqUrl string, postData url.Values, hea
 		headers = map[string]string{}
 	}
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
-	return _httpRequest(client, "DELETE", reqUrl, postData.Encode(), headers)
+	return NewHttpRequest(client, "DELETE", reqUrl, postData.Encode(), headers)
 }
