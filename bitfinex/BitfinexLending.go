@@ -38,6 +38,14 @@ type LendOrder struct {
 	Timestamp       string  `json:"timestamp"`
 }
 
+func (bfx *Bitfinex) GetDepositWalletBalance() (*Account, error) {
+	wallets, err := bfx.GetWalletBalances()
+	if err != nil {
+		return nil, err
+	}
+	return wallets["deposit"], nil
+}
+
 func (bfx *Bitfinex) GetLendBook(currency Currency) (error, *LendBook) {
 	path := fmt.Sprintf("/lendbook/%s", currency.Symbol)
 	resp, err := bfx.httpClient.Get(BASE_URL + path)
@@ -111,6 +119,7 @@ func (bfx *Bitfinex) NewLoanOrder(currency Currency, amount, rate string, period
 }
 
 func (bfx *Bitfinex) CancelLendOrder(id int) (error, *LendOrder) {
+	println("id=", id)
 	path := "offer/cancel"
 	var lendOrder LendOrder
 	err := bfx.doAuthenticatedRequest("POST", path, map[string]interface{}{"offer_id": id}, &lendOrder)
@@ -155,4 +164,23 @@ func (bfx *Bitfinex) ActiveCredits() (error, []LendOrder) {
 		return err, nil
 	}
 	return nil, offerOrders
+}
+
+type TradeFunding struct {
+	Rate      string `json:"rate"`
+	Period    string `json:"period"`
+	Amount    string `json:"amount"`
+	Timestamp string `json:"timestamp"`
+	Type      string `json:"type"`
+	Tid       int64  `json:"tid"`
+	OfferId   int64  `json:"offer_id"`
+}
+
+func (bfx *Bitfinex) MytradesFunding(currency Currency, limit int) (error, []TradeFunding) {
+	var trades []TradeFunding
+	err := bfx.doAuthenticatedRequest("POST", "mytrades_funding", map[string]interface{}{"limit_trades": limit, "symbol": currency.Symbol}, &trades)
+	if err != nil {
+		return err, nil
+	}
+	return nil, trades
 }
