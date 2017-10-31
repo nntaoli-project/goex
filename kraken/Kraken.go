@@ -89,25 +89,38 @@ func (kraken *Kraken) GetDepth(size int, currencyPair CurrencyPair) (*Depth, err
 }
 
 func (kraken *Kraken) buildParamsSigned(method string, postForm *url.Values) string {
-	//	postForm.Set("nonce", fmt.Sprintf("%d", time.Now().UnixNano()))
-	//	urlPath := API_V0+PRIVATE+method
+	postForm.Set("nonce", fmt.Sprintf("%d", time.Now().UnixNano()))
+	urlPath := API_V0+PRIVATE+method
 	// Create signature
-	//secret, _ := base64.StdEncoding.DecodeString(api.secret)
-	//signature := createSignature(urlPath, values, secret)
+	signature, _ := GetParamHmacSHA256SHA512Base64Sign(kraken.secretKey, urlPath, postForm)
 
-	return nil
+	log.Println("signature",signature)
+	return signature
 }
-func (kraken *Kraken) queryPrivate(method string, values url.Values, typ interface{}) (interface{}, error) {
-
-}
+//func (kraken *Kraken) queryPrivate(method string, values url.Values, typ interface{}) (interface{}, error) {
+//
+//}
 func (kraken *Kraken) placeOrder(amount, price string, pair CurrencyPair, orderType, orderSide string) (*Order, error) {
 	panic("not implement")
 
 }
 
 func (kraken *Kraken) GetAccount() (*Account, error) {
-	panic("not implement")
+	params := url.Values{}
+	path := API_BASE_URL+API_V0+PRIVATE+ACCOUNT_URI
+	signature := kraken.buildParamsSigned(ACCOUNT_URI, &params)
+	headers := map[string]string{
+		"API-Key":  kraken.accessKey,
+		"API-Sign": signature,
+	}
 
+	resp, err := HttpPostForm2(kraken.httpClient, path, params,	headers)
+	log.Println("resp:", string(resp), "err:", err, path, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 func (kraken *Kraken) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
