@@ -21,8 +21,10 @@ var (
 	UNKNOWN = Currency{"UNKNOWN", ""}
 	CNY     = Currency{"CNY", "rmb （China Yuan)"}
 	USD     = Currency{"USD", "USA dollar"}
+	USDT    = Currency{"USDT","http://tether.io"}
 	EUR     = Currency{"EUR", ""}
 	BTC     = Currency{"BTC", "bitcoin.org"}
+	XBT     = Currency{"XBT", "bitcoin.org"}
 	BCC     = Currency{"BCC", "bitcoin-abc"}
 	BCH     = Currency{"BCH","bitcoin-abc"}
 	LTC     = Currency{"LTC", "litecoin.org"}
