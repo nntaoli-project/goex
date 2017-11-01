@@ -2,7 +2,7 @@ package yunbi
 
 import (
 	"net/http"
-	. "github.com/nntaoli/crypto_coin_api"
+	. "github.com/nntaoli-project/GoEx"
 	"fmt"
 	"log"
 	"io/ioutil"
@@ -11,9 +11,10 @@ import (
 	"time"
 	"net/url"
 	"errors"
+	"strings"
 )
 
-const _EXCHANGE_NAME = "yunbi"
+const _EXCHANGE_NAME = "yunbi.com"
 
 var (
 	API_URL = "https://yunbi.com"
@@ -59,7 +60,8 @@ func (yunbi *YunBi)GetTicker(currency CurrencyPair) (*Ticker, error) {
 		log.Println(err)
 		return nil, err
 	}
-	
+	defer resp.Body.Close()
+
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Println(err)
@@ -68,7 +70,10 @@ func (yunbi *YunBi)GetTicker(currency CurrencyPair) (*Ticker, error) {
 	
 	//println(string(respData))
 	tickerResp := new(_TickerResponse)
-	json.Unmarshal(respData, tickerResp)
+	err = json.Unmarshal(respData, tickerResp)
+	if err != nil {
+		return nil , err
+	}
 	
 	ticker := new(Ticker)
 	ticker.Date = tickerResp.At
@@ -133,6 +138,13 @@ func (yunbi *YunBi)GetAccount() (*Account, error) {
 	}
 	
 	//log.Println(resp)
+	if resp["error"] != nil{
+		errmap := resp["error"].(map[string]interface{})
+		errcode := errmap["code"].(float64)
+		errmsg := errmap["message"].(string)
+		return nil , errors.New(fmt.Sprintf("%.0f:%s" , errcode , errmsg))
+	}
+
 	acc := new(Account)
 	acc.SubAccounts = make(map[Currency]SubAccount)
 	
@@ -162,6 +174,10 @@ func (yunbi *YunBi)GetAccount() (*Account, error) {
 			currency = ZEC
 		case "sc":
 			currency = SC
+		case "bts":
+			currency = BTS
+		case "eos":
+			currency = EOS
 		default:
 			skip = true
 		}
@@ -316,8 +332,12 @@ func (yunbi *YunBi) GetOrderHistorys(currency CurrencyPair, currentPage, pageSiz
 	return nil, nil
 }
 
-func (yunbi *YunBi) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+func (yunbi *YunBi) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
 	return nil, nil
+}
+
+func (yunbi *YunBi) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	panic("unimplements")
 }
 
 func (yunbi *YunBi)parseOrder(orderMap map[string]interface{}) Order {
@@ -354,7 +374,7 @@ func (yunbi *YunBi) buildPostForm(httpMethod, apiURI string, postForm *url.Value
 	
 	params := postForm.Encode();
 	payload := httpMethod + "|" + apiURI + "|" + params
-	println(payload)
+	//println(payload)
 	
 	sign, err := GetParamHmacSHA256Sign(yunbi.secretKey, payload);
 	if err != nil {
@@ -367,15 +387,5 @@ func (yunbi *YunBi) buildPostForm(httpMethod, apiURI string, postForm *url.Value
 }
 
 func convertCurrencyPair(currencyPair CurrencyPair) string {
-	switch currencyPair {
-	case BTC_CNY:
-		return "btccny"
-	case ETH_CNY:
-		return "ethcny"
-	case ETC_CNY:
-		return "etccny"
-	case ZEC_CNY:
-		return "zeccny"
-	}
-	return "btccny"
+	return strings.ToLower(currencyPair.ToSymbol(""))
 }

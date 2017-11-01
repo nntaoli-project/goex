@@ -1,7 +1,8 @@
+/*注意:haobtc已经下线交易所*/
 package haobtc
 
 import (
-	. "../"
+	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"errors"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 
 const
 (
-	EXCHANGE_NAME = "haobtc";
+	EXCHANGE_NAME = "haobtc.com";
 	API_BASE_URL = "https://haobtc.com/exchange/api/v1/";
 	TICKER_URI = "ticker";
 	TRADE_URI = "trade";
@@ -54,7 +55,7 @@ func (ctx *HaoBtc) buildPostForm(postForm *url.Values) error {
 
 func (ctx *HaoBtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	if currency != BTC_CNY {
-		return nil, errors.New("The HaoBtc Unsupport " + CurrencyPairSymbol[currency]);
+		return nil, errors.New("The HaoBtc Unsupport " + currency.String());
 	}
 
 	var tickerMap map[string]interface{};
@@ -86,7 +87,7 @@ func (ctx *HaoBtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	case BTC_CNY:
 		depthUri = API_BASE_URL + fmt.Sprintf(DEPTH_URI, size);
 	default:
-		return nil, errors.New("Unsupport The CurrencyPair " + CurrencyPairSymbol[currency]);
+		return nil, errors.New("Unsupport The CurrencyPair " + currency.ToSymbol("_"));
 	}
 
 	bodyDataMap, err := HttpGet(ctx.httpClient,depthUri);
