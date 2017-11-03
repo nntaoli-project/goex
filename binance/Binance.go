@@ -62,7 +62,8 @@ func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	var tickerMap map[string]interface{} = bodyDataMap
 	var ticker Ticker
 
-	ticker.Date = uint64(tickerMap["closeTime"].(float64))
+	t, _ := tickerMap["closeTime"].(float64)
+	ticker.Date = uint64(t)
 	ticker.Last, _ = strconv.ParseFloat(tickerMap["lastPrice"].(string), 10)
 	ticker.Buy, _ = strconv.ParseFloat(tickerMap["bidPrice"].(string), 10)
 	ticker.Sell, _ = strconv.ParseFloat(tickerMap["askPrice"].(string), 10)
