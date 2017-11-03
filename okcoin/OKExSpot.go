@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	. "github.com/nntaoli-project/GoEx"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -41,6 +42,8 @@ func (ctx *OKExSpot) GetAccount() (*Account, error) {
 		return nil, err
 	}
 
+	log.Println(respMap)
+
 	if !respMap["result"].(bool) {
 		errcode := strconv.FormatFloat(respMap["error_code"].(float64), 'f', 0, 64)
 		return nil, errors.New(errcode)
@@ -58,11 +61,14 @@ func (ctx *OKExSpot) GetAccount() (*Account, error) {
 	account := new(Account)
 	account.Exchange = ctx.GetExchangeName()
 
-	var btcSubAccount SubAccount
-	var ltcSubAccount SubAccount
-	var ethSubAccount SubAccount
-	var etcSubAccount SubAccount
-	var bccSubAccount SubAccount
+	var (
+		btcSubAccount  SubAccount
+		ltcSubAccount  SubAccount
+		ethSubAccount  SubAccount
+		etcSubAccount  SubAccount
+		bccSubAccount  SubAccount
+		usdtSubAccount SubAccount
+	)
 
 	btcSubAccount.Currency = BTC
 	btcSubAccount.Amount = ToFloat64(free["btc"])
@@ -89,12 +95,18 @@ func (ctx *OKExSpot) GetAccount() (*Account, error) {
 	bccSubAccount.LoanAmount = 0
 	bccSubAccount.ForzenAmount = ToFloat64(freezed["bcc"])
 
+	usdtSubAccount.Currency = USDT
+	usdtSubAccount.Amount = ToFloat64(free["usdt"])
+	usdtSubAccount.LoanAmount = 0
+	usdtSubAccount.ForzenAmount = ToFloat64(freezed["usdt"])
+
 	account.SubAccounts = make(map[Currency]SubAccount, 5)
 	account.SubAccounts[BTC] = btcSubAccount
 	account.SubAccounts[LTC] = ltcSubAccount
 	account.SubAccounts[ETH] = ethSubAccount
 	account.SubAccounts[ETC] = etcSubAccount
 	account.SubAccounts[BCC] = bccSubAccount
+	account.SubAccounts[USDT] = usdtSubAccount
 
 	return account, nil
 }
