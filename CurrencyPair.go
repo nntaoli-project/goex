@@ -38,6 +38,7 @@ var (
 	ZEC     = Currency{"ZEC", ""}
 	DCR     = Currency{"DCR", ""}
 	XRP     = Currency{"XRP", ""}
+	BTG     = Currency{"BTG",""}
 
 	//currency pair
 
@@ -61,6 +62,13 @@ var (
 	BCC_USD = CurrencyPair{BCC, USD}
 	XRP_USD = CurrencyPair{XRP, USD}
 
+	BTC_USDT = CurrencyPair{BTC,USDT}
+	LTC_USDT = CurrencyPair{LTC, USDT}
+	BCH_USDT = CurrencyPair{BCH, USDT}
+	BCC_USDT = CurrencyPair{BCC,USDT}
+	ETC_USDT = CurrencyPair{ETC,USDT}
+	ETH_USDT = CurrencyPair{ETH,USDT}
+
 	XRP_EUR = CurrencyPair{XRP , EUR}
 
 	LTC_BTC = CurrencyPair{LTC, BTC}
@@ -70,6 +78,7 @@ var (
 	BCH_BTC = CurrencyPair{BCH, BTC}
 	DCR_BTC = CurrencyPair{DCR, BTC}
 	XRP_BTC = CurrencyPair{XRP ,BTC}
+	BTG_BTC = CurrencyPair{BTG,BTC}
 
 	ETC_ETH = CurrencyPair{ETC, ETH}
 	EOS_ETH = CurrencyPair{EOS, ETH}
