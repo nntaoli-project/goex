@@ -8,6 +8,7 @@ type Order struct {
 	AvgPrice,
 	DealAmount,
 	Fee float64
+	OrderID2  string
 	OrderID   int
 	OrderTime int
 	Status    TradeStatus
