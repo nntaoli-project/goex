@@ -23,6 +23,7 @@ var (
 	USD     = Currency{"USD", "USA dollar"}
 	USDT    = Currency{"USDT","http://tether.io"}
 	EUR     = Currency{"EUR", ""}
+	JPY     = Currency{"JPY", "japanese yen"}
 	BTC     = Currency{"BTC", "bitcoin.org"}
 	XBT     = Currency{"XBT", "bitcoin.org"}
 	BCC     = Currency{"BCC", "bitcoin-abc"}
@@ -70,6 +71,11 @@ var (
 	ETH_USDT = CurrencyPair{ETH,USDT}
 
 	XRP_EUR = CurrencyPair{XRP , EUR}
+
+	BTC_JPY = CurrencyPair{BTC,JPY}
+	LTC_JPY = CurrencyPair{LTC,JPY}
+	ETH_JPY = CurrencyPair{ETH,JPY}
+	ETC_JPY = CurrencyPair{ETC,JPY}
 
 	LTC_BTC = CurrencyPair{LTC, BTC}
 	ETH_BTC = CurrencyPair{ETH, BTC}
