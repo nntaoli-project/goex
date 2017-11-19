@@ -38,6 +38,10 @@ func NewAPIBuilder() (builder *APIBuilder) {
 	return &APIBuilder{client: _client}
 }
 
+func NewCustomAPIBuilder(client *http.Client) (builder *APIBuilder) {
+	return &APIBuilder{client: client}
+}
+
 func (builder *APIBuilder) APIKey(key string) (_builder *APIBuilder) {
 	builder.apiKey = key
 	return builder
