@@ -21,6 +21,7 @@ var (
 	UNKNOWN = Currency{"UNKNOWN", ""}
 	CNY     = Currency{"CNY", "rmb （China Yuan)"}
 	USD     = Currency{"USD", "USA dollar"}
+	USDT     = Currency{"USDT", "USA dollar"}
 	EUR     = Currency{"EUR", ""}
 	BTC     = Currency{"BTC", "bitcoin.org"}
 	BCC     = Currency{"BCC", "bitcoin-abc"}
@@ -58,6 +59,14 @@ var (
 	BCH_USD = CurrencyPair{BCH, USD}
 	BCC_USD = CurrencyPair{BCC, USD}
 	XRP_USD = CurrencyPair{XRP, USD}
+
+	BTC_USDT = CurrencyPair{BTC, USDT}
+	LTC_USDT = CurrencyPair{LTC, USDT}
+	ETH_USDT = CurrencyPair{ETH, USDT}
+	ETC_USDT = CurrencyPair{ETC, USDT}
+	BCH_USDT = CurrencyPair{BCH, USDT}
+	BCC_USDT = CurrencyPair{BCC, USDT}
+	XRP_USDT = CurrencyPair{XRP, USDT}
 
 	XRP_EUR = CurrencyPair{XRP , EUR}
 

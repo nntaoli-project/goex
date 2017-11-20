@@ -1,12 +1,9 @@
 package okcoin
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"io/ioutil"
-//	"log"
 	"net/http"
 	"net/url"
 	"strconv"

@@ -258,7 +258,9 @@ func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool,
 func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, error) {
 	params := url.Values{}
 	params.Set("symbol", currencyPair.ToSymbol(""))
-	params.Set("orderId", orderId)
+	if orderId != "" {
+		params.Set("orderId", orderId)
+	}
 
 	bn.buildParamsSigned(&params)
 	path := API_V3 + ORDER_URI + params.Encode()
@@ -274,11 +276,21 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	ord.Currency = currencyPair
 	ord.OrderID = ToInt(orderId)
 
-	if status == "FILLED" {
+	switch status {
+	case "FILLED" :
 		ord.Status = ORDER_FINISH
-	} else {
+	case "PARTIALLY_FILLED" :
+		ord.Status = ORDER_PART_FINISH
+	case "CANCELED" :
+		ord.Status = ORDER_CANCEL
+	case "PENDING_CANCEL" :
+		ord.Status = ORDER_CANCEL_ING
+	case "REJECTED" :
+		ord.Status = ORDER_REJECT
+	default:
 		ord.Status = ORDER_UNFINISH
 	}
+
 	ord.Amount = ToFloat64(respmap["origQty"].(string))
 	ord.Price = ToFloat64(respmap["price"].(string))
 
