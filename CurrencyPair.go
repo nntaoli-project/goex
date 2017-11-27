@@ -40,6 +40,9 @@ var (
 	DCR     = Currency{"DCR", ""}
 	XRP     = Currency{"XRP", ""}
 	BTG     = Currency{"BTG",""}
+	BCD     = Currency{"BCD",""}
+	NEO     = Currency{"NEO","neo.org"}
+	HSR     = Currency{"HSR",""}
 
 	//currency pair
 
@@ -62,6 +65,7 @@ var (
 	BCH_USD = CurrencyPair{BCH, USD}
 	BCC_USD = CurrencyPair{BCC, USD}
 	XRP_USD = CurrencyPair{XRP, USD}
+	BCD_USD = CurrencyPair{BCD,USD}
 
 	BTC_USDT = CurrencyPair{BTC,USDT}
 	LTC_USDT = CurrencyPair{LTC, USDT}
@@ -69,6 +73,11 @@ var (
 	BCC_USDT = CurrencyPair{BCC,USDT}
 	ETC_USDT = CurrencyPair{ETC,USDT}
 	ETH_USDT = CurrencyPair{ETH,USDT}
+	BCD_USDT = CurrencyPair{BCD,USDT}
+	NEO_USDT = CurrencyPair{NEO,USDT}
+	EOS_USDT = CurrencyPair{EOS,USDT}
+	XRP_USDT = CurrencyPair{XRP,USDT}
+	HSR_USDT = CurrencyPair{HSR,USDT}
 
 	XRP_EUR = CurrencyPair{XRP , EUR}
 
@@ -76,6 +85,7 @@ var (
 	LTC_JPY = CurrencyPair{LTC,JPY}
 	ETH_JPY = CurrencyPair{ETH,JPY}
 	ETC_JPY = CurrencyPair{ETC,JPY}
+	BCH_JPY = CurrencyPair{BCH,JPY}
 
 	LTC_BTC = CurrencyPair{LTC, BTC}
 	ETH_BTC = CurrencyPair{ETH, BTC}
@@ -85,9 +95,16 @@ var (
 	DCR_BTC = CurrencyPair{DCR, BTC}
 	XRP_BTC = CurrencyPair{XRP ,BTC}
 	BTG_BTC = CurrencyPair{BTG,BTC}
+	BCD_BTC = CurrencyPair{BCD,BTC}
+	NEO_BTC = CurrencyPair{NEO,BTC}
+	EOS_BTC = CurrencyPair{EOS,BTC}
+	HSR_BTC = CurrencyPair{HSR,BTC}
 
 	ETC_ETH = CurrencyPair{ETC, ETH}
 	EOS_ETH = CurrencyPair{EOS, ETH}
+	ZEC_ETH = CurrencyPair{ZEC,ETH}
+	NEO_ETH = CurrencyPair{NEO,ETH}
+	HSR_ETH = CurrencyPair{HSR,ETH}
 
 	UNKNOWN_PAIR = CurrencyPair{UNKNOWN,UNKNOWN}
 )
