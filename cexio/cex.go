@@ -1,8 +1,6 @@
 package cexio
 
 import (
-	"encoding/json"
-	"errors"
 	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"strconv"
@@ -11,6 +9,28 @@ import (
 const (
 	EXCHANGE_NAME = "cex.io"
 )
+
+var (
+	balanceCurrencies = map[string]Currency{
+		"USD":  USD,
+		"EUR":  EUR,
+		"GBP":  NewCurrency("GBP", ""),
+		"RUB":  NewCurrency("RUB", ""),
+		"GHS":  NewCurrency("GHS", ""),
+		"BTC":  BTC,
+		"BCH":  BCH,
+		"ETH":  ETH,
+		"DASH": NewCurrency("DASH", ""),
+		"ZEC":  ZEC,
+	}
+)
+
+type Cex struct {
+	httpClient *http.Client
+	userId     string
+	Api_key    string
+	Api_secret string
+}
 
 func New(client *http.Client, accessKey, secretKey string, clientId string) *Cex {
 	return &Cex{client, clientId, accessKey, secretKey}
@@ -21,12 +41,8 @@ func (cex *Cex) GetExchangeName() string {
 }
 
 func (cex *Cex) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	opt := currency.ToSymbol("/")
-	respData := cex.Ticker(opt)
-	if respData == nil {
-		return nil, errors.New("ticker error")
-	}
-	resp, err := cex.convert(respData)
+	pair := currency.ToSymbol("/")
+	resp, err := cex.ticker(pair)
 	if err != nil {
 		return nil, err
 	}
@@ -75,17 +91,36 @@ func (cex *Cex) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize in
 }
 
 func (cex *Cex) GetAccount() (*Account, error) {
-	panic("not implement")
-}
-
-func (cex *Cex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	opt := currency.ToSymbol("/")
-	respData := cex.OrderBook(size, opt)
-	//fmt.Println(string(respData))
-	resp, err := cex.convert(respData)
+	resp, err := cex.balance()
 	if err != nil {
 		return nil, err
 	}
+	//fmt.Println(resp)
+
+	acc := &Account{}
+	acc.Exchange = cex.GetExchangeName()
+	acc.SubAccounts = make(map[Currency]SubAccount)
+
+	for name, currency := range balanceCurrencies {
+		data := resp[name].(map[string]interface{})
+		acc.SubAccounts[currency] = SubAccount{
+			Currency:     currency,
+			Amount:       ToFloat64(data["available"]),
+			ForzenAmount: ToFloat64(data["orders"]),
+			LoanAmount:   0,
+		}
+	}
+
+	return acc, nil
+}
+
+func (cex *Cex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
+	pair := currency.ToSymbol("/")
+	resp, err := cex.orderBook(size, pair)
+	if err != nil {
+		return nil, err
+	}
+
 	bids := resp["bids"].([]interface{})
 	asks := resp["asks"].([]interface{})
 
@@ -117,13 +152,4 @@ func (cex *Cex) GetKlineRecords(currency CurrencyPair, period, size, since int) 
 //非个人，整个交易所的交易记录
 func (cex *Cex) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("not implement")
-}
-
-func (cex *Cex) convert(data []byte) (map[string]interface{}, error) {
-	var resp map[string]interface{}
-	err := json.Unmarshal(data, &resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
 }
