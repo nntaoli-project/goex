@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"sort"
 )
 
 type BaseResponse struct {
@@ -259,6 +260,8 @@ func (k *Kraken) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		}
 		break
 	}
+
+	sort.Sort(sort.Reverse(dep.AskList)) //reverse
 
 	return &dep, nil
 }
