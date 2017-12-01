@@ -1,5 +1,5 @@
-### 数字资产交易平台Go API库
-(The GoEx Project is crypto coin trading api wrap) 
+### <img width="50" height="50" src="https://raw.githubusercontent.com/huzhihao2002/GoEx/dev/banner.jpg"/>数字资产交易平台Go API库
+## <img width="30" height="30" src="https://raw.githubusercontent.com/huzhihao2002/GoEx/dev/banner.jpg"/>The GoEx Project is crypto coin trading api wrap
 
 
 Provide a standard wrapper for difference crpto coin trade platforms
