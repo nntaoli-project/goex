@@ -59,7 +59,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.Sell, _ = strconv.ParseFloat(tickermap["lowestAsk"].(string), 64)
 	ticker.Vol, _ = strconv.ParseFloat(tickermap["quoteVolume"].(string), 64)
 
-	log.Println(tickermap)
+	//log.Println(tickermap)
 
 	return ticker, nil
 }

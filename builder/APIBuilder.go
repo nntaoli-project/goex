@@ -7,6 +7,7 @@ import (
 	"github.com/nntaoli-project/GoEx/bitfinex"
 	"github.com/nntaoli-project/GoEx/bitstamp"
 	"github.com/nntaoli-project/GoEx/btcbox"
+	"github.com/nntaoli-project/GoEx/cexio"
 	"github.com/nntaoli-project/GoEx/chbtc"
 	"github.com/nntaoli-project/GoEx/coincheck"
 	"github.com/nntaoli-project/GoEx/huobi"
@@ -104,6 +105,8 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = binance.New(builder.client, builder.apiKey, builder.secretkey)
 	case "btcbox.co.jp":
 		_api = btcbox.New(builder.client, builder.apiKey, builder.secretkey)
+	case "cex.io":
+		_api = cexio.New(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
 	default:
 		panic("exchange name error.")
 
