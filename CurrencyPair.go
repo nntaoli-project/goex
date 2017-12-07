@@ -23,6 +23,7 @@ var (
 	USD     = Currency{"USD", "USA dollar"}
 	USDT    = Currency{"USDT","http://tether.io"}
 	EUR     = Currency{"EUR", ""}
+	KRW     = Currency{"KRW", ""}
 	JPY     = Currency{"JPY", "japanese yen"}
 	BTC     = Currency{"BTC", "bitcoin.org"}
 	XBT     = Currency{"XBT", "bitcoin.org"}
@@ -57,6 +58,12 @@ var (
 	SC_CNY   = CurrencyPair{SC, CNY}
 	ANS_CNY  = CurrencyPair{ANS, CNY}
 	ZEC_CNY  = CurrencyPair{ZEC, CNY}
+
+	BTC_KRW  = CurrencyPair{BTC,KRW}
+	ETH_KRW  = CurrencyPair{BTC,KRW}
+	ETC_KRW  = CurrencyPair{BTC,KRW}
+	LTC_KRW  = CurrencyPair{BTC,KRW}
+	BCH_KRW  = CurrencyPair{BTC,KRW}
 
 	BTC_USD = CurrencyPair{BTC, USD}
 	LTC_USD = CurrencyPair{LTC, USD}
