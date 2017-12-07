@@ -41,11 +41,9 @@ func (ctx *OKExSpot) GetAccount() (*Account, error) {
 		return nil, err
 	}
 
-	//log.Println(respMap)
-
-	if !respMap["result"].(bool) {
-		errcode := strconv.FormatFloat(respMap["error_code"].(float64), 'f', 0, 64)
-		return nil, errors.New(errcode)
+	if errcode , isok := respMap["error_code"].(float64) ; isok {
+		errcodeStr := strconv.FormatFloat(errcode, 'f', 0, 64)
+		return nil, errors.New(errcodeStr)
 	}
 	//log.Println(respMap)
 	info, ok := respMap["info"].(map[string]interface{})
