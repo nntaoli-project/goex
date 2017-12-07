@@ -223,7 +223,8 @@ type futureUserInfoResponse struct {
 		Eth map[string]float64 `json:"eth"`
 		Bch map[string]float64 `json:"bch"`
 	} `json:info`
-	Result bool `json:"result,bool"`
+	Result     bool `json:"result,bool"`
+	Error_code int  `json:"error_code"`
 }
 
 func (ok *OKEx) GetFutureUserinfo() (*FutureAccount, error) {
@@ -245,8 +246,8 @@ func (ok *OKEx) GetFutureUserinfo() (*FutureAccount, error) {
 		return nil, err
 	}
 
-	if !resp.Result {
-		return nil, errors.New(string(body))
+	if !resp.Result && resp.Error_code > 0 {
+		return nil, ok.errorWrapper(resp.Error_code)
 	}
 
 	account := new(FutureAccount)
@@ -506,7 +507,7 @@ func (ok *OKEx) GetContractValue(currencyPair CurrencyPair) (float64, error) {
 	switch currencyPair {
 	case BTC_USD:
 		return 100, nil
-	case LTC_USD,ETH_USD,ETC_USD,BCH_USD:
+	case LTC_USD, ETH_USD, ETC_USD, BCH_USD:
 		return 10, nil
 	}
 
@@ -575,4 +576,19 @@ func (ok *OKEx) GetKlineRecords(contract_type string, currencyPair CurrencyPair,
 
 func (okFuture *OKEx) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("unimplements")
+}
+
+func (okFuture *OKEx) errorWrapper(errorCode int) ApiError {
+	switch errorCode {
+	case 20024:
+		return EX_ERR_SIGN
+	case 20020:
+		return EX_ERR_NOT_FIND_SECRETKEY
+	case 20015:
+		return EX_ERR_NOT_FIND_ORDER
+	case 20049:
+		return EX_ERR_API_LIMIT
+	}
+	errmsg := fmt.Sprintf("%d", errorCode)
+	return ApiError{ErrCode: errmsg, OriginErrMsg: errmsg}
 }

@@ -13,6 +13,7 @@ func (e ApiError) Error() string {
 var (
 	API_ERR                      = ApiError{ErrCode: "EX_ERR_0000", ErrMsg: "unknown error"}
 	HTTP_ERR_CODE                = ApiError{ErrCode: "HTTP_ERR_0001", ErrMsg: "http request error"}
+	EX_ERR_API_LIMIT             = ApiError{ErrCode: "EX_ERR_1000", ErrMsg: "api limited"}
 	EX_ERR_SIGN                  = ApiError{ErrCode: "EX_ERR_0001", ErrMsg: "signature error"}
 	EX_ERR_NOT_FIND_SECRETKEY    = ApiError{ErrCode: "EX_ERR_0002", ErrMsg: "not find secretkey"}
 	EX_ERR_NOT_FIND_APIKEY       = ApiError{ErrCode: "EX_ERR_0003", ErrMsg: "not find apikey"}
