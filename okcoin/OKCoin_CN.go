@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
 	. "github.com/nntaoli-project/GoEx"
 )
 
@@ -114,8 +113,8 @@ func (ctx *OKCoinCN_API) placeOrder(side, amount, price string, currency Currenc
 		return nil, err
 	}
 
-	if !respMap["result"].(bool) {
-		return nil, errors.New(string(body))
+	if err , isok := respMap["error_code"].(float64) ; isok {
+		return nil, errors.New(fmt.Sprint(err))
 	}
 
 	order := new(Order)
@@ -171,8 +170,8 @@ func (ctx *OKCoinCN_API) CancelOrder(orderId string, currency CurrencyPair) (boo
 		return false, err
 	}
 
-	if !respMap["result"].(bool) {
-		return false, errors.New(string(body))
+	if err , isok := respMap["error_code"].(float64) ; isok {
+		return false, errors.New(fmt.Sprint(err))
 	}
 
 	return true, nil
@@ -198,8 +197,8 @@ func (ctx *OKCoinCN_API) getOrders(orderId string, currency CurrencyPair) ([]Ord
 		return nil, err
 	}
 
-	if !respMap["result"].(bool) {
-		return nil, errors.New(string(body))
+	if err , isok := respMap["error_code"].(float64) ; isok {
+		return nil, errors.New(fmt.Sprint(err))
 	}
 
 	orders := respMap["orders"].([]interface{})
@@ -285,9 +284,8 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 		return nil, err
 	}
 
-	if !respMap["result"].(bool) {
-		errcode := strconv.FormatFloat(respMap["error_code"].(float64), 'f', 0, 64)
-		return nil, errors.New(errcode)
+	if err , isok := respMap["error_code"].(float64) ; isok {
+		return nil, errors.New(fmt.Sprint(err))
 	}
 
 	info, ok := respMap["info"].(map[string]interface{})
@@ -385,11 +383,16 @@ func (ctx *OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, erro
 		return nil, err
 	}
 
-	if bodyDataMap["result"] != nil && !bodyDataMap["result"].(bool) {
-		return nil, errors.New(fmt.Sprintf("%.0f", bodyDataMap["error_code"].(float64)))
+	if err , isok := bodyDataMap["error_code"].(float64) ; isok {
+		return nil, errors.New(fmt.Sprint(err))
 	}
 
-	for _, v := range bodyDataMap["asks"].([]interface{}) {
+	dep , isok := bodyDataMap["asks"].([]interface{})
+	if !isok {
+		return nil , errors.New("parse data error")
+	}
+
+	for _, v := range dep {
 		var dr DepthRecord
 		for i, vv := range v.([]interface{}) {
 			switch i {
@@ -496,8 +499,8 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 		return nil, err
 	}
 
-	if !respMap["result"].(bool) {
-		return nil, errors.New(string(body))
+	if err , isok := respMap["error_code"].(float64) ; isok {
+		return nil, errors.New(fmt.Sprint(err))
 	}
 
 	orders := respMap["orders"].([]interface{})
