@@ -31,6 +31,7 @@ func NewBitstamp(client *http.Client, accessKey, secertkey, clientId string) *Bi
 
 func (bitstamp *Bitstamp) buildPostForm(params *url.Values) {
 	nonce := time.Now().UnixNano()
+	//println(nonce)
 	payload := fmt.Sprintf("%d%s%s", nonce, bitstamp.clientId, bitstamp.accessKey)
 	sign, _ := GetParamHmacSHA256Sign(bitstamp.secretkey, payload)
 	params.Set("signature", strings.ToUpper(sign))
@@ -66,6 +67,12 @@ func (bitstamp *Bitstamp) GetAccount() (*Account, error) {
 		ForzenAmount: ToFloat64(respmap["btc_reserved"]),
 		LoanAmount:   0,
 	}
+	acc.SubAccounts[LTC] = SubAccount{
+		Currency:     LTC,
+		Amount:       ToFloat64(respmap["ltc_available"]),
+		ForzenAmount: ToFloat64(respmap["ltc_reserved"]),
+		LoanAmount:   0,
+	}
 	acc.SubAccounts[ETH] = SubAccount{
 		Currency:     ETH,
 		Amount:       ToFloat64(respmap["eth_available"]),
@@ -90,6 +97,11 @@ func (bitstamp *Bitstamp) GetAccount() (*Account, error) {
 		ForzenAmount: ToFloat64(respmap["eur_reserved"]),
 		LoanAmount:   0,
 	}
+	acc.SubAccounts[BCH] = SubAccount{
+		Currency:BCH,
+		Amount: ToFloat64(respmap["bch_available"]),
+		ForzenAmount:ToFloat64(respmap["bch_reserved"]),
+		LoanAmount:0}
 	return &acc, nil
 }
 
@@ -224,6 +236,11 @@ func (bitstamp *Bitstamp) GetOneOrder(orderId string, currency CurrencyPair) (*O
 			amount := ToFloat64(transaction[currencyStr])
 			dealAmount += amount
 			tradeAmount += amount * price
+
+			tpy := ToInt(transaction["type"])
+			if tpy == 2 {
+				ord.Side = SELL
+			}
 		}
 		avgPrice := tradeAmount / dealAmount
 		ord.DealAmount = dealAmount
@@ -250,13 +267,13 @@ func (bitstamp *Bitstamp) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 		log.Println(string(resp))
 		return nil, err
 	}
-
+	//log.Println(respmap)
 	orders := make([]Order, 0)
 	for _, v := range respmap {
 		ord := v.(map[string]interface{})
 		side := ToInt(ord["type"])
 		orderSide := SELL
-		if side == 1 {
+		if side == 0 {
 			orderSide = BUY
 		}
 		orderTime, _ := time.Parse("2006-01-02 15:04:05", ord["datetime"].(string))
