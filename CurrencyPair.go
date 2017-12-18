@@ -29,6 +29,7 @@ var (
 	XBT     = Currency{"XBT", "bitcoin.org"}
 	BCC     = Currency{"BCC", "bitcoin-abc"}
 	BCH     = Currency{"BCH","bitcoin-abc"}
+	BCX     = Currency{"BCX",""}
 	LTC     = Currency{"LTC", "litecoin.org"}
 	ETH     = Currency{"ETH", ""}
 	ETC     = Currency{"ETC", ""}
@@ -60,10 +61,10 @@ var (
 	ZEC_CNY  = CurrencyPair{ZEC, CNY}
 
 	BTC_KRW  = CurrencyPair{BTC,KRW}
-	ETH_KRW  = CurrencyPair{BTC,KRW}
-	ETC_KRW  = CurrencyPair{BTC,KRW}
-	LTC_KRW  = CurrencyPair{BTC,KRW}
-	BCH_KRW  = CurrencyPair{BTC,KRW}
+	ETH_KRW  = CurrencyPair{ETH,KRW}
+	ETC_KRW  = CurrencyPair{ETC,KRW}
+	LTC_KRW  = CurrencyPair{LTC,KRW}
+	BCH_KRW  = CurrencyPair{BCH,KRW}
 
 	BTC_USD = CurrencyPair{BTC, USD}
 	LTC_USD = CurrencyPair{LTC, USD}
