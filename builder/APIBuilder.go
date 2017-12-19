@@ -3,16 +3,18 @@ package builder
 import (
 	"context"
 	. "github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/binance"
 	"github.com/nntaoli-project/GoEx/bitfinex"
 	"github.com/nntaoli-project/GoEx/bitstamp"
+	"github.com/nntaoli-project/GoEx/btcbox"
 	"github.com/nntaoli-project/GoEx/chbtc"
 	"github.com/nntaoli-project/GoEx/coincheck"
 	"github.com/nntaoli-project/GoEx/huobi"
+	"github.com/nntaoli-project/GoEx/kraken"
 	"github.com/nntaoli-project/GoEx/okcoin"
 	"github.com/nntaoli-project/GoEx/poloniex"
 	"github.com/nntaoli-project/GoEx/yunbi"
 	"github.com/nntaoli-project/GoEx/zaif"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -34,6 +36,10 @@ func NewAPIBuilder() (builder *APIBuilder) {
 	}
 	_client.Transport = transport
 	return &APIBuilder{client: _client}
+}
+
+func NewCustomAPIBuilder(client *http.Client) (builder *APIBuilder) {
+	return &APIBuilder{client: client}
 }
 
 func (builder *APIBuilder) APIKey(key string) (_builder *APIBuilder) {
@@ -88,12 +94,18 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = bitstamp.NewBitstamp(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
 	case "huobi.pro":
 		_api = huobi.NewHuobiPro(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
+	case "okex.com":
+		_api = okcoin.NewOKExSpot(builder.client, builder.apiKey, builder.secretkey)
 	case "bitfinex.com":
 		_api = bitfinex.New(builder.client, builder.apiKey, builder.secretkey)
+	case "kraken.com":
+		_api = kraken.New(builder.client, builder.apiKey, builder.secretkey)
 	case "binance.com":
-		_api = bitfinex.New(builder.client, builder.apiKey, builder.secretkey)
+		_api = binance.New(builder.client, builder.apiKey, builder.secretkey)
+	case "btcbox.co.jp":
+		_api = btcbox.New(builder.client, builder.apiKey, builder.secretkey)
 	default:
-		log.Println("error")
+		panic("exchange name error.")
 
 	}
 	return _api

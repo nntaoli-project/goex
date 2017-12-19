@@ -8,7 +8,6 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
-	"net/url"
 )
 
 /**
@@ -88,21 +87,4 @@ func GetParamHmacSHA256Base64Sign(secret, params string) (string, error) {
 	}
 	signByte := mac.Sum(nil)
 	return base64.StdEncoding.EncodeToString(signByte), nil
-}
-func GetParamHmacSHA256SHA512Base64Sign(secret, urlPath string, values *url.Values) (string, error) {
-	secretByte, _ := base64.StdEncoding.DecodeString(secret)
-
-	encode := []byte(values.Get("nonce") + values.Encode())
-	sha := sha256.New()
-	sha.Write(encode)
-	shaSum := sha.Sum(nil)
-
-	pathSha := append([]byte(urlPath), shaSum...)
-
-	mac := hmac.New(sha512.New, secretByte)
-	mac.Write(pathSha)
-	macSum := mac.Sum(nil)
-
-	return base64.StdEncoding.EncodeToString(macSum), nil
-
 }

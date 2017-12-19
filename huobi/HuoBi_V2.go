@@ -83,12 +83,16 @@ func (hbV2 *HuoBi_V2) GetAccount() (*Account, error) {
 	list := datamap["list"].([]interface{})
 	acc := new(Account)
 	acc.SubAccounts = make(map[Currency]SubAccount, 3)
+	acc.Exchange = hbV2.GetExchangeName()
+
 	var (
-		cnySubAcc SubAccount
-		bccSubAcc SubAccount
-		etcSubAcc SubAccount
-		ethSubAcc SubAccount
-		btcSubAcc SubAccount
+		cnySubAcc  SubAccount
+		bccSubAcc  SubAccount
+		etcSubAcc  SubAccount
+		ethSubAcc  SubAccount
+		btcSubAcc  SubAccount
+		ltcSubAcc  SubAccount
+		usdtSubAcc SubAccount
 	)
 
 	for _, v := range list {
@@ -98,34 +102,53 @@ func (hbV2 *HuoBi_V2) GetAccount() (*Account, error) {
 		balance := ToFloat64(balancemap["balance"])
 		switch currency {
 		case "cny":
+			cnySubAcc.Currency = CNY
 			if typeStr == "trade" {
 				cnySubAcc.Amount = balance
 			} else {
 				cnySubAcc.ForzenAmount = balance
 			}
 		case "bcc":
+			bccSubAcc.Currency = BCC
 			if typeStr == "trade" {
 				bccSubAcc.Amount = balance
 			} else {
 				bccSubAcc.ForzenAmount = balance
 			}
 		case "etc":
+			etcSubAcc.Currency = ETC
 			if typeStr == "trade" {
 				etcSubAcc.Amount = balance
 			} else {
 				etcSubAcc.ForzenAmount = balance
 			}
 		case "eth":
+			ethSubAcc.Currency = ETH
 			if typeStr == "trade" {
 				ethSubAcc.Amount = balance
 			} else {
 				ethSubAcc.ForzenAmount = balance
 			}
 		case "btc":
+			btcSubAcc.Currency = BTC
 			if typeStr == "trade" {
 				btcSubAcc.Amount = balance
 			} else {
 				btcSubAcc.ForzenAmount = balance
+			}
+		case "ltc":
+			ltcSubAcc.Currency = LTC
+			if typeStr == "trade" {
+				ltcSubAcc.Amount = balance
+			} else {
+				ltcSubAcc.ForzenAmount = balance
+			}
+		case "usdt":
+			usdtSubAcc.Currency = USDT
+			if typeStr == "trade" {
+				usdtSubAcc.Amount = balance
+			} else {
+				usdtSubAcc.ForzenAmount = balance
 			}
 		}
 	}
@@ -135,6 +158,8 @@ func (hbV2 *HuoBi_V2) GetAccount() (*Account, error) {
 	acc.SubAccounts[ETC] = etcSubAcc
 	acc.SubAccounts[ETH] = ethSubAcc
 	acc.SubAccounts[BTC] = btcSubAcc
+	acc.SubAccounts[USDT] = usdtSubAcc
+	acc.SubAccounts[LTC] = ltcSubAcc
 
 	return acc, nil
 }

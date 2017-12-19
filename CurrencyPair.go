@@ -21,11 +21,15 @@ var (
 	UNKNOWN = Currency{"UNKNOWN", ""}
 	CNY     = Currency{"CNY", "rmb （China Yuan)"}
 	USD     = Currency{"USD", "USA dollar"}
-	USDT     = Currency{"USDT", "USA dollar"}
+	USDT    = Currency{"USDT","http://tether.io"}
 	EUR     = Currency{"EUR", ""}
+	KRW     = Currency{"KRW", ""}
+	JPY     = Currency{"JPY", "japanese yen"}
 	BTC     = Currency{"BTC", "bitcoin.org"}
+	XBT     = Currency{"XBT", "bitcoin.org"}
 	BCC     = Currency{"BCC", "bitcoin-abc"}
 	BCH     = Currency{"BCH","bitcoin-abc"}
+	BCX     = Currency{"BCX",""}
 	LTC     = Currency{"LTC", "litecoin.org"}
 	ETH     = Currency{"ETH", ""}
 	ETC     = Currency{"ETC", ""}
@@ -37,6 +41,10 @@ var (
 	ZEC     = Currency{"ZEC", ""}
 	DCR     = Currency{"DCR", ""}
 	XRP     = Currency{"XRP", ""}
+	BTG     = Currency{"BTG",""}
+	BCD     = Currency{"BCD",""}
+	NEO     = Currency{"NEO","neo.org"}
+	HSR     = Currency{"HSR",""}
 
 	//currency pair
 
@@ -52,6 +60,12 @@ var (
 	ANS_CNY  = CurrencyPair{ANS, CNY}
 	ZEC_CNY  = CurrencyPair{ZEC, CNY}
 
+	BTC_KRW  = CurrencyPair{BTC,KRW}
+	ETH_KRW  = CurrencyPair{ETH,KRW}
+	ETC_KRW  = CurrencyPair{ETC,KRW}
+	LTC_KRW  = CurrencyPair{LTC,KRW}
+	BCH_KRW  = CurrencyPair{BCH,KRW}
+
 	BTC_USD = CurrencyPair{BTC, USD}
 	LTC_USD = CurrencyPair{LTC, USD}
 	ETH_USD = CurrencyPair{ETH, USD}
@@ -59,16 +73,27 @@ var (
 	BCH_USD = CurrencyPair{BCH, USD}
 	BCC_USD = CurrencyPair{BCC, USD}
 	XRP_USD = CurrencyPair{XRP, USD}
+	BCD_USD = CurrencyPair{BCD,USD}
 
-	BTC_USDT = CurrencyPair{BTC, USDT}
+	BTC_USDT = CurrencyPair{BTC,USDT}
 	LTC_USDT = CurrencyPair{LTC, USDT}
-	ETH_USDT = CurrencyPair{ETH, USDT}
-	ETC_USDT = CurrencyPair{ETC, USDT}
 	BCH_USDT = CurrencyPair{BCH, USDT}
-	BCC_USDT = CurrencyPair{BCC, USDT}
-	XRP_USDT = CurrencyPair{XRP, USDT}
+	BCC_USDT = CurrencyPair{BCC,USDT}
+	ETC_USDT = CurrencyPair{ETC,USDT}
+	ETH_USDT = CurrencyPair{ETH,USDT}
+	BCD_USDT = CurrencyPair{BCD,USDT}
+	NEO_USDT = CurrencyPair{NEO,USDT}
+	EOS_USDT = CurrencyPair{EOS,USDT}
+	XRP_USDT = CurrencyPair{XRP,USDT}
+	HSR_USDT = CurrencyPair{HSR,USDT}
 
 	XRP_EUR = CurrencyPair{XRP , EUR}
+
+	BTC_JPY = CurrencyPair{BTC,JPY}
+	LTC_JPY = CurrencyPair{LTC,JPY}
+	ETH_JPY = CurrencyPair{ETH,JPY}
+	ETC_JPY = CurrencyPair{ETC,JPY}
+	BCH_JPY = CurrencyPair{BCH,JPY}
 
 	LTC_BTC = CurrencyPair{LTC, BTC}
 	ETH_BTC = CurrencyPair{ETH, BTC}
@@ -77,9 +102,17 @@ var (
 	BCH_BTC = CurrencyPair{BCH, BTC}
 	DCR_BTC = CurrencyPair{DCR, BTC}
 	XRP_BTC = CurrencyPair{XRP ,BTC}
+	BTG_BTC = CurrencyPair{BTG,BTC}
+	BCD_BTC = CurrencyPair{BCD,BTC}
+	NEO_BTC = CurrencyPair{NEO,BTC}
+	EOS_BTC = CurrencyPair{EOS,BTC}
+	HSR_BTC = CurrencyPair{HSR,BTC}
 
 	ETC_ETH = CurrencyPair{ETC, ETH}
 	EOS_ETH = CurrencyPair{EOS, ETH}
+	ZEC_ETH = CurrencyPair{ZEC,ETH}
+	NEO_ETH = CurrencyPair{NEO,ETH}
+	HSR_ETH = CurrencyPair{HSR,ETH}
 
 	UNKNOWN_PAIR = CurrencyPair{UNKNOWN,UNKNOWN}
 )
@@ -112,4 +145,3 @@ func (pair CurrencyPair) ToSymbol(joinChar string) string {
 func (pair CurrencyPair) ToSymbol2(joinChar string) string {
 	return strings.Join([]string{pair.CurrencyB.Symbol, pair.CurrencyA.Symbol}, joinChar)
 }
-

@@ -258,35 +258,34 @@ func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool,
 func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, error) {
 	params := url.Values{}
 	params.Set("symbol", currencyPair.ToSymbol(""))
-	if orderId != "" {
-		params.Set("orderId", orderId)
-	}
+	params.Set("orderId", orderId)
 
 	bn.buildParamsSigned(&params)
 	path := API_V3 + ORDER_URI + params.Encode()
 
 	respmap, err := HttpGet2(bn.httpClient, path, map[string]string{"X-MBX-APIKEY": bn.accessKey})
-
+	//log.Println(respmap)
 	if err != nil {
 		return nil, err
 	}
 	status := respmap["status"].(string)
+	side := respmap["side"].(string)
 
 	ord := Order{}
 	ord.Currency = currencyPair
 	ord.OrderID = ToInt(orderId)
 
+	if side == "SELL" {
+		ord.Side = SELL
+	} else {
+		ord.Side = BUY
+	}
+
 	switch status {
-	case "FILLED" :
+	case"FILLED":
 		ord.Status = ORDER_FINISH
-	case "PARTIALLY_FILLED" :
-		ord.Status = ORDER_PART_FINISH
-	case "CANCELED" :
+	case "CANCELED":
 		ord.Status = ORDER_CANCEL
-	case "PENDING_CANCEL" :
-		ord.Status = ORDER_CANCEL_ING
-	case "REJECTED" :
-		ord.Status = ORDER_REJECT
 	default:
 		ord.Status = ORDER_UNFINISH
 	}
@@ -329,4 +328,17 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 			OrderTime: ToInt(ord["time"])})
 	}
 	return orders, nil
+}
+
+func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+	panic("not implements")
+}
+
+//非个人，整个交易所的交易记录
+func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	panic("not implements")
+}
+
+func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+	panic("not implements")
 }

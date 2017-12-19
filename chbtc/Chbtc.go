@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	EXCHANGE_NAME = "chbtc.com"
 	MARKET_URL = "http://api.chbtc.com/data/v1/"
 	TICKER_API = "ticker?currency=%s"
 	DEPTH_API  = "depth?currency=%s&size=%d"
@@ -40,7 +39,7 @@ func New(httpClient *http.Client, accessKey, secretKey string) *Chbtc {
 }
 
 func (chbtc *Chbtc) GetExchangeName() string {
-	return EXCHANGE_NAME
+	return "chbtc.com"
 }
 
 func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
@@ -49,16 +48,7 @@ func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		return nil, err
 	}
 	//log.Println(resp)
-	str, _ := json.Marshal(resp)
-	if string(str) == "{\"message\":\"服务端忙碌\",\"result\":false}" {
-		fmt.Println("err:", "{\"message\":\"服务端忙碌\",\"result\":false}")
-		return nil, errors.New("server busy")
-	}
-
-	tickermap,ok := resp["ticker"].(map[string]interface{})
-	if ok != true{
-		return nil, errors.New("no ticker")
-	}
+	tickermap := resp["ticker"].(map[string]interface{})
 
 	ticker := new(Ticker)
 	ticker.Date, _ = strconv.ParseUint(resp["date"].(string), 10, 64)

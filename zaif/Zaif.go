@@ -140,7 +140,7 @@ func (zf *Zaif) GetAccount() (*Account, error) {
 	return nil, nil
 }
 
-func (zf *Zaif) GetKlineRecords(currency CurrencyPair, period string, size, since int) ([]Kline, error) {
+func (zf *Zaif) GetKlineRecords(currency CurrencyPair , period int, size, since int) ([]Kline, error) {
 	return nil, nil
 }
 

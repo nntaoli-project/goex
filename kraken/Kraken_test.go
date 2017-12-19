@@ -2,36 +2,62 @@ package kraken
 
 import (
 	"github.com/nntaoli-project/GoEx"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 )
 
-var kk = New(http.DefaultClient, "", "")
-
-func TestKraken_GetTicker(t *testing.T) {
-	ticker, _ := kk.GetTicker(goex.LTC_BTC)
-	t.Log(ticker)
-}
-func TestKraken_LimitSell(t *testing.T) {
-	order, err := kk.LimitSell("1", "1", goex.LTC_BTC)
-	t.Log(order, err)
-}
+var k = New(http.DefaultClient, "", "")
+var BCH_XBT = goex.NewCurrencyPair(goex.BCH, goex.XBT)
 
 func TestKraken_GetDepth(t *testing.T) {
-	dep, err := kk.GetDepth(5, goex.ETH_BTC)
-	t.Log(err)
-	if err == nil {
-		t.Log(dep.AskList)
-		t.Log(dep.BidList)
-	}
+	dep, err := k.GetDepth(2, goex.BTC_USD)
+	assert.Nil(t, err)
+	t.Log(dep)
+}
+
+func TestKraken_GetTicker(t *testing.T) {
+	ticker, err := k.GetTicker(goex.ETC_BTC)
+	assert.Nil(t, err)
+	t.Log(ticker)
 }
 
 func TestKraken_GetAccount(t *testing.T) {
-	account, err := kk.GetAccount()
-	t.Log(account, err)
+	acc, err := k.GetAccount()
+	assert.Nil(t, err)
+	t.Log(acc)
+}
+
+func TestKraken_LimitSell(t *testing.T) {
+	ord, err := k.LimitSell("0.01", "6900", goex.BTC_USD)
+	assert.Nil(t, err)
+	t.Log(ord)
+}
+
+func TestKraken_LimitBuy(t *testing.T) {
+	ord, err := k.LimitBuy("0.01", "6100", goex.NewCurrencyPair(goex.XBT, goex.USD))
+	assert.Nil(t, err)
+	t.Log(ord)
 }
 
 func TestKraken_GetUnfinishOrders(t *testing.T) {
-	orders, err := kk.GetUnfinishOrders(goex.ETH_BTC)
-	t.Log(orders, err)
+	ords, err := k.GetUnfinishOrders(goex.NewCurrencyPair(goex.XBT, goex.USD))
+	assert.Nil(t, err)
+	t.Log(ords)
+}
+
+func TestKraken_CancelOrder(t *testing.T) {
+	r, err := k.CancelOrder("O6EAJC-YAC3C-XDEEXQ", goex.NewCurrencyPair(goex.XBT, goex.USD))
+	assert.Nil(t, err)
+	t.Log(r)
+}
+
+func TestKraken_GetTradeBalance(t *testing.T) {
+	//	k.GetTradeBalance()
+}
+
+func TestKraken_GetOneOrder(t *testing.T) {
+	ord, err := k.GetOneOrder("ODCRMQ-RDEID-CY334C", goex.BTC_USD)
+	assert.Nil(t, err)
+	t.Log(ord)
 }
