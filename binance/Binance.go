@@ -296,6 +296,7 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	case "REJECTED" :
 		ord.Status = ORDER_REJECT
 	}
+
 	ord.Amount = ToFloat64(respmap["origQty"].(string))
 	ord.Price = ToFloat64(respmap["price"].(string))
 
@@ -335,7 +336,6 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	}
 	return orders, nil
 }
-
 
 func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	panic("not implements")
