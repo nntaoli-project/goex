@@ -258,6 +258,9 @@ func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool,
 func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, error) {
 	params := url.Values{}
 	params.Set("symbol", currencyPair.ToSymbol(""))
+	if orderId != "" {
+		params.Set("orderId", orderId)
+	}
 	params.Set("orderId", orderId)
 
 	bn.buildParamsSigned(&params)
@@ -282,14 +285,17 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	}
 
 	switch status {
-	case"FILLED":
+	case "FILLED" :
 		ord.Status = ORDER_FINISH
-	case "CANCELED":
+	case "PARTIALLY_FILLED" :
+		ord.Status = ORDER_PART_FINISH
+	case "CANCELED" :
 		ord.Status = ORDER_CANCEL
-	default:
-		ord.Status = ORDER_UNFINISH
+	case "PENDING_CANCEL" :
+		ord.Status = ORDER_CANCEL_ING
+	case "REJECTED" :
+		ord.Status = ORDER_REJECT
 	}
-
 	ord.Amount = ToFloat64(respmap["origQty"].(string))
 	ord.Price = ToFloat64(respmap["price"].(string))
 
@@ -329,6 +335,7 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	}
 	return orders, nil
 }
+
 
 func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	panic("not implements")
