@@ -98,5 +98,5 @@ func (wex *Wex) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, erro
 }
 
 func (wex *Wex) GetExchangeName() string {
-	return "btcbox.co.jp"
+	return "wex.nz"
 }
