@@ -48,8 +48,8 @@ func (zb *ZB) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		return nil, err
 	}
 	//log.Println(resp)
-	str, _ := json.Marshal(resp)
-	if string(str) == "{\"message\":\"服务端忙碌\",\"result\":false}" {
+	result, ok := resp["result"].bool
+	if ok == true && result == false {
 		//log.Println("err:", "{\"message\":\"服务端忙碌\",\"result\":false}")
 		return nil, errors.New("server busy")
 	}
@@ -59,13 +59,13 @@ func (zb *ZB) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		return nil, errors.New("no ticker")
 	}
 	ticker := new(Ticker)
-	ticker.Date, _ = strconv.ParseUint(resp["date"].(string), 10, 64)
-	ticker.Buy, _ = strconv.ParseFloat(tickermap["buy"].(string), 64)
-	ticker.Sell, _ = strconv.ParseFloat(tickermap["sell"].(string), 64)
-	ticker.Last, _ = strconv.ParseFloat(tickermap["last"].(string), 64)
-	ticker.High, _ = strconv.ParseFloat(tickermap["high"].(string), 64)
-	ticker.Low, _ = strconv.ParseFloat(tickermap["low"].(string), 64)
-	ticker.Vol, _ = strconv.ParseFloat(tickermap["vol"].(string), 64)
+	ticker.Date = ToFloat64(resp["date"])
+	ticker.Buy = ToFloat64(tickermap["buy"])
+	ticker.Sell = ToFloat64(tickermap["sell"])
+	ticker.Last = ToFloat64(tickermap["last"])
+	ticker.High = ToFloat64(tickermap["high"])
+	ticker.Low = ToFloat64(tickermap["low"])
+	ticker.Vol = ToFloat64(tickermap["vol"])
 	//log.Println("ZB####", ticker)
 	return ticker, nil
 }
