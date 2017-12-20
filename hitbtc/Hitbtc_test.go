@@ -8,7 +8,7 @@ import (
 
 var htb = New(http.DefaultClient, "", "")
 
-func TestWex_GetTicker(t *testing.T) {
+func TestHitbtc_GetTicker(t *testing.T) {
 	ticker, err := htb.GetTicker(goex.BTC_USD)
 	t.Log("err=>", err)
 	t.Log("ticker=>", ticker)
