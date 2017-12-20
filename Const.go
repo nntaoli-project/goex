@@ -3,7 +3,7 @@ package goex
 type TradeSide int
 
 const (
-	BUY         = 1 + iota
+	BUY = 1 + iota
 	SELL
 	BUY_MARKET
 	SELL_MARKET
@@ -33,7 +33,7 @@ func (ts TradeStatus) String() string {
 var tradeStatusSymbol = [...]string{"UNFINISH", "PART_FINISH", "FINISH", "CANCEL", "REJECT", "CANCEL_ING"}
 
 const (
-	ORDER_UNFINISH    = iota
+	ORDER_UNFINISH = iota
 	ORDER_PART_FINISH
 	ORDER_FINISH
 	ORDER_CANCEL
@@ -50,7 +50,7 @@ const (
 
 //k线周期
 const (
-	KLINE_PERIOD_1MIN  = 1 + iota
+	KLINE_PERIOD_1MIN = 1 + iota
 	KLINE_PERIOD_5MIN
 	KLINE_PERIOD_15MIN
 	KLINE_PERIOD_30MIN
@@ -58,6 +58,8 @@ const (
 	KLINE_PERIOD_4H
 	KLINE_PERIOD_1DAY
 	KLINE_PERIOD_1WEEK
+	KLINE_PERIOD_1MONTH
+	KLINE_PERIOD_1YEAR
 )
 
 var (
