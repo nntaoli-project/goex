@@ -64,12 +64,12 @@ func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 
 	t, _ := tickerMap["closeTime"].(float64)
 	ticker.Date = uint64(t)
-	ticker.Last, _ = strconv.ParseFloat(tickerMap["lastPrice"].(string), 10)
-	ticker.Buy, _ = strconv.ParseFloat(tickerMap["bidPrice"].(string), 10)
-	ticker.Sell, _ = strconv.ParseFloat(tickerMap["askPrice"].(string), 10)
-	ticker.Low, _ = strconv.ParseFloat(tickerMap["lowPrice"].(string), 10)
-	ticker.High, _ = strconv.ParseFloat(tickerMap["highPrice"].(string), 10)
-	ticker.Vol, _ = strconv.ParseFloat(tickerMap["volume"].(string), 10)
+	ticker.Last = ToFloat64(tickerMap["lastPrice"])
+	ticker.Buy = ToFloat64(tickerMap["bidPrice"])
+	ticker.Sell = ToFloat64(tickerMap["askPrice"])
+	ticker.Low = ToFloat64(tickerMap["lowPrice"])
+	ticker.High = ToFloat64(tickerMap["highPrice"])
+	ticker.Vol = ToFloat64(tickerMap["volume"])
 	return &ticker, nil
 }
 
