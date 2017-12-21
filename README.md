@@ -13,4 +13,4 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
 
 ### 欢迎为作者付一碗面钱
 
-<img src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG" width="250" alt="一碗面钱">
+<img src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG" width="250" alt="一碗面钱">&nbsp;&nbsp;&nbsp;<img src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/IMG_1177.jpg" width="250" alt="一碗面钱">
