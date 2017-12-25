@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/btcsuite/goleveldb/leveldb/errors"
 	. "github.com/nntaoli-project/GoEx"
-	"internal/log"
+	"log"
 	"net/http"
 	"net/url"
 	"sort"
