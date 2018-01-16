@@ -111,21 +111,7 @@ func (bfx *Bitfinex) GetWalletBalances() (map[string]*Account, error) {
 		subacc := v.(map[string]interface{})
 		typeStr := subacc["type"].(string)
 
-		currency := UNKNOWN
-		switch subacc["currency"].(string) {
-		case "eth":
-			currency = ETH
-		case "btc":
-			currency = BTC
-		case "ltc":
-			currency = LTC
-		case "usd":
-			currency = USD
-		case "etc":
-			currency = ETC
-		case "bch":
-			currency = BCH
-		}
+		currency := NewCurrency(subacc["currency"].(string), "")
 
 		if currency == UNKNOWN {
 			continue
