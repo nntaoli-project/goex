@@ -41,7 +41,7 @@ func (ctx *OKExSpot) GetAccount() (*Account, error) {
 		return nil, err
 	}
 
-	if errcode , isok := respMap["error_code"].(float64) ; isok {
+	if errcode, isok := respMap["error_code"].(float64); isok {
 		errcodeStr := strconv.FormatFloat(errcode, 'f', 0, 64)
 		return nil, errors.New(errcodeStr)
 	}
@@ -58,52 +58,15 @@ func (ctx *OKExSpot) GetAccount() (*Account, error) {
 	account := new(Account)
 	account.Exchange = ctx.GetExchangeName()
 
-	var (
-		btcSubAccount  SubAccount
-		ltcSubAccount  SubAccount
-		ethSubAccount  SubAccount
-		etcSubAccount  SubAccount
-		bchSubAccount  SubAccount
-		usdtSubAccount SubAccount
-	)
-
-	btcSubAccount.Currency = BTC
-	btcSubAccount.Amount = ToFloat64(free["btc"])
-	btcSubAccount.LoanAmount = 0
-	btcSubAccount.ForzenAmount = ToFloat64(freezed["btc"])
-
-	ltcSubAccount.Currency = LTC
-	ltcSubAccount.Amount = ToFloat64(free["ltc"])
-	ltcSubAccount.LoanAmount = 0
-	ltcSubAccount.ForzenAmount = ToFloat64(freezed["ltc"])
-
-	ethSubAccount.Currency = ETH
-	ethSubAccount.Amount = ToFloat64(free["eth"])
-	ethSubAccount.LoanAmount = 0
-	ethSubAccount.ForzenAmount = ToFloat64(freezed["eth"])
-
-	etcSubAccount.Currency = ETC
-	etcSubAccount.Amount = ToFloat64(free["etc"])
-	etcSubAccount.LoanAmount = 0
-	etcSubAccount.ForzenAmount = ToFloat64(freezed["etc"])
-
-	bchSubAccount.Currency = BCH
-	bchSubAccount.Amount = ToFloat64(free["bch"])
-	bchSubAccount.LoanAmount = 0
-	bchSubAccount.ForzenAmount = ToFloat64(freezed["bch"])
-
-	usdtSubAccount.Currency = USDT
-	usdtSubAccount.Amount = ToFloat64(free["usdt"])
-	usdtSubAccount.LoanAmount = 0
-	usdtSubAccount.ForzenAmount = ToFloat64(freezed["usdt"])
-
-	account.SubAccounts = make(map[Currency]SubAccount, 5)
-	account.SubAccounts[BTC] = btcSubAccount
-	account.SubAccounts[LTC] = ltcSubAccount
-	account.SubAccounts[ETH] = ethSubAccount
-	account.SubAccounts[ETC] = etcSubAccount
-	account.SubAccounts[BCH] = bchSubAccount
-	account.SubAccounts[USDT] = usdtSubAccount
+	account.SubAccounts = make(map[Currency]SubAccount, 6)
+	for k, v := range free {
+		currencyKey := NewCurrency(k, "")
+		subAcc := SubAccount{
+			Currency:     currencyKey,
+			Amount:       ToFloat64(v),
+			ForzenAmount: ToFloat64(freezed[k])}
+		account.SubAccounts[currencyKey] = subAcc
+	}
 
 	return account, nil
 }

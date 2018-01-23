@@ -122,7 +122,38 @@ func (c CurrencyPair) String() string {
 }
 
 func NewCurrency(symbol, desc string) Currency {
-	return Currency{symbol, desc}
+	switch symbol {
+	case "cny" , "CNY":
+		return CNY
+	case "usdt", "USDT":
+		return USDT
+	case "usd", "USD":
+		return USD
+	case "jpy" , "JPY":
+		return JPY
+	case "krw", "KRW":
+		return KRW
+	case "eur", "EUR":
+		return EUR
+	case "btc", "BTC":
+		return BTC
+	case "xbt", "XBT":
+		return XBT
+	case "bch", "BCH":
+		return BCH
+	case "bcc", "BCC":
+		return BCC
+	case "ltc", "LTC":
+		return LTC
+	case "sc", "SC":
+		return SC
+	case "ans", "ANS":
+		return ANS
+	case "neo", "NEO":
+		return NEO
+	default:
+		return Currency{strings.ToUpper(symbol) , desc}
+	}
 }
 
 func NewCurrencyPair(currencyA Currency, currencyB Currency) CurrencyPair {
@@ -133,7 +164,7 @@ func NewCurrencyPair2(currencyPairSymbol string) CurrencyPair  {
 	currencys := strings.Split(currencyPairSymbol , "_")
 	if len(currencys) == 2 {
 		return CurrencyPair{NewCurrency(currencys[0] , "") ,
-			NewCurrency(currencys[1] , "")}
+		NewCurrency(currencys[1] , "")}
 	}
 	return UNKNOWN_PAIR
 }

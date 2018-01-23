@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -36,7 +35,7 @@ func (hbV2 *HuoBi_V2) GetAccountId() (string, error) {
 	params := &url.Values{}
 	hbV2.buildPostForm("GET", path, params)
 
-	log.Println(hbV2.baseUrl + path + "?" + params.Encode())
+	//log.Println(hbV2.baseUrl + path + "?" + params.Encode())
 
 	respmap, err := HttpGet(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode())
 	if err != nil {
@@ -82,84 +81,32 @@ func (hbV2 *HuoBi_V2) GetAccount() (*Account, error) {
 
 	list := datamap["list"].([]interface{})
 	acc := new(Account)
-	acc.SubAccounts = make(map[Currency]SubAccount, 3)
+	acc.SubAccounts = make(map[Currency]SubAccount, 6)
 	acc.Exchange = hbV2.GetExchangeName()
 
-	var (
-		cnySubAcc  SubAccount
-		bccSubAcc  SubAccount
-		etcSubAcc  SubAccount
-		ethSubAcc  SubAccount
-		btcSubAcc  SubAccount
-		ltcSubAcc  SubAccount
-		usdtSubAcc SubAccount
-	)
+	subAccMap := make(map[Currency]*SubAccount)
 
 	for _, v := range list {
 		balancemap := v.(map[string]interface{})
-		currency := balancemap["currency"].(string)
+		currencySymbol := balancemap["currency"].(string)
+		currency := NewCurrency(currencySymbol, "")
 		typeStr := balancemap["type"].(string)
 		balance := ToFloat64(balancemap["balance"])
-		switch currency {
-		case "cny":
-			cnySubAcc.Currency = CNY
-			if typeStr == "trade" {
-				cnySubAcc.Amount = balance
-			} else {
-				cnySubAcc.ForzenAmount = balance
-			}
-		case "bcc":
-			bccSubAcc.Currency = BCC
-			if typeStr == "trade" {
-				bccSubAcc.Amount = balance
-			} else {
-				bccSubAcc.ForzenAmount = balance
-			}
-		case "etc":
-			etcSubAcc.Currency = ETC
-			if typeStr == "trade" {
-				etcSubAcc.Amount = balance
-			} else {
-				etcSubAcc.ForzenAmount = balance
-			}
-		case "eth":
-			ethSubAcc.Currency = ETH
-			if typeStr == "trade" {
-				ethSubAcc.Amount = balance
-			} else {
-				ethSubAcc.ForzenAmount = balance
-			}
-		case "btc":
-			btcSubAcc.Currency = BTC
-			if typeStr == "trade" {
-				btcSubAcc.Amount = balance
-			} else {
-				btcSubAcc.ForzenAmount = balance
-			}
-		case "ltc":
-			ltcSubAcc.Currency = LTC
-			if typeStr == "trade" {
-				ltcSubAcc.Amount = balance
-			} else {
-				ltcSubAcc.ForzenAmount = balance
-			}
-		case "usdt":
-			usdtSubAcc.Currency = USDT
-			if typeStr == "trade" {
-				usdtSubAcc.Amount = balance
-			} else {
-				usdtSubAcc.ForzenAmount = balance
-			}
+		if subAccMap[currency] == nil {
+			subAccMap[currency] = new(SubAccount)
+		}
+		subAccMap[currency].Currency = currency
+		switch typeStr {
+		case "trade":
+			subAccMap[currency].Amount = balance
+		case "frozen":
+			subAccMap[currency].ForzenAmount = balance
 		}
 	}
 
-	acc.SubAccounts[CNY] = cnySubAcc
-	acc.SubAccounts[BCC] = bccSubAcc
-	acc.SubAccounts[ETC] = etcSubAcc
-	acc.SubAccounts[ETH] = ethSubAcc
-	acc.SubAccounts[BTC] = btcSubAcc
-	acc.SubAccounts[USDT] = usdtSubAcc
-	acc.SubAccounts[LTC] = ltcSubAcc
+	for k, v := range subAccMap {
+		acc.SubAccounts[k] = *v
+	}
 
 	return acc, nil
 }
@@ -316,7 +263,7 @@ func (hbV2 *HuoBi_V2) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) 
 	path := "/v1/order/orders"
 	params := url.Values{}
 	params.Set("symbol", strings.ToLower(currency.ToSymbol("")))
-	params.Set("states", "submitted")
+	params.Set("states", "submitted,partial-filled")
 	hbV2.buildPostForm("GET", path, &params)
 	respmap, err := HttpGet(hbV2.httpClient, fmt.Sprintf("%s%s?%s", hbV2.baseUrl, path, params.Encode()))
 	if err != nil {
