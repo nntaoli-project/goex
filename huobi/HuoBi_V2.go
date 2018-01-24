@@ -340,8 +340,16 @@ func (hbV2 *HuoBi_V2) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	ticker.Vol = ToFloat64(tickmap["amount"])
 	ticker.Low = ToFloat64(tickmap["low"])
 	ticker.High = ToFloat64(tickmap["high"])
-	ticker.Buy = ToFloat64((tickmap["bid"].([]interface{}))[0])
-	ticker.Sell = ToFloat64((tickmap["ask"].([]interface{}))[0])
+	bid, isOk := tickmap["bid"].([]interface{})
+	if isOk != true {
+		return nil, errors.New("no bid")
+	}
+	ask, isOk := tickmap["ask"].([]interface{})
+	if isOk != true {
+		return nil, errors.New("no ask")
+	}
+	ticker.Buy = ToFloat64(bid[0])
+	ticker.Sell = ToFloat64(ask[0])
 	ticker.Last = ToFloat64(tickmap["close"])
 	ticker.Date = ToUint64(respmap["ts"])
 
