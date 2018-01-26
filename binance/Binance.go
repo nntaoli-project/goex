@@ -149,12 +149,9 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 		log.Println(string(resp))
 		return nil, err
 	}
-	if _, isok := respmap["code"]; isok == true {
-		return nil, errors.New(respmap["msg"].(string))
-	}
 
-	orderId, isok := respmap["orderId"].(string)
-	if !isok {
+	orderId := ToInt(respmap["orderId"])
+	if orderId <= 0 {
 		return nil, errors.New(string(resp))
 	}
 
@@ -162,6 +159,7 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	if orderSide == "SELL" {
 		side = SELL
 	}
+
 	return &Order{
 		Currency:   pair,
 		OrderID:    ToInt(orderId),
@@ -244,12 +242,9 @@ func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool,
 		return false, err
 	}
 
-	orderIdCanceled, isok := respmap["orderId"].(string)
-	if !isok {
+	orderIdCanceled := ToInt(respmap["orderId"])
+	if orderIdCanceled <= 0 {
 		return false, errors.New(string(resp))
-	}
-	if orderIdCanceled != orderId {
-		return false, errors.New("orderId doesn't match")
 	}
 
 	return true, nil
