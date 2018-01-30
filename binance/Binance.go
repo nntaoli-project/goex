@@ -53,17 +53,17 @@ func (bn *Binance) GetExchangeName() string {
 
 func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	tickerUri := API_V1 + fmt.Sprintf(TICKER_URI, currency.ToSymbol(""))
-	bodyDataMap, err := HttpGet(bn.httpClient, tickerUri)
+	tickerMap, err := HttpGet(bn.httpClient, tickerUri)
 
 	if err != nil {
 		log.Println("GetTicker error:", err)
 		return nil, err
 	}
-	var tickerMap map[string]interface{} = bodyDataMap
+
 	var ticker Ticker
 
 	t, _ := tickerMap["closeTime"].(float64)
-	ticker.Date = uint64(t)
+	ticker.Date = uint64(t/1000)
 	ticker.Last = ToFloat64(tickerMap["lastPrice"])
 	ticker.Buy = ToFloat64(tickerMap["bidPrice"])
 	ticker.Sell = ToFloat64(tickerMap["askPrice"])
