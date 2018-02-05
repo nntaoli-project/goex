@@ -17,7 +17,14 @@ import (
 	"github.com/nntaoli-project/GoEx/zaif"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
+	"github.com/nntaoli-project/GoEx/bittrex"
+	"github.com/nntaoli-project/GoEx/bithumb"
+	"github.com/nntaoli-project/GoEx/gdax"
+	"github.com/nntaoli-project/GoEx/gateio"
+	"github.com/nntaoli-project/GoEx/wex"
+	"github.com/nntaoli-project/GoEx/zb"
 )
 
 type APIBuilder struct {
@@ -49,6 +56,16 @@ func (builder *APIBuilder) APIKey(key string) (_builder *APIBuilder) {
 
 func (builder *APIBuilder) APISecretkey(key string) (_builder *APIBuilder) {
 	builder.secretkey = key
+	return builder
+}
+
+func (builder *APIBuilder) HttpProxy(proxyUrl string) (_builder *APIBuilder) {
+	proxy, err := url.Parse(proxyUrl)
+	if err != nil {
+		return
+	}
+	transport := builder.client.Transport.(*http.Transport)
+	transport.Proxy = http.ProxyURL(proxy)
 	return builder
 }
 
@@ -104,8 +121,20 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = binance.New(builder.client, builder.apiKey, builder.secretkey)
 	case "btcbox.co.jp":
 		_api = btcbox.New(builder.client, builder.apiKey, builder.secretkey)
+	case "bittrex.com":
+		_api = bittrex.New(builder.client, builder.apiKey, builder.secretkey)
+	case "bithumb.com":
+		_api = bithumb.New(builder.client, builder.apiKey, builder.secretkey)
+	case "gdax.com":
+		_api = gdax.New(builder.client , builder.apiKey , builder.secretkey)
+	case "gate.io":
+		_api = gateio.New(builder.client , builder.apiKey , builder.secretkey)
+	case "wex.nz":
+		_api = wex.New(builder.client , builder.apiKey ,builder.secretkey)
+	case "zb.com":
+		_api = zb.New(builder.client , builder.apiKey, builder.secretkey)
 	default:
-		panic("exchange name error.")
+		panic("exchange name error ["+exName+"].")
 
 	}
 	return _api
