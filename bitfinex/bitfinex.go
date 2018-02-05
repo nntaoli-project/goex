@@ -327,13 +327,13 @@ func (bfx *Bitfinex) adaptTimestamp(timestamp string) int {
 	intTime, _ := strconv.Atoi(times[0])
 	return intTime
 }
+
 func (bfx *Bitfinex) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
 	var currencyA Currency
 	var currencyB Currency
 
 	DASH := NewCurrency("DASH", "")
 	DSH := NewCurrency("DSH", "")
-	QTUM := NewCurrency("QTUM", "")
 	QTM := NewCurrency("QTM", "")
 	IOTA := NewCurrency("IOTA", "")
 	IOT := NewCurrency("IOT", "")
