@@ -314,7 +314,7 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	orders := make([]Order, 0)
 	for _, v := range respmap {
 		ord := v.(map[string]interface{})
-		side := ord["type"].(string)
+		side := ord["side"].(string)
 		orderSide := SELL
 		if side == "BUY" {
 			orderSide = BUY
