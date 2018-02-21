@@ -53,17 +53,17 @@ func (bn *Binance) GetExchangeName() string {
 
 func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	tickerUri := API_V1 + fmt.Sprintf(TICKER_URI, currency.ToSymbol(""))
-	bodyDataMap, err := HttpGet(bn.httpClient, tickerUri)
+	tickerMap, err := HttpGet(bn.httpClient, tickerUri)
 
 	if err != nil {
 		log.Println("GetTicker error:", err)
 		return nil, err
 	}
-	var tickerMap map[string]interface{} = bodyDataMap
+
 	var ticker Ticker
 
 	t, _ := tickerMap["closeTime"].(float64)
-	ticker.Date = uint64(t)
+	ticker.Date = uint64(t/1000)
 	ticker.Last = ToFloat64(tickerMap["lastPrice"])
 	ticker.Buy = ToFloat64(tickerMap["bidPrice"])
 	ticker.Sell = ToFloat64(tickerMap["askPrice"])
@@ -149,12 +149,9 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 		log.Println(string(resp))
 		return nil, err
 	}
-	if _, isok := respmap["code"]; isok == true {
-		return nil, errors.New(respmap["msg"].(string))
-	}
 
-	orderId, isok := respmap["orderId"].(string)
-	if !isok {
+	orderId := ToInt(respmap["orderId"])
+	if orderId <= 0 {
 		return nil, errors.New(string(resp))
 	}
 
@@ -162,6 +159,7 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	if orderSide == "SELL" {
 		side = SELL
 	}
+
 	return &Order{
 		Currency:   pair,
 		OrderID:    ToInt(orderId),
@@ -244,12 +242,9 @@ func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool,
 		return false, err
 	}
 
-	orderIdCanceled, isok := respmap["orderId"].(string)
-	if !isok {
+	orderIdCanceled := ToInt(respmap["orderId"])
+	if orderIdCanceled <= 0 {
 		return false, errors.New(string(resp))
-	}
-	if orderIdCanceled != orderId {
-		return false, errors.New("orderId doesn't match")
 	}
 
 	return true, nil
@@ -319,7 +314,7 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	orders := make([]Order, 0)
 	for _, v := range respmap {
 		ord := v.(map[string]interface{})
-		side := ord["type"].(string)
+		side := ord["side"].(string)
 		orderSide := SELL
 		if side == "BUY" {
 			orderSide = BUY
