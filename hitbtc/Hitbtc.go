@@ -4,7 +4,11 @@ import (
 	"errors"
 	. "github.com/nntaoli-project/GoEx"
 	//"log"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -103,7 +107,26 @@ func (hitbtc *Hitbtc) GetOrderHistorys(currency CurrencyPair, currentPage, pageS
 }
 
 func (hitbtc *Hitbtc) GetAccount() (*Account, error) {
-	panic("not implements")
+	var ret []interface{}
+	err := hitbtc.doRequest("GET", "trading/balance", &ret)
+	//log.Println(ret)
+	if err != nil {
+		return nil, err
+	}
+
+	acc := new(Account)
+	acc.SubAccounts = make(map[Currency]SubAccount, 1)
+
+	for _, v := range ret {
+		vv := v.(map[string]interface{})
+		currency := NewCurrency(vv["currency"].(string), "")
+		acc.SubAccounts[currency] = SubAccount{
+			Currency:     currency,
+			Amount:       ToFloat64(vv["available"]),
+			ForzenAmount: ToFloat64(vv["reserved"])}
+	}
+
+	return acc, nil
 }
 
 func (hitbtc *Hitbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
@@ -135,4 +158,35 @@ func (hitbtc *Hitbtc) GetKlineRecords(currency CurrencyPair, period, size, since
 //非个人，整个交易所的交易记录
 func (hitbtc *Hitbtc) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("not implements")
+}
+
+func (hitbtc *Hitbtc) doRequest(reqMethod, uri string, ret interface{}) error {
+	url := API_BASE_URL + API_V2 + uri
+	req, _ := http.NewRequest(reqMethod, url, strings.NewReader(""))
+	req.SetBasicAuth(hitbtc.accessKey, hitbtc.secretKey)
+	resp, err := hitbtc.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	bodyData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	println(string(bodyData))
+
+	if resp.StatusCode != 200 {
+		return errors.New(fmt.Sprintf("HttpStatusCode:%d ,Desc:%s", resp.StatusCode, string(bodyData)))
+	}
+
+	err = json.Unmarshal(bodyData, ret)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
