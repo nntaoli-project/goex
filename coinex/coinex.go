@@ -3,7 +3,6 @@ package coinex
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/btcsuite/goleveldb/leveldb/errors"
 	. "github.com/nntaoli-project/GoEx"
 	"log"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"errors"
 )
 
 type CoinEx struct {
