@@ -231,6 +231,9 @@ func (poloniex *Poloniex) GetOneOrder(orderId string, currency CurrencyPair) (*O
 		ords, err1 := poloniex.GetUnfinishOrders(currency)
 		if err1 != nil {
 			log.Println(err1)
+			if strings.Contains(err1.Error(), "Order not found") {
+				return nil, EX_ERR_NOT_FIND_ORDER
+			}
 		} else {
 			_ordId, _ := strconv.Atoi(orderId)
 
