@@ -189,6 +189,7 @@ func (coinex *CoinEx) GetAccount() (*Account, error) {
 	//log.Println(datamap)
 	acc := new(Account)
 	acc.SubAccounts = make(map[Currency]SubAccount, 2)
+	acc.Exchange = EXCHANGE_NAME
 	for c, v := range datamap {
 		vv := v.(map[string]interface{})
 		currency := NewCurrency(c, "")
@@ -284,6 +285,8 @@ func (coinex *CoinEx) adaptTradeStatus(status string) TradeStatus {
 		tradeStatus = ORDER_FINISH
 	case "partly":
 		tradeStatus = ORDER_PART_FINISH
+	case "cancel":
+		tradeStatus = ORDER_CANCEL
 	}
 	return tradeStatus
 }
