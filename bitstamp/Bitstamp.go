@@ -172,11 +172,11 @@ func (bitstamp *Bitstamp) LimitSell(amount, price string, currency CurrencyPair)
 	return bitstamp.placeLimitOrder("sell", currency, amount, price)
 }
 
-func (bitstamp *Bitstamp) MarketBuy(amount string, currency CurrencyPair) (*Order, error) {
+func (bitstamp *Bitstamp) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
 	return bitstamp.placeMarketOrder("buy", currency, amount)
 }
 
-func (bitstamp *Bitstamp) MarketSell(amount string, currency CurrencyPair) (*Order, error) {
+func (bitstamp *Bitstamp) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
 	return bitstamp.placeMarketOrder("sell", currency, amount)
 }
 
