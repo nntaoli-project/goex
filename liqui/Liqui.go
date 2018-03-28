@@ -98,15 +98,15 @@ func (liqui *Liqui) GetUnfinishOrders() string {
 	panic("not implements")
 }
 
-func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (liqui *Liqui) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	panic("not implements")
 }
 
 //非个人，整个交易所的交易记录
-func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+func (liqui *Liqui) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("not implements")
 }
 
-func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (liqui *Liqui) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
 	panic("not implements")
 }
