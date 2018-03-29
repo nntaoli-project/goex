@@ -15,7 +15,7 @@ import (
 const (
 	EXCHANGE_NAME = "binance.com"
 
-	API_BASE_URL = "https://www.binance.com/"
+	API_BASE_URL = "https://api.binance.com/"
 	API_V1       = API_BASE_URL + "api/v1/"
 	API_V3       = API_BASE_URL + "api/v3/"
 
@@ -294,6 +294,8 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 
 	ord.Amount = ToFloat64(respmap["origQty"].(string))
 	ord.Price = ToFloat64(respmap["price"].(string))
+	ord.DealAmount = ToFloat64(respmap["executedQty"])
+	ord.AvgPrice = ord.Price // response no avg price ， fill price
 
 	return &ord, nil
 }

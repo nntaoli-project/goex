@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"log"
 	"net/http"
-	"os"
 	"testing"
 )
 
@@ -44,6 +43,20 @@ func TestBitstamp_LimitBuy(t *testing.T) {
 
 func TestBitstamp_LimitSell(t *testing.T) {
 	ord, err := btmp.LimitSell("40", "0.22", goex.XRP_USD)
+	assert.Nil(t, err)
+	t.Log(ord)
+}
+
+
+func TestBitstamp_MarketBuy(t *testing.T) {
+	ord, err := btmp.MarketBuy("1", goex.XRP_USD)
+	assert.Nil(t, err)
+	t.Log(ord)
+}
+
+
+func TestBitstamp_MarketSell(t *testing.T) {
+	ord, err := btmp.MarketSell("2", goex.XRP_USD)
 	assert.Nil(t, err)
 	t.Log(ord)
 }
