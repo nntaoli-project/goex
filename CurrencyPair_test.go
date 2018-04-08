@@ -22,4 +22,5 @@ func TestCurrencyPair2_String(t *testing.T) {
 func TestFormatPairs_String(t *testing.T) {
 	p := NewCurrencyPairsFromStrings("BTC_USD,LTC_USD,LTC_BTC,ETH_USD,ETH_BTC,ETC_BTC,ETC_USD", ",")
 	t.Log(p)
+	t.Log(Contains(p, BTC_USD))
 }

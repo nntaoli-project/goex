@@ -196,3 +196,23 @@ func (pair CurrencyPair) ToSymbol(joinChar string) string {
 func (pair CurrencyPair) ToSymbol2(joinChar string) string {
 	return strings.Join([]string{pair.CurrencyB.Symbol, pair.CurrencyA.Symbol}, joinChar)
 }
+
+// Equal compares two currency pairs and returns whether or not they are equal
+func (pair CurrencyPair) Equal(p CurrencyPair) bool {
+	if (pair.CurrencyA.String() == p.CurrencyA.String() && pair.CurrencyB.String() == p.CurrencyB.String()) ||
+		(pair.CurrencyB.String() == p.CurrencyA.String() && pair.CurrencyA.String() == p.CurrencyB.String()) {
+		return true
+	}
+	return false
+}
+
+// Contains checks to see if a specified pair exists inside a currency pair
+// array
+func Contains(pairs []CurrencyPair, p CurrencyPair) bool {
+	for x := range pairs {
+		if pairs[x].Equal(p) {
+			return true
+		}
+	}
+	return false
+}
