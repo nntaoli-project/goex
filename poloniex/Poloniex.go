@@ -148,6 +148,7 @@ func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currenc
 	order := new(Order)
 	order.OrderTime = int(time.Now().Unix() * 1000)
 	order.OrderID, _ = strconv.Atoi(orderNumber)
+	order.OrderID2 = orderNumber
 	order.Amount, _ = strconv.ParseFloat(amount, 64)
 	order.Price, _ = strconv.ParseFloat(price, 64)
 	order.Status = ORDER_UNFINISH
@@ -315,6 +316,7 @@ func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 		order := Order{}
 		order.Currency = currency
 		order.OrderID, _ = strconv.Atoi(vv["orderNumber"].(string))
+		order.OrderID2 = vv["orderNumber"].(string)
 		order.Amount, _ = strconv.ParseFloat(vv["amount"].(string), 64)
 		order.Price, _ = strconv.ParseFloat(vv["rate"].(string), 64)
 		order.Status = ORDER_UNFINISH

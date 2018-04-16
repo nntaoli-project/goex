@@ -143,6 +143,7 @@ func (bitstamp *Bitstamp) placeOrder(side string, pair CurrencyPair, amount, pri
 	return &Order{
 		Currency:   pair,
 		OrderID:    ToInt(orderId),
+		OrderID2:   orderId,
 		Price:      ToFloat64(orderprice),
 		Amount:     ToFloat64(amount),
 		DealAmount: 0,
@@ -233,6 +234,7 @@ func (bitstamp *Bitstamp) GetOneOrder(orderId string, currency CurrencyPair) (*O
 	ord := Order{}
 	ord.Currency = currency
 	ord.OrderID = ToInt(orderId)
+	ord.OrderID2 = orderId
 
 	if status == "Finished" {
 		ord.Status = ORDER_FINISH
@@ -296,6 +298,7 @@ func (bitstamp *Bitstamp) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 		orderTime, _ := time.Parse("2006-01-02 15:04:05", ord["datetime"].(string))
 		orders = append(orders, Order{
 			OrderID:   ToInt(ord["id"]),
+			OrderID2:  fmt.Sprint(ToInt(ord["id"])),
 			Currency:  currency,
 			Price:     ToFloat64(ord["price"]),
 			Amount:    ToFloat64(ord["amount"]),

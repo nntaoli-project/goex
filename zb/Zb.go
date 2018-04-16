@@ -254,6 +254,7 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 	//log.Println(ordermap)
 	//order.Currency = currency;
 	order.OrderID, _ = strconv.Atoi(ordermap["id"].(string))
+	order.OrderID2 = ordermap["id"].(string)
 	order.Amount = ordermap["total_amount"].(float64)
 	order.DealAmount = ordermap["trade_amount"].(float64)
 	order.Price = ordermap["price"].(float64)

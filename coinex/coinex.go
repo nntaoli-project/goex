@@ -294,6 +294,7 @@ func (coinex *CoinEx) adaptOrder(ordermap map[string]interface{}, pair CurrencyP
 	return Order{
 		Currency:   pair,
 		OrderID:    ToInt(ordermap["id"]),
+		OrderID2:   fmt.Sprint(ToInt(ordermap["id"])),
 		Amount:     ToFloat64(ordermap["amount"]),
 		Price:      ToFloat64(ordermap["price"]),
 		DealAmount: ToFloat64(ordermap["deal_amount"]),
