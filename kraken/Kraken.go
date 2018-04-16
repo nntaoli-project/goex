@@ -193,6 +193,7 @@ func (k *Kraken) GetAccount() (*Account, error) {
 	}
 
 	acc := new(Account)
+	acc.Exchange = k.GetExchangeName()
 	acc.SubAccounts = make(map[Currency]SubAccount)
 
 	for key, v := range resustmap {
@@ -277,7 +278,7 @@ func (k *Kraken) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, err
 }
 
 func (k *Kraken) GetExchangeName() string {
-	return "kraken.com"
+	return KRAKEN
 }
 
 func (k *Kraken) buildParamsSigned(apiuri string, postForm *url.Values) string {

@@ -19,8 +19,6 @@ type Bitfinex struct {
 }
 
 const (
-	EXCHANGE_NAME = "bitfinex.com"
-
 	BASE_URL = "https://api.bitfinex.com/v1"
 )
 
@@ -29,7 +27,7 @@ func New(client *http.Client, accessKey, secretKey string) *Bitfinex {
 }
 
 func (bfx *Bitfinex) GetExchangeName() string {
-	return EXCHANGE_NAME
+	return BITFINEX
 }
 
 func (bfx *Bitfinex) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {

@@ -34,7 +34,7 @@ func New(client *http.Client, accessKey, secretKey string) *Poloniex {
 }
 
 func (poloniex *Poloniex) GetExchangeName() string {
-	return EXCHANGE_NAME
+	return POLONIEX
 }
 
 func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {

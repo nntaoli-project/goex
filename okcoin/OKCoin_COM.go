@@ -86,5 +86,5 @@ func (ctx *OKCoinCOM_API) GetAccount() (*Account, error) {
 }
 
 func (ctx *OKCoinCOM_API) GetExchangeName() string {
-	return EXCHANGE_NAME_COM
+	return OKCOIN_COM
 }

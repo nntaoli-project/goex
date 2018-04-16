@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	EXCHANGE_NAME_CN = "okcoin.cn"
 	url_ticker       = "ticker.do"
 	url_depth        = "depth.do"
 	url_trades       = "trades.do"
@@ -422,7 +421,7 @@ func (ctx *OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, erro
 }
 
 func (ctx *OKCoinCN_API) GetExchangeName() string {
-	return EXCHANGE_NAME_CN
+	return OKCOIN_CN
 }
 
 func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {

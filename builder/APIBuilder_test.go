@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"github.com/nntaoli-project/GoEx"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -8,13 +9,10 @@ import (
 var builder = NewAPIBuilder()
 
 func TestAPIBuilder_Build(t *testing.T) {
-	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("okcoin.cn").GetExchangeName(), "okcoin.cn")
-	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("okcoin.com").GetExchangeName(), "okcoin.com")
-	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("huobi.com").GetExchangeName(), "huobi.com")
-	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("chbtc.com").GetExchangeName(), "chbtc.com")
-	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("yunbi.com").GetExchangeName(), "yunbi.com")
-	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("poloniex.com").GetExchangeName(), "poloniex.com")
-	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("coincheck.com").GetExchangeName(), "coincheck.com")
-	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("zaif.jp").GetExchangeName(), "zaif.jp")
-	assert.Equal(t, builder.APIKey("").APISecretkey("").Build("huobi.pro").GetExchangeName(), "huobi.pro")
+	assert.Equal(t, builder.APIKey("").APISecretkey("").Build(goex.OKCOIN_COM).GetExchangeName(), goex.OKCOIN_COM)
+	assert.Equal(t, builder.APIKey("").APISecretkey("").Build(goex.HUOBI_PRO).GetExchangeName(), goex.HUOBI_PRO)
+	assert.Equal(t, builder.APIKey("").APISecretkey("").Build(goex.ZB).GetExchangeName(), goex.ZB)
+	assert.Equal(t, builder.APIKey("").APISecretkey("").Build(goex.OKEX).GetExchangeName(), goex.OKEX)
+	assert.Equal(t, builder.APIKey("").APISecretkey("").Build(goex.POLONIEX).GetExchangeName(), goex.POLONIEX)
+	assert.Equal(t, builder.APIKey("").APISecretkey("").Build(goex.KRAKEN).GetExchangeName(), goex.KRAKEN)
 }

@@ -19,7 +19,7 @@ func NewOKExSpot(client *http.Client, accesskey, secretkey string) *OKExSpot {
 }
 
 func (ctx *OKExSpot) GetExchangeName() string {
-	return "okex.com"
+	return OKEX
 }
 
 func (ctx *OKExSpot) GetAccount() (*Account, error) {

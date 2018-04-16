@@ -5,26 +5,22 @@ import (
 	. "github.com/nntaoli-project/GoEx"
 	"github.com/nntaoli-project/GoEx/binance"
 	"github.com/nntaoli-project/GoEx/bitfinex"
+	"github.com/nntaoli-project/GoEx/bithumb"
 	"github.com/nntaoli-project/GoEx/bitstamp"
-	"github.com/nntaoli-project/GoEx/btcbox"
-	"github.com/nntaoli-project/GoEx/chbtc"
-	"github.com/nntaoli-project/GoEx/coincheck"
+	"github.com/nntaoli-project/GoEx/bittrex"
+	"github.com/nntaoli-project/GoEx/coinex"
+	"github.com/nntaoli-project/GoEx/gateio"
+	"github.com/nntaoli-project/GoEx/gdax"
 	"github.com/nntaoli-project/GoEx/huobi"
 	"github.com/nntaoli-project/GoEx/kraken"
 	"github.com/nntaoli-project/GoEx/okcoin"
 	"github.com/nntaoli-project/GoEx/poloniex"
-	"github.com/nntaoli-project/GoEx/yunbi"
-	"github.com/nntaoli-project/GoEx/zaif"
+	"github.com/nntaoli-project/GoEx/wex"
+	"github.com/nntaoli-project/GoEx/zb"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
-	"github.com/nntaoli-project/GoEx/bittrex"
-	"github.com/nntaoli-project/GoEx/bithumb"
-	"github.com/nntaoli-project/GoEx/gdax"
-	"github.com/nntaoli-project/GoEx/gateio"
-	"github.com/nntaoli-project/GoEx/wex"
-	"github.com/nntaoli-project/GoEx/zb"
 )
 
 type APIBuilder struct {
@@ -91,50 +87,42 @@ func (builder *APIBuilder) HttpTimeout(timeout time.Duration) (_builder *APIBuil
 func (builder *APIBuilder) Build(exName string) (api API) {
 	var _api API
 	switch exName {
-	case "okcoin.cn":
+	case OKCOIN_CN:
 		_api = okcoin.New(builder.client, builder.apiKey, builder.secretkey)
-	case "huobi.com":
+	case HUOBI:
 		_api = huobi.New(builder.client, builder.apiKey, builder.secretkey)
-	case "chbtc.com":
-		_api = chbtc.New(builder.client, builder.apiKey, builder.secretkey)
-	case "yunbi.com":
-		_api = yunbi.New(builder.client, builder.apiKey, builder.secretkey)
-	case "poloniex.com":
+	case POLONIEX:
 		_api = poloniex.New(builder.client, builder.apiKey, builder.secretkey)
-	case "okcoin.com":
+	case OKCOIN_COM:
 		_api = okcoin.NewCOM(builder.client, builder.apiKey, builder.secretkey)
-	case "coincheck.com":
-		_api = coincheck.New(builder.client, builder.apiKey, builder.secretkey)
-	case "zaif.jp":
-		_api = zaif.New(builder.client, builder.apiKey, builder.secretkey)
-	case "bitstamp.net":
+	case BITSTAMP:
 		_api = bitstamp.NewBitstamp(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
-	case "huobi.pro":
+	case HUOBI_PRO:
 		_api = huobi.NewHuobiPro(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
-	case "okex.com":
+	case OKEX:
 		_api = okcoin.NewOKExSpot(builder.client, builder.apiKey, builder.secretkey)
-	case "bitfinex.com":
+	case BITFINEX:
 		_api = bitfinex.New(builder.client, builder.apiKey, builder.secretkey)
-	case "kraken.com":
+	case KRAKEN:
 		_api = kraken.New(builder.client, builder.apiKey, builder.secretkey)
-	case "binance.com":
+	case BINANCE:
 		_api = binance.New(builder.client, builder.apiKey, builder.secretkey)
-	case "btcbox.co.jp":
-		_api = btcbox.New(builder.client, builder.apiKey, builder.secretkey)
-	case "bittrex.com":
+	case BITTREX:
 		_api = bittrex.New(builder.client, builder.apiKey, builder.secretkey)
-	case "bithumb.com":
+	case BITHUMB:
 		_api = bithumb.New(builder.client, builder.apiKey, builder.secretkey)
-	case "gdax.com":
-		_api = gdax.New(builder.client , builder.apiKey , builder.secretkey)
-	case "gate.io":
-		_api = gateio.New(builder.client , builder.apiKey , builder.secretkey)
-	case "wex.nz":
-		_api = wex.New(builder.client , builder.apiKey ,builder.secretkey)
-	case "zb.com":
-		_api = zb.New(builder.client , builder.apiKey, builder.secretkey)
+	case GDAX:
+		_api = gdax.New(builder.client, builder.apiKey, builder.secretkey)
+	case GATEIO:
+		_api = gateio.New(builder.client, builder.apiKey, builder.secretkey)
+	case WEX_NZ:
+		_api = wex.New(builder.client, builder.apiKey, builder.secretkey)
+	case ZB:
+		_api = zb.New(builder.client, builder.apiKey, builder.secretkey)
+	case COINEX:
+		_api = coinex.New(builder.client, builder.apiKey, builder.secretkey)
 	default:
-		panic("exchange name error ["+exName+"].")
+		panic("exchange name error [" + exName + "].")
 
 	}
 	return _api

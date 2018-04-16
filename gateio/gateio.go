@@ -108,5 +108,5 @@ func (g *Gate) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error
 }
 
 func (g *Gate) GetExchangeName() string {
-	return "gdax.com"
+	return GATEIO
 }

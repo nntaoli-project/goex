@@ -13,8 +13,6 @@ import (
 )
 
 const (
-	EXCHANGE_NAME = "binance.com"
-
 	API_BASE_URL = "https://api.binance.com/"
 	API_V1       = API_BASE_URL + "api/v1/"
 	API_V3       = API_BASE_URL + "api/v3/"
@@ -48,7 +46,7 @@ func New(client *http.Client, api_key, secret_key string) *Binance {
 }
 
 func (bn *Binance) GetExchangeName() string {
-	return EXCHANGE_NAME
+	return BINANCE
 }
 
 func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {

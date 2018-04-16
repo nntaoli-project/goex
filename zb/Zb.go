@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	EXCHANGE_NAME = "zb.com"
 	MARKET_URL    = "http://api.zb.com/data/v1/"
 	TICKER_API    = "ticker?market=%s"
 	DEPTH_API     = "depth?market=%s&size=%d"
@@ -40,7 +39,7 @@ func New(httpClient *http.Client, accessKey, secretKey string) *Zb {
 }
 
 func (zb *Zb) GetExchangeName() string {
-	return EXCHANGE_NAME
+	return ZB
 }
 
 func (zb *Zb) GetTicker(currency CurrencyPair) (*Ticker, error) {
@@ -139,7 +138,7 @@ func (zb *Zb) GetAccount() (*Account, error) {
 	}
 
 	acc := new(Account)
-	acc.Exchange = EXCHANGE_NAME
+	acc.Exchange = zb.GetExchangeName()
 	acc.SubAccounts = make(map[Currency]SubAccount)
 
 	resultmap := respmap["result"].(map[string]interface{})

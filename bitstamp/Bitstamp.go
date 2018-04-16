@@ -384,5 +384,5 @@ func (bitstamp *Bitstamp) GetTrades(currencyPair CurrencyPair, since int64) ([]T
 }
 
 func (bitstamp *Bitstamp) GetExchangeName() string {
-	return "bitstamp.net"
+	return BITSTAMP
 }

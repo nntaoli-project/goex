@@ -67,3 +67,25 @@ var (
 	NEXT_WEEK_CONTRACT = "next_week" //次周合约
 	QUARTER_CONTRACT   = "quarter"   //季度合约
 )
+
+//exchanges const
+const (
+	OKCOIN_CN   = "okcoin.cn"
+	OKCOIN_COM  = "okcoin.com"
+	OKEX        = "okex.com"
+	OKEX_FUTURE = "okex.com"
+	HUOBI       = "huobi.com"
+	HUOBI_PRO   = "huobi.pro"
+	BITSTAMP    = "bitstamp.net"
+	KRAKEN      = "kraken.com"
+	ZB          = "zb.com"
+	BITFINEX    = "bitfinex.com"
+	BINANCE     = "binance.com"
+	POLONIEX    = "poloniex.com"
+	COINEX      = "coinex.com"
+	BITHUMB     = "bithumb.com"
+	GATEIO      = "gate.io"
+	BITTREX     = "bittrex.com"
+	GDAX        = "gdax.com"
+	WEX_NZ      = "wex.nz"
+)
