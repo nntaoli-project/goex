@@ -9,12 +9,10 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
 	. "github.com/nntaoli-project/GoEx"
 )
 
 const (
-	EXCHANGE_NAME_CN = "okcoin.cn"
 	url_ticker       = "ticker.do"
 	url_depth        = "depth.do"
 	url_trades       = "trades.do"
@@ -114,12 +112,13 @@ func (ctx *OKCoinCN_API) placeOrder(side, amount, price string, currency Currenc
 		return nil, err
 	}
 
-	if !respMap["result"].(bool) {
-		return nil, errors.New(string(body))
+	if err , isok := respMap["error_code"].(float64) ; isok {
+		return nil, errors.New(fmt.Sprint(err))
 	}
 
 	order := new(Order)
 	order.OrderID = int(respMap["order_id"].(float64))
+	order.OrderID2 = fmt.Sprint(int(respMap["order_id"].(float64)))
 	order.Price, _ = strconv.ParseFloat(price, 64)
 	order.Amount, _ = strconv.ParseFloat(amount, 64)
 	order.Currency = currency
@@ -171,8 +170,8 @@ func (ctx *OKCoinCN_API) CancelOrder(orderId string, currency CurrencyPair) (boo
 		return false, err
 	}
 
-	if !respMap["result"].(bool) {
-		return false, errors.New(string(body))
+	if err , isok := respMap["error_code"].(float64) ; isok {
+		return false, errors.New(fmt.Sprint(err))
 	}
 
 	return true, nil
@@ -198,8 +197,8 @@ func (ctx *OKCoinCN_API) getOrders(orderId string, currency CurrencyPair) ([]Ord
 		return nil, err
 	}
 
-	if !respMap["result"].(bool) {
-		return nil, errors.New(string(body))
+	if err , isok := respMap["error_code"].(float64) ; isok {
+		return nil, errors.New(fmt.Sprint(err))
 	}
 
 	orders := respMap["orders"].([]interface{})
@@ -211,6 +210,7 @@ func (ctx *OKCoinCN_API) getOrders(orderId string, currency CurrencyPair) ([]Ord
 		var order Order
 		order.Currency = currency
 		order.OrderID = int(orderMap["order_id"].(float64))
+		order.OrderID2 = fmt.Sprint(int(orderMap["order_id"].(float64)))
 		order.Amount = orderMap["amount"].(float64)
 		order.Price = orderMap["price"].(float64)
 		order.DealAmount = orderMap["deal_amount"].(float64)
@@ -285,9 +285,8 @@ func (ctx *OKCoinCN_API) GetAccount() (*Account, error) {
 		return nil, err
 	}
 
-	if !respMap["result"].(bool) {
-		errcode := strconv.FormatFloat(respMap["error_code"].(float64), 'f', 0, 64)
-		return nil, errors.New(errcode)
+	if err , isok := respMap["error_code"].(float64) ; isok {
+		return nil, errors.New(fmt.Sprint(err))
 	}
 
 	info, ok := respMap["info"].(map[string]interface{})
@@ -385,11 +384,16 @@ func (ctx *OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, erro
 		return nil, err
 	}
 
-	if bodyDataMap["result"] != nil && !bodyDataMap["result"].(bool) {
-		return nil, errors.New(fmt.Sprintf("%.0f", bodyDataMap["error_code"].(float64)))
+	if err , isok := bodyDataMap["error_code"].(float64) ; isok {
+		return nil, errors.New(fmt.Sprint(err))
 	}
 
-	for _, v := range bodyDataMap["asks"].([]interface{}) {
+	dep , isok := bodyDataMap["asks"].([]interface{})
+	if !isok {
+		return nil , errors.New("parse data error")
+	}
+
+	for _, v := range dep {
 		var dr DepthRecord
 		for i, vv := range v.([]interface{}) {
 			switch i {
@@ -419,7 +423,7 @@ func (ctx *OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, erro
 }
 
 func (ctx *OKCoinCN_API) GetExchangeName() string {
-	return EXCHANGE_NAME_CN
+	return OKCOIN_CN
 }
 
 func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
@@ -496,8 +500,8 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 		return nil, err
 	}
 
-	if !respMap["result"].(bool) {
-		return nil, errors.New(string(body))
+	if err , isok := respMap["error_code"].(float64) ; isok {
+		return nil, errors.New(fmt.Sprint(err))
 	}
 
 	orders := respMap["orders"].([]interface{})
@@ -509,6 +513,7 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 		var order Order
 		order.Currency = currency
 		order.OrderID = int(orderMap["order_id"].(float64))
+		order.OrderID2 = fmt.Sprint(int(orderMap["order_id"].(float64)))
 		order.Amount = orderMap["amount"].(float64)
 		order.Price = orderMap["price"].(float64)
 		order.DealAmount = orderMap["deal_amount"].(float64)

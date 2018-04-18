@@ -11,6 +11,7 @@ import (
 	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 )
@@ -114,6 +115,7 @@ func (k *Kraken) toOrder(orderinfo interface{}) Order {
 		AvgPrice:   ToFloat64(omap["price"]),
 		Side:       k.convertSide(descmap["type"].(string)),
 		Status:     k.convertOrderStatus(omap["status"].(string)),
+		Fee:        ToFloat64(omap["fee"]),
 		OrderTime:  ToInt(omap["opentm"]),
 	}
 }
@@ -127,7 +129,7 @@ func (k *Kraken) GetOrderInfos(txids ...string) ([]Order, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	//log.Println(resultmap)
 	var ords []Order
 	for txid, v := range resultmap {
 		ord := k.toOrder(v)
@@ -191,6 +193,7 @@ func (k *Kraken) GetAccount() (*Account, error) {
 	}
 
 	acc := new(Account)
+	acc.Exchange = k.GetExchangeName()
 	acc.SubAccounts = make(map[Currency]SubAccount)
 
 	for key, v := range resustmap {
@@ -199,7 +202,7 @@ func (k *Kraken) GetAccount() (*Account, error) {
 		//log.Println(symbol, amount)
 		acc.SubAccounts[currency] = SubAccount{Currency: currency, Amount: amount, ForzenAmount: 0, LoanAmount: 0}
 
-		if currency.Symbol == "XBT" {
+		if currency.Symbol == "XBT" { // adapt to btc
 			acc.SubAccounts[BTC] = SubAccount{Currency: BTC, Amount: amount, ForzenAmount: 0, LoanAmount: 0}
 		}
 	}
@@ -260,6 +263,8 @@ func (k *Kraken) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		break
 	}
 
+	sort.Sort(sort.Reverse(dep.AskList)) //reverse
+
 	return &dep, nil
 }
 
@@ -273,7 +278,7 @@ func (k *Kraken) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, err
 }
 
 func (k *Kraken) GetExchangeName() string {
-	return "kraken.com"
+	return KRAKEN
 }
 
 func (k *Kraken) buildParamsSigned(apiuri string, postForm *url.Values) string {
@@ -363,11 +368,11 @@ func (k *Kraken) convertSide(typeS string) TradeSide {
 
 func (k *Kraken) convertOrderStatus(status string) TradeStatus {
 	switch status {
-	case "open", "pending", "expired":
+	case "open", "pending":
 		return ORDER_UNFINISH
-	case "canceled", "closed":
+	case "canceled", "expired":
 		return ORDER_CANCEL
-	case "filled":
+	case "filled", "closed":
 		return ORDER_FINISH
 	case "partialfilled":
 		return ORDER_PART_FINISH

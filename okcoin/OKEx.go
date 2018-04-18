@@ -62,7 +62,7 @@ func (ok *OKEx) buildPostForm(postForm *url.Values) error {
 }
 
 func (ok *OKEx) GetExchangeName() string {
-	return "okex.com"
+	return OKEX_FUTURE
 }
 
 func (ok *OKEx) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, error) {
@@ -219,8 +219,12 @@ type futureUserInfoResponse struct {
 	Info struct {
 		Btc map[string]float64 `json:btc`
 		Ltc map[string]float64 `json:ltc`
+		Etc map[string]float64 `json:"etc"`
+		Eth map[string]float64 `json:"eth"`
+		Bch map[string]float64 `json:"bch"`
 	} `json:info`
-	Result bool `json:"result,bool"`
+	Result     bool `json:"result,bool"`
+	Error_code int  `json:"error_code"`
 }
 
 func (ok *OKEx) GetFutureUserinfo() (*FutureAccount, error) {
@@ -242,8 +246,8 @@ func (ok *OKEx) GetFutureUserinfo() (*FutureAccount, error) {
 		return nil, err
 	}
 
-	if !resp.Result {
-		return nil, errors.New(string(body))
+	if !resp.Result && resp.Error_code > 0 {
+		return nil, ok.errorWrapper(resp.Error_code)
 	}
 
 	account := new(FutureAccount)
@@ -251,9 +255,15 @@ func (ok *OKEx) GetFutureUserinfo() (*FutureAccount, error) {
 
 	btcMap := resp.Info.Btc
 	ltcMap := resp.Info.Ltc
+	bchMap := resp.Info.Bch
+	ethMap := resp.Info.Eth
+	etcMap := resp.Info.Etc
 
 	account.FutureSubAccounts[BTC] = FutureSubAccount{BTC, btcMap["account_rights"], btcMap["keep_deposit"], btcMap["profit_real"], btcMap["profit_unreal"], btcMap["risk_rate"]}
 	account.FutureSubAccounts[LTC] = FutureSubAccount{LTC, ltcMap["account_rights"], ltcMap["keep_deposit"], ltcMap["profit_real"], ltcMap["profit_unreal"], ltcMap["risk_rate"]}
+	account.FutureSubAccounts[BCH] = FutureSubAccount{BCH, bchMap["account_rights"], bchMap["keep_deposit"], bchMap["profit_real"], bchMap["profit_unreal"], bchMap["risk_rate"]}
+	account.FutureSubAccounts[ETH] = FutureSubAccount{ETH, ethMap["account_rights"], ethMap["keep_deposit"], ethMap["profit_real"], ethMap["profit_unreal"], ethMap["risk_rate"]}
+	account.FutureSubAccounts[ETC] = FutureSubAccount{ETC, etcMap["account_rights"], etcMap["keep_deposit"], etcMap["profit_real"], etcMap["profit_unreal"], etcMap["risk_rate"]}
 
 	return account, nil
 }
@@ -389,7 +399,7 @@ func (ok *OKEx) parseOrders(body []byte, currencyPair CurrencyPair) ([]FutureOrd
 	if err != nil {
 		return nil, err
 	}
-
+	
 	if !respMap["result"].(bool) {
 		return nil, errors.New(string(body))
 	}
@@ -489,11 +499,15 @@ func (ok *OKEx) GetExchangeRate() (float64, error) {
 	return respMap["rate"].(float64), nil
 }
 
+/**
+ * BTC: 100美元一张合约
+ * LTC/ETH/ETC/BCH: 10美元一张合约
+ */
 func (ok *OKEx) GetContractValue(currencyPair CurrencyPair) (float64, error) {
 	switch currencyPair {
 	case BTC_USD:
 		return 100, nil
-	case LTC_USD:
+	case LTC_USD, ETH_USD, ETC_USD, BCH_USD:
 		return 10, nil
 	}
 
@@ -562,4 +576,19 @@ func (ok *OKEx) GetKlineRecords(contract_type string, currencyPair CurrencyPair,
 
 func (okFuture *OKEx) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("unimplements")
+}
+
+func (okFuture *OKEx) errorWrapper(errorCode int) ApiError {
+	switch errorCode {
+	case 20024:
+		return EX_ERR_SIGN
+	case 20020:
+		return EX_ERR_NOT_FIND_SECRETKEY
+	case 20015:
+		return EX_ERR_NOT_FIND_ORDER
+	case 20049:
+		return EX_ERR_API_LIMIT
+	}
+	errmsg := fmt.Sprintf("%d", errorCode)
+	return ApiError{ErrCode: errmsg, OriginErrMsg: errmsg}
 }

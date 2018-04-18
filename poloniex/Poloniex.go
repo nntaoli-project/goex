@@ -34,7 +34,7 @@ func New(client *http.Client, accessKey, secretKey string) *Poloniex {
 }
 
 func (poloniex *Poloniex) GetExchangeName() string {
-	return EXCHANGE_NAME
+	return POLONIEX
 }
 
 func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
@@ -46,6 +46,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	}
 
 	pair := poloniex.adaptCurrencyPair(currency).ToSymbol2("_")
+	//println(pair)
 	tickermap, ok := respmap[pair].(map[string]interface{})
 	if !ok {
 		return new(Ticker), errors.New("not found")
@@ -59,7 +60,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.Sell, _ = strconv.ParseFloat(tickermap["lowestAsk"].(string), 64)
 	ticker.Vol, _ = strconv.ParseFloat(tickermap["quoteVolume"].(string), 64)
 
-	log.Println(tickermap)
+	//log.Println(tickermap)
 
 	return ticker, nil
 }
@@ -147,6 +148,7 @@ func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currenc
 	order := new(Order)
 	order.OrderTime = int(time.Now().Unix() * 1000)
 	order.OrderID, _ = strconv.Atoi(orderNumber)
+	order.OrderID2 = orderNumber
 	order.Amount, _ = strconv.ParseFloat(amount, 64)
 	order.Price, _ = strconv.ParseFloat(price, 64)
 	order.Status = ORDER_UNFINISH
@@ -159,7 +161,7 @@ func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currenc
 		order.Side = BUY
 	}
 
-	log.Println(string(resp))
+	//log.Println(string(resp))
 	return order, nil
 }
 
@@ -196,8 +198,8 @@ func (poloniex *Poloniex) CancelOrder(orderId string, currency CurrencyPair) (bo
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil || respmap["error"] != nil {
-		log.Println(err, string(resp))
-		return false, err
+		//log.Println(err, string(resp))
+		return false, errors.New(string(resp))
 	}
 
 	success := int(respmap["success"].(float64))
@@ -230,6 +232,9 @@ func (poloniex *Poloniex) GetOneOrder(orderId string, currency CurrencyPair) (*O
 		ords, err1 := poloniex.GetUnfinishOrders(currency)
 		if err1 != nil {
 			log.Println(err1)
+			if strings.Contains(err1.Error(), "Order not found") {
+				return nil, EX_ERR_NOT_FIND_ORDER
+			}
 		} else {
 			_ordId, _ := strconv.Atoi(orderId)
 
@@ -311,6 +316,7 @@ func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 		order := Order{}
 		order.Currency = currency
 		order.OrderID, _ = strconv.Atoi(vv["orderNumber"].(string))
+		order.OrderID2 = vv["orderNumber"].(string)
 		order.Amount, _ = strconv.ParseFloat(vv["amount"].(string), 64)
 		order.Price, _ = strconv.ParseFloat(vv["rate"].(string), 64)
 		order.Status = ORDER_UNFINISH
@@ -364,36 +370,13 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 	acc.SubAccounts = make(map[Currency]SubAccount)
 
 	for k, v := range respmap {
-		var currency Currency
-
-		switch k {
-		case "BTC":
-			currency = BTC
-		case "LTC":
-			currency = LTC
-		case "ETH":
-			currency = ETH
-		case "ETC":
-			currency = ETC
-		case "USD":
-			currency = USD
-		case "USDT":
-			currency = USD
-		case "BCH":
-			currency = BCC
-
-		default:
-			currency = UNKNOWN
-		}
-
-		if currency != UNKNOWN {
-			vv := v.(map[string]interface{})
-			subAcc := SubAccount{}
-			subAcc.Currency = currency
-			subAcc.Amount, _ = strconv.ParseFloat(vv["available"].(string), 64)
-			subAcc.ForzenAmount, _ = strconv.ParseFloat(vv["onOrders"].(string), 64)
-			acc.SubAccounts[subAcc.Currency] = subAcc
-		}
+		var currency Currency = NewCurrency(k, "")
+		vv := v.(map[string]interface{})
+		subAcc := SubAccount{}
+		subAcc.Currency = currency
+		subAcc.Amount, _ = strconv.ParseFloat(vv["available"].(string), 64)
+		subAcc.ForzenAmount, _ = strconv.ParseFloat(vv["onOrders"].(string), 64)
+		acc.SubAccounts[subAcc.Currency] = subAcc
 	}
 
 	return acc, nil
@@ -516,21 +499,20 @@ func (poloniex *Poloniex) buildPostForm(postForm *url.Values) (string, error) {
 }
 
 func (poloniex *Poloniex) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
-	var currencyA Currency
-	var currencyB Currency
+	var currencyA Currency = pair.CurrencyA
+	var currencyB Currency = pair.CurrencyB
 
 	if pair.CurrencyA == BCC {
 		currencyA = BCH
-	} else {
-		currencyA = pair.CurrencyA
 	}
 
-	if pair.CurrencyB == USD {
-		currencyB = NewCurrency("USDT", "")
-	} else {
-		currencyB = pair.CurrencyB
-	}
-
+	//
+	//if pair.CurrencyB == USD {
+	//	currencyB = NewCurrency("USDT", "")
+	//} else {
+	//	currencyB = pair.CurrencyB
+	//}
+	//
 	return NewCurrencyPair(currencyA, currencyB)
 }
 

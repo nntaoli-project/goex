@@ -1,4 +1,4 @@
-package chbtc
+package zb
 
 import (
 	"encoding/json"
@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	MARKET_URL = "http://api.chbtc.com/data/v1/"
-	TICKER_API = "ticker?currency=%s"
-	DEPTH_API  = "depth?currency=%s&size=%d"
+	MARKET_URL    = "http://api.zb.com/data/v1/"
+	TICKER_API    = "ticker?market=%s"
+	DEPTH_API     = "depth?market=%s&size=%d"
 
-	TRADE_URL                 = "https://trade.chbtc.com/api/"
+	TRADE_URL                 = "https://trade.zb.com/api/"
 	GET_ACCOUNT_API           = "getAccountInfo"
 	GET_ORDER_API             = "getOrder"
 	GET_UNFINISHED_ORDERS_API = "getUnfinishedOrdersIgnoreTradeType"
@@ -28,22 +28,22 @@ const (
 	CANCELWITHDRAW_API        = "cancelWithdraw"
 )
 
-type Chbtc struct {
+type Zb struct {
 	httpClient *http.Client
 	accessKey,
 	secretKey string
 }
 
-func New(httpClient *http.Client, accessKey, secretKey string) *Chbtc {
-	return &Chbtc{httpClient, accessKey, secretKey}
+func New(httpClient *http.Client, accessKey, secretKey string) *Zb {
+	return &Zb{httpClient, accessKey, secretKey}
 }
 
-func (chbtc *Chbtc) GetExchangeName() string {
-	return "chbtc.com"
+func (zb *Zb) GetExchangeName() string {
+	return ZB
 }
 
-func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	resp, err := HttpGet(chbtc.httpClient, MARKET_URL+fmt.Sprintf(TICKER_API, strings.ToLower(currency.ToSymbol("_"))))
+func (zb *Zb) GetTicker(currency CurrencyPair) (*Ticker, error) {
+	resp, err := HttpGet(zb.httpClient, MARKET_URL+fmt.Sprintf(TICKER_API, strings.ToLower(currency.ToSymbol("_"))))
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +62,8 @@ func (chbtc *Chbtc) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	return ticker, nil
 }
 
-func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	resp, err := HttpGet(chbtc.httpClient, MARKET_URL+fmt.Sprintf(DEPTH_API, currency.ToSymbol("_"), size))
+func (zb *Zb) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
+	resp, err := HttpGet(zb.httpClient, MARKET_URL+fmt.Sprintf(DEPTH_API, currency.ToSymbol("_"), size))
 	if err != nil {
 		return nil, err
 	}
@@ -99,11 +99,11 @@ func (chbtc *Chbtc) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return depth, nil
 }
 
-func (chbtc *Chbtc) buildPostForm(postForm *url.Values) error {
-	postForm.Set("accesskey", chbtc.accessKey)
+func (zb *Zb) buildPostForm(postForm *url.Values) error {
+	postForm.Set("accesskey", zb.accessKey)
 
 	payload := postForm.Encode()
-	secretkeySha, _ := GetSHA(chbtc.secretKey)
+	secretkeySha, _ := GetSHA(zb.secretKey)
 
 	sign, err := GetParamHmacMD5Sign(secretkeySha, payload)
 	if err != nil {
@@ -116,12 +116,12 @@ func (chbtc *Chbtc) buildPostForm(postForm *url.Values) error {
 	return nil
 }
 
-func (chbtc *Chbtc) GetAccount() (*Account, error) {
+func (zb *Zb) GetAccount() (*Account, error) {
 	params := url.Values{}
 	params.Set("method", "getAccountInfo")
-	chbtc.buildPostForm(&params)
+	zb.buildPostForm(&params)
 	//log.Println(params.Encode())
-	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+GET_ACCOUNT_API, params)
+	resp, err := HttpPostForm(zb.httpClient, TRADE_URL+GET_ACCOUNT_API, params)
 	if err != nil {
 		return nil, err
 	}
@@ -133,54 +133,26 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 		return nil, err
 	}
 
-	//log.Println(respmap)
 	if respmap["code"] != nil && respmap["code"].(float64) != 1000 {
 		return nil, errors.New(string(resp))
 	}
 
 	acc := new(Account)
-	acc.Exchange = "chbtc"
+	acc.Exchange = zb.GetExchangeName()
 	acc.SubAccounts = make(map[Currency]SubAccount)
 
 	resultmap := respmap["result"].(map[string]interface{})
-	balancemap := resultmap["balance"].(map[string]interface{})
-	frozenmap := resultmap["frozen"].(map[string]interface{})
-	p2pmap := resultmap["p2p"].(map[string]interface{})
+	coins := resultmap["coins"].([]interface{})
 
 	acc.NetAsset = ToFloat64(resultmap["netAssets"])
 	acc.Asset = ToFloat64(resultmap["totalAssets"])
 
-	for t, v := range balancemap {
+	for _, v := range coins {
 		vv := v.(map[string]interface{})
-		frozen := frozenmap["CNY"].(map[string]interface{})
 		subAcc := SubAccount{}
-		subAcc.Amount = ToFloat64(vv["amount"])
-		subAcc.ForzenAmount = ToFloat64(frozen["amount"])
-		subAcc.LoanAmount = ToFloat64(p2pmap[fmt.Sprintf("in%s", t)])
-
-		switch t {
-		case "CNY":
-			subAcc.Currency = CNY
-		case "BTC":
-			subAcc.Currency = BTC
-		case "LTC":
-			subAcc.Currency = LTC
-		case "ETH":
-			subAcc.Currency = ETH
-		case "ETC":
-			subAcc.Currency = ETC
-		case "BTS":
-			subAcc.Currency = BTS
-		case "EOS":
-			subAcc.Currency = EOS
-		case "BCC":
-			subAcc.Currency = BCC
-		case "QTUM":
-			subAcc.Currency = QTUM
-		default:
-			log.Println("unknown ", t)
-
-		}
+		subAcc.Amount = ToFloat64(vv["available"])
+		subAcc.ForzenAmount = ToFloat64(vv["freez"])
+		subAcc.Currency = NewCurrency(vv["key"].(string), "")
 		acc.SubAccounts[subAcc.Currency] = subAcc
 	}
 
@@ -190,16 +162,16 @@ func (chbtc *Chbtc) GetAccount() (*Account, error) {
 	return acc, nil
 }
 
-func (chbtc *Chbtc) placeOrder(amount, price string, currency CurrencyPair, tradeType int) (*Order, error) {
+func (zb *Zb) placeOrder(amount, price string, currency CurrencyPair, tradeType int) (*Order, error) {
 	params := url.Values{}
 	params.Set("method", "order")
 	params.Set("price", price)
 	params.Set("amount", amount)
 	params.Set("currency", currency.ToSymbol("_"))
 	params.Set("tradeType", fmt.Sprintf("%d", tradeType))
-	chbtc.buildPostForm(&params)
+	zb.buildPostForm(&params)
 
-	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+PLACE_ORDER_API, params)
+	resp, err := HttpPostForm(zb.httpClient, TRADE_URL+PLACE_ORDER_API, params)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -240,22 +212,22 @@ func (chbtc *Chbtc) placeOrder(amount, price string, currency CurrencyPair, trad
 	return order, nil
 }
 
-func (chbtc *Chbtc) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return chbtc.placeOrder(amount, price, currency, 1)
+func (zb *Zb) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	return zb.placeOrder(amount, price, currency, 1)
 }
 
-func (chbtc *Chbtc) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return chbtc.placeOrder(amount, price, currency, 0)
+func (zb *Zb) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return zb.placeOrder(amount, price, currency, 0)
 }
 
-func (chbtc *Chbtc) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
+func (zb *Zb) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
 	params := url.Values{}
 	params.Set("method", "cancelOrder")
 	params.Set("id", orderId)
 	params.Set("currency", currency.ToSymbol("_"))
-	chbtc.buildPostForm(&params)
+	zb.buildPostForm(&params)
 
-	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+CANCEL_ORDER_API, params)
+	resp, err := HttpPostForm(zb.httpClient, TRADE_URL+CANCEL_ORDER_API, params)
 	if err != nil {
 		log.Println(err)
 		return false, err
@@ -282,10 +254,11 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 	//log.Println(ordermap)
 	//order.Currency = currency;
 	order.OrderID, _ = strconv.Atoi(ordermap["id"].(string))
+	order.OrderID2 = ordermap["id"].(string)
 	order.Amount = ordermap["total_amount"].(float64)
 	order.DealAmount = ordermap["trade_amount"].(float64)
 	order.Price = ordermap["price"].(float64)
-//	order.Fee = ordermap["fees"].(float64)
+	//	order.Fee = ordermap["fees"].(float64)
 	if order.DealAmount > 0 {
 		order.AvgPrice = ordermap["trade_money"].(float64) / order.DealAmount
 	} else {
@@ -313,20 +286,19 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 	case 2:
 		order.Status = ORDER_FINISH
 	case 3:
-		order.Status = ORDER_PART_FINISH
-
+		order.Status = ORDER_UNFINISH
 	}
 
 }
 
-func (chbtc *Chbtc) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
+func (zb *Zb) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
 	params := url.Values{}
 	params.Set("method", "getOrder")
 	params.Set("id", orderId)
 	params.Set("currency", currency.ToSymbol("_"))
-	chbtc.buildPostForm(&params)
+	zb.buildPostForm(&params)
 
-	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+GET_ORDER_API, params)
+	resp, err := HttpPostForm(zb.httpClient, TRADE_URL+GET_ORDER_API, params)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -347,15 +319,15 @@ func (chbtc *Chbtc) GetOneOrder(orderId string, currency CurrencyPair) (*Order, 
 	return order, nil
 }
 
-func (chbtc *Chbtc) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
+func (zb *Zb) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params := url.Values{}
 	params.Set("method", "getUnfinishedOrdersIgnoreTradeType")
 	params.Set("currency", currency.ToSymbol("_"))
 	params.Set("pageIndex", "1")
 	params.Set("pageSize", "100")
-	chbtc.buildPostForm(&params)
+	zb.buildPostForm(&params)
 
-	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+GET_UNFINISHED_ORDERS_API, params)
+	resp, err := HttpPostForm(zb.httpClient, TRADE_URL+GET_UNFINISHED_ORDERS_API, params)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -388,15 +360,15 @@ func (chbtc *Chbtc) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return orders, nil
 }
 
-func (chbtc *Chbtc) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (zb *Zb) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
 	return nil, nil
 }
 
-func (chbtc *Chbtc) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
+func (zb *Zb) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	return nil, nil
 }
 
-func (chbtc *Chbtc) Withdraw(amount string, currency Currency, fees, receiveAddr, safePwd string) (string, error) {
+func (zb *Zb) Withdraw(amount string, currency Currency, fees, receiveAddr, safePwd string) (string, error) {
 	params := url.Values{}
 	params.Set("method", "withdraw")
 	params.Set("currency", strings.ToLower(currency.String()))
@@ -404,9 +376,9 @@ func (chbtc *Chbtc) Withdraw(amount string, currency Currency, fees, receiveAddr
 	params.Set("fees", fees)
 	params.Set("receiveAddr", receiveAddr)
 	params.Set("safePwd", safePwd)
-	chbtc.buildPostForm(&params)
+	zb.buildPostForm(&params)
 
-	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+WITHDRAW_API, params)
+	resp, err := HttpPostForm(zb.httpClient, TRADE_URL+WITHDRAW_API, params)
 	if err != nil {
 		log.Println("withdraw fail.", err)
 		return "", err
@@ -426,15 +398,15 @@ func (chbtc *Chbtc) Withdraw(amount string, currency Currency, fees, receiveAddr
 	return "", errors.New(string(resp))
 }
 
-func (chbtc *Chbtc) CancelWithdraw(id string, currency Currency, safePwd string) (bool, error) {
+func (zb *Zb) CancelWithdraw(id string, currency Currency, safePwd string) (bool, error) {
 	params := url.Values{}
 	params.Set("method", "cancelWithdraw")
 	params.Set("currency", strings.ToLower(currency.String()))
 	params.Set("downloadId", id)
 	params.Set("safePwd", safePwd)
-	chbtc.buildPostForm(&params)
+	zb.buildPostForm(&params)
 
-	resp, err := HttpPostForm(chbtc.httpClient, TRADE_URL+CANCELWITHDRAW_API, params)
+	resp, err := HttpPostForm(zb.httpClient, TRADE_URL+CANCELWITHDRAW_API, params)
 	if err != nil {
 		log.Println("cancel withdraw fail.", err)
 		return false, err
@@ -454,14 +426,14 @@ func (chbtc *Chbtc) CancelWithdraw(id string, currency Currency, safePwd string)
 	return false, errors.New(string(resp))
 }
 
-func (chbtc *Chbtc) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+func (zb *Zb) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("unimplements")
 }
 
-func (chbtc *Chbtc) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (zb *Zb) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
 	panic("unsupport the market order")
 }
 
-func (chbtc *Chbtc) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (zb *Zb) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
 	panic("unsupport the market order")
 }

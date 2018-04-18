@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -36,7 +35,7 @@ func (hbV2 *HuoBi_V2) GetAccountId() (string, error) {
 	params := &url.Values{}
 	hbV2.buildPostForm("GET", path, params)
 
-	log.Println(hbV2.baseUrl + path + "?" + params.Encode())
+	//log.Println(hbV2.baseUrl + path + "?" + params.Encode())
 
 	respmap, err := HttpGet(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode())
 	if err != nil {
@@ -82,59 +81,32 @@ func (hbV2 *HuoBi_V2) GetAccount() (*Account, error) {
 
 	list := datamap["list"].([]interface{})
 	acc := new(Account)
-	acc.SubAccounts = make(map[Currency]SubAccount, 3)
-	var (
-		cnySubAcc SubAccount
-		bccSubAcc SubAccount
-		etcSubAcc SubAccount
-		ethSubAcc SubAccount
-		btcSubAcc SubAccount
-	)
+	acc.SubAccounts = make(map[Currency]SubAccount, 6)
+	acc.Exchange = hbV2.GetExchangeName()
+
+	subAccMap := make(map[Currency]*SubAccount)
 
 	for _, v := range list {
 		balancemap := v.(map[string]interface{})
-		currency := balancemap["currency"].(string)
+		currencySymbol := balancemap["currency"].(string)
+		currency := NewCurrency(currencySymbol, "")
 		typeStr := balancemap["type"].(string)
 		balance := ToFloat64(balancemap["balance"])
-		switch currency {
-		case "cny":
-			if typeStr == "trade" {
-				cnySubAcc.Amount = balance
-			} else {
-				cnySubAcc.ForzenAmount = balance
-			}
-		case "bcc":
-			if typeStr == "trade" {
-				bccSubAcc.Amount = balance
-			} else {
-				bccSubAcc.ForzenAmount = balance
-			}
-		case "etc":
-			if typeStr == "trade" {
-				etcSubAcc.Amount = balance
-			} else {
-				etcSubAcc.ForzenAmount = balance
-			}
-		case "eth":
-			if typeStr == "trade" {
-				ethSubAcc.Amount = balance
-			} else {
-				ethSubAcc.ForzenAmount = balance
-			}
-		case "btc":
-			if typeStr == "trade" {
-				btcSubAcc.Amount = balance
-			} else {
-				btcSubAcc.ForzenAmount = balance
-			}
+		if subAccMap[currency] == nil {
+			subAccMap[currency] = new(SubAccount)
+		}
+		subAccMap[currency].Currency = currency
+		switch typeStr {
+		case "trade":
+			subAccMap[currency].Amount = balance
+		case "frozen":
+			subAccMap[currency].ForzenAmount = balance
 		}
 	}
 
-	acc.SubAccounts[CNY] = cnySubAcc
-	acc.SubAccounts[BCC] = bccSubAcc
-	acc.SubAccounts[ETC] = etcSubAcc
-	acc.SubAccounts[ETH] = ethSubAcc
-	acc.SubAccounts[BTC] = btcSubAcc
+	for k, v := range subAccMap {
+		acc.SubAccounts[k] = *v
+	}
 
 	return acc, nil
 }
@@ -181,6 +153,7 @@ func (hbV2 *HuoBi_V2) LimitBuy(amount, price string, currency CurrencyPair) (*Or
 	return &Order{
 		Currency: currency,
 		OrderID:  ToInt(orderId),
+		OrderID2: orderId,
 		Amount:   ToFloat64(amount),
 		Price:    ToFloat64(price),
 		Side:     BUY}, nil
@@ -194,6 +167,7 @@ func (hbV2 *HuoBi_V2) LimitSell(amount, price string, currency CurrencyPair) (*O
 	return &Order{
 		Currency: currency,
 		OrderID:  ToInt(orderId),
+		OrderID2: orderId,
 		Amount:   ToFloat64(amount),
 		Price:    ToFloat64(price),
 		Side:     SELL}, nil
@@ -207,6 +181,7 @@ func (hbV2 *HuoBi_V2) MarketBuy(amount, price string, currency CurrencyPair) (*O
 	return &Order{
 		Currency: currency,
 		OrderID:  ToInt(orderId),
+		OrderID2: orderId,
 		Amount:   ToFloat64(amount),
 		Price:    ToFloat64(price),
 		Side:     BUY_MARKET}, nil
@@ -220,6 +195,7 @@ func (hbV2 *HuoBi_V2) MarketSell(amount, price string, currency CurrencyPair) (*
 	return &Order{
 		Currency: currency,
 		OrderID:  ToInt(orderId),
+		OrderID2: orderId,
 		Amount:   ToFloat64(amount),
 		Price:    ToFloat64(price),
 		Side:     SELL_MARKET}, nil
@@ -228,6 +204,7 @@ func (hbV2 *HuoBi_V2) MarketSell(amount, price string, currency CurrencyPair) (*
 func (hbV2 *HuoBi_V2) parseOrder(ordmap map[string]interface{}) Order {
 	ord := Order{
 		OrderID:    ToInt(ordmap["id"]),
+		OrderID2:   fmt.Sprint(ToInt(ordmap["id"])),
 		Amount:     ToFloat64(ordmap["amount"]),
 		Price:      ToFloat64(ordmap["price"]),
 		DealAmount: ToFloat64(ordmap["field-amount"]),
@@ -237,7 +214,7 @@ func (hbV2 *HuoBi_V2) parseOrder(ordmap map[string]interface{}) Order {
 
 	state := ordmap["state"].(string)
 	switch state {
-	case "submitted":
+	case "submitted","pre-submitted":
 		ord.Status = ORDER_UNFINISH
 	case "filled":
 		ord.Status = ORDER_FINISH
@@ -288,33 +265,12 @@ func (hbV2 *HuoBi_V2) GetOneOrder(orderId string, currency CurrencyPair) (*Order
 }
 
 func (hbV2 *HuoBi_V2) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
-	path := "/v1/order/orders"
-	params := url.Values{}
-	params.Set("symbol", strings.ToLower(currency.ToSymbol("")))
-	params.Set("states", "submitted")
-	hbV2.buildPostForm("GET", path, &params)
-	respmap, err := HttpGet(hbV2.httpClient, fmt.Sprintf("%s%s?%s", hbV2.baseUrl, path, params.Encode()))
-	if err != nil {
-		return nil, err
-	}
-
-	if respmap["status"].(string) != "ok" {
-		return nil, errors.New(respmap["err-code"].(string))
-	}
-
-	datamap := respmap["data"].([]interface{})
-	var orders []Order
-	for _, v := range datamap {
-		ordmap := v.(map[string]interface{})
-		ord := hbV2.parseOrder(ordmap)
-		ord.Currency = currency
-		orders = append(orders, ord)
-	}
-
-	//resp, err := HttpPostForm3(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode(), hbV2.toJson(params),
-	//	map[string]string{"Content-Type": "application/json", "Accept-Language": "zh-cn"})
-	//log.Println(respmap)
-	return orders, nil
+	return hbV2.getOrders(queryOrdersParams{
+		pair:   currency,
+		states: "pre-submitted,submitted,partial-filled",
+		size:   100,
+		//direct:""
+	})
 }
 
 func (hbV2 *HuoBi_V2) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
@@ -341,7 +297,59 @@ func (hbV2 *HuoBi_V2) CancelOrder(orderId string, currency CurrencyPair) (bool, 
 }
 
 func (hbV2 *HuoBi_V2) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
-	panic("not implement")
+	return hbV2.getOrders(queryOrdersParams{
+		pair:   currency,
+		size:   pageSize,
+		states: "partial-canceled,filled",
+		direct: "next",
+	})
+}
+
+type queryOrdersParams struct {
+	types,
+	startDate,
+	endDate,
+	states,
+	from,
+	direct string
+	size int
+	pair CurrencyPair
+}
+
+func (hbV2 *HuoBi_V2) getOrders(queryparams queryOrdersParams) ([]Order, error) {
+	path := "/v1/order/orders"
+	params := url.Values{}
+	params.Set("symbol", strings.ToLower(queryparams.pair.ToSymbol("")))
+	params.Set("states", queryparams.states)
+
+	if queryparams.direct != "" {
+		params.Set("direct", queryparams.direct)
+	}
+
+	if queryparams.size > 0 {
+		params.Set("size", fmt.Sprint(queryparams.size))
+	}
+
+	hbV2.buildPostForm("GET", path, &params)
+	respmap, err := HttpGet(hbV2.httpClient, fmt.Sprintf("%s%s?%s", hbV2.baseUrl, path, params.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(string) != "ok" {
+		return nil, errors.New(respmap["err-code"].(string))
+	}
+
+	datamap := respmap["data"].([]interface{})
+	var orders []Order
+	for _, v := range datamap {
+		ordmap := v.(map[string]interface{})
+		ord := hbV2.parseOrder(ordmap)
+		ord.Currency = queryparams.pair
+		orders = append(orders, ord)
+	}
+
+	return orders, nil
 }
 
 func (hbV2 *HuoBi_V2) GetExchangeName() string {
@@ -368,8 +376,16 @@ func (hbV2 *HuoBi_V2) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	ticker.Vol = ToFloat64(tickmap["amount"])
 	ticker.Low = ToFloat64(tickmap["low"])
 	ticker.High = ToFloat64(tickmap["high"])
-	ticker.Buy = ToFloat64((tickmap["bid"].([]interface{}))[0])
-	ticker.Sell = ToFloat64((tickmap["ask"].([]interface{}))[0])
+	bid, isOk := tickmap["bid"].([]interface{})
+	if isOk != true {
+		return nil, errors.New("no bid")
+	}
+	ask, isOk := tickmap["ask"].([]interface{})
+	if isOk != true {
+		return nil, errors.New("no ask")
+	}
+	ticker.Buy = ToFloat64(bid[0])
+	ticker.Sell = ToFloat64(ask[0])
 	ticker.Last = ToFloat64(tickmap["close"])
 	ticker.Date = ToUint64(respmap["ts"])
 

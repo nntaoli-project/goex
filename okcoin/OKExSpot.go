@@ -19,7 +19,7 @@ func NewOKExSpot(client *http.Client, accesskey, secretkey string) *OKExSpot {
 }
 
 func (ctx *OKExSpot) GetExchangeName() string {
-	return "okex.com"
+	return OKEX
 }
 
 func (ctx *OKExSpot) GetAccount() (*Account, error) {
@@ -41,9 +41,9 @@ func (ctx *OKExSpot) GetAccount() (*Account, error) {
 		return nil, err
 	}
 
-	if !respMap["result"].(bool) {
-		errcode := strconv.FormatFloat(respMap["error_code"].(float64), 'f', 0, 64)
-		return nil, errors.New(errcode)
+	if errcode, isok := respMap["error_code"].(float64); isok {
+		errcodeStr := strconv.FormatFloat(errcode, 'f', 0, 64)
+		return nil, errors.New(errcodeStr)
 	}
 	//log.Println(respMap)
 	info, ok := respMap["info"].(map[string]interface{})
@@ -58,43 +58,15 @@ func (ctx *OKExSpot) GetAccount() (*Account, error) {
 	account := new(Account)
 	account.Exchange = ctx.GetExchangeName()
 
-	var btcSubAccount SubAccount
-	var ltcSubAccount SubAccount
-	var ethSubAccount SubAccount
-	var etcSubAccount SubAccount
-	var bccSubAccount SubAccount
-
-	btcSubAccount.Currency = BTC
-	btcSubAccount.Amount = ToFloat64(free["btc"])
-	btcSubAccount.LoanAmount = 0
-	btcSubAccount.ForzenAmount = ToFloat64(freezed["btc"])
-
-	ltcSubAccount.Currency = LTC
-	ltcSubAccount.Amount = ToFloat64(free["ltc"])
-	ltcSubAccount.LoanAmount = 0
-	ltcSubAccount.ForzenAmount = ToFloat64(freezed["ltc"])
-
-	ethSubAccount.Currency = ETH
-	ethSubAccount.Amount = ToFloat64(free["eth"])
-	ethSubAccount.LoanAmount = 0
-	ethSubAccount.ForzenAmount = ToFloat64(freezed["eth"])
-
-	etcSubAccount.Currency = ETC
-	etcSubAccount.Amount = ToFloat64(free["etc"])
-	etcSubAccount.LoanAmount = 0
-	etcSubAccount.ForzenAmount = ToFloat64(freezed["etc"])
-
-	bccSubAccount.Currency = BCC
-	bccSubAccount.Amount = ToFloat64(free["bcc"])
-	bccSubAccount.LoanAmount = 0
-	bccSubAccount.ForzenAmount = ToFloat64(freezed["bcc"])
-
-	account.SubAccounts = make(map[Currency]SubAccount, 5)
-	account.SubAccounts[BTC] = btcSubAccount
-	account.SubAccounts[LTC] = ltcSubAccount
-	account.SubAccounts[ETH] = ethSubAccount
-	account.SubAccounts[ETC] = etcSubAccount
-	account.SubAccounts[BCC] = bccSubAccount
+	account.SubAccounts = make(map[Currency]SubAccount, 6)
+	for k, v := range free {
+		currencyKey := NewCurrency(k, "")
+		subAcc := SubAccount{
+			Currency:     currencyKey,
+			Amount:       ToFloat64(v),
+			ForzenAmount: ToFloat64(freezed[k])}
+		account.SubAccounts[currencyKey] = subAcc
+	}
 
 	return account, nil
 }
