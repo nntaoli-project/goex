@@ -160,7 +160,7 @@ func NewCurrencyPair(currencyA Currency, currencyB Currency) CurrencyPair {
 	return CurrencyPair{currencyA, currencyB}
 }
 
-func NewCurrencyPairFromString(currencyPairSymbol string) CurrencyPair {
+func NewCurrencyPair2(currencyPairSymbol string) CurrencyPair {
 	currencys := strings.Split(currencyPairSymbol, "_")
 	if len(currencys) == 2 {
 		return CurrencyPair{NewCurrency(currencys[0], ""),
@@ -169,50 +169,10 @@ func NewCurrencyPairFromString(currencyPairSymbol string) CurrencyPair {
 	return UNKNOWN_PAIR
 }
 
-// FormatPairs formats a string array to a list of currency pairs with the
-// supplied currency pair format
-func NewCurrencyPairsFromStrings(currencyPairsSymbols, separator string) []CurrencyPair {
-	// SplitStrings splits blocks of strings from string into a string array using
-	// a separator ie "," or ";"
-	pairs := strings.Split(currencyPairsSymbols, separator)
-
-	var result []CurrencyPair
-	for x := range pairs {
-		if pairs[x] == "" {
-			continue
-		}
-		p := NewCurrencyPairFromString(pairs[x])
-		if p != UNKNOWN_PAIR {
-			result = append(result, p)
-		}
-	}
-	return result
-}
-
 func (pair CurrencyPair) ToSymbol(joinChar string) string {
 	return strings.Join([]string{pair.CurrencyA.Symbol, pair.CurrencyB.Symbol}, joinChar)
 }
 
 func (pair CurrencyPair) ToSymbol2(joinChar string) string {
 	return strings.Join([]string{pair.CurrencyB.Symbol, pair.CurrencyA.Symbol}, joinChar)
-}
-
-// Equal compares two currency pairs and returns whether or not they are equal
-func (pair CurrencyPair) Equal(p CurrencyPair) bool {
-	if (pair.CurrencyA.String() == p.CurrencyA.String() && pair.CurrencyB.String() == p.CurrencyB.String()) ||
-		(pair.CurrencyB.String() == p.CurrencyA.String() && pair.CurrencyA.String() == p.CurrencyB.String()) {
-		return true
-	}
-	return false
-}
-
-// Contains checks to see if a specified pair exists inside a currency pair
-// array
-func Contains(pairs []CurrencyPair, p CurrencyPair) bool {
-	for x := range pairs {
-		if pairs[x].Equal(p) {
-			return true
-		}
-	}
-	return false
 }
