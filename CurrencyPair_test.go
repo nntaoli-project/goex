@@ -20,6 +20,6 @@ func TestCurrencyPair2_String(t *testing.T) {
 	t.Log(BTC_CNY)
 }
 func TestFormatPairs_String(t *testing.T) {
-	p := NewCurrencyPairs2("BTC_USD,LTC_USD,LTC_BTC,ETH_USD,ETH_BTC,ETC_BTC,ETC_USD", ",")
+	p := NewCurrencyPair2("BTC_USD,LTC_USD,LTC_BTC,ETH_USD,ETH_BTC,ETC_BTC,ETC_USD", ",")
 	t.Log(p)
 }
