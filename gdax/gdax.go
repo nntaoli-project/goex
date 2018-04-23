@@ -122,5 +122,5 @@ func (g *Gdax) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error
 }
 
 func (g *Gdax) GetExchangeName() string {
-	return "gdax.com"
+	return GDAX
 }

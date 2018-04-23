@@ -341,5 +341,5 @@ func (bit *Bithumb) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, 
 }
 
 func (bit *Bithumb) GetExchangeName() string {
-	return "bithumb.com"
+	return BITHUMB
 }

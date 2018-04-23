@@ -20,7 +20,6 @@ type CoinEx struct {
 }
 
 var (
-	EXCHANGE_NAME = "coinex.com"
 	baseurl       = "https://api.coinex.com/v1/"
 )
 
@@ -29,7 +28,7 @@ func New(client *http.Client, accessKey, secretKey string) *CoinEx {
 }
 
 func (coinex *CoinEx) GetExchangeName() string {
-	return EXCHANGE_NAME
+	return COINEX
 }
 
 func (coinex *CoinEx) GetTicker(currency CurrencyPair) (*Ticker, error) {
@@ -189,7 +188,7 @@ func (coinex *CoinEx) GetAccount() (*Account, error) {
 	//log.Println(datamap)
 	acc := new(Account)
 	acc.SubAccounts = make(map[Currency]SubAccount, 2)
-	acc.Exchange = EXCHANGE_NAME
+	acc.Exchange = coinex.GetExchangeName()
 	for c, v := range datamap {
 		vv := v.(map[string]interface{})
 		currency := NewCurrency(c, "")
@@ -295,6 +294,7 @@ func (coinex *CoinEx) adaptOrder(ordermap map[string]interface{}, pair CurrencyP
 	return Order{
 		Currency:   pair,
 		OrderID:    ToInt(ordermap["id"]),
+		OrderID2:   fmt.Sprint(ToInt(ordermap["id"])),
 		Amount:     ToFloat64(ordermap["amount"]),
 		Price:      ToFloat64(ordermap["price"]),
 		DealAmount: ToFloat64(ordermap["deal_amount"]),

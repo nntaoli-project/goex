@@ -19,8 +19,6 @@ type Bitfinex struct {
 }
 
 const (
-	EXCHANGE_NAME = "bitfinex.com"
-
 	BASE_URL = "https://api.bitfinex.com/v1"
 )
 
@@ -29,7 +27,7 @@ func New(client *http.Client, accessKey, secretKey string) *Bitfinex {
 }
 
 func (bfx *Bitfinex) GetExchangeName() string {
-	return EXCHANGE_NAME
+	return BITFINEX
 }
 
 func (bfx *Bitfinex) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
@@ -171,6 +169,7 @@ func (bfx *Bitfinex) placeOrder(orderType, side, amount, price string, pair Curr
 	order := new(Order)
 	order.Currency = pair
 	order.OrderID = ToInt(respmap["id"])
+	order.OrderID2 = fmt.Sprint(ToInt(respmap["id"]))
 	order.Amount = ToFloat64(amount)
 	order.Price = ToFloat64(price)
 	order.AvgPrice = ToFloat64(respmap["avg_execution_price"])
@@ -225,6 +224,7 @@ func (bfx *Bitfinex) toOrder(respmap map[string]interface{}) *Order {
 	order := new(Order)
 	order.Currency = bfx.symbolToCurrencyPair(respmap["symbol"].(string))
 	order.OrderID = ToInt(respmap["id"])
+	order.OrderID2 = fmt.Sprint(ToInt(respmap["id"]))
 	order.Amount = ToFloat64(respmap["original_amount"])
 	order.Price = ToFloat64(respmap["price"])
 	order.DealAmount = ToFloat64(respmap["executed_amount"])

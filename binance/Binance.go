@@ -13,8 +13,6 @@ import (
 )
 
 const (
-	EXCHANGE_NAME = "binance.com"
-
 	API_BASE_URL = "https://api.binance.com/"
 	API_V1       = API_BASE_URL + "api/v1/"
 	API_V3       = API_BASE_URL + "api/v3/"
@@ -48,7 +46,7 @@ func New(client *http.Client, api_key, secret_key string) *Binance {
 }
 
 func (bn *Binance) GetExchangeName() string {
-	return EXCHANGE_NAME
+	return BINANCE
 }
 
 func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
@@ -165,7 +163,8 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 
 	return &Order{
 		Currency:   pair,
-		OrderID:    ToInt(orderId),
+		OrderID:    orderId,
+		OrderID2:  fmt.Sprint(orderId),
 		Price:      ToFloat64(price),
 		Amount:     ToFloat64(amount),
 		DealAmount: 0,
@@ -279,6 +278,7 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	ord := Order{}
 	ord.Currency = currencyPair
 	ord.OrderID = ToInt(orderId)
+	ord.OrderID2 = orderId
 
 	if side == "SELL" {
 		ord.Side = SELL
@@ -332,6 +332,7 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 
 		orders = append(orders, Order{
 			OrderID:   ToInt(ord["orderId"]),
+			OrderID2: fmt.Sprint(ToInt(ord["id"])),
 			Currency:  currencyPair,
 			Price:     ToFloat64(ord["price"]),
 			Amount:    ToFloat64(ord["origQty"]),

@@ -62,7 +62,7 @@ func (ok *OKEx) buildPostForm(postForm *url.Values) error {
 }
 
 func (ok *OKEx) GetExchangeName() string {
-	return "okex.com"
+	return OKEX_FUTURE
 }
 
 func (ok *OKEx) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, error) {
@@ -399,7 +399,7 @@ func (ok *OKEx) parseOrders(body []byte, currencyPair CurrencyPair) ([]FutureOrd
 	if err != nil {
 		return nil, err
 	}
-
+	
 	if !respMap["result"].(bool) {
 		return nil, errors.New(string(body))
 	}

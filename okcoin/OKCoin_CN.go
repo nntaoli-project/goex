@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	EXCHANGE_NAME_CN = "okcoin.cn"
 	url_ticker       = "ticker.do"
 	url_depth        = "depth.do"
 	url_trades       = "trades.do"
@@ -119,6 +118,7 @@ func (ctx *OKCoinCN_API) placeOrder(side, amount, price string, currency Currenc
 
 	order := new(Order)
 	order.OrderID = int(respMap["order_id"].(float64))
+	order.OrderID2 = fmt.Sprint(int(respMap["order_id"].(float64)))
 	order.Price, _ = strconv.ParseFloat(price, 64)
 	order.Amount, _ = strconv.ParseFloat(amount, 64)
 	order.Currency = currency
@@ -210,6 +210,7 @@ func (ctx *OKCoinCN_API) getOrders(orderId string, currency CurrencyPair) ([]Ord
 		var order Order
 		order.Currency = currency
 		order.OrderID = int(orderMap["order_id"].(float64))
+		order.OrderID2 = fmt.Sprint(int(orderMap["order_id"].(float64)))
 		order.Amount = orderMap["amount"].(float64)
 		order.Price = orderMap["price"].(float64)
 		order.DealAmount = orderMap["deal_amount"].(float64)
@@ -422,7 +423,7 @@ func (ctx *OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, erro
 }
 
 func (ctx *OKCoinCN_API) GetExchangeName() string {
-	return EXCHANGE_NAME_CN
+	return OKCOIN_CN
 }
 
 func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
@@ -512,6 +513,7 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 		var order Order
 		order.Currency = currency
 		order.OrderID = int(orderMap["order_id"].(float64))
+		order.OrderID2 = fmt.Sprint(int(orderMap["order_id"].(float64)))
 		order.Amount = orderMap["amount"].(float64)
 		order.Price = orderMap["price"].(float64)
 		order.DealAmount = orderMap["deal_amount"].(float64)
