@@ -36,6 +36,8 @@ func (hbpro *HuobiPro) createWsConn() {
 	if hbpro.ws == nil {
 		//connect wsx
 		hbpro.createWsLock.Lock()
+		defer hbpro.createWsLock.Unlock()
+
 		if hbpro.ws == nil {
 			hbpro.ws = NewWsConn("wss://api.huobipro.com/ws")
 			hbpro.ws.Heartbeat(func() interface{} {
@@ -87,7 +89,6 @@ func (hbpro *HuobiPro) createWsConn() {
 				log.Println(string(data))
 			})
 		}
-		hbpro.createWsLock.Unlock()
 	}
 }
 
