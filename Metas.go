@@ -39,6 +39,7 @@ type Account struct {
 }
 
 type Ticker struct {
+	Pair CurrencyPair
 	Last float64 `json:"last"`
 	Buy  float64 `json:"buy"`
 	Sell float64 `json:"sell"`
@@ -68,6 +69,7 @@ func (dr DepthRecords) Less(i, j int) bool {
 }
 
 type Depth struct {
+	Pair CurrencyPair
 	AskList,
 	BidList DepthRecords
 }
@@ -80,6 +82,7 @@ type APIConfig struct {
 }
 
 type Kline struct {
+	Pair      CurrencyPair
 	Timestamp int64
 	Open,
 	Close,
