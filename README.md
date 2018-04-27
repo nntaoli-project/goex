@@ -7,9 +7,16 @@ PLAN :
 
 
 
+To test or demo all the funcations for trading , could use the following testing to insure all the API still working and up to date
+
+TEST / DEMO: 
+cd .demo/
+go test -v
+
+
+
 
 Special Thanks for the initial effort for:
-
 https://github.com/nntaoli-project/GoEx
 
 https://github.com/ccxt/ccxt
