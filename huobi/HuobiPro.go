@@ -3,7 +3,7 @@ package huobi
 import (
 	"net/http"
 
-	. ".."
+	. "github.com/BitontopTech/GoEx"
 )
 
 type HuobiPro struct {

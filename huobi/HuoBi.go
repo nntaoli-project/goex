@@ -4,9 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	. ".."
-
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	. "github.com/BitontopTech/GoEx"
 )
 
 const (

@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"testing"
 
-	goex ".."
-	huobi "../huobi"
+	. "github.com/BitontopTech/GoEx"
+	huobi "github.com/BitontopTech/GoEx/huobi"
+
 	"github.com/stretchr/testify/assert"
 )
 
 var hbpro = huobi.NewHuobiPro(http.DefaultClient, HUOBI_API_KEY, HUOBI_SECRET_KEY, "")
-
-var pair = goex.BCX_BTC
+var pair = BCX_BTC
 
 func TestHuoBi_Pro_GetDepth(t *testing.T) {
 	depth, err := hbpro.GetDepth(50, pair)

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	. ".."
+	. "github.com/BitontopTech/GoEx"
 )
 
 type HuoBi_V2 struct {
