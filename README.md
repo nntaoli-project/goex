@@ -6,8 +6,12 @@ PLAN :
 2. add WS support  
 
 
+
+
 Special Thanks for the initial effort for:
+
 https://github.com/nntaoli-project/GoEx
+
 https://github.com/ccxt/ccxt
 
 
