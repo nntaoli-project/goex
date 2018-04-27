@@ -12,7 +12,7 @@ To test or demo all the funcations for trading , could use the following testing
 TEST / DEMO: 
 cd .demo/
 go test -v
-
+go test -v huobi_test.go
 
 
 
