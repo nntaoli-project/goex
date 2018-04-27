@@ -118,6 +118,9 @@ func HttpPostForm2(client *http.Client, reqUrl string, postData url.Values, head
 }
 
 func HttpPostForm3(client *http.Client, reqUrl string, postData string, headers map[string]string) ([]byte, error) {
+	fmt.Printf("\nheaders=%s\n", headers)
+	fmt.Printf("\nreqUrl=%s\n", reqUrl)
+	fmt.Printf("\npostData=%s\n", postData)
 	return NewHttpRequest(client, "POST", reqUrl, postData, headers)
 }
 
