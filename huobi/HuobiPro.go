@@ -1,8 +1,9 @@
 package huobi
 
 import (
-	. "github.com/nntaoli-project/GoEx"
 	"net/http"
+
+	. ".."
 )
 
 type HuobiPro struct {
@@ -15,7 +16,7 @@ func NewHuobiPro(client *http.Client, apikey, secretkey, accountId string) *Huob
 	hbv2.accessKey = apikey
 	hbv2.secretKey = secretkey
 	hbv2.httpClient = client
-	hbv2.baseUrl = "https://api.huobipro.com"
+	hbv2.baseUrl = "https://api.huobi.pro"
 	return &HuobiPro{hbv2}
 }
 

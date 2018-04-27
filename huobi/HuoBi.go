@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+
+	. ".."
+
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -469,7 +471,7 @@ func (hb *HuoBi) CancelOrder(orderId string, currency CurrencyPair) (bool, error
 /**
  * 具体参数详解: https://github.com/huobiapi/API_Docs/wiki/REST-Interval
  */
-func (hb *HuoBi) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
+func (hb *HuoBi) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	klineUri := API_BASE_URL + KLINE_URI
 
 	_period := _INERNAL_KLINE_PERIOD_CONVERTER[period]

@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	. ".."
 )
 
 type HuoBi_V2 struct {
@@ -28,6 +30,7 @@ type response struct {
 
 func NewV2(httpClient *http.Client, accessKey, secretKey, clientId string) *HuoBi_V2 {
 	return &HuoBi_V2{httpClient, clientId, "https://be.huobi.com", accessKey, secretKey}
+
 }
 
 func (hbV2 *HuoBi_V2) GetAccountId() (string, error) {
@@ -50,7 +53,7 @@ func (hbV2 *HuoBi_V2) GetAccountId() (string, error) {
 	accountIdMap := data[0].(map[string]interface{})
 	hbV2.accountId = fmt.Sprintf("%.f", accountIdMap["id"].(float64))
 
-	//log.Println(respmap)
+	log.Println(respmap)
 	return hbV2.accountId, nil
 }
 
@@ -114,20 +117,25 @@ func (hbV2 *HuoBi_V2) GetAccount() (*Account, error) {
 func (hbV2 *HuoBi_V2) placeOrder(amount, price string, pair CurrencyPair, orderType string) (string, error) {
 	path := "/v1/order/orders/place"
 	params := url.Values{}
-	params.Set("account-id", hbV2.accountId)
-	params.Set("amount", amount)
-	params.Set("symbol", strings.ToLower(pair.ToSymbol("")))
-	params.Set("type", orderType)
+	body := url.Values{}
+
+	body.Set("account-id", hbV2.accountId)
+	body.Set("source", "api")
+	body.Set("amount", amount)
+	body.Set("symbol", strings.ToLower(pair.ToSymbol("")))
+	body.Set("type", orderType)
 
 	switch orderType {
 	case "buy-limit", "sell-limit":
-		params.Set("price", price)
+		body.Set("price", price)
 	}
 
 	hbV2.buildPostForm("POST", path, &params)
+	signature := params.Get("Signature")
+	params.Del("Signature")
 
-	resp, err := HttpPostForm3(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode(), hbV2.toJson(params),
-		map[string]string{"Content-Type": "application/json", "Accept-Language": "zh-cn"})
+	resp, err := HttpPostForm3(hbV2.httpClient, hbV2.baseUrl+path+"?"+params.Encode()+"&Signature="+signature, hbV2.toJson(body),
+		map[string]string{"Content-Type": "application/json", "Accept-Language": "zh-cn", "Accept": "application/json"})
 	if err != nil {
 		return "", err
 	}
@@ -214,7 +222,7 @@ func (hbV2 *HuoBi_V2) parseOrder(ordmap map[string]interface{}) Order {
 
 	state := ordmap["state"].(string)
 	switch state {
-	case "submitted","pre-submitted":
+	case "submitted", "pre-submitted":
 		ord.Status = ORDER_UNFINISH
 	case "filled":
 		ord.Status = ORDER_FINISH
@@ -394,6 +402,7 @@ func (hbV2 *HuoBi_V2) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 
 func (hbV2 *HuoBi_V2) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	url := hbV2.baseUrl + "/market/depth?symbol=%s&type=step0"
+	// fmt.Printf("url=%s", url)
 	respmap, err := HttpGet(hbV2.httpClient, fmt.Sprintf(url, strings.ToLower(currency.ToSymbol(""))))
 	if err != nil {
 		return nil, err
@@ -454,9 +463,30 @@ func (hbV2 *HuoBi_V2) buildPostForm(reqMethod, path string, postForm *url.Values
 	postForm.Set("SignatureVersion", "2")
 	postForm.Set("Timestamp", time.Now().UTC().Format("2006-01-02T15:04:05"))
 	domain := strings.Replace(hbV2.baseUrl, "https://", "", len(hbV2.baseUrl))
-	payload := fmt.Sprintf("%s\n%s\n%s\n%s", reqMethod, domain, path, postForm.Encode())
+	var payload string
+	// if reqMethod == "POST" {
+	// 	params := &url.Values{}
+	// 	params.Set("AccessKeyId", hbV2.accessKey)
+	// 	params.Set("SignatureMethod", "HmacSHA256")
+	// 	params.Set("SignatureVersion", "2")
+	// 	params.Set("Timestamp", time.Now().UTC().Format("2006-01-02T15:04:05"))
+	// 	payload = fmt.Sprintf("%s\n%s\n%s\n%s", reqMethod, domain, path, params.Encode())
+	// } else {
+
+	// payload := fmt.Sprintf("%s\n%s\n%s\n%s", reqMethod, domain, path, postForm.Encode())
+	payload = fmt.Sprintf("%s\n%s\n%s\n%s", reqMethod, domain, path, postForm.Encode())
+	// }
+
+	// fmt.Printf("Payload:\n%s \n ", payload)
+
 	sign, _ := GetParamHmacSHA256Base64Sign(hbV2.secretKey, payload)
+
 	postForm.Set("Signature", sign)
+
+	// fmt.Printf("secretKey: %s \n", hbV2.secretKey)
+
+	// fmt.Printf("sign: %s \n", sign)
+
 	return nil
 }
 
