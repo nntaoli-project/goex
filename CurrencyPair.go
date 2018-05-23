@@ -2,6 +2,34 @@ package goex
 
 import "strings"
 
+// ETH_BTC --> ethbtc
+type Symbols map[CurrencyPair]string
+
+// huobi.com --> symbols
+type ExSymbols map[string]Symbols
+
+var exSymbols ExSymbols
+
+func GetExSymbols(exName string) Symbols {
+	ret, ok := exSymbols[exName]
+	if !ok {
+		return nil
+	}
+	return ret
+}
+
+func RegisterExSymbol(exName string, pair CurrencyPair) {
+	if exSymbols == nil {
+		exSymbols = make(ExSymbols)
+	}
+
+	if _, ok := exSymbols[exName]; !ok {
+		exSymbols[exName] = make(Symbols)
+	}
+
+	exSymbols[exName][pair] = pair.ToSymbol("")
+}
+
 type Currency struct {
 	Symbol string
 	Desc   string
