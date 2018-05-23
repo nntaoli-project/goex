@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,10 @@ type Bitstamp struct {
 	clientId,
 	accessKey,
 	secretkey string
+	ws                *WsConn
+	createWsLock      sync.Mutex
+	wsTickerHandleMap map[string]func(*Ticker)
+	wsDepthHandleMap  map[string]func(*Depth)
 }
 
 func NewBitstamp(client *http.Client, accessKey, secertkey, clientId string) *Bitstamp {
@@ -156,13 +161,13 @@ func (bitstamp *Bitstamp) placeOrder(side string, pair CurrencyPair, amount, pri
 func (bitstamp *Bitstamp) placeLimitOrder(side string, pair CurrencyPair, amount, price string) (*Order, error) {
 	urlStr := fmt.Sprintf("%sv2/%s/%s/", BASE_URL, side, strings.ToLower(pair.ToSymbol("")))
 	println(urlStr)
-	return bitstamp.placeOrder(side, pair, amount, price, urlStr);
+	return bitstamp.placeOrder(side, pair, amount, price, urlStr)
 }
 
 func (bitstamp *Bitstamp) placeMarketOrder(side string, pair CurrencyPair, amount string) (*Order, error) {
 	urlStr := fmt.Sprintf("%sv2/%s/market/%s/", BASE_URL, side, strings.ToLower(pair.ToSymbol("")))
 	println(urlStr)
-	return bitstamp.placeOrder(side, pair, amount, "", urlStr);
+	return bitstamp.placeOrder(side, pair, amount, "", urlStr)
 }
 
 func (bitstamp *Bitstamp) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
@@ -256,10 +261,10 @@ func (bitstamp *Bitstamp) GetOneOrder(orderId string, currency CurrencyPair) (*O
 			dealAmount += amount
 			tradeAmount += amount * price
 
-			tpy := ToInt(transaction["type"])
-			if tpy == 2 {
-				ord.Side = SELL
-			}
+			//tpy := ToInt(transaction["type"]) //注意:不是交易方向，type (0 - deposit; 1 - withdrawal; 2 - market trade)
+			//if tpy == 2 {
+			//	ord.Side = SELL
+			//}
 		}
 		avgPrice := tradeAmount / dealAmount
 		ord.DealAmount = dealAmount
@@ -286,7 +291,7 @@ func (bitstamp *Bitstamp) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 		log.Println(string(resp))
 		return nil, err
 	}
-	//log.Println(respmap)
+	log.Println(respmap)
 	orders := make([]Order, 0)
 	for _, v := range respmap {
 		ord := v.(map[string]interface{})

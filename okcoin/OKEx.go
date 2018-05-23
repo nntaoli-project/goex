@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
@@ -23,6 +24,7 @@ const (
 	FUTURE_ORDERS_INFO_URI = "future_orders_info.do"
 	FUTURE_POSITION_URI    = "future_position.do"
 	FUTURE_TRADE_URI       = "future_trade.do"
+	TRADES_URI             = "future_trades.do"
 	FUTURE_ESTIMATED_PRICE = "future_estimated_price.do?symbol=%s"
 	_EXCHANGE_RATE_URI     = "exchange_rate.do"
 	_GET_KLINE_URI         = "future_kline.do"
@@ -31,7 +33,11 @@ const (
 type OKEx struct {
 	apiKey,
 	apiSecretKey string
-	client *http.Client
+	client            *http.Client
+	ws                *WsConn
+	createWsLock      sync.Mutex
+	wsTickerHandleMap map[string]func(*Ticker)
+	wsDepthHandleMap  map[string]func(*Depth)
 }
 
 func NewOKEx(client *http.Client, api_key, secret_key string) *OKEx {
@@ -399,7 +405,7 @@ func (ok *OKEx) parseOrders(body []byte, currencyPair CurrencyPair) ([]FutureOrd
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if !respMap["result"].(bool) {
 		return nil, errors.New(string(body))
 	}
