@@ -50,6 +50,7 @@ func (bn *Binance) GetExchangeName() string {
 }
 
 func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
+	currency = bn.adaptCurrencyPair(currency)
 	tickerUri := API_V1 + fmt.Sprintf(TICKER_URI, currency.ToSymbol(""))
 	tickerMap, err := HttpGet(bn.httpClient, tickerUri)
 
@@ -61,7 +62,7 @@ func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	var ticker Ticker
 
 	t, _ := tickerMap["closeTime"].(float64)
-	ticker.Date = uint64(t/1000)
+	ticker.Date = uint64(t / 1000)
 	ticker.Last = ToFloat64(tickerMap["lastPrice"])
 	ticker.Buy = ToFloat64(tickerMap["bidPrice"])
 	ticker.Sell = ToFloat64(tickerMap["askPrice"])
@@ -77,6 +78,7 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 	} else if size < 5 {
 		size = 5
 	}
+	currencyPair = bn.adaptCurrencyPair(currencyPair)
 
 	apiUrl := fmt.Sprintf(API_V1+DEPTH_URI, currencyPair.ToSymbol(""), size)
 	resp, err := HttpGet(bn.httpClient, apiUrl)
@@ -117,6 +119,7 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 }
 
 func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType, orderSide string) (*Order, error) {
+	pair = bn.adaptCurrencyPair(pair)
 	path := API_V3 + ORDER_URI
 	params := url.Values{}
 	params.Set("symbol", pair.ToSymbol(""))
@@ -161,7 +164,7 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	return &Order{
 		Currency:   pair,
 		OrderID:    orderId,
-		OrderID2:  fmt.Sprint(orderId),
+		OrderID2:   fmt.Sprint(orderId),
 		Price:      ToFloat64(price),
 		Amount:     ToFloat64(amount),
 		DealAmount: 0,
@@ -220,6 +223,7 @@ func (bn *Binance) MarketSell(amount, price string, currencyPair CurrencyPair) (
 }
 
 func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool, error) {
+	currencyPair = bn.adaptCurrencyPair(currencyPair)
 	path := API_V3 + ORDER_URI
 	params := url.Values{}
 	params.Set("symbol", currencyPair.ToSymbol(""))
@@ -251,6 +255,7 @@ func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool,
 
 func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, error) {
 	params := url.Values{}
+	currencyPair = bn.adaptCurrencyPair(currencyPair)
 	params.Set("symbol", currencyPair.ToSymbol(""))
 	if orderId != "" {
 		params.Set("orderId", orderId)
@@ -302,6 +307,7 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 
 func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error) {
 	params := url.Values{}
+	currencyPair = bn.adaptCurrencyPair(currencyPair)
 	params.Set("symbol", currencyPair.ToSymbol(""))
 
 	bn.buildParamsSigned(&params)
@@ -324,7 +330,7 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 
 		orders = append(orders, Order{
 			OrderID:   ToInt(ord["orderId"]),
-			OrderID2: fmt.Sprint(ToInt(ord["id"])),
+			OrderID2:  fmt.Sprint(ToInt(ord["id"])),
 			Currency:  currencyPair,
 			Price:     ToFloat64(ord["price"]),
 			Amount:    ToFloat64(ord["origQty"]),
@@ -346,4 +352,19 @@ func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, e
 
 func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
 	panic("not implements")
+}
+func (ba *Binance) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
+	var currencyA Currency
+	var currencyB Currency
+	if pair.CurrencyA == BCH {
+		currencyA = BCC
+	} else {
+		currencyA = pair.CurrencyA
+	}
+	if pair.CurrencyB == USD {
+		currencyB = NewCurrency("USDT", "")
+	} else {
+		currencyB = pair.CurrencyB
+	}
+	return NewCurrencyPair(currencyA, currencyB)
 }
