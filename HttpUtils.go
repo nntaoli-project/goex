@@ -94,6 +94,7 @@ func HttpGet3(client *http.Client, reqUrl string, headers map[string]string) ([]
 	}
 	return bodyDataMap, nil
 }
+
 func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) ([]byte, error) {
 	headers := map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded"}
@@ -110,6 +111,15 @@ func HttpPostForm2(client *http.Client, reqUrl string, postData url.Values, head
 
 func HttpPostForm3(client *http.Client, reqUrl string, postData string, headers map[string]string) ([]byte, error) {
 	return NewHttpRequest(client, "POST", reqUrl, postData, headers)
+}
+
+func HttpPostForm4(client *http.Client, reqUrl string, postData map[string]string, headers map[string]string) ([]byte, error) {
+	if headers == nil {
+		headers = map[string]string{}
+	}
+	headers["Content-Type"] = "application/json"
+	data, _ := json.Marshal(postData)
+	return NewHttpRequest(client, "POST", reqUrl, string(data), headers)
 }
 
 func HttpDeleteForm(client *http.Client, reqUrl string, postData url.Values, headers map[string]string) ([]byte, error) {

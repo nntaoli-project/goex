@@ -5,6 +5,7 @@ import (
 	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"sort"
+	"errors"
 )
 
 type Bittrex struct {
