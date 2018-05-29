@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	. "github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/bigone"
 	"github.com/nntaoli-project/GoEx/binance"
 	"github.com/nntaoli-project/GoEx/bitfinex"
 	"github.com/nntaoli-project/GoEx/bithumb"
@@ -121,6 +122,8 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = zb.New(builder.client, builder.apiKey, builder.secretkey)
 	case COINEX:
 		_api = coinex.New(builder.client, builder.apiKey, builder.secretkey)
+	case BIGONE:
+		_api = bigone.New(builder.client, builder.apiKey, builder.secretkey)
 	default:
 		panic("exchange name error [" + exName + "].")
 
