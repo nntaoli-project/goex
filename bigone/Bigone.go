@@ -152,7 +152,7 @@ func (bo *Bigone) getOrdersList(currencyPair CurrencyPair, size int, sts TradeSt
 		apiURL += "&state=open"
 	}
 	respmap, err := HttpGet2(bo.httpClient, apiURL, bo.privateHeader())
-	log.Println(respmap)
+	//log.Println(respmap)
 	if err != nil {
 		return nil, err
 	}
