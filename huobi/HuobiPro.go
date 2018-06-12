@@ -28,7 +28,7 @@ func NewHuobiPro(client *http.Client, apikey, secretkey, accountId string) *Huob
 	hbv2.accessKey = apikey
 	hbv2.secretKey = secretkey
 	hbv2.httpClient = client
-	hbv2.baseUrl = "https://api.huobipro.com"
+	hbv2.baseUrl = "https://api.huobi.br.com"
 	return &HuobiPro{HuoBi_V2: hbv2, wsTickerHandleMap: make(map[string]func(*Ticker)), wsDepthHandleMap: make(map[string]func(*Depth))}
 }
 
@@ -39,7 +39,7 @@ func (hbpro *HuobiPro) createWsConn() {
 		defer hbpro.createWsLock.Unlock()
 
 		if hbpro.ws == nil {
-			hbpro.ws = NewWsConn("wss://api.huobipro.com/ws")
+			hbpro.ws = NewWsConn("wss://api.huobi.br.com/ws")
 			hbpro.ws.Heartbeat(func() interface{} {
 				return map[string]interface{}{
 					"ping": time.Now().Unix()}
@@ -56,12 +56,15 @@ func (hbpro *HuobiPro) createWsConn() {
 				}
 
 				if datamap["ping"] != nil {
+					//log.Println(datamap)
+					hbpro.ws.UpdateActivedTime()
 					hbpro.ws.WriteJSON(map[string]interface{}{
 						"pong": datamap["ping"]}) // 回应心跳
 					return
 				}
 
 				if datamap["pong"] != nil { //
+					hbpro.ws.UpdateActivedTime()
 					return
 				}
 
@@ -86,7 +89,7 @@ func (hbpro *HuobiPro) createWsConn() {
 					return
 				}
 
-				log.Println(string(data))
+				//log.Println(string(data))
 			})
 		}
 	}
