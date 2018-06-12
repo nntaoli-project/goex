@@ -1,6 +1,9 @@
 package goex
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+)
 
 type Order struct {
 	Price,
@@ -72,6 +75,7 @@ func (dr DepthRecords) Less(i, j int) bool {
 type Depth struct {
 	ContractType string //for future
 	Pair         CurrencyPair
+	UTime        time.Time
 	AskList,
 	BidList DepthRecords
 }
