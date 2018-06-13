@@ -32,6 +32,13 @@ func NewHuobiPro(client *http.Client, apikey, secretkey, accountId string) *Huob
 	return &HuobiPro{HuoBi_V2: hbv2, wsTickerHandleMap: make(map[string]func(*Ticker)), wsDepthHandleMap: make(map[string]func(*Depth))}
 }
 
+func NewHuobiPro2(client *http.Client, apikey, secretkey string) *HuobiPro {
+	hb := NewHuobiPro(client, apikey, secretkey, "")
+	id, _ := hb.GetAccountId()
+	hb.accountId = id
+	return hb
+}
+
 func (hbpro *HuobiPro) createWsConn() {
 	if hbpro.ws == nil {
 		//connect wsx
