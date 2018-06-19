@@ -69,7 +69,7 @@ func (okFuture *OKEx) GetDepthWithWs(pair CurrencyPair, contractType string, han
 	okFuture.createWsConn()
 	channel := fmt.Sprintf("ok_sub_futureusd_%s_depth_%s_5", strings.ToLower(pair.CurrencyA.Symbol), contractType)
 	okFuture.wsDepthHandleMap[channel] = handle
-	return okFuture.ws.WriteJSON(map[string]string{
+	return okFuture.ws.Subscribe(map[string]string{
 		"event":   "addChannel",
 		"channel": channel})
 }
@@ -78,7 +78,7 @@ func (okFuture *OKEx) GetTickerWithWs(pair CurrencyPair, contractType string, ha
 	okFuture.createWsConn()
 	channel := fmt.Sprintf("ok_sub_futureusd_%s_ticker_%s", strings.ToLower(pair.CurrencyA.Symbol), contractType)
 	okFuture.wsTickerHandleMap[channel] = handle
-	return okFuture.ws.WriteJSON(map[string]string{
+	return okFuture.ws.Subscribe(map[string]string{
 		"event":   "addChannel",
 		"channel": channel})
 }

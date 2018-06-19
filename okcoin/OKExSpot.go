@@ -145,7 +145,7 @@ func (okSpot *OKExSpot) GetTickerWithWs(pair CurrencyPair, handle func(*Ticker))
 	okSpot.createWsConn()
 	channel := fmt.Sprintf("ok_sub_spot_%s_ticker", strings.ToLower(pair.ToSymbol("_")))
 	okSpot.wsTickerHandleMap[channel] = handle
-	return okSpot.ws.WriteJSON(map[string]string{
+	return okSpot.ws.Subscribe(map[string]string{
 		"event":   "addChannel",
 		"channel": channel})
 }
