@@ -94,6 +94,7 @@ func (okSpot *OKExSpot) createWsConn() {
 			okSpot.ws.ReConnect()
 			okSpot.ws.ReceiveMessage(func(msg []byte) {
 				if string(msg) == "{\"event\":\"pong\"}" {
+					okSpot.ws.UpdateActivedTime()
 					return
 				}
 
@@ -135,7 +136,7 @@ func (okSpot *OKExSpot) GetDepthWithWs(pair CurrencyPair, handle func(*Depth)) e
 	okSpot.createWsConn()
 	channel := fmt.Sprintf("ok_sub_spot_%s_depth_5", strings.ToLower(pair.ToSymbol("_")))
 	okSpot.wsDepthHandleMap[channel] = handle
-	return okSpot.ws.WriteJSON(map[string]string{
+	return okSpot.ws.Subscribe(map[string]string{
 		"event":   "addChannel",
 		"channel": channel})
 }
