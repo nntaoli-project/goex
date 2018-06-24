@@ -11,7 +11,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"sort"
 	"strings"
 	"time"
 )
@@ -66,7 +65,7 @@ func (ft *FCoin) setTimeOffset() error {
 	return nil
 }
 
-func (ft *FCoin) GetTicker(currencyPair CurrencyPair) (*FCoinTicker, error) {
+func (ft *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	respmap, err := HttpGet(ft.httpClient, ft.baseUrl+fmt.Sprintf("market/ticker/%s",
 		strings.ToLower(currencyPair.ToSymbol(""))))
 
@@ -90,7 +89,7 @@ func (ft *FCoin) GetTicker(currencyPair CurrencyPair) (*FCoinTicker, error) {
 		return nil, API_ERR
 	}
 
-	ticker := new(FCoinTicker)
+	ticker := new(Ticker)
 	ticker.Pair = currencyPair
 	ticker.Date = uint64(time.Now().Nanosecond() / 1000)
 	ticker.Last = ToFloat64(tickmap[0])
@@ -99,8 +98,8 @@ func (ft *FCoin) GetTicker(currencyPair CurrencyPair) (*FCoinTicker, error) {
 	ticker.High = ToFloat64(tickmap[7])
 	ticker.Buy = ToFloat64(tickmap[2])
 	ticker.Sell = ToFloat64(tickmap[4])
-	ticker.SellAmount = ToFloat64(tickmap[5])
-	ticker.BuyAmount = ToFloat64(tickmap[3])
+	//ticker.SellAmount = ToFloat64(tickmap[5])
+	//ticker.BuyAmount = ToFloat64(tickmap[3])
 
 	return ticker, nil
 
@@ -128,23 +127,33 @@ func (ft *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	depth := new(Depth)
 	depth.Pair = currency
 
+	n := 0
 	for i := 0; i < len(bids); {
 		depth.BidList = append(depth.BidList, DepthRecord{ToFloat64(bids[i]), ToFloat64(bids[i+1])})
 		i += 2
+		n++
+		if n == size {
+			break
+		}
 	}
 
+	n = 0
 	for i := 0; i < len(asks); {
 		depth.AskList = append(depth.AskList, DepthRecord{ToFloat64(asks[i]), ToFloat64(asks[i+1])})
 		i += 2
+		n++
+		if n == size {
+			break
+		}
 	}
 
-	sort.Sort(sort.Reverse(depth.AskList))
+	//sort.Sort(sort.Reverse(depth.AskList))
 
 	return depth, nil
 }
 func (ft *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (interface{}, error) {
 
-	timestamp := time.Now().Unix() * 1000
+	timestamp := time.Now().Unix()*1000 + ft.timeoffset*1000
 	sign := ft.buildSigned(method, ft.baseUrl+uri, timestamp, params)
 
 	header := map[string]string{
