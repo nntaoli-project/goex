@@ -91,4 +91,5 @@ const (
 	BIGONE      = "big.one"
 	COIN58      = "58coin.com"
 	FCOIN       = "fcoin.com"
+	HITBTC      = "hitbtc.com"
 )
