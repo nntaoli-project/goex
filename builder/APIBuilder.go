@@ -21,6 +21,10 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"github.com/nntaoli-project/GoEx/fcoin"
+	"github.com/nntaoli-project/GoEx/coin58"
+	"github.com/nntaoli-project/GoEx/bigone"
+	"github.com/nntaoli-project/GoEx/hitbtc"
 )
 
 type APIBuilder struct {
@@ -121,6 +125,14 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = zb.New(builder.client, builder.apiKey, builder.secretkey)
 	case COINEX:
 		_api = coinex.New(builder.client, builder.apiKey, builder.secretkey)
+	case FCOIN:
+		_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey)
+	case COIN58:
+		_api = coin58.New58Coin(builder.client, builder.apiKey, builder.secretkey)
+	case BIGONE:
+		_api = bigone.New(builder.client, builder.apiKey, builder.secretkey)
+	case HITBTC:
+		_api = hitbtc.New(builder.client, builder.apiKey, builder.secretkey)
 	default:
 		panic("exchange name error [" + exName + "].")
 
