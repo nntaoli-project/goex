@@ -93,8 +93,6 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 	switch exName {
 	case OKCOIN_CN:
 		_api = okcoin.New(builder.client, builder.apiKey, builder.secretkey)
-	case HUOBI:
-		_api = huobi.New(builder.client, builder.apiKey, builder.secretkey)
 	case POLONIEX:
 		_api = poloniex.New(builder.client, builder.apiKey, builder.secretkey)
 	case OKCOIN_COM:
@@ -102,7 +100,7 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 	case BITSTAMP:
 		_api = bitstamp.NewBitstamp(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
 	case HUOBI_PRO:
-		_api = huobi.NewHuobiPro(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
+		_api = huobi.NewHuoBiProSpot(builder.client, builder.apiKey, builder.secretkey)
 	case OKEX:
 		_api = okcoin.NewOKExSpot(builder.client, builder.apiKey, builder.secretkey)
 	case BITFINEX:
