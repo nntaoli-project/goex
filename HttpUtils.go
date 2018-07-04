@@ -14,7 +14,6 @@ import (
 
 func NewHttpRequest(client *http.Client, reqType string, reqUrl string, postData string, requstHeaders map[string]string) ([]byte, error) {
 	req, _ := http.NewRequest(reqType, reqUrl, strings.NewReader(postData))
-
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36")
 
 	if requstHeaders != nil {
@@ -93,6 +92,25 @@ func HttpGet3(client *http.Client, reqUrl string, headers map[string]string) ([]
 		return nil, err
 	}
 	return bodyDataMap, nil
+}
+
+func HttpGet4(client *http.Client, reqUrl string, headers map[string]string, result interface{}) error {
+	if headers == nil {
+		headers = map[string]string{}
+	}
+	headers["Content-Type"] = "application/x-www-form-urlencoded"
+	respData, err := NewHttpRequest(client, "GET", reqUrl, "", headers)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(respData, result)
+	if err != nil {
+		log.Printf("HttpGet4 - json.Unmarshal failed : %v, resp %s", err, string(respData))
+		return err
+	}
+
+	return nil
 }
 
 func HttpPostForm(client *http.Client, reqUrl string, postData url.Values) ([]byte, error) {

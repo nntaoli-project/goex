@@ -47,31 +47,31 @@ type CurrencyPair struct {
 
 var (
 	UNKNOWN = Currency{"UNKNOWN", ""}
-	CNY     = Currency{"CNY", "rmb （China Yuan)"}
-	USD     = Currency{"USD", "USA dollar"}
-	USDT    = Currency{"USDT", "http://tether.io"}
+	CNY     = Currency{"CNY", ""}
+	USD     = Currency{"USD", ""}
+	USDT    = Currency{"USDT", ""}
 	EUR     = Currency{"EUR", ""}
 	KRW     = Currency{"KRW", ""}
-	JPY     = Currency{"JPY", "japanese yen"}
-	BTC     = Currency{"BTC", "bitcoin.org"}
-	XBT     = Currency{"XBT", "bitcoin.org"}
-	BCC     = Currency{"BCC", "bitcoin-abc"}
-	BCH     = Currency{"BCH", "bitcoin-abc"}
+	JPY     = Currency{"JPY", ""}
+	BTC     = Currency{"BTC", ""}
+	XBT     = Currency{"XBT", ""}
+	BCC     = Currency{"BCC", ""}
+	BCH     = Currency{"BCH", ""}
 	BCX     = Currency{"BCX", ""}
-	LTC     = Currency{"LTC", "litecoin.org"}
+	LTC     = Currency{"LTC", ""}
 	ETH     = Currency{"ETH", ""}
 	ETC     = Currency{"ETC", ""}
 	EOS     = Currency{"EOS", ""}
 	BTS     = Currency{"BTS", ""}
 	QTUM    = Currency{"QTUM", ""}
-	SC      = Currency{"SC", "sia.tech"}
-	ANS     = Currency{"ANS", "www.antshares.org"}
+	SC      = Currency{"SC", ""}
+	ANS     = Currency{"ANS", ""}
 	ZEC     = Currency{"ZEC", ""}
 	DCR     = Currency{"DCR", ""}
 	XRP     = Currency{"XRP", ""}
 	BTG     = Currency{"BTG", ""}
 	BCD     = Currency{"BCD", ""}
-	NEO     = Currency{"NEO", "neo.org"}
+	NEO     = Currency{"NEO", ""}
 	HSR     = Currency{"HSR", ""}
 
 	//currency pair
