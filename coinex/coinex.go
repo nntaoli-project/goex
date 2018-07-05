@@ -2,15 +2,16 @@ package coinex
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
 	"log"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
 	"time"
-	"errors"
+
+	. "github.com/nntaoli-project/GoEx"
 )
 
 type CoinEx struct {
@@ -20,7 +21,7 @@ type CoinEx struct {
 }
 
 var (
-	baseurl       = "https://api.coinex.com/v1/"
+	baseurl = "https://api.coinex.com/v1/"
 )
 
 func New(client *http.Client, accessKey, secretKey string) *CoinEx {
@@ -240,8 +241,8 @@ func (coinex *CoinEx) doRequest(method, uri string, params *url.Values) (map[str
 		paramStr = string(jsonData)
 	}
 
-	println(reqUrl)
-	println(paramStr)
+	// println(reqUrl)
+	// println(paramStr)
 
 	resp, err := NewHttpRequest(coinex.httpClient, method, reqUrl, paramStr, headermap)
 
