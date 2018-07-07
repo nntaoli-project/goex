@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -181,6 +182,42 @@ func (coinex *CoinEx) GetOrderHistorys(currency CurrencyPair, currentPage, pageS
 	panic("not implement")
 }
 
+type coinexDifficulty struct {
+	Code int `json:"code"`
+	Data struct {
+		Difficulty string `json:"difficulty"`
+		Prediction string `json:"prediction"`
+		UpdateTime int    `json:"update_time"`
+	} `json:"data"`
+	Message string `json:"message"`
+}
+
+func (coinex *CoinEx) GetDifficulty() (limit, cur float64, err error) {
+	buf, err := coinex.doRequestInner("GET", "order/mining/difficulty", &url.Values{})
+	if nil != err {
+		log.Printf("GetDifficulty - http.NewRequest failed : %v", err)
+		return 0.0, 0.0, err
+	}
+
+	var diff coinexDifficulty
+	if err = json.Unmarshal(buf, &diff); nil != err {
+		log.Printf("GetDifficulty - json.Unmarshal failed : %v", err)
+		return 0.0, 0.0, err
+	}
+	limit, err = strconv.ParseFloat(diff.Data.Difficulty, 64)
+	if nil != err {
+		log.Printf("GetDifficulty - strconv.ParseFloat failed : %v", err)
+		return 0.0, 0.0, err
+	}
+	cur, err = strconv.ParseFloat(diff.Data.Prediction, 64)
+	if nil != err {
+		log.Printf("GetDifficulty - strconv.ParseFloat failed : %v", err)
+		return 0.0, 0.0, err
+	}
+
+	return limit, cur, nil
+}
+
 func (coinex *CoinEx) GetAccount() (*Account, error) {
 	datamap, err := coinex.doRequest("GET", "balance", &url.Values{})
 	if err != nil {
@@ -210,7 +247,7 @@ func (coinex *CoinEx) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade
 	panic("not implement")
 }
 
-func (coinex *CoinEx) doRequest(method, uri string, params *url.Values) (map[string]interface{}, error) {
+func (coinex *CoinEx) doRequestInner(method, uri string, params *url.Values) (buf []byte, err error) {
 	reqUrl := baseurl + uri
 
 	headermap := map[string]string{
@@ -241,10 +278,11 @@ func (coinex *CoinEx) doRequest(method, uri string, params *url.Values) (map[str
 		paramStr = string(jsonData)
 	}
 
-	// println(reqUrl)
-	// println(paramStr)
+	return NewHttpRequest(coinex.httpClient, method, reqUrl, paramStr, headermap)
+}
 
-	resp, err := NewHttpRequest(coinex.httpClient, method, reqUrl, paramStr, headermap)
+func (coinex *CoinEx) doRequest(method, uri string, params *url.Values) (map[string]interface{}, error) {
+	resp, err := coinex.doRequestInner(method, uri, params)
 
 	if err != nil {
 		return nil, err
