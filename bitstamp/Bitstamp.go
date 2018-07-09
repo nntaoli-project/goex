@@ -160,13 +160,13 @@ func (bitstamp *Bitstamp) placeOrder(side string, pair CurrencyPair, amount, pri
 
 func (bitstamp *Bitstamp) placeLimitOrder(side string, pair CurrencyPair, amount, price string) (*Order, error) {
 	urlStr := fmt.Sprintf("%sv2/%s/%s/", BASE_URL, side, strings.ToLower(pair.ToSymbol("")))
-	println(urlStr)
+	//println(urlStr)
 	return bitstamp.placeOrder(side, pair, amount, price, urlStr)
 }
 
 func (bitstamp *Bitstamp) placeMarketOrder(side string, pair CurrencyPair, amount string) (*Order, error) {
 	urlStr := fmt.Sprintf("%sv2/%s/market/%s/", BASE_URL, side, strings.ToLower(pair.ToSymbol("")))
-	println(urlStr)
+	//println(urlStr)
 	return bitstamp.placeOrder(side, pair, amount, "", urlStr)
 }
 
@@ -221,7 +221,7 @@ func (bitstamp *Bitstamp) GetOneOrder(orderId string, currency CurrencyPair) (*O
 	if err != nil {
 		return nil, err
 	}
-	println(string(resp))
+	//println(string(resp))
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
@@ -251,8 +251,13 @@ func (bitstamp *Bitstamp) GetOneOrder(orderId string, currency CurrencyPair) (*O
 		if ord.Status != ORDER_FINISH {
 			ord.Status = ORDER_PART_FINISH
 		}
-		var dealAmount float64
-		var tradeAmount float64
+
+		var (
+			dealAmount  float64
+			tradeAmount float64
+			fee float64
+		)
+
 		currencyStr := strings.ToLower(currency.CurrencyA.Symbol)
 		for _, v := range transactions {
 			transaction := v.(map[string]interface{})
@@ -260,15 +265,17 @@ func (bitstamp *Bitstamp) GetOneOrder(orderId string, currency CurrencyPair) (*O
 			amount := ToFloat64(transaction[currencyStr])
 			dealAmount += amount
 			tradeAmount += amount * price
-
+			fee += ToFloat64(transaction["fee"])
 			//tpy := ToInt(transaction["type"]) //注意:不是交易方向，type (0 - deposit; 1 - withdrawal; 2 - market trade)
 			//if tpy == 2 {
 			//	ord.Side = SELL
 			//}
 		}
+
 		avgPrice := tradeAmount / dealAmount
 		ord.DealAmount = dealAmount
 		ord.AvgPrice = avgPrice
+		ord.Fee = fee
 	}
 
 	//	println(string(resp))
