@@ -38,6 +38,42 @@ type LendOrder struct {
 	Timestamp       string  `json:"timestamp"`
 }
 
+type LendTicker struct {
+	Ticker
+	Coin            Currency
+	DailyChangePerc float64
+}
+
+func (bfx *Bitfinex) GetLendTickers() ([]LendTicker, error) {
+
+	resp, err := bfx.httpClient.Get("https://api.bitfinex.com/v2/tickers?symbols=ALL")
+	if err != nil {
+		return nil, err
+	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	var ret []interface{}
+	json.Unmarshal(body, &ret)
+
+	var tickers []LendTicker
+
+	for _, v := range ret {
+		vv := v.([]interface{})
+		symbol := vv[0].(string)
+		if strings.HasPrefix(symbol, "f") {
+			tickers = append(tickers, LendTicker{
+				Ticker: Ticker{
+					Last: ToFloat64(vv[10]) * 100,
+					Vol:  ToFloat64(vv[11])},
+				DailyChangePerc: ToFloat64(vv[9]) * 100,
+				Coin:            NewCurrency(symbol[1:], "")})
+		}
+	}
+
+	return tickers, nil
+}
+
 func (bfx *Bitfinex) GetDepositWalletBalance() (*Account, error) {
 	wallets, err := bfx.GetWalletBalances()
 	if err != nil {
