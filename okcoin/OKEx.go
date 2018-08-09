@@ -18,6 +18,7 @@ const (
 	FUTURE_API_BASE_URL    = "https://www.okex.com/api/v1/"
 	FUTURE_TICKER_URI      = "future_ticker.do?symbol=%s&contract_type=%s"
 	FUTURE_DEPTH_URI       = "future_depth.do?symbol=%s&contract_type=%s"
+	FUTURE_INDEX_PRICE     = "future_index.do?symbol=%s"
 	FUTURE_USERINFO_URI    = "future_userinfo.do"
 	FUTURE_CANCEL_URI      = "future_cancel.do"
 	FUTURE_ORDER_INFO_URI  = "future_order_info.do"
@@ -218,7 +219,28 @@ func (ok *OKEx) GetFutureDepth(currencyPair CurrencyPair, contractType string, s
 }
 
 func (ok *OKEx) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
-	return 0, nil
+	resp, err := ok.client.Get(fmt.Sprintf(FUTURE_API_BASE_URL+FUTURE_INDEX_PRICE, strings.ToLower(currencyPair.ToSymbol("_"))))
+	if err != nil {
+		return 0, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return 0, err
+	}
+
+	bodyMap := make(map[string]interface{})
+
+	err = json.Unmarshal(body, &bodyMap)
+	if err != nil {
+		return 0, err
+	}
+
+	//println(string(body))
+	return bodyMap["future_index"].(float64), nil
 }
 
 type futureUserInfoResponse struct {
