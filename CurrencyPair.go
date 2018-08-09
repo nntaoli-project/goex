@@ -102,6 +102,8 @@ var (
 	BCC_USD = CurrencyPair{BCC, USD}
 	XRP_USD = CurrencyPair{XRP, USD}
 	BCD_USD = CurrencyPair{BCD, USD}
+	EOS_USD = CurrencyPair{EOS, USD}
+	BTG_USD = CurrencyPair{BTG, USD}
 
 	BTC_USDT = CurrencyPair{BTC, USDT}
 	LTC_USDT = CurrencyPair{LTC, USDT}
