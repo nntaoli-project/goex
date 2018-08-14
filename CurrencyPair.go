@@ -47,31 +47,31 @@ type CurrencyPair struct {
 
 var (
 	UNKNOWN = Currency{"UNKNOWN", ""}
-	CNY     = Currency{"CNY", "rmb （China Yuan)"}
-	USD     = Currency{"USD", "USA dollar"}
-	USDT    = Currency{"USDT", "http://tether.io"}
+	CNY     = Currency{"CNY", ""}
+	USD     = Currency{"USD", ""}
+	USDT    = Currency{"USDT", ""}
 	EUR     = Currency{"EUR", ""}
 	KRW     = Currency{"KRW", ""}
-	JPY     = Currency{"JPY", "japanese yen"}
-	BTC     = Currency{"BTC", "bitcoin.org"}
-	XBT     = Currency{"XBT", "bitcoin.org"}
-	BCC     = Currency{"BCC", "bitcoin-abc"}
-	BCH     = Currency{"BCH", "bitcoin-abc"}
+	JPY     = Currency{"JPY", ""}
+	BTC     = Currency{"BTC", ""}
+	XBT     = Currency{"XBT", ""}
+	BCC     = Currency{"BCC", ""}
+	BCH     = Currency{"BCH", ""}
 	BCX     = Currency{"BCX", ""}
-	LTC     = Currency{"LTC", "litecoin.org"}
+	LTC     = Currency{"LTC", ""}
 	ETH     = Currency{"ETH", ""}
 	ETC     = Currency{"ETC", ""}
 	EOS     = Currency{"EOS", ""}
 	BTS     = Currency{"BTS", ""}
 	QTUM    = Currency{"QTUM", ""}
-	SC      = Currency{"SC", "sia.tech"}
-	ANS     = Currency{"ANS", "www.antshares.org"}
+	SC      = Currency{"SC", ""}
+	ANS     = Currency{"ANS", ""}
 	ZEC     = Currency{"ZEC", ""}
 	DCR     = Currency{"DCR", ""}
 	XRP     = Currency{"XRP", ""}
 	BTG     = Currency{"BTG", ""}
 	BCD     = Currency{"BCD", ""}
-	NEO     = Currency{"NEO", "neo.org"}
+	NEO     = Currency{"NEO", ""}
 	HSR     = Currency{"HSR", ""}
 
 	//currency pair
@@ -102,6 +102,8 @@ var (
 	BCC_USD = CurrencyPair{BCC, USD}
 	XRP_USD = CurrencyPair{XRP, USD}
 	BCD_USD = CurrencyPair{BCD, USD}
+	EOS_USD = CurrencyPair{EOS, USD}
+	BTG_USD = CurrencyPair{BTG, USD}
 
 	BTC_USDT = CurrencyPair{BTC, USDT}
 	LTC_USDT = CurrencyPair{LTC, USDT}
@@ -147,6 +149,20 @@ var (
 
 func (c CurrencyPair) String() string {
 	return c.ToSymbol("_")
+}
+
+func (c Currency) AdaptBchToBcc() Currency {
+	if c.Symbol == "BCH" || c.Symbol == "bch" {
+		return BCC
+	}
+	return c
+}
+
+func (c Currency) AdaptBccToBch() Currency {
+	if c.Symbol == "BCC" || c.Symbol == "bcc" {
+		return BCH
+	}
+	return c
 }
 
 func NewCurrency(symbol, desc string) Currency {
@@ -205,36 +221,45 @@ func (pair CurrencyPair) ToSymbol2(joinChar string) string {
 	return strings.Join([]string{pair.CurrencyB.Symbol, pair.CurrencyA.Symbol}, joinChar)
 }
 
-type exchCurrencyAdpter struct {
-	exch     string
-	currency []currencyAdpter
-}
-type currencyAdpter struct {
-	a Currency
-	b Currency
-}
-
-var (
-	ExchangesCurreniesAdpters = []exchCurrencyAdpter{{ZB, []currencyAdpter{{BCH, BCC},
-		{USD, USDT},
-	}}}
-)
-
-func ExchangeCurrenyAdpter(exch string, currency Currency) Currency {
-	for _, ex := range ExchangesCurreniesAdpters {
-		if ex.exch == exch {
-			for _, cur := range ex.currency {
-				if cur.a == currency {
-					return cur.b
-				}
-			}
-		}
+func (pair CurrencyPair) AdaptUsdtToUsd() CurrencyPair {
+	CurrencyB := pair.CurrencyB
+	if pair.CurrencyB == USDT {
+		CurrencyB = USD
 	}
-	return currency
+	return CurrencyPair{pair.CurrencyA, CurrencyB}
 }
 
-func ExchangeCurrenyPairAdpter(exch string, currencyPair CurrencyPair) CurrencyPair {
-	a := ExchangeCurrenyAdpter(exch, currencyPair.CurrencyA)
-	b := ExchangeCurrenyAdpter(exch, currencyPair.CurrencyB)
-	return NewCurrencyPair(a, b)
+func (pair CurrencyPair) AdaptUsdToUsdt() CurrencyPair {
+	CurrencyB := pair.CurrencyB
+	if pair.CurrencyB == USD {
+		CurrencyB = USDT
+	}
+	return CurrencyPair{pair.CurrencyA, CurrencyB}
+}
+
+//It is currently applicable to binance and zb
+func (pair CurrencyPair) AdaptBchToBcc() CurrencyPair {
+	CurrencyA := pair.CurrencyA
+	if pair.CurrencyA == BCH {
+		CurrencyA = BCC
+	}
+	return CurrencyPair{CurrencyA, pair.CurrencyB}
+}
+
+//for to symbol lower , Not practical '==' operation method
+func (pair CurrencyPair) ToLower() CurrencyPair {
+	return CurrencyPair{NewCurrency(strings.ToLower(pair.CurrencyA.Symbol), ""),
+		NewCurrency(strings.ToLower(pair.CurrencyB.Symbol), "")}
+}
+
+type CurrencyPair2 struct {
+	CurrencyPair
+}
+
+func (pair CurrencyPair) Reverse() CurrencyPair2 {
+	return CurrencyPair2{CurrencyPair{pair.CurrencyB, pair.CurrencyA}}
+}
+
+func (pair CurrencyPair2) ToSymbol(joinChar string) string {
+	return strings.Join([]string{pair.CurrencyA.Symbol, pair.CurrencyB.Symbol}, joinChar)
 }

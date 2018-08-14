@@ -22,4 +22,5 @@ var (
 	EX_ERR_CANCEL_ORDER_FAIL     = ApiError{ErrCode: "EX_ERR_0006", ErrMsg: "cancel order failure"}
 	EX_ERR_INVALID_CURRENCY_PAIR = ApiError{ErrCode: "EX_ERR_0007", ErrMsg: "invalid currency pair"}
 	EX_ERR_NOT_FIND_ORDER        = ApiError{ErrCode: "EX_ERR_0008", ErrMsg: "not find order"}
+	EX_ERR_SYMBOL_ERR            = ApiError{ErrCode: "EX_ERR_0009", ErrMsg: "symbol error"}
 )

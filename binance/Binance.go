@@ -50,8 +50,8 @@ func (bn *Binance) GetExchangeName() string {
 }
 
 func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	currency = bn.adaptCurrencyPair(currency)
-	tickerUri := API_V1 + fmt.Sprintf(TICKER_URI, currency.ToSymbol(""))
+	currency2 := bn.adaptCurrencyPair(currency)
+	tickerUri := API_V1 + fmt.Sprintf(TICKER_URI, currency2.ToSymbol(""))
 	tickerMap, err := HttpGet(bn.httpClient, tickerUri)
 
 	if err != nil {
@@ -60,7 +60,7 @@ func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	}
 
 	var ticker Ticker
-
+	ticker.Pair = currency
 	t, _ := tickerMap["closeTime"].(float64)
 	ticker.Date = uint64(t / 1000)
 	ticker.Last = ToFloat64(tickerMap["lastPrice"])
@@ -78,9 +78,9 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 	} else if size < 5 {
 		size = 5
 	}
-	currencyPair = bn.adaptCurrencyPair(currencyPair)
+	currencyPair2 := bn.adaptCurrencyPair(currencyPair)
 
-	apiUrl := fmt.Sprintf(API_V1+DEPTH_URI, currencyPair.ToSymbol(""), size)
+	apiUrl := fmt.Sprintf(API_V1+DEPTH_URI, currencyPair2.ToSymbol(""), size)
 	resp, err := HttpGet(bn.httpClient, apiUrl)
 	if err != nil {
 		log.Println("GetDepth error:", err)
@@ -98,7 +98,7 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 	//log.Println(asks)
 
 	depth := new(Depth)
-
+	depth.Pair = currencyPair
 	for _, bid := range bids {
 		_bid := bid.([]interface{})
 		amount := ToFloat64(_bid[1])
@@ -195,7 +195,7 @@ func (bn *Binance) GetAccount() (*Account, error) {
 	for _, v := range balances {
 		//log.Println(v)
 		vv := v.(map[string]interface{})
-		currency := NewCurrency(vv["asset"].(string), "")
+		currency := NewCurrency(vv["asset"].(string), "").AdaptBccToBch()
 		acc.SubAccounts[currency] = SubAccount{
 			Currency:     currency,
 			Amount:       ToFloat64(vv["free"]),
@@ -354,17 +354,5 @@ func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize
 	panic("not implements")
 }
 func (ba *Binance) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
-	var currencyA Currency
-	var currencyB Currency
-	if pair.CurrencyA == BCH {
-		currencyA = BCC
-	} else {
-		currencyA = pair.CurrencyA
-	}
-	if pair.CurrencyB == USD {
-		currencyB = NewCurrency("USDT", "")
-	} else {
-		currencyB = pair.CurrencyB
-	}
-	return NewCurrencyPair(currencyA, currencyB)
+	return pair.AdaptBchToBcc().AdaptUsdToUsdt()
 }

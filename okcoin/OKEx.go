@@ -18,6 +18,7 @@ const (
 	FUTURE_API_BASE_URL    = "https://www.okex.com/api/v1/"
 	FUTURE_TICKER_URI      = "future_ticker.do?symbol=%s&contract_type=%s"
 	FUTURE_DEPTH_URI       = "future_depth.do?symbol=%s&contract_type=%s"
+	FUTURE_INDEX_PRICE     = "future_index.do?symbol=%s"
 	FUTURE_USERINFO_URI    = "future_userinfo.do"
 	FUTURE_CANCEL_URI      = "future_cancel.do"
 	FUTURE_ORDER_INFO_URI  = "future_order_info.do"
@@ -218,7 +219,28 @@ func (ok *OKEx) GetFutureDepth(currencyPair CurrencyPair, contractType string, s
 }
 
 func (ok *OKEx) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
-	return 0, nil
+	resp, err := ok.client.Get(fmt.Sprintf(FUTURE_API_BASE_URL+FUTURE_INDEX_PRICE, strings.ToLower(currencyPair.ToSymbol("_"))))
+	if err != nil {
+		return 0, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return 0, err
+	}
+
+	bodyMap := make(map[string]interface{})
+
+	err = json.Unmarshal(body, &bodyMap)
+	if err != nil {
+		return 0, err
+	}
+
+	//println(string(body))
+	return bodyMap["future_index"].(float64), nil
 }
 
 type futureUserInfoResponse struct {
@@ -228,6 +250,9 @@ type futureUserInfoResponse struct {
 		Etc map[string]float64 `json:"etc"`
 		Eth map[string]float64 `json:"eth"`
 		Bch map[string]float64 `json:"bch"`
+		Xrp map[string]float64 `json:"xrp"`
+		Eos map[string]float64 `json:"eos"`
+		Btg map[string]float64 `json:"btg"`
 	} `json:info`
 	Result     bool `json:"result,bool"`
 	Error_code int  `json:"error_code"`
@@ -264,12 +289,18 @@ func (ok *OKEx) GetFutureUserinfo() (*FutureAccount, error) {
 	bchMap := resp.Info.Bch
 	ethMap := resp.Info.Eth
 	etcMap := resp.Info.Etc
+	xrpMap := resp.Info.Xrp
+	eosMap := resp.Info.Eos
+	btgMap := resp.Info.Btg
 
 	account.FutureSubAccounts[BTC] = FutureSubAccount{BTC, btcMap["account_rights"], btcMap["keep_deposit"], btcMap["profit_real"], btcMap["profit_unreal"], btcMap["risk_rate"]}
 	account.FutureSubAccounts[LTC] = FutureSubAccount{LTC, ltcMap["account_rights"], ltcMap["keep_deposit"], ltcMap["profit_real"], ltcMap["profit_unreal"], ltcMap["risk_rate"]}
 	account.FutureSubAccounts[BCH] = FutureSubAccount{BCH, bchMap["account_rights"], bchMap["keep_deposit"], bchMap["profit_real"], bchMap["profit_unreal"], bchMap["risk_rate"]}
 	account.FutureSubAccounts[ETH] = FutureSubAccount{ETH, ethMap["account_rights"], ethMap["keep_deposit"], ethMap["profit_real"], ethMap["profit_unreal"], ethMap["risk_rate"]}
 	account.FutureSubAccounts[ETC] = FutureSubAccount{ETC, etcMap["account_rights"], etcMap["keep_deposit"], etcMap["profit_real"], etcMap["profit_unreal"], etcMap["risk_rate"]}
+	account.FutureSubAccounts[XRP] = FutureSubAccount{XRP, xrpMap["account_rights"], xrpMap["keep_deposit"], xrpMap["profit_real"], xrpMap["profit_unreal"], xrpMap["risk_rate"]}
+	account.FutureSubAccounts[EOS] = FutureSubAccount{EOS, eosMap["account_rights"], eosMap["keep_deposit"], eosMap["profit_real"], eosMap["profit_unreal"], eosMap["risk_rate"]}
+	account.FutureSubAccounts[BTG] = FutureSubAccount{BTG, btgMap["account_rights"], btgMap["keep_deposit"], btgMap["profit_real"], btgMap["profit_unreal"], btgMap["risk_rate"]}
 
 	return account, nil
 }
