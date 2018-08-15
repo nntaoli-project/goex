@@ -73,9 +73,12 @@ func (zb *Zb) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	//log.Println(resp)
 
-	asks := resp["asks"].([]interface{})
-	bids := resp["bids"].([]interface{})
-
+	asks, isok1 := resp["asks"].([]interface{})
+	bids, isok2 := resp["bids"].([]interface{})
+	
+	if isok2 != true || isok1 != true {
+		return nil, errors.New("no depth data!")
+	}
 	//log.Println(asks)
 	//log.Println(bids)
 
