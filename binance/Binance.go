@@ -23,7 +23,26 @@ const (
 	ACCOUNT_URI            = "account?"
 	ORDER_URI              = "order?"
 	UNFINISHED_ORDERS_INFO = "openOrders?"
+	KLINE_URI              = "klines"
 )
+
+var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
+	KLINE_PERIOD_1MIN:   "1m",
+	KLINE_PERIOD_3MIN:   "3m",
+	KLINE_PERIOD_5MIN:   "5m",
+	KLINE_PERIOD_15MIN:  "15m",
+	KLINE_PERIOD_30MIN:  "30m",
+	KLINE_PERIOD_60MIN:  "1h",
+	KLINE_PERIOD_2H:     "2h",
+	KLINE_PERIOD_4H:     "4h",
+	KLINE_PERIOD_6H:     "6h",
+	KLINE_PERIOD_8H:     "8h",
+	KLINE_PERIOD_12H:    "12h",
+	KLINE_PERIOD_1DAY:   "1d",
+	KLINE_PERIOD_3DAY:   "3d",
+	KLINE_PERIOD_1WEEK:  "1w",
+	KLINE_PERIOD_1MONTH: "1M",
+}
 
 type Binance struct {
 	accessKey,
@@ -342,7 +361,46 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 }
 
 func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	panic("not implements")
+	currency2 := bn.adaptCurrencyPair(currency)
+	params := url.Values{}
+	params.Set("symbol", currency2.ToSymbol(""))
+	params.Set("interval", _INERNAL_KLINE_PERIOD_CONVERTER[period])
+	params.Set("startTime", strconv.Itoa(since/1000000))
+	params.Set("endTime", strconv.Itoa(int(time.Now().UnixNano()/1000000)))
+	params.Set("limit", fmt.Sprintf("%d", size))
+
+	klineUrl := API_V1 + KLINE_URI + "?" + params.Encode()
+	fmt.Println(klineUrl)
+	klines, err := HttpGet3(bn.httpClient, klineUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	var klineRecords []Kline
+
+	for _, _record := range klines {
+		r := Kline{Pair: currency}
+		record := _record.([]interface{})
+		for i, e := range record {
+			switch i {
+			case 0:
+				r.Timestamp = int64(e.(float64)) / 1000 //to unix timestramp
+			case 1:
+				r.Open = ToFloat64(e)
+			case 2:
+				r.High = ToFloat64(e)
+			case 3:
+				r.Low = ToFloat64(e)
+			case 4:
+				r.Close = ToFloat64(e)
+			case 5:
+				r.Vol = ToFloat64(e)
+			}
+		}
+		klineRecords = append(klineRecords, r)
+	}
+
+	return klineRecords, nil
+
 }
 
 //非个人，整个交易所的交易记录
