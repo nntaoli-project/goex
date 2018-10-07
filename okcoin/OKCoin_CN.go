@@ -550,27 +550,35 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 }
 
 func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	tradeUrl := ok.api_base_url + trade_uri
-	postData := url.Values{}
-	postData.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
-	postData.Set("since", fmt.Sprintf("%d", since))
+	url := ok.api_base_url + url_trades + "?symbol=" + strings.ToLower(currencyPair.ToSymbol("_")) + "&since="
+	if since > 0 {
+		url = url + fmt.Sprintf("%d", since)
+	}
 
-	err := ok.buildPostForm(&postData)
+	body, err := HttpGet5(ok.client, url, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	body, err := HttpPostForm(ok.client, tradeUrl, postData)
-	if err != nil {
-		return nil, err
-	}
-	//println(string(body))
+	fmt.Println(string(body))
 
 	var trades []Trade
-	err = json.Unmarshal(body, &trades)
+	var resp []interface{}
+	err = json.Unmarshal(body, &resp)
 	if err != nil {
-		return nil, err
+		return nil, errors.New(string(body))
 	}
+
+	for _, v := range resp {
+		item := v.(map[string]interface{})
+
+		tid := int64(item["tid"].(float64))
+		direction := item["type"].(string)
+		amount := item["amount"].(float64)
+		price := item["price"].(float64)
+		time := int64(item["date_ms"].(float64))
+		trades = append(trades, Trade{tid, direction, amount, price, time})
+	}
+
 
 	return trades, nil
 }
