@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -61,7 +60,7 @@ var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
 //}
 
 func New(client *http.Client, api_key, secret_key string) *OKCoinCN_API {
-	return &OKCoinCN_API{client, api_key, secret_key, "https://www.okcoin.cn/api/v1/"}
+	return &OKCoinCN_API{client, api_key, secret_key, "https://www.okex.com/api/v1/"}
 }
 
 func (ctx *OKCoinCN_API) buildPostForm(postForm *url.Values) error {
@@ -435,14 +434,10 @@ func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period, size, si
 		klineUrl += "&since=" + strconv.Itoa(since)
 	}
 
-	resp, err := http.Get(klineUrl)
+	body, err := HttpGet5(ctx.client, klineUrl, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
 
 	var klines [][]interface{}
 
