@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -61,7 +60,7 @@ var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
 //}
 
 func New(client *http.Client, api_key, secret_key string) *OKCoinCN_API {
-	return &OKCoinCN_API{client, api_key, secret_key, "https://www.okcoin.cn/api/v1/"}
+	return &OKCoinCN_API{client, api_key, secret_key, "https://www.okex.com/api/v1/"}
 }
 
 func (ctx *OKCoinCN_API) buildPostForm(postForm *url.Values) error {
@@ -435,14 +434,10 @@ func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period, size, si
 		klineUrl += "&since=" + strconv.Itoa(since)
 	}
 
-	resp, err := http.Get(klineUrl)
+	body, err := HttpGet5(ctx.client, klineUrl, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
 
 	var klines [][]interface{}
 
@@ -550,27 +545,35 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 }
 
 func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	tradeUrl := ok.api_base_url + trade_uri
-	postData := url.Values{}
-	postData.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
-	postData.Set("since", fmt.Sprintf("%d", since))
+	url := ok.api_base_url + url_trades + "?symbol=" + strings.ToLower(currencyPair.ToSymbol("_")) + "&since="
+	if since > 0 {
+		url = url + fmt.Sprintf("%d", since)
+	}
 
-	err := ok.buildPostForm(&postData)
+	body, err := HttpGet5(ok.client, url, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	body, err := HttpPostForm(ok.client, tradeUrl, postData)
-	if err != nil {
-		return nil, err
-	}
-	//println(string(body))
+	fmt.Println(string(body))
 
 	var trades []Trade
-	err = json.Unmarshal(body, &trades)
+	var resp []interface{}
+	err = json.Unmarshal(body, &resp)
 	if err != nil {
-		return nil, err
+		return nil, errors.New(string(body))
 	}
+
+	for _, v := range resp {
+		item := v.(map[string]interface{})
+
+		tid := int64(item["tid"].(float64))
+		direction := item["type"].(string)
+		amount := item["amount"].(float64)
+		price := item["price"].(float64)
+		time := int64(item["date_ms"].(float64))
+		trades = append(trades, Trade{tid, direction, amount, price, time})
+	}
+
 
 	return trades, nil
 }

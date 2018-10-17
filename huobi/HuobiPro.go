@@ -61,10 +61,12 @@ func NewHuoBiProSpot(client *http.Client, apikey, secretkey string) *HuoBiPro {
 	hb := NewHuoBiPro(client, apikey, secretkey, "")
 	accinfo, err := hb.GetAccountInfo(HB_SPOT_ACCOUNT)
 	if err != nil {
-		panic(err)
+		hb.accountId = ""
+		//panic(err)
+	}else{
+		hb.accountId = accinfo.Id
+		log.Println("account state :", accinfo.State)
 	}
-	hb.accountId = accinfo.Id
-	log.Println("account state :", accinfo.State)
 	return hb
 }
 
