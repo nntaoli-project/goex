@@ -98,4 +98,5 @@ const (
 	COIN58      = "58coin.com"
 	FCOIN       = "fcoin.com"
 	HITBTC      = "hitbtc.com"
+	BITMEX      = "bitmex.com"
 )
