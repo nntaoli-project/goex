@@ -9,6 +9,7 @@ import (
 	. "github.com/nntaoli-project/GoEx"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"net/http"
 	"net/url"
 	"sort"
@@ -36,6 +37,7 @@ type HuoBiPro struct {
 	accountId         string
 	accessKey         string
 	secretKey         string
+	ECDSAPrivateKey   string
 	ws                *WsConn
 	createWsLock      sync.Mutex
 	wsTickerHandleMap map[string]func(*Ticker)
@@ -63,7 +65,7 @@ func NewHuoBiProSpot(client *http.Client, apikey, secretkey string) *HuoBiPro {
 	if err != nil {
 		hb.accountId = ""
 		//panic(err)
-	}else{
+	} else {
 		hb.accountId = accinfo.Id
 		log.Println("account state :", accinfo.State)
 	}
@@ -462,41 +464,8 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 	}
 
 	tick, _ := respmap["tick"].(map[string]interface{})
-	bids, _ := tick["bids"].([]interface{})
-	asks, _ := tick["asks"].([]interface{})
 
-	depth := new(Depth)
-	_size := size
-	for _, r := range asks {
-		var dr DepthRecord
-		rr := r.([]interface{})
-		dr.Price = ToFloat64(rr[0])
-		dr.Amount = ToFloat64(rr[1])
-		depth.AskList = append(depth.AskList, dr)
-
-		_size--
-		if _size == 0 {
-			break
-		}
-	}
-
-	_size = size
-	for _, r := range bids {
-		var dr DepthRecord
-		rr := r.([]interface{})
-		dr.Price = ToFloat64(rr[0])
-		dr.Amount = ToFloat64(rr[1])
-		depth.BidList = append(depth.BidList, dr)
-
-		_size--
-		if _size == 0 {
-			break
-		}
-	}
-
-	sort.Sort(sort.Reverse(depth.AskList))
-
-	return depth, nil
+	return hbpro.parseDepthData(tick), nil
 }
 
 func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
@@ -508,6 +477,10 @@ func (hbpro *HuoBiPro) GetTrades(currencyPair CurrencyPair, since int64) ([]Trad
 	panic("not implement")
 }
 
+type ecdsaSignature struct {
+	R, S *big.Int
+}
+
 func (hbpro *HuoBiPro) buildPostForm(reqMethod, path string, postForm *url.Values) error {
 	postForm.Set("AccessKeyId", hbpro.accessKey)
 	postForm.Set("SignatureMethod", "HmacSHA256")
@@ -517,6 +490,16 @@ func (hbpro *HuoBiPro) buildPostForm(reqMethod, path string, postForm *url.Value
 	payload := fmt.Sprintf("%s\n%s\n%s\n%s", reqMethod, domain, path, postForm.Encode())
 	sign, _ := GetParamHmacSHA256Base64Sign(hbpro.secretKey, payload)
 	postForm.Set("Signature", sign)
+
+	/**
+	p, _ := pem.Decode([]byte(hbpro.ECDSAPrivateKey))
+	pri, _ := secp256k1_go.PrivKeyFromBytes(secp256k1_go.S256(), p.Bytes)
+	signer, _ := pri.Sign([]byte(sign))
+	signAsn, _ := asn1.Marshal(signer)
+	priSign := base64.StdEncoding.EncodeToString(signAsn)
+	postForm.Set("PrivateSignature", priSign)
+	*/
+
 	return nil
 }
 
@@ -612,6 +595,8 @@ func (hbpro *HuoBiPro) parseDepthData(tick map[string]interface{}) *Depth {
 		dr.Amount = ToFloat64(rr[1])
 		depth.BidList = append(depth.BidList, dr)
 	}
+
+	sort.Sort(sort.Reverse(depth.AskList))
 
 	return depth
 }
