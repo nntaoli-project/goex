@@ -25,6 +25,7 @@ import (
 	"github.com/nntaoli-project/GoEx/coin58"
 	"github.com/nntaoli-project/GoEx/bigone"
 	"github.com/nntaoli-project/GoEx/hitbtc"
+	"github.com/nntaoli-project/GoEx/bitz"
 )
 
 type APIBuilder struct {
@@ -113,6 +114,58 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = bittrex.New(builder.client, builder.apiKey, builder.secretkey)
 	case BITHUMB:
 		_api = bithumb.New(builder.client, builder.apiKey, builder.secretkey)
+	case GDAX:
+		_api = gdax.New(builder.client, builder.apiKey, builder.secretkey)
+	case GATEIO:
+		_api = gateio.New(builder.client, builder.apiKey, builder.secretkey)
+	case WEX_NZ:
+		_api = wex.New(builder.client, builder.apiKey, builder.secretkey)
+	case ZB:
+		_api = zb.New(builder.client, builder.apiKey, builder.secretkey)
+	case COINEX:
+		_api = coinex.New(builder.client, builder.apiKey, builder.secretkey)
+	case FCOIN:
+		_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey)
+	case COIN58:
+		_api = coin58.New58Coin(builder.client, builder.apiKey, builder.secretkey)
+	case BIGONE:
+		_api = bigone.New(builder.client, builder.apiKey, builder.secretkey)
+	case HITBTC:
+		_api = hitbtc.New(builder.client, builder.apiKey, builder.secretkey)
+	default:
+		panic("exchange name error [" + exName + "].")
+
+	}
+	return _api
+}
+
+func (builder *APIBuilder) BuildNew(exName string, params map[string]interface{}) (api API) {
+	var _api API
+	switch exName {
+	case OKCOIN_CN:
+		_api = okcoin.New(builder.client, builder.apiKey, builder.secretkey)
+	case POLONIEX:
+		_api = poloniex.New(builder.client, builder.apiKey, builder.secretkey)
+	case OKCOIN_COM:
+		_api = okcoin.NewCOM(builder.client, builder.apiKey, builder.secretkey)
+	case BITSTAMP:
+		_api = bitstamp.NewBitstamp(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
+	case HUOBI_PRO:
+		_api = huobi.NewHuoBiProSpot(builder.client, builder.apiKey, builder.secretkey)
+	case OKEX:
+		_api = okcoin.NewOKExSpot(builder.client, builder.apiKey, builder.secretkey)
+	case BITFINEX:
+		_api = bitfinex.New(builder.client, builder.apiKey, builder.secretkey)
+	case KRAKEN:
+		_api = kraken.New(builder.client, builder.apiKey, builder.secretkey)
+	case BINANCE:
+		_api = binance.New(builder.client, builder.apiKey, builder.secretkey)
+	case BITTREX:
+		_api = bittrex.New(builder.client, builder.apiKey, builder.secretkey)
+	case BITHUMB:
+		_api = bithumb.New(builder.client, builder.apiKey, builder.secretkey)
+	case BITZ:
+		_api = bitz.New(builder.client, builder.apiKey, builder.secretkey, params)
 	case GDAX:
 		_api = gdax.New(builder.client, builder.apiKey, builder.secretkey)
 	case GATEIO:

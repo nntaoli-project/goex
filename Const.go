@@ -83,6 +83,7 @@ const (
 	HUOBI       = "huobi.com"
 	HUOBI_PRO   = "huobi.pro"
 	BITSTAMP    = "bitstamp.net"
+	BITZ        = "bitz.com"
 	KRAKEN      = "kraken.com"
 	ZB          = "zb.com"
 	BITFINEX    = "bitfinex.com"
