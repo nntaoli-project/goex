@@ -468,8 +468,58 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 	return hbpro.parseDepthData(tick), nil
 }
 
+//倒序
 func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	panic("not implement")
+	url := hbpro.baseUrl + "/market/history/kline?period=%s&size=%d&symbol=%s"
+	symbol := strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol(""))
+	periodS := "1min"
+	switch period {
+	case KLINE_PERIOD_1MIN:
+		periodS = "1min"
+	case KLINE_PERIOD_5MIN:
+		periodS = "5min"
+	case KLINE_PERIOD_15MIN:
+		periodS = "15min"
+	case KLINE_PERIOD_30MIN:
+		periodS = "30min"
+	case KLINE_PERIOD_60MIN:
+		periodS = "60min"
+	case KLINE_PERIOD_1DAY:
+		periodS = "1day"
+	case KLINE_PERIOD_1WEEK:
+		periodS = "1week"
+	case KLINE_PERIOD_1MONTH:
+		periodS = "1mon"
+	case KLINE_PERIOD_1YEAR:
+		periodS = "1year"
+	default:
+		periodS = "1min"
+	}
+
+	ret, err := HttpGet(hbpro.httpClient, fmt.Sprintf(url, periodS, size, symbol))
+	if err != nil {
+		return nil, err
+	}
+
+	data, ok := ret["data"].([]interface{})
+	if !ok {
+		return nil, errors.New("response format error")
+	}
+
+	var klines []Kline
+	for _, e := range data {
+		item := e.(map[string]interface{})
+		klines = append(klines, Kline{
+			Pair:      currency,
+			Open:      ToFloat64(item["open"]),
+			Close:     ToFloat64(item["close"]),
+			High:      ToFloat64(item["high"]),
+			Low:       ToFloat64(item["low"]),
+			Vol:       ToFloat64(item["vol"]),
+			Timestamp: int64(ToUint64(item["id"]))})
+	}
+
+	return klines, nil
 }
 
 //非个人，整个交易所的交易记录
