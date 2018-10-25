@@ -256,23 +256,21 @@ func (ctx *BitZ) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
 	asks, _ := data["asks"].([]interface{})
 
 	depth := new(Depth)
-	for _, bid := range bids {
-		_bid := bid.([]interface{})
+	for i:=0; i < size && i < len(bids); i++{
+		_bid := bids[i].([]interface{})
 		amount := ToFloat64(_bid[1])
 		price := ToFloat64(_bid[0])
 		dr := DepthRecord{Amount: amount, Price: price}
 		depth.BidList = append(depth.BidList, dr)
 	}
 
-	for _, ask := range asks {
-		_ask := ask.([]interface{})
+	for i:=len(asks)-1; i >= len(asks)-size && i >= 0; i--{
+		_ask := asks[i].([]interface{})
 		amount := ToFloat64(_ask[1])
 		price := ToFloat64(_ask[0])
 		dr := DepthRecord{Amount: amount, Price: price}
 		depth.AskList = append(depth.AskList, dr)
 	}
-	depth.AskList = depth.AskList[0:size]
-	depth.BidList = depth.BidList[0:size]
 
 	return depth, nil
 }
