@@ -610,12 +610,19 @@ func (hbpro *HuoBiPro) createWsConn() {
 				}
 
 				tick := datamap["tick"].(map[string]interface{})
+				pair := hbpro.getPairFromChannel(ch)
 				if hbpro.wsTickerHandleMap[ch] != nil {
+					tick := hbpro.parseTickerData(tick)
+					tick.Pair = pair
+					tick.Date = ToUint64(datamap["ts"])
+					(hbpro.wsTickerHandleMap[ch])(tick)
 					return
 				}
 
 				if hbpro.wsDepthHandleMap[ch] != nil {
-					(hbpro.wsDepthHandleMap[ch])(hbpro.parseDepthData(tick))
+					depth :=hbpro.parseDepthData(tick)
+					depth.Pair = pair
+					(hbpro.wsDepthHandleMap[ch])(depth)
 					return
 				}
 
@@ -623,6 +630,41 @@ func (hbpro *HuoBiPro) createWsConn() {
 			})
 		}
 	}
+}
+
+func (hbpro *HuoBiPro) getPairFromChannel(ch string) CurrencyPair {
+
+	var currA, currB string
+	if strings.HasSuffix(ch, "usdt.detail") {
+		currB = "usdt"
+	} else if strings.HasSuffix(ch, "husd.detail") {
+		currB = "husd"
+	} else if strings.HasSuffix(ch, "btc.detail") {
+		currB = "btc"
+	} else if strings.HasSuffix(ch, "eth.detail") {
+		currB = "eth"
+	} else if strings.HasSuffix(ch, "ht.detail") {
+		currB = "ht"
+	}
+
+	currA = strings.TrimPrefix(ch, "market.")
+	currA = strings.TrimSuffix(currA, currB+".detail")
+
+	a := NewCurrency(currA, "")
+	b := NewCurrency(currB, "")
+
+	pair := NewCurrencyPair(a, b)
+	return pair
+}
+
+func (hbpro *HuoBiPro) parseTickerData(tick map[string]interface{}) *Ticker {
+	t := new(Ticker)
+
+	t.Last = ToFloat64(tick["close"])
+	t.Low = ToFloat64(tick["low"])
+	t.Vol = ToFloat64(tick["vol"])
+	t.High = ToFloat64(tick["high"])
+	return t
 }
 
 func (hbpro *HuoBiPro) parseDepthData(tick map[string]interface{}) *Depth {
