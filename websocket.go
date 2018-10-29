@@ -4,10 +4,12 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"time"
+	"sync"
 )
 
 type WsConn struct {
 	*websocket.Conn
+	sendWsLock               sync.Mutex
 	url                      string
 	heartbeatIntervalTime    time.Duration
 	checkConnectIntervalTime time.Duration
@@ -36,6 +38,13 @@ func NewWsConn(wsurl string) *WsConn {
 	return &WsConn{Conn: wsConn, url: wsurl, actived: time.Now(), checkConnectIntervalTime: 30 * time.Second, close: make(chan int, 1)}
 }
 
+func (ws *WsConn) SendWriteJSON(v interface{}) error  {
+	defer ws.sendWsLock.Unlock()
+	ws.sendWsLock.Lock()
+
+	return ws.WriteJSON(v)
+}
+
 func (ws *WsConn) ReConnect() {
 
 	timer := time.NewTimer(ws.checkConnectIntervalTime)
@@ -55,7 +64,7 @@ func (ws *WsConn) ReConnect() {
 						//re subscribe
 						for _, sub := range ws.subs {
 							log.Println("subscribe:", sub)
-							ws.WriteJSON(sub)
+							ws.SendWriteJSON(sub)
 						}
 					}
 				}
@@ -78,7 +87,7 @@ func (ws *WsConn) Heartbeat(heartbeat func() interface{}, interval time.Duration
 		for {
 			select {
 			case <-timer.C:
-				err := ws.WriteJSON(heartbeat())
+				err := ws.SendWriteJSON(heartbeat())
 				if err != nil {
 					log.Println("heartbeat error , ", err)
 					time.Sleep(time.Second)
@@ -94,7 +103,7 @@ func (ws *WsConn) Heartbeat(heartbeat func() interface{}, interval time.Duration
 }
 
 func (ws *WsConn) Subscribe(subEvent interface{}) error {
-	err := ws.WriteJSON(subEvent)
+	err := ws.SendWriteJSON(subEvent)
 	if err != nil {
 		return err
 	}
