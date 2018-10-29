@@ -40,6 +40,7 @@ type HuoBiPro struct {
 	ECDSAPrivateKey   string
 	ws                *WsConn
 	createWsLock      sync.Mutex
+	sendWsLock        sync.Mutex
 	wsTickerHandleMap map[string]func(*Ticker)
 	wsDepthHandleMap  map[string]func(*Depth)
 }
@@ -84,6 +85,13 @@ func NewHuoBiProPoint(client *http.Client, apikey, secretkey string) *HuoBiPro {
 	hb.accountId = accinfo.Id
 	log.Println("account state :", accinfo.State)
 	return hb
+}
+
+func (hbpro *HuoBiPro) wsSendWriteJSON(v interface{}) error  {
+	defer hbpro.sendWsLock.Unlock()
+	hbpro.sendWsLock.Lock()
+
+	return hbpro.ws.WriteJSON(v)
 }
 
 func (hbpro *HuoBiPro) GetAccountInfo(acc string) (AccountInfo, error) {
@@ -588,7 +596,7 @@ func (hbpro *HuoBiPro) createWsConn() {
 				if datamap["ping"] != nil {
 					//log.Println(datamap)
 					hbpro.ws.UpdateActivedTime()
-					hbpro.ws.WriteJSON(map[string]interface{}{
+					hbpro.wsSendWriteJSON(map[string]interface{}{
 						"pong": datamap["ping"]}) // 回应心跳
 					return
 				}
@@ -620,7 +628,7 @@ func (hbpro *HuoBiPro) createWsConn() {
 				}
 
 				if hbpro.wsDepthHandleMap[ch] != nil {
-					depth :=hbpro.parseDepthData(tick)
+					depth := hbpro.parseDepthData(tick)
 					depth.Pair = pair
 					(hbpro.wsDepthHandleMap[ch])(depth)
 					return
