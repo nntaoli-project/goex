@@ -40,7 +40,6 @@ type HuoBiPro struct {
 	ECDSAPrivateKey   string
 	ws                *WsConn
 	createWsLock      sync.Mutex
-	sendWsLock        sync.Mutex
 	wsTickerHandleMap map[string]func(*Ticker)
 	wsDepthHandleMap  map[string]func(*Depth)
 }
