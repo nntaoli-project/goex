@@ -87,13 +87,6 @@ func NewHuoBiProPoint(client *http.Client, apikey, secretkey string) *HuoBiPro {
 	return hb
 }
 
-func (hbpro *HuoBiPro) wsSendWriteJSON(v interface{}) error  {
-	defer hbpro.sendWsLock.Unlock()
-	hbpro.sendWsLock.Lock()
-
-	return hbpro.ws.WriteJSON(v)
-}
-
 func (hbpro *HuoBiPro) GetAccountInfo(acc string) (AccountInfo, error) {
 	path := "/v1/account/accounts"
 	params := &url.Values{}
@@ -571,73 +564,69 @@ func (hbpro *HuoBiPro) toJson(params url.Values) string {
 }
 
 func (hbpro *HuoBiPro) createWsConn() {
-	if hbpro.ws == nil {
-		//connect wsx
-		hbpro.createWsLock.Lock()
-		defer hbpro.createWsLock.Unlock()
 
-		if hbpro.ws == nil {
-			hbpro.ws = NewWsConn("wss://api.huobi.br.com/ws")
-			hbpro.ws.Heartbeat(func() interface{} {
-				return map[string]interface{}{
-					"ping": time.Now().Unix()}
-			}, 5*time.Second)
-			hbpro.ws.ReConnect()
-			hbpro.ws.ReceiveMessage(func(msg []byte) {
-				gzipreader, _ := gzip.NewReader(bytes.NewReader(msg))
-				data, _ := ioutil.ReadAll(gzipreader)
-				datamap := make(map[string]interface{})
-				err := json.Unmarshal(data, &datamap)
-				if err != nil {
-					log.Println("json unmarshal error for ", string(data))
-					return
-				}
+	onceWsConn.Do(func() {
+		hbpro.ws = NewWsConn("wss://api.huobi.br.com/ws")
+		hbpro.ws.Heartbeat(func() interface{} {
+			return map[string]interface{}{
+				"ping": time.Now().Unix()}
+		}, 5*time.Second)
+		hbpro.ws.ReConnect()
+		hbpro.ws.ReceiveMessage(func(msg []byte) {
+			gzipreader, _ := gzip.NewReader(bytes.NewReader(msg))
+			data, _ := ioutil.ReadAll(gzipreader)
+			datamap := make(map[string]interface{})
+			err := json.Unmarshal(data, &datamap)
+			if err != nil {
+				log.Println("json unmarshal error for ", string(data))
+				return
+			}
 
-				if datamap["ping"] != nil {
-					//log.Println(datamap)
-					hbpro.ws.UpdateActivedTime()
-					hbpro.wsSendWriteJSON(map[string]interface{}{
-						"pong": datamap["ping"]}) // 回应心跳
-					return
-				}
+			if datamap["ping"] != nil {
+				//log.Println(datamap)
+				hbpro.ws.UpdateActivedTime()
+				hbpro.ws.SendWriteJSON(map[string]interface{}{
+					"pong": datamap["ping"]}) // 回应心跳
+				return
+			}
 
-				if datamap["pong"] != nil { //
-					hbpro.ws.UpdateActivedTime()
-					return
-				}
+			if datamap["pong"] != nil { //
+				hbpro.ws.UpdateActivedTime()
+				return
+			}
 
-				if datamap["id"] != nil { //忽略订阅成功的回执消息
-					log.Println(string(data))
-					return
-				}
+			if datamap["id"] != nil { //忽略订阅成功的回执消息
+				log.Println(string(data))
+				return
+			}
 
-				ch, isok := datamap["ch"].(string)
-				if !isok {
-					log.Println("error:", string(data))
-					return
-				}
+			ch, isok := datamap["ch"].(string)
+			if !isok {
+				log.Println("error:", string(data))
+				return
+			}
 
-				tick := datamap["tick"].(map[string]interface{})
-				pair := hbpro.getPairFromChannel(ch)
-				if hbpro.wsTickerHandleMap[ch] != nil {
-					tick := hbpro.parseTickerData(tick)
-					tick.Pair = pair
-					tick.Date = ToUint64(datamap["ts"])
-					(hbpro.wsTickerHandleMap[ch])(tick)
-					return
-				}
+			tick := datamap["tick"].(map[string]interface{})
+			pair := hbpro.getPairFromChannel(ch)
+			if hbpro.wsTickerHandleMap[ch] != nil {
+				tick := hbpro.parseTickerData(tick)
+				tick.Pair = pair
+				tick.Date = ToUint64(datamap["ts"])
+				(hbpro.wsTickerHandleMap[ch])(tick)
+				return
+			}
 
-				if hbpro.wsDepthHandleMap[ch] != nil {
-					depth := hbpro.parseDepthData(tick)
-					depth.Pair = pair
-					(hbpro.wsDepthHandleMap[ch])(depth)
-					return
-				}
+			if hbpro.wsDepthHandleMap[ch] != nil {
+				depth := hbpro.parseDepthData(tick)
+				depth.Pair = pair
+				(hbpro.wsDepthHandleMap[ch])(depth)
+				return
+			}
 
-				//log.Println(string(data))
-			})
-		}
-	}
+			//log.Println(string(data))
+		})
+	})
+
 }
 
 func (hbpro *HuoBiPro) getPairFromChannel(ch string) CurrencyPair {

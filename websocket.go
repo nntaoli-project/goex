@@ -9,7 +9,7 @@ import (
 
 type WsConn struct {
 	*websocket.Conn
-	sendWsLock               sync.Mutex
+	lock                     sync.Mutex
 	url                      string
 	heartbeatIntervalTime    time.Duration
 	checkConnectIntervalTime time.Duration
@@ -18,6 +18,7 @@ type WsConn struct {
 	isClose                  bool
 	subs                     []interface{}
 }
+
 
 const (
 	SUB_TICKER      = 1 + iota
@@ -38,9 +39,22 @@ func NewWsConn(wsurl string) *WsConn {
 	return &WsConn{Conn: wsConn, url: wsurl, actived: time.Now(), checkConnectIntervalTime: 30 * time.Second, close: make(chan int, 1)}
 }
 
-func (ws *WsConn) SendWriteJSON(v interface{}) error  {
-	defer ws.sendWsLock.Unlock()
-	ws.sendWsLock.Lock()
+func (ws *WsConn) setActived(t time.Time) {
+	defer ws.lock.Unlock()
+	ws.lock.Lock()
+	ws.actived = t
+}
+
+func (ws *WsConn) getActived() time.Time {
+	defer ws.lock.Unlock()
+	ws.lock.Lock()
+	return ws.actived
+}
+
+//并发安全写入，  不要用WriteJSON，或者会导致DATA RACE
+func (ws *WsConn) SendWriteJSON(v interface{}) error {
+	defer ws.lock.Unlock()
+	ws.lock.Lock()
 
 	return ws.WriteJSON(v)
 }
@@ -52,7 +66,7 @@ func (ws *WsConn) ReConnect() {
 		for {
 			select {
 			case <-timer.C:
-				if time.Now().Sub(ws.actived) >= 2*ws.checkConnectIntervalTime {
+				if time.Now().Sub(ws.getActived()) >= 2*ws.checkConnectIntervalTime {
 					ws.Close()
 					log.Println("start reconnect websocket:", ws.url)
 					wsConn, _, err := websocket.DefaultDialer.Dial(ws.url, nil)
@@ -60,7 +74,7 @@ func (ws *WsConn) ReConnect() {
 						log.Println("reconnect fail ???")
 					} else {
 						ws.Conn = wsConn
-						ws.actived = time.Now()
+						ws.UpdateActivedTime()
 						//re subscribe
 						for _, sub := range ws.subs {
 							log.Println("subscribe:", sub)
@@ -128,7 +142,7 @@ func (ws *WsConn) ReceiveMessage(handle func(msg []byte)) {
 			case websocket.TextMessage, websocket.BinaryMessage:
 				handle(msg)
 			case websocket.PongMessage:
-				ws.actived = time.Now()
+				ws.UpdateActivedTime()
 			case websocket.CloseMessage:
 				ws.CloseWs()
 				return
@@ -140,6 +154,9 @@ func (ws *WsConn) ReceiveMessage(handle func(msg []byte)) {
 }
 
 func (ws *WsConn) UpdateActivedTime() {
+	defer ws.lock.Unlock()
+	ws.lock.Lock()
+
 	ws.actived = time.Now()
 }
 
