@@ -19,6 +19,7 @@ import (
 )
 
 var HBPOINT = NewCurrency("HBPOINT", "")
+var onceWsConn sync.Once
 
 const (
 	HB_POINT_ACCOUNT = "point"
