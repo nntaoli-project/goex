@@ -106,7 +106,7 @@ func (ctx *BitZ) placeOrder(amount, price string, pair CurrencyPair, orderSide i
 	}
 
 	if bodyDataMap["status"].(float64) != 200 {
-		return nil, errors.New(bodyDataMap["msg"].(string))
+		return nil, errors.New(fmt.Sprintf("%d %s", int(bodyDataMap["status"].(float64)), bodyDataMap["msg"].(string)))
 	}
 
 	data, isok := bodyDataMap["data"].(map[string]interface{})

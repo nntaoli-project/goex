@@ -94,7 +94,7 @@ func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
 	if size > 100 {
 		size = 100
-	} else if size < 5 {
+	} else if size < 1 {
 		size = 5
 	}
 	currencyPair2 := bn.adaptCurrencyPair(currencyPair)
