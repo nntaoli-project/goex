@@ -125,7 +125,7 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 	case COINEX:
 		_api = coinex.New(builder.client, builder.apiKey, builder.secretkey)
 	case FCOIN:
-		_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey)
+		_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey, nil)
 	case COIN58:
 		_api = coin58.New58Coin(builder.client, builder.apiKey, builder.secretkey)
 	case BIGONE:
@@ -177,7 +177,7 @@ func (builder *APIBuilder) BuildNew(exName string, params map[string]interface{}
 	case COINEX:
 		_api = coinex.New(builder.client, builder.apiKey, builder.secretkey)
 	case FCOIN:
-		_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey)
+		_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey, params)
 	case COIN58:
 		_api = coin58.New58Coin(builder.client, builder.apiKey, builder.secretkey)
 	case BIGONE:

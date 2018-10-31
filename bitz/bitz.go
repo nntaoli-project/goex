@@ -40,7 +40,7 @@ var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
 
 func New(client *http.Client, api_key, secret_key string, params map[string]interface{}) *BitZ {
 	_tradePwd := ""
-	if(params["tradePwd"] != nil){
+	if params != nil && params["tradePwd"] != nil {
 		_tradePwd = params["tradePwd"].(string)
 	}
 	return &BitZ{accessKey: api_key, secretKey: secret_key, httpClient: client, tradePwd:_tradePwd}

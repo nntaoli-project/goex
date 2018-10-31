@@ -42,8 +42,12 @@ type FCoin struct {
 	timeoffset int64
 }
 
-func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
-	fc := &FCoin{baseUrl: "https://api.fcoin.com/v2/", accessKey: apikey, secretKey: secretkey, httpClient: client}
+func NewFCoin(client *http.Client, apikey, secretkey string, params map[string]interface{}) *FCoin {
+	baseUrl := "https://api.fcoin.com/v2/"
+	if params != nil && params["baseUrl"] != nil{
+		baseUrl = params["baseUrl"].(string)
+	}
+	fc := &FCoin{baseUrl: baseUrl, accessKey: apikey, secretKey: secretkey, httpClient: client}
 	fc.setTimeOffset()
 	return fc
 }
