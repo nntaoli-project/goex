@@ -22,8 +22,6 @@ import (
 )
 
 const (
-	EXCHANGE_NAME = "cryptopia.co.nz"
-
 	API_BASE_URL = "https://www.cryptopia.co.nz/api/"
 
 	TICKERS_URI                = "GetMarkets"
@@ -63,7 +61,7 @@ func New(client *http.Client, accessKey, secretKey string) *Cryptopia {
 }
 
 func (cta *Cryptopia) GetExchangeName() string {
-	return EXCHANGE_NAME
+	return CRYPTOPIA
 }
 
 func (cta *Cryptopia) GetTickers(currency CurrencyPair) (*Ticker, error) {
@@ -292,7 +290,7 @@ func (cta *Cryptopia) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade
 	panic("not implements")
 }
 
-func (c *Cryptopia) do(method string, resource string, payload string, authNeeded bool) (response []byte, err error) {
+func (cta *Cryptopia) do(method string, resource string, payload string, authNeeded bool) (response []byte, err error) {
 	connectTimer := time.NewTimer(DEFAULT_HTTPCLIENT_TIMEOUT * time.Second)
 
 	var rawurl string
@@ -313,23 +311,23 @@ func (c *Cryptopia) do(method string, resource string, payload string, authNeede
 
 	// Auth
 	if authNeeded {
-		if len(c.accessKey) == 0 || len(c.secretKey) == 0 {
+		if len(cta.accessKey) == 0 || len(cta.secretKey) == 0 {
 			err = errors.New("You need to set API Key and API Secret to call this method")
 			return
 		}
 		nonce := strconv.FormatInt(time.Now().UnixNano(), 10)
 		md5 := md5.Sum([]byte(payload))
-		signature := c.accessKey + method + strings.ToLower(url.QueryEscape(req.URL.String())) +
+		signature := cta.accessKey + method + strings.ToLower(url.QueryEscape(req.URL.String())) +
 			nonce + base64.StdEncoding.EncodeToString(md5[:])
-		secret, _ := base64.StdEncoding.DecodeString(c.secretKey)
+		secret, _ := base64.StdEncoding.DecodeString(cta.secretKey)
 		mac := hmac.New(sha256.New, secret)
 		_, err = mac.Write([]byte(signature))
 		sig := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-		auth := "amx " + c.accessKey + ":" + sig + ":" + nonce
+		auth := "amx " + cta.accessKey + ":" + sig + ":" + nonce
 		req.Header.Add("Authorization", auth)
 	}
 
-	resp, err := c.doTimeoutRequest(connectTimer, req)
+	resp, err := cta.doTimeoutRequest(connectTimer, req)
 	if err != nil {
 		return
 	}
@@ -346,7 +344,7 @@ func (c *Cryptopia) do(method string, resource string, payload string, authNeede
 	return response, err
 }
 
-func (c Cryptopia) dumpRequest(r *http.Request) {
+func (cta Cryptopia) dumpRequest(r *http.Request) {
 	if r == nil {
 		log.Print("dumpReq ok: <nil>")
 		return
@@ -359,7 +357,7 @@ func (c Cryptopia) dumpRequest(r *http.Request) {
 	}
 }
 
-func (c Cryptopia) dumpResponse(r *http.Response) {
+func (cta Cryptopia) dumpResponse(r *http.Response) {
 	if r == nil {
 		log.Print("dumpResponse ok: <nil>")
 		return
@@ -373,7 +371,7 @@ func (c Cryptopia) dumpResponse(r *http.Response) {
 }
 
 // doTimeoutRequest do a HTTP request with timeout
-func (c *Cryptopia) doTimeoutRequest(timer *time.Timer, req *http.Request) (*http.Response, error) {
+func (cta *Cryptopia) doTimeoutRequest(timer *time.Timer, req *http.Request) (*http.Response, error) {
 	// Do the request in the background so we can check the timeout
 	type result struct {
 		resp *http.Response
@@ -381,12 +379,12 @@ func (c *Cryptopia) doTimeoutRequest(timer *time.Timer, req *http.Request) (*htt
 	}
 	done := make(chan result, 1)
 	go func() {
-		if c.debug {
-			c.dumpRequest(req)
+		if cta.debug {
+			cta.dumpRequest(req)
 		}
-		resp, err := c.httpClient.Do(req)
-		if c.debug {
-			c.dumpResponse(resp)
+		resp, err := cta.httpClient.Do(req)
+		if cta.debug {
+			cta.dumpResponse(resp)
 		}
 		done <- result{resp, err}
 	}()
@@ -399,6 +397,6 @@ func (c *Cryptopia) doTimeoutRequest(timer *time.Timer, req *http.Request) (*htt
 	}
 }
 
-func (c *Cryptopia) SetDebug(enable bool) {
-	c.debug = enable
+func (cta *Cryptopia) SetDebug(enable bool) {
+	cta.debug = enable
 }

@@ -88,4 +88,10 @@ const (
 	BITTREX     = "bittrex.com"
 	GDAX        = "gdax.com"
 	WEX_NZ      = "wex.nz"
+	BIGONE      = "big.one"
+	COIN58      = "58coin.com"
+	FCOIN       = "fcoin.com"
+	HITBTC      = "hitbtc.com"
+	BITMEX      = "bitmex.com"
+	CRYPTOPIA   = "cryptopia.co.nz"
 )
