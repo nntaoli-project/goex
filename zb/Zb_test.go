@@ -3,7 +3,6 @@ package zb
 import (
 	"github.com/nntaoli-project/GoEx"
 	"net/http"
-	"os"
 	"testing"
 )
 
@@ -14,19 +13,18 @@ var (
 )
 
 func TestZb_GetAccount(t *testing.T) {
-	os.Setenv("https_proxy", "http://120.27.230.57:30000")
 	acc, err := zb.GetAccount()
 	t.Log(err)
 	t.Log(acc.SubAccounts[goex.BTC])
 }
 
 func TestZb_GetTicker(t *testing.T) {
-	ticker, _ := zb.GetTicker(goex.LTC_BTC)
+	ticker, _ := zb.GetTicker(goex.BCH_USD)
 	t.Log(ticker)
 }
 
 func TestZb_GetDepth(t *testing.T) {
-	dep, _ := zb.GetDepth(2, goex.ETH_USDT)
+	dep, _ := zb.GetDepth(2, goex.BCH_USDT)
 	t.Log(dep)
 }
 

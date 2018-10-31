@@ -34,7 +34,7 @@ func (poloniex *Poloniex) MarginLimitSell(amount, price string, currency Currenc
 func (poloniex *Poloniex) GetMarginPosition(currency CurrencyPair) (*PoloniexMarginPosition, error) {
 	values := url.Values{}
 	values.Set("command", "getMarginPosition")
-	values.Set("currencyPair", poloniex.adaptCurrencyPair(currency).ToSymbol2("_"))
+	values.Set("currencyPair", currency.AdaptUsdToUsdt().Reverse().ToSymbol("_"))
 	result := PoloniexMarginPosition{}
 	err := poloniex.sendAuthenticatedRequest(values, &result)
 	if err != nil {
@@ -46,7 +46,7 @@ func (poloniex *Poloniex) GetMarginPosition(currency CurrencyPair) (*PoloniexMar
 func (poloniex *Poloniex) CloseMarginPosition(currency CurrencyPair) (bool, error) {
 	values := url.Values{}
 	values.Set("command", "closeMarginPosition")
-	values.Set("currencyPair", poloniex.adaptCurrencyPair(currency).ToSymbol2("_"))
+	values.Set("currencyPair", currency.AdaptUsdToUsdt().Reverse().ToSymbol("_"))
 	result := PoloniexGenericResponse{}
 	err := poloniex.sendAuthenticatedRequest(values, &result)
 	if err != nil {

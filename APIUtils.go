@@ -70,7 +70,7 @@ func CancelAllUnfinishedOrders(api API, currencyPair CurrencyPair) int {
 	if orders != nil {
 		c := 0
 		for _, ord := range orders.([]Order) {
-			_, err := api.CancelOrder(fmt.Sprintf("%d", ord.OrderID), currencyPair)
+			_, err := api.CancelOrder(ord.OrderID2, currencyPair)
 			if err != nil {
 				log.Println(err)
 			}

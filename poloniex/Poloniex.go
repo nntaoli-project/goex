@@ -45,7 +45,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		return nil, err
 	}
 
-	pair := poloniex.adaptCurrencyPair(currency).ToSymbol2("_")
+	pair := currency.AdaptUsdToUsdt().Reverse().ToSymbol("_")
 	//println(pair)
 	tickermap, ok := respmap[pair].(map[string]interface{})
 	if !ok {
@@ -53,6 +53,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	}
 
 	ticker := new(Ticker)
+	ticker.Pair = currency
 	ticker.High, _ = strconv.ParseFloat(tickermap["high24hr"].(string), 64)
 	ticker.Low, _ = strconv.ParseFloat(tickermap["low24hr"].(string), 64)
 	ticker.Last, _ = strconv.ParseFloat(tickermap["last"].(string), 64)
@@ -66,7 +67,7 @@ func (poloniex *Poloniex) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 func (poloniex *Poloniex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	respmap, err := HttpGet(poloniex.client, PUBLIC_URL+
-		fmt.Sprintf(ORDER_BOOK_API, poloniex.adaptCurrencyPair(currency).ToSymbol2("_"), size))
+		fmt.Sprintf(ORDER_BOOK_API, currency.AdaptUsdToUsdt().Reverse().ToSymbol("_"), size))
 
 	if err != nil {
 		log.Println(err)
@@ -85,7 +86,7 @@ func (poloniex *Poloniex) GetDepth(size int, currency CurrencyPair) (*Depth, err
 	}
 
 	var depth Depth
-
+	depth.Pair = currency
 	for _, v := range respmap["asks"].([]interface{}) {
 		var dr DepthRecord
 		for i, vv := range v.([]interface{}) {
@@ -121,7 +122,7 @@ func (Poloniex *Poloniex) GetKlineRecords(currency CurrencyPair, period, size, s
 func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currency CurrencyPair) (*Order, error) {
 	postData := url.Values{}
 	postData.Set("command", command)
-	postData.Set("currencyPair", poloniex.adaptCurrencyPair(currency).ToSymbol2("_"))
+	postData.Set("currencyPair", currency.AdaptUsdToUsdt().Reverse().ToSymbol("_"))
 	postData.Set("rate", price)
 	postData.Set("amount", amount)
 
@@ -286,7 +287,7 @@ func (poloniex *Poloniex) GetOneOrder(orderId string, currency CurrencyPair) (*O
 func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	postData := url.Values{}
 	postData.Set("command", "returnOpenOrders")
-	postData.Set("currencyPair", poloniex.adaptCurrencyPair(currency).ToSymbol2("_"))
+	postData.Set("currencyPair", currency.AdaptUsdToUsdt().Reverse().ToSymbol("_"))
 
 	sign, err := poloniex.buildPostForm(&postData)
 	if err != nil {
@@ -377,6 +378,9 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 		subAcc.Amount, _ = strconv.ParseFloat(vv["available"].(string), 64)
 		subAcc.ForzenAmount, _ = strconv.ParseFloat(vv["onOrders"].(string), 64)
 		acc.SubAccounts[subAcc.Currency] = subAcc
+		if currency.Symbol == "USDT" {
+			acc.SubAccounts[USD] = subAcc
+		}
 	}
 
 	return acc, nil
@@ -496,24 +500,6 @@ func (poloniex *Poloniex) buildPostForm(postForm *url.Values) (string, error) {
 	}
 	//log.Println(sign)
 	return sign, nil
-}
-
-func (poloniex *Poloniex) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
-	var currencyA Currency = pair.CurrencyA
-	var currencyB Currency = pair.CurrencyB
-
-	if pair.CurrencyA == BCC {
-		currencyA = BCH
-	}
-
-	//
-	//if pair.CurrencyB == USD {
-	//	currencyB = NewCurrency("USDT", "")
-	//} else {
-	//	currencyB = pair.CurrencyB
-	//}
-	//
-	return NewCurrencyPair(currencyA, currencyB)
 }
 
 func (poloniex *Poloniex) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {

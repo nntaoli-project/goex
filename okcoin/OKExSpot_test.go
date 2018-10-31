@@ -20,3 +20,8 @@ func TestOKExSpot_GetDepth(t *testing.T) {
 	assert.Nil(t, err)
 	t.Log(dep)
 }
+
+func TestOKExSpot_GetKlineRecords(t *testing.T) {
+	klines, err := okexSpot.GetKlineRecords(goex.LTC_BTC, goex.KLINE_PERIOD_1MIN, 1000, -1)
+	t.Log(err, klines)
+}

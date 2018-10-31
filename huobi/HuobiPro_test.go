@@ -3,14 +3,35 @@ package huobi
 import (
 	"github.com/nntaoli-project/GoEx"
 	"github.com/stretchr/testify/assert"
-	"internal/log"
+	"net"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
+	"log"
+)
+
+var httpProxyClient = &http.Client{
+	Transport: &http.Transport{
+		Proxy: func(req *http.Request) (*url.URL, error) {
+			return &url.URL{
+				Scheme: "socks5",
+				Host:   "127.0.0.1:1080"}, nil
+		},
+		Dial: (&net.Dialer{
+			Timeout: 10 * time.Second,
+		}).Dial,
+	},
+	Timeout: 10 * time.Second,
+}
+
+var (
+	apikey    = ""
+	secretkey = ""
 )
 
 //
-var hbpro = NewHuobiPro(http.DefaultClient, "", "", "")
+var hbpro = NewHuoBiProSpot(httpProxyClient, apikey, secretkey)
 
 func TestHuobiPro_GetTicker(t *testing.T) {
 	ticker, err := hbpro.GetTicker(goex.XRP_BTC)
@@ -19,21 +40,30 @@ func TestHuobiPro_GetTicker(t *testing.T) {
 }
 
 func TestHuobiPro_GetDepth(t *testing.T) {
-	dep, err := hbpro.GetDepth(2, goex.LTC_BTC)
+	dep, err := hbpro.GetDepth(2, goex.LTC_USDT)
 	assert.Nil(t, err)
-	t.Log(dep)
+	t.Log(dep.AskList)
+	t.Log(dep.BidList)
 }
 
-func TestHuobiPro_GetAccountId(t *testing.T) {
-	id, err := hbpro.GetAccountId()
+func TestHuobiPro_GetAccountInfo(t *testing.T) {
+	info, err := hbpro.GetAccountInfo("point")
 	assert.Nil(t, err)
-	t.Log(id)
+	t.Log(info)
 }
 
+//获取点卡剩余
+func TestHuoBiPro_GetPoint(t *testing.T) {
+	point := NewHuoBiProPoint(httpProxyClient, apikey, secretkey)
+	acc, _ := point.GetAccount()
+	t.Log(acc.SubAccounts[HBPOINT])
+}
+
+//获取现货资产信息
 func TestHuobiPro_GetAccount(t *testing.T) {
 	acc, err := hbpro.GetAccount()
 	assert.Nil(t, err)
-	t.Log(acc.SubAccounts[goex.LTC], acc.SubAccounts[goex.BTC], acc.SubAccounts[goex.BCH])
+	t.Log(acc.SubAccounts)
 }
 
 func TestHuobiPro_LimitBuy(t *testing.T) {

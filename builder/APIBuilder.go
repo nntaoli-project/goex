@@ -21,6 +21,10 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"github.com/nntaoli-project/GoEx/fcoin"
+	"github.com/nntaoli-project/GoEx/coin58"
+	"github.com/nntaoli-project/GoEx/bigone"
+	"github.com/nntaoli-project/GoEx/hitbtc"
 )
 
 type APIBuilder struct {
@@ -89,8 +93,6 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 	switch exName {
 	case OKCOIN_CN:
 		_api = okcoin.New(builder.client, builder.apiKey, builder.secretkey)
-	case HUOBI:
-		_api = huobi.New(builder.client, builder.apiKey, builder.secretkey)
 	case POLONIEX:
 		_api = poloniex.New(builder.client, builder.apiKey, builder.secretkey)
 	case OKCOIN_COM:
@@ -98,7 +100,7 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 	case BITSTAMP:
 		_api = bitstamp.NewBitstamp(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
 	case HUOBI_PRO:
-		_api = huobi.NewHuobiPro(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
+		_api = huobi.NewHuoBiProSpot(builder.client, builder.apiKey, builder.secretkey)
 	case OKEX:
 		_api = okcoin.NewOKExSpot(builder.client, builder.apiKey, builder.secretkey)
 	case BITFINEX:
@@ -121,6 +123,14 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = zb.New(builder.client, builder.apiKey, builder.secretkey)
 	case COINEX:
 		_api = coinex.New(builder.client, builder.apiKey, builder.secretkey)
+	case FCOIN:
+		_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey)
+	case COIN58:
+		_api = coin58.New58Coin(builder.client, builder.apiKey, builder.secretkey)
+	case BIGONE:
+		_api = bigone.New(builder.client, builder.apiKey, builder.secretkey)
+	case HITBTC:
+		_api = hitbtc.New(builder.client, builder.apiKey, builder.secretkey)
 	default:
 		panic("exchange name error [" + exName + "].")
 

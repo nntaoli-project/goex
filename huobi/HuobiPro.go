@@ -4,42 +4,572 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"net/http"
+	"net/url"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 )
 
-type HuobiPro struct {
-	*HuoBi_V2
+var HBPOINT = NewCurrency("HBPOINT", "")
+
+const (
+	HB_POINT_ACCOUNT = "point"
+	HB_SPOT_ACCOUNT  = "spot"
+)
+
+type AccountInfo struct {
+	Id    string
+	Type  string
+	State string
+}
+
+type HuoBiPro struct {
+	httpClient        *http.Client
+	baseUrl           string
+	accountId         string
+	accessKey         string
+	secretKey         string
+	ECDSAPrivateKey   string
 	ws                *WsConn
 	createWsLock      sync.Mutex
 	wsTickerHandleMap map[string]func(*Ticker)
 	wsDepthHandleMap  map[string]func(*Depth)
 }
 
-func NewHuobiPro(client *http.Client, apikey, secretkey, accountId string) *HuobiPro {
-	hbv2 := new(HuoBi_V2)
-	hbv2.accountId = accountId
-	hbv2.accessKey = apikey
-	hbv2.secretKey = secretkey
-	hbv2.httpClient = client
-	hbv2.baseUrl = "https://api.huobipro.com"
-	return &HuobiPro{HuoBi_V2: hbv2, wsTickerHandleMap: make(map[string]func(*Ticker)), wsDepthHandleMap: make(map[string]func(*Depth))}
+func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoBiPro {
+	hbpro := new(HuoBiPro)
+	hbpro.baseUrl = "https://api.huobi.br.com"
+	hbpro.httpClient = client
+	hbpro.accessKey = apikey
+	hbpro.secretKey = secretkey
+	hbpro.accountId = accountId
+	hbpro.wsDepthHandleMap = make(map[string]func(*Depth))
+	hbpro.wsTickerHandleMap = make(map[string]func(*Ticker))
+	return hbpro
 }
 
-func (hbpro *HuobiPro) createWsConn() {
+/**
+ *现货交易
+ */
+func NewHuoBiProSpot(client *http.Client, apikey, secretkey string) *HuoBiPro {
+	hb := NewHuoBiPro(client, apikey, secretkey, "")
+	accinfo, err := hb.GetAccountInfo(HB_SPOT_ACCOUNT)
+	if err != nil {
+		hb.accountId = ""
+		//panic(err)
+	} else {
+		hb.accountId = accinfo.Id
+		log.Println("account state :", accinfo.State)
+	}
+	return hb
+}
+
+/**
+ * 点卡账户
+ */
+func NewHuoBiProPoint(client *http.Client, apikey, secretkey string) *HuoBiPro {
+	hb := NewHuoBiPro(client, apikey, secretkey, "")
+	accinfo, err := hb.GetAccountInfo(HB_POINT_ACCOUNT)
+	if err != nil {
+		panic(err)
+	}
+	hb.accountId = accinfo.Id
+	log.Println("account state :", accinfo.State)
+	return hb
+}
+
+func (hbpro *HuoBiPro) GetAccountInfo(acc string) (AccountInfo, error) {
+	path := "/v1/account/accounts"
+	params := &url.Values{}
+	hbpro.buildPostForm("GET", path, params)
+
+	//log.Println(hbpro.baseUrl + path + "?" + params.Encode())
+
+	respmap, err := HttpGet(hbpro.httpClient, hbpro.baseUrl+path+"?"+params.Encode())
+	if err != nil {
+		return AccountInfo{}, err
+	}
+	//log.Println(respmap)
+	if respmap["status"].(string) != "ok" {
+		return AccountInfo{}, errors.New(respmap["err-code"].(string))
+	}
+
+	var info AccountInfo
+
+	data := respmap["data"].([]interface{})
+	for _, v := range data {
+		iddata := v.(map[string]interface{})
+		if iddata["type"].(string) == acc {
+			info.Id = fmt.Sprintf("%.0f", iddata["id"])
+			info.Type = acc
+			info.State = iddata["state"].(string)
+			break
+		}
+	}
+	//log.Println(respmap)
+	return info, nil
+}
+
+func (hbpro *HuoBiPro) GetAccount() (*Account, error) {
+	path := fmt.Sprintf("/v1/account/accounts/%s/balance", hbpro.accountId)
+	params := &url.Values{}
+	params.Set("accountId-id", hbpro.accountId)
+	hbpro.buildPostForm("GET", path, params)
+
+	urlStr := hbpro.baseUrl + path + "?" + params.Encode()
+	//println(urlStr)
+	respmap, err := HttpGet(hbpro.httpClient, urlStr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	//log.Println(respmap)
+
+	if respmap["status"].(string) != "ok" {
+		return nil, errors.New(respmap["err-code"].(string))
+	}
+
+	datamap := respmap["data"].(map[string]interface{})
+	if datamap["state"].(string) != "working" {
+		return nil, errors.New(datamap["state"].(string))
+	}
+
+	list := datamap["list"].([]interface{})
+	acc := new(Account)
+	acc.SubAccounts = make(map[Currency]SubAccount, 6)
+	acc.Exchange = hbpro.GetExchangeName()
+
+	subAccMap := make(map[Currency]*SubAccount)
+
+	for _, v := range list {
+		balancemap := v.(map[string]interface{})
+		currencySymbol := balancemap["currency"].(string)
+		currency := NewCurrency(currencySymbol, "")
+		typeStr := balancemap["type"].(string)
+		balance := ToFloat64(balancemap["balance"])
+		if subAccMap[currency] == nil {
+			subAccMap[currency] = new(SubAccount)
+		}
+		subAccMap[currency].Currency = currency
+		switch typeStr {
+		case "trade":
+			subAccMap[currency].Amount = balance
+		case "frozen":
+			subAccMap[currency].ForzenAmount = balance
+		}
+	}
+
+	for k, v := range subAccMap {
+		acc.SubAccounts[k] = *v
+	}
+
+	return acc, nil
+}
+
+func (hbpro *HuoBiPro) placeOrder(amount, price string, pair CurrencyPair, orderType string) (string, error) {
+	path := "/v1/order/orders/place"
+	params := url.Values{}
+	params.Set("account-id", hbpro.accountId)
+	params.Set("amount", amount)
+	params.Set("symbol", strings.ToLower(pair.ToSymbol("")))
+	params.Set("type", orderType)
+
+	switch orderType {
+	case "buy-limit", "sell-limit":
+		params.Set("price", price)
+	}
+
+	hbpro.buildPostForm("POST", path, &params)
+
+	resp, err := HttpPostForm3(hbpro.httpClient, hbpro.baseUrl+path+"?"+params.Encode(), hbpro.toJson(params),
+		map[string]string{"Content-Type": "application/json", "Accept-Language": "zh-cn"})
+	if err != nil {
+		return "", err
+	}
+
+	respmap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respmap)
+	if err != nil {
+		return "", err
+	}
+
+	if respmap["status"].(string) != "ok" {
+		return "", errors.New(respmap["err-code"].(string))
+	}
+
+	return respmap["data"].(string), nil
+}
+
+func (hbpro *HuoBiPro) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	orderId, err := hbpro.placeOrder(amount, price, currency, "buy-limit")
+	if err != nil {
+		return nil, err
+	}
+	return &Order{
+		Currency: currency,
+		OrderID:  ToInt(orderId),
+		OrderID2: orderId,
+		Amount:   ToFloat64(amount),
+		Price:    ToFloat64(price),
+		Side:     BUY}, nil
+}
+
+func (hbpro *HuoBiPro) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	orderId, err := hbpro.placeOrder(amount, price, currency, "sell-limit")
+	if err != nil {
+		return nil, err
+	}
+	return &Order{
+		Currency: currency,
+		OrderID:  ToInt(orderId),
+		OrderID2: orderId,
+		Amount:   ToFloat64(amount),
+		Price:    ToFloat64(price),
+		Side:     SELL}, nil
+}
+
+func (hbpro *HuoBiPro) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	orderId, err := hbpro.placeOrder(amount, price, currency, "buy-market")
+	if err != nil {
+		return nil, err
+	}
+	return &Order{
+		Currency: currency,
+		OrderID:  ToInt(orderId),
+		OrderID2: orderId,
+		Amount:   ToFloat64(amount),
+		Price:    ToFloat64(price),
+		Side:     BUY_MARKET}, nil
+}
+
+func (hbpro *HuoBiPro) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	orderId, err := hbpro.placeOrder(amount, price, currency, "sell-market")
+	if err != nil {
+		return nil, err
+	}
+	return &Order{
+		Currency: currency,
+		OrderID:  ToInt(orderId),
+		OrderID2: orderId,
+		Amount:   ToFloat64(amount),
+		Price:    ToFloat64(price),
+		Side:     SELL_MARKET}, nil
+}
+
+func (hbpro *HuoBiPro) parseOrder(ordmap map[string]interface{}) Order {
+	ord := Order{
+		OrderID:    ToInt(ordmap["id"]),
+		OrderID2:   fmt.Sprint(ToInt(ordmap["id"])),
+		Amount:     ToFloat64(ordmap["amount"]),
+		Price:      ToFloat64(ordmap["price"]),
+		DealAmount: ToFloat64(ordmap["field-amount"]),
+		Fee:        ToFloat64(ordmap["field-fees"]),
+		OrderTime:  ToInt(ordmap["created-at"]),
+	}
+
+	state := ordmap["state"].(string)
+	switch state {
+	case "submitted", "pre-submitted":
+		ord.Status = ORDER_UNFINISH
+	case "filled":
+		ord.Status = ORDER_FINISH
+	case "partial-filled":
+		ord.Status = ORDER_PART_FINISH
+	case "canceled", "partial-canceled":
+		ord.Status = ORDER_CANCEL
+	default:
+		ord.Status = ORDER_UNFINISH
+	}
+
+	if ord.DealAmount > 0.0 {
+		ord.AvgPrice = ToFloat64(ordmap["field-cash-amount"]) / ord.DealAmount
+	}
+
+	typeS := ordmap["type"].(string)
+	switch typeS {
+	case "buy-limit":
+		ord.Side = BUY
+	case "buy-market":
+		ord.Side = BUY_MARKET
+	case "sell-limit":
+		ord.Side = SELL
+	case "sell-market":
+		ord.Side = SELL_MARKET
+	}
+	return ord
+}
+
+func (hbpro *HuoBiPro) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
+	path := "/v1/order/orders/" + orderId
+	params := url.Values{}
+	hbpro.buildPostForm("GET", path, &params)
+	respmap, err := HttpGet(hbpro.httpClient, hbpro.baseUrl+path+"?"+params.Encode())
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(string) != "ok" {
+		return nil, errors.New(respmap["err-code"].(string))
+	}
+
+	datamap := respmap["data"].(map[string]interface{})
+	order := hbpro.parseOrder(datamap)
+	order.Currency = currency
+	//log.Println(respmap)
+	return &order, nil
+}
+
+func (hbpro *HuoBiPro) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
+	return hbpro.getOrders(queryOrdersParams{
+		pair:   currency,
+		states: "pre-submitted,submitted,partial-filled",
+		size:   100,
+		//direct:""
+	})
+}
+
+func (hbpro *HuoBiPro) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
+	path := fmt.Sprintf("/v1/order/orders/%s/submitcancel", orderId)
+	params := url.Values{}
+	hbpro.buildPostForm("POST", path, &params)
+	resp, err := HttpPostForm3(hbpro.httpClient, hbpro.baseUrl+path+"?"+params.Encode(), hbpro.toJson(params),
+		map[string]string{"Content-Type": "application/json", "Accept-Language": "zh-cn"})
+	if err != nil {
+		return false, err
+	}
+
+	var respmap map[string]interface{}
+	err = json.Unmarshal(resp, &respmap)
+	if err != nil {
+		return false, err
+	}
+
+	if respmap["status"].(string) != "ok" {
+		return false, errors.New(string(resp))
+	}
+
+	return true, nil
+}
+
+func (hbpro *HuoBiPro) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+	return hbpro.getOrders(queryOrdersParams{
+		pair:   currency,
+		size:   pageSize,
+		states: "partial-canceled,filled",
+		direct: "next",
+	})
+}
+
+type queryOrdersParams struct {
+	types,
+	startDate,
+	endDate,
+	states,
+	from,
+	direct string
+	size int
+	pair CurrencyPair
+}
+
+func (hbpro *HuoBiPro) getOrders(queryparams queryOrdersParams) ([]Order, error) {
+	path := "/v1/order/orders"
+	params := url.Values{}
+	params.Set("symbol", strings.ToLower(queryparams.pair.ToSymbol("")))
+	params.Set("states", queryparams.states)
+
+	if queryparams.direct != "" {
+		params.Set("direct", queryparams.direct)
+	}
+
+	if queryparams.size > 0 {
+		params.Set("size", fmt.Sprint(queryparams.size))
+	}
+
+	hbpro.buildPostForm("GET", path, &params)
+	respmap, err := HttpGet(hbpro.httpClient, fmt.Sprintf("%s%s?%s", hbpro.baseUrl, path, params.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(string) != "ok" {
+		return nil, errors.New(respmap["err-code"].(string))
+	}
+
+	datamap := respmap["data"].([]interface{})
+	var orders []Order
+	for _, v := range datamap {
+		ordmap := v.(map[string]interface{})
+		ord := hbpro.parseOrder(ordmap)
+		ord.Currency = queryparams.pair
+		orders = append(orders, ord)
+	}
+
+	return orders, nil
+}
+
+func (hbpro *HuoBiPro) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
+	url := hbpro.baseUrl + "/market/detail/merged?symbol=" + strings.ToLower(currencyPair.ToSymbol(""))
+	respmap, err := HttpGet(hbpro.httpClient, url)
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(string) == "error" {
+		return nil, errors.New(respmap["err-msg"].(string))
+	}
+
+	tickmap, ok := respmap["tick"].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("tick assert error")
+	}
+
+	ticker := new(Ticker)
+	ticker.Vol = ToFloat64(tickmap["amount"])
+	ticker.Low = ToFloat64(tickmap["low"])
+	ticker.High = ToFloat64(tickmap["high"])
+	bid, isOk := tickmap["bid"].([]interface{})
+	if isOk != true {
+		return nil, errors.New("no bid")
+	}
+	ask, isOk := tickmap["ask"].([]interface{})
+	if isOk != true {
+		return nil, errors.New("no ask")
+	}
+	ticker.Buy = ToFloat64(bid[0])
+	ticker.Sell = ToFloat64(ask[0])
+	ticker.Last = ToFloat64(tickmap["close"])
+	ticker.Date = ToUint64(respmap["ts"])
+
+	return ticker, nil
+}
+
+func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
+	url := hbpro.baseUrl + "/market/depth?symbol=%s&type=step0"
+	respmap, err := HttpGet(hbpro.httpClient, fmt.Sprintf(url, strings.ToLower(currency.ToSymbol(""))))
+	if err != nil {
+		return nil, err
+	}
+
+	if "ok" != respmap["status"].(string) {
+		return nil, errors.New(respmap["err-msg"].(string))
+	}
+
+	tick, _ := respmap["tick"].(map[string]interface{})
+
+	return hbpro.parseDepthData(tick), nil
+}
+
+//倒序
+func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+	url := hbpro.baseUrl + "/market/history/kline?period=%s&size=%d&symbol=%s"
+	symbol := strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol(""))
+	periodS := "1min"
+	switch period {
+	case KLINE_PERIOD_1MIN:
+		periodS = "1min"
+	case KLINE_PERIOD_5MIN:
+		periodS = "5min"
+	case KLINE_PERIOD_15MIN:
+		periodS = "15min"
+	case KLINE_PERIOD_30MIN:
+		periodS = "30min"
+	case KLINE_PERIOD_60MIN:
+		periodS = "60min"
+	case KLINE_PERIOD_1DAY:
+		periodS = "1day"
+	case KLINE_PERIOD_1WEEK:
+		periodS = "1week"
+	case KLINE_PERIOD_1MONTH:
+		periodS = "1mon"
+	case KLINE_PERIOD_1YEAR:
+		periodS = "1year"
+	default:
+		periodS = "1min"
+	}
+
+	ret, err := HttpGet(hbpro.httpClient, fmt.Sprintf(url, periodS, size, symbol))
+	if err != nil {
+		return nil, err
+	}
+
+	data, ok := ret["data"].([]interface{})
+	if !ok {
+		return nil, errors.New("response format error")
+	}
+
+	var klines []Kline
+	for _, e := range data {
+		item := e.(map[string]interface{})
+		klines = append(klines, Kline{
+			Pair:      currency,
+			Open:      ToFloat64(item["open"]),
+			Close:     ToFloat64(item["close"]),
+			High:      ToFloat64(item["high"]),
+			Low:       ToFloat64(item["low"]),
+			Vol:       ToFloat64(item["vol"]),
+			Timestamp: int64(ToUint64(item["id"]))})
+	}
+
+	return klines, nil
+}
+
+//非个人，整个交易所的交易记录
+func (hbpro *HuoBiPro) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	panic("not implement")
+}
+
+type ecdsaSignature struct {
+	R, S *big.Int
+}
+
+func (hbpro *HuoBiPro) buildPostForm(reqMethod, path string, postForm *url.Values) error {
+	postForm.Set("AccessKeyId", hbpro.accessKey)
+	postForm.Set("SignatureMethod", "HmacSHA256")
+	postForm.Set("SignatureVersion", "2")
+	postForm.Set("Timestamp", time.Now().UTC().Format("2006-01-02T15:04:05"))
+	domain := strings.Replace(hbpro.baseUrl, "https://", "", len(hbpro.baseUrl))
+	payload := fmt.Sprintf("%s\n%s\n%s\n%s", reqMethod, domain, path, postForm.Encode())
+	sign, _ := GetParamHmacSHA256Base64Sign(hbpro.secretKey, payload)
+	postForm.Set("Signature", sign)
+
+	/**
+	p, _ := pem.Decode([]byte(hbpro.ECDSAPrivateKey))
+	pri, _ := secp256k1_go.PrivKeyFromBytes(secp256k1_go.S256(), p.Bytes)
+	signer, _ := pri.Sign([]byte(sign))
+	signAsn, _ := asn1.Marshal(signer)
+	priSign := base64.StdEncoding.EncodeToString(signAsn)
+	postForm.Set("PrivateSignature", priSign)
+	*/
+
+	return nil
+}
+
+func (hbpro *HuoBiPro) toJson(params url.Values) string {
+	parammap := make(map[string]string)
+	for k, v := range params {
+		parammap[k] = v[0]
+	}
+	jsonData, _ := json.Marshal(parammap)
+	return string(jsonData)
+}
+
+func (hbpro *HuoBiPro) createWsConn() {
 	if hbpro.ws == nil {
 		//connect wsx
 		hbpro.createWsLock.Lock()
 		defer hbpro.createWsLock.Unlock()
 
 		if hbpro.ws == nil {
-			hbpro.ws = NewWsConn("wss://api.huobipro.com/ws")
+			hbpro.ws = NewWsConn("wss://api.huobi.br.com/ws")
 			hbpro.ws.Heartbeat(func() interface{} {
 				return map[string]interface{}{
 					"ping": time.Now().Unix()}
@@ -56,12 +586,15 @@ func (hbpro *HuobiPro) createWsConn() {
 				}
 
 				if datamap["ping"] != nil {
+					//log.Println(datamap)
+					hbpro.ws.UpdateActivedTime()
 					hbpro.ws.WriteJSON(map[string]interface{}{
 						"pong": datamap["ping"]}) // 回应心跳
 					return
 				}
 
 				if datamap["pong"] != nil { //
+					hbpro.ws.UpdateActivedTime()
 					return
 				}
 
@@ -77,22 +610,64 @@ func (hbpro *HuobiPro) createWsConn() {
 				}
 
 				tick := datamap["tick"].(map[string]interface{})
+				pair := hbpro.getPairFromChannel(ch)
 				if hbpro.wsTickerHandleMap[ch] != nil {
+					tick := hbpro.parseTickerData(tick)
+					tick.Pair = pair
+					tick.Date = ToUint64(datamap["ts"])
+					(hbpro.wsTickerHandleMap[ch])(tick)
 					return
 				}
 
 				if hbpro.wsDepthHandleMap[ch] != nil {
-					(hbpro.wsDepthHandleMap[ch])(hbpro.parseDepthData(tick))
+					depth :=hbpro.parseDepthData(tick)
+					depth.Pair = pair
+					(hbpro.wsDepthHandleMap[ch])(depth)
 					return
 				}
 
-				log.Println(string(data))
+				//log.Println(string(data))
 			})
 		}
 	}
 }
 
-func (hbpro *HuobiPro) parseDepthData(tick map[string]interface{}) *Depth {
+func (hbpro *HuoBiPro) getPairFromChannel(ch string) CurrencyPair {
+
+	var currA, currB string
+	if strings.HasSuffix(ch, "usdt.detail") {
+		currB = "usdt"
+	} else if strings.HasSuffix(ch, "husd.detail") {
+		currB = "husd"
+	} else if strings.HasSuffix(ch, "btc.detail") {
+		currB = "btc"
+	} else if strings.HasSuffix(ch, "eth.detail") {
+		currB = "eth"
+	} else if strings.HasSuffix(ch, "ht.detail") {
+		currB = "ht"
+	}
+
+	currA = strings.TrimPrefix(ch, "market.")
+	currA = strings.TrimSuffix(currA, currB+".detail")
+
+	a := NewCurrency(currA, "")
+	b := NewCurrency(currB, "")
+
+	pair := NewCurrencyPair(a, b)
+	return pair
+}
+
+func (hbpro *HuoBiPro) parseTickerData(tick map[string]interface{}) *Ticker {
+	t := new(Ticker)
+
+	t.Last = ToFloat64(tick["close"])
+	t.Low = ToFloat64(tick["low"])
+	t.Vol = ToFloat64(tick["vol"])
+	t.High = ToFloat64(tick["high"])
+	return t
+}
+
+func (hbpro *HuoBiPro) parseDepthData(tick map[string]interface{}) *Depth {
 	bids, _ := tick["bids"].([]interface{})
 	asks, _ := tick["asks"].([]interface{})
 
@@ -113,14 +688,16 @@ func (hbpro *HuobiPro) parseDepthData(tick map[string]interface{}) *Depth {
 		depth.BidList = append(depth.BidList, dr)
 	}
 
+	sort.Sort(sort.Reverse(depth.AskList))
+
 	return depth
 }
 
-func (hbpro *HuobiPro) GetExchangeName() string {
+func (hbpro *HuoBiPro) GetExchangeName() string {
 	return HUOBI_PRO
 }
 
-func (hbpro *HuobiPro) GetTickerWithWs(pair CurrencyPair, handle func(ticker *Ticker)) error {
+func (hbpro *HuoBiPro) GetTickerWithWs(pair CurrencyPair, handle func(ticker *Ticker)) error {
 	hbpro.createWsConn()
 	sub := fmt.Sprintf("market.%s.detail", strings.ToLower(pair.ToSymbol("")))
 	hbpro.wsTickerHandleMap[sub] = handle
@@ -129,7 +706,7 @@ func (hbpro *HuobiPro) GetTickerWithWs(pair CurrencyPair, handle func(ticker *Ti
 		"sub": sub})
 }
 
-func (hbpro *HuobiPro) GetDepthWithWs(pair CurrencyPair, handle func(dep *Depth)) error {
+func (hbpro *HuoBiPro) GetDepthWithWs(pair CurrencyPair, handle func(dep *Depth)) error {
 	hbpro.createWsConn()
 	sub := fmt.Sprintf("market.%s.depth.step0", strings.ToLower(pair.ToSymbol("")))
 	hbpro.wsDepthHandleMap[sub] = handle

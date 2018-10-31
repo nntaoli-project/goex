@@ -67,7 +67,7 @@ func (bm *Bitstamp) GetDepthWithWs(pair goex.CurrencyPair, handle func(*goex.Dep
 		Event: "pusher:subscribe",
 		Data: map[string]interface{}{
 			"channel": channel}}
-	return bm.ws.WriteJSON(e)
+	return bm.ws.Subscribe(e)
 }
 
 func (bm *Bitstamp) parseDepth(dep string) *goex.Depth {

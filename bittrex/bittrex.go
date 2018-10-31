@@ -5,6 +5,7 @@ import (
 	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"sort"
+	"errors"
 )
 
 type Bittrex struct {
@@ -80,8 +81,10 @@ func (bx *Bittrex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		return nil, errCode
 	}
 
-	result := resp["result"].(map[string]interface{})
-
+	result, err2 := resp["result"].(map[string]interface{})
+	if err2 != true {
+		return nil, errors.New(resp["message"].(string))
+	}
 	bids, _ := result["buy"].([]interface{})
 	asks, _ := result["sell"].([]interface{})
 
