@@ -84,6 +84,14 @@ func NewHuoBiProPoint(client *http.Client, apikey, secretkey string) *HuoBiPro {
 	return hb
 }
 
+func GetErrorMsg(resp map[string]interface{}) string {
+	err := resp["err-code"].(string)
+	if resp["err-msg"] != nil {
+		err = err + " : " + resp["err-msg"].(string)
+	}
+	return err
+}
+
 func (hbpro *HuoBiPro) GetAccountInfo(acc string) (AccountInfo, error) {
 	path := "/v1/account/accounts"
 	params := &url.Values{}
@@ -97,7 +105,7 @@ func (hbpro *HuoBiPro) GetAccountInfo(acc string) (AccountInfo, error) {
 	}
 	//log.Println(respmap)
 	if respmap["status"].(string) != "ok" {
-		return AccountInfo{}, errors.New(respmap["err-code"].(string))
+		return AccountInfo{}, errors.New(GetErrorMsg(respmap))
 	}
 
 	var info AccountInfo
@@ -133,7 +141,7 @@ func (hbpro *HuoBiPro) GetAccount() (*Account, error) {
 	//log.Println(respmap)
 
 	if respmap["status"].(string) != "ok" {
-		return nil, errors.New(respmap["err-code"].(string))
+		return nil, errors.New(GetErrorMsg(respmap))
 	}
 
 	datamap := respmap["data"].(map[string]interface{})
@@ -201,7 +209,7 @@ func (hbpro *HuoBiPro) placeOrder(amount, price string, pair CurrencyPair, order
 	}
 
 	if respmap["status"].(string) != "ok" {
-		return "", errors.New(respmap["err-code"].(string))
+		return "", errors.New(GetErrorMsg(respmap))
 	}
 
 	return respmap["data"].(string), nil
@@ -316,7 +324,7 @@ func (hbpro *HuoBiPro) GetOneOrder(orderId string, currency CurrencyPair) (*Orde
 	}
 
 	if respmap["status"].(string) != "ok" {
-		return nil, errors.New(respmap["err-code"].(string))
+		return nil, errors.New(GetErrorMsg(respmap))
 	}
 
 	datamap := respmap["data"].(map[string]interface{})
@@ -352,7 +360,7 @@ func (hbpro *HuoBiPro) CancelOrder(orderId string, currency CurrencyPair) (bool,
 	}
 
 	if respmap["status"].(string) != "ok" {
-		return false, errors.New(string(resp))
+		return false, errors.New(GetErrorMsg(respmap))
 	}
 
 	return true, nil
@@ -399,7 +407,7 @@ func (hbpro *HuoBiPro) getOrders(queryparams queryOrdersParams) ([]Order, error)
 	}
 
 	if respmap["status"].(string) != "ok" {
-		return nil, errors.New(respmap["err-code"].(string))
+		return nil, errors.New(GetErrorMsg(respmap))
 	}
 
 	datamap := respmap["data"].([]interface{})
