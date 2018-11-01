@@ -64,7 +64,7 @@ func (ctx *BitZ) GetAccount() (*Account, error) {
 	}
 
 	if bodyDataMap["status"].(float64) != 200 {
-		return nil, errors.New(bodyDataMap["msg"].(string))
+		return nil, errors.New(fmt.Sprintf("%d %s", int(bodyDataMap["status"].(float64)), bodyDataMap["msg"].(string)))
 	}
 
 	balances, isok := bodyDataMap["data"].(map[string]interface{})
@@ -144,7 +144,7 @@ func (ctx *BitZ) CancelOrder(orderId string, currencyPair CurrencyPair) (bool, e
 	}
 
 	if bodyDataMap["status"].(float64) != 200 {
-		return false, errors.New(bodyDataMap["msg"].(string))
+		return false, errors.New(fmt.Sprintf("%d %s", int(bodyDataMap["status"].(float64)), bodyDataMap["msg"].(string)))
 	}
 
 	return true, nil
@@ -160,7 +160,7 @@ func (ctx *BitZ) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order,
 	}
 
 	if bodyDataMap["status"].(float64) != 200 {
-		return nil, errors.New(bodyDataMap["msg"].(string))
+		return nil, errors.New(fmt.Sprintf("%d %s", int(bodyDataMap["status"].(float64)), bodyDataMap["msg"].(string)))
 	}
 
 	data, _ := bodyDataMap["data"].(map[string]interface{})
@@ -178,7 +178,7 @@ func (ctx *BitZ) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error) {
 	}
 
 	if bodyDataMap["status"].(float64) != 200 {
-		return nil, errors.New(bodyDataMap["msg"].(string))
+		return nil, errors.New(fmt.Sprintf("%d %s", int(bodyDataMap["status"].(float64)), bodyDataMap["msg"].(string)))
 	}
 
 	data, _ := bodyDataMap["data"].(map[string]interface{})
@@ -247,7 +247,7 @@ func (ctx *BitZ) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
 		return nil, err
 	}
 	if bodyDataMap["status"].(float64) != 200 {
-		return nil, errors.New(bodyDataMap["msg"].(string))
+		return nil, errors.New(fmt.Sprintf("%d %s", int(bodyDataMap["status"].(float64)), bodyDataMap["msg"].(string)))
 	}
 
 	data := bodyDataMap["data"].(map[string]interface{})
@@ -284,7 +284,7 @@ func (ctx *BitZ) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 		return nil, err
 	}
 	if bodyDataMap["status"].(float64) != 200 {
-		return nil, errors.New(bodyDataMap["msg"].(string))
+		return nil, errors.New(fmt.Sprintf("%d %s", int(bodyDataMap["status"].(float64)), bodyDataMap["msg"].(string)))
 	}
 
 	tickerMap := bodyDataMap["data"].(map[string]interface{})
@@ -311,7 +311,7 @@ func (ctx *BitZ) GetKlineRecords(currency CurrencyPair, period, size, since int)
 		return nil, err
 	}
 	if bodyDataMap["status"].(float64) != 200 {
-		return nil, errors.New(bodyDataMap["msg"].(string))
+		return nil, errors.New(fmt.Sprintf("%d %s", int(bodyDataMap["status"].(float64)), bodyDataMap["msg"].(string)))
 	}
 
 	data := bodyDataMap["data"].(map[string]interface{})
@@ -345,7 +345,7 @@ func (ctx *BitZ) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, err
 		return nil, err
 	}
 	if bodyDataMap["status"].(float64) != 200 {
-		return nil, errors.New(bodyDataMap["msg"].(string))
+		return nil, errors.New(fmt.Sprintf("%d %s", int(bodyDataMap["status"].(float64)), bodyDataMap["msg"].(string)))
 	}
 
 	data := bodyDataMap["data"].([]interface{})
