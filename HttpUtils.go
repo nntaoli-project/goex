@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sort"
 )
 
 func NewHttpRequest(client *http.Client, reqType string, reqUrl string, postData string, requstHeaders map[string]string) ([]byte, error) {
@@ -162,4 +163,31 @@ func HttpDeleteForm(client *http.Client, reqUrl string, postData url.Values, hea
 	}
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
 	return NewHttpRequest(client, "DELETE", reqUrl, postData.Encode(), headers)
+}
+
+// form
+// ("bar=baz&foo=quux") sorted by key.
+func GetSortedValues(para url.Values) string {
+	if para == nil {
+		return ""
+	}
+	var buf strings.Builder
+	keys := make([]string, 0, len(para))
+	for k := range para {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		vs := para[k]
+		keyEscaped := k
+		for _, v := range vs {
+			if buf.Len() > 0 {
+				buf.WriteByte('&')
+			}
+			buf.WriteString(keyEscaped)
+			buf.WriteByte('=')
+			buf.WriteString(v)
+		}
+	}
+	return buf.String()
 }

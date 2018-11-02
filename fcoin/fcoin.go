@@ -201,7 +201,7 @@ func (ft *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (
 func (ft *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, para url.Values) string {
 	param := ""
 	if para != nil {
-		param = para.Encode()
+		param = GetSortedValues(para)
 	}
 
 	if "GET" == httpmethod && param != "" {
@@ -335,7 +335,7 @@ func (ft *FCoin) GetOrdersList() {
 func (ft *FCoin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params := url.Values{}
 	params.Set("symbol", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
-	params.Set("states", "submitted")
+	params.Set("states", "submitted,partial_filled")
 	//params.Set("before", "1")
 	//params.Set("after", "0")
 	params.Set("limit", "100")
