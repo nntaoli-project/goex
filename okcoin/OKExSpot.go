@@ -112,7 +112,6 @@ func (okSpot *OKExSpot) createWsConn() {
 					return
 				}
 
-				fmt.Printf("msg :%s \n", msg)
 				if string(msg) == "{\"event\":\"pong\"}" {
 					okSpot.ws.UpdateActivedTime()
 					return
