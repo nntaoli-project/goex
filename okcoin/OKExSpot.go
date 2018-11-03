@@ -15,6 +15,7 @@ import (
 	"compress/flate"
 	"bytes"
 	"io/ioutil"
+	"github.com/buger/jsonparser"
 )
 
 type OKExSpot struct {
@@ -23,13 +24,15 @@ type OKExSpot struct {
 	createWsLock      sync.Mutex
 	wsTickerHandleMap map[string]func(*Ticker)
 	wsDepthHandleMap  map[string]func(*Depth)
+	wsTradeHandleMap  map[string]func(*Trade)
 }
 
 func NewOKExSpot(client *http.Client, accesskey, secretkey string) *OKExSpot {
 	return &OKExSpot{
 		OKCoinCN_API:      OKCoinCN_API{client, accesskey, secretkey, "https://www.okex.com/api/v1/"},
 		wsTickerHandleMap: make(map[string]func(*Ticker)),
-		wsDepthHandleMap:  make(map[string]func(*Depth))}
+		wsDepthHandleMap:  make(map[string]func(*Depth)),
+		wsTradeHandleMap:  make(map[string]func(*Trade))}
 }
 
 func (ctx *OKExSpot) GetExchangeName() string {
@@ -94,6 +97,10 @@ func (okSpot *OKExSpot) GzipDecode(in []byte) ([]byte, error) {
 
 }
 
+func (okSpot *OKExSpot) MessageDecode(msg []byte) {
+
+}
+
 func (okSpot *OKExSpot) createWsConn() {
 	if okSpot.ws == nil {
 		//connect wsx
@@ -107,7 +114,7 @@ func (okSpot *OKExSpot) createWsConn() {
 			okSpot.ws.ReceiveMessage(func(msg []byte) {
 				var err error
 				msg, err = okSpot.GzipDecode(msg)
-				if err != nil{
+				if err != nil {
 					log.Println(err)
 					return
 				}
@@ -128,24 +135,58 @@ func (okSpot *OKExSpot) createWsConn() {
 					return
 				}
 
-				datamap := data[0].(map[string]interface{})
-				channel := datamap["channel"].(string)
-				if channel == "addChannel" {
-					return
-				}
+				jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+					channel, err := jsonparser.GetString(value, "channel")
+					if err != nil {
+						fmt.Printf("channel err :%s \n", err)
+						return
+					}
 
-				tickmap := datamap["data"].(map[string]interface{})
-				pair := okSpot.getPairFormChannel(channel)
+					m, _, _, err := jsonparser.Get(value, "data")
+					if err != nil {
+						fmt.Printf("data err :%s \n", err)
+						return
+					}
 
-				if strings.HasSuffix(channel, "_ticker") {
-					ticker := okSpot.parseTicker(tickmap)
-					ticker.Pair = pair
-					okSpot.wsTickerHandleMap[channel](ticker)
-				} else if strings.Contains(channel, "depth_") {
-					dep := okSpot.parseDepth(tickmap)
-					dep.Pair = pair
-					okSpot.wsDepthHandleMap[channel](dep)
-				}
+					if channel == "addChannel" {
+						fmt.Printf("msg: %s \n", m)
+						return
+					}
+
+					pair := okSpot.getPairFormChannel(channel)
+
+					if strings.Contains(channel, "_deals") {
+						jsonparser.ArrayEach(m, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+							var t []string
+							err = json.Unmarshal(value, &t)
+							if err != nil {
+								fmt.Printf("tradeArr  Unmarshal err :%s \n", err)
+								return
+							}
+
+							trade := okSpot.parseTrade(t)
+							trade.Pair = pair
+
+							okSpot.wsTradeHandleMap[channel](trade)
+						})
+						return
+					}
+
+					tickmap := make(map[string]interface{})
+					err = json.Unmarshal(m, &tickmap)
+
+					if strings.HasSuffix(channel, "_ticker") {
+						ticker := okSpot.parseTicker(tickmap)
+						ticker.Pair = pair
+						okSpot.wsTickerHandleMap[channel](ticker)
+					} else if strings.Contains(channel, "depth_") {
+						dep := okSpot.parseDepth(tickmap)
+						dep.Pair = pair
+						okSpot.wsDepthHandleMap[channel](dep)
+					}
+
+				}, )
+
 			})
 		}
 	}
@@ -167,6 +208,44 @@ func (okSpot *OKExSpot) GetTickerWithWs(pair CurrencyPair, handle func(*Ticker))
 	return okSpot.ws.Subscribe(map[string]string{
 		"event":   "addChannel",
 		"channel": channel})
+}
+
+func (okSpot *OKExSpot) GetTradeWithWs(pair CurrencyPair, handle func(*Trade)) error {
+	okSpot.createWsConn()
+	channel := fmt.Sprintf("ok_sub_spot_%s_deals", strings.ToLower(pair.String()))
+	fmt.Printf("channel:%s \n", channel)
+	okSpot.wsTradeHandleMap[channel] = handle
+	return okSpot.ws.Subscribe(map[string]string{
+		"event":   "addChannel",
+		"channel": channel})
+}
+
+func (okSpot *OKExSpot) parseTrade(arr []string) *Trade {
+
+	trade := new(Trade)
+	trade.Tid = int64(ToUint64(arr[0]))
+	trade.Price = ToFloat64(arr[1])
+	trade.Amount = ToFloat64(arr[2])
+	trade.Date = okSpot.formatTimeMs(arr[3])
+
+	if arr[4] == "ask" {
+		trade.Type = BUY
+	} else {
+		trade.Type = SELL
+	}
+
+	return trade
+}
+
+// date = 15:04:05   return ms
+func (okSpot *OKExSpot) formatTimeMs(date string) int64 {
+	const format = "2006-01-02 15:04:05"
+	day := time.Now().Format("2006-01-02")
+	local, _ := time.LoadLocation("Asia/Chongqing")
+	t, _ := time.ParseInLocation(format, day+" "+date, local)
+
+	return t.UnixNano() / 1e6
+
 }
 
 func (okSpot *OKExSpot) parseTicker(tickmap map[string]interface{}) *Ticker {
