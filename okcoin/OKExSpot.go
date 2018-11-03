@@ -12,6 +12,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"compress/flate"
+	"bytes"
+	"io/ioutil"
 )
 
 type OKExSpot struct {
@@ -82,6 +85,15 @@ func (ctx *OKExSpot) GetAccount() (*Account, error) {
 	return account, nil
 }
 
+//
+func (okSpot *OKExSpot) GzipDecode(in []byte) ([]byte, error) {
+	reader := flate.NewReader(bytes.NewReader(in))
+	defer reader.Close()
+
+	return ioutil.ReadAll(reader)
+
+}
+
 func (okSpot *OKExSpot) createWsConn() {
 	if okSpot.ws == nil {
 		//connect wsx
@@ -89,17 +101,25 @@ func (okSpot *OKExSpot) createWsConn() {
 		defer okSpot.createWsLock.Unlock()
 
 		if okSpot.ws == nil {
-			okSpot.ws = NewWsConn("wss://real.okex.com:10441/websocket")
+			okSpot.ws = NewWsConn("wss://real.okex.com:10440/ws/v1")
 			okSpot.ws.Heartbeat(func() interface{} { return map[string]string{"event": "ping"} }, 20*time.Second)
 			okSpot.ws.ReConnect()
 			okSpot.ws.ReceiveMessage(func(msg []byte) {
+				var err error
+				msg, err = okSpot.GzipDecode(msg)
+				if err != nil{
+					log.Println(err)
+					return
+				}
+
+				fmt.Printf("msg :%s \n", msg)
 				if string(msg) == "{\"event\":\"pong\"}" {
 					okSpot.ws.UpdateActivedTime()
 					return
 				}
 
 				var data []interface{}
-				err := json.Unmarshal(msg, &data)
+				err = json.Unmarshal(msg, &data)
 				if err != nil {
 					log.Println(err)
 					return
