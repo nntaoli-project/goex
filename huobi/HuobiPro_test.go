@@ -16,7 +16,7 @@ var httpProxyClient = &http.Client{
 		Proxy: func(req *http.Request) (*url.URL, error) {
 			return &url.URL{
 				Scheme: "socks5",
-				Host:   "127.0.0.1:1080"}, nil
+				Host:   "127.0.0.1:8016"}, nil
 		},
 		Dial: (&net.Dialer{
 			Timeout: 10 * time.Second,
@@ -117,7 +117,14 @@ func TestHuobiPro_GetOrderHistorys(t *testing.T) {
 
 func TestHuobiPro_GetDepthWithWs(t *testing.T) {
 	hbpro.GetDepthWithWs(goex.BTC_USDT, func(dep *goex.Depth) {
-		log.Println("%+v", *dep)
+		log.Printf("%+v", dep)
+	})
+	time.Sleep(time.Minute)
+}
+
+func TestHuoBiPro_GetTradeWithWs(t *testing.T) {
+	hbpro.GetTradeWithWs(goex.BTC_USDT, func(trade *goex.Trade) {
+		log.Printf("%+v", trade)
 	})
 	time.Sleep(time.Minute)
 }

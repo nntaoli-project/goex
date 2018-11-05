@@ -43,6 +43,7 @@ type HuoBiPro struct {
 	createWsLock      sync.Mutex
 	wsTickerHandleMap map[string]func(*Ticker)
 	wsDepthHandleMap  map[string]func(*Depth)
+	wsTradeHandleMap  map[string]func(*Trade)
 }
 
 func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoBiPro {
@@ -54,6 +55,8 @@ func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoB
 	hbpro.accountId = accountId
 	hbpro.wsDepthHandleMap = make(map[string]func(*Depth))
 	hbpro.wsTickerHandleMap = make(map[string]func(*Ticker))
+	hbpro.wsTradeHandleMap = make(map[string]func(*Trade))
+
 	return hbpro
 }
 
@@ -607,6 +610,7 @@ func (hbpro *HuoBiPro) createWsConn() {
 			}
 
 			tick := datamap["tick"].(map[string]interface{})
+
 			pair := hbpro.getPairFromChannel(ch)
 			if hbpro.wsTickerHandleMap[ch] != nil {
 				tick := hbpro.parseTickerData(tick)
@@ -621,6 +625,14 @@ func (hbpro *HuoBiPro) createWsConn() {
 				depth.Pair = pair
 				(hbpro.wsDepthHandleMap[ch])(depth)
 				return
+			}
+
+			if strings.Contains(ch, ".trade.detail") {
+				trades := hbpro.parseTradeData(tick)
+				for _, t := range trades {
+					t.Pair = pair
+					(hbpro.wsTradeHandleMap[ch])(t)
+				}
 			}
 
 			//log.Println(string(data))
@@ -690,6 +702,30 @@ func (hbpro *HuoBiPro) parseDepthData(tick map[string]interface{}) *Depth {
 	return depth
 }
 
+func (hbpro *HuoBiPro) parseTradeData(tick map[string]interface{}) (trades []*Trade) {
+
+	arr, _ := tick["data"].([]interface{})
+
+	for _, t := range arr {
+		trade := new(Trade)
+		z := t.(map[string]interface{})
+		trade.Tid = int64(ToUint64(z["id"]))
+		trade.Amount = ToFloat64(z["amount"])
+		trade.Price = ToFloat64(z["price"])
+		trade.Date = int64(ToUint64(z["ts"]))
+		direction  := z["direction"].(string)
+		if direction == "buy" {
+			trade.Type = BUY
+		}else{
+			trade.Type = SELL
+		}
+
+		trades = append(trades, trade)
+	}
+
+	return trades
+}
+
 func (hbpro *HuoBiPro) GetExchangeName() string {
 	return HUOBI_PRO
 }
@@ -709,5 +745,14 @@ func (hbpro *HuoBiPro) GetDepthWithWs(pair CurrencyPair, handle func(dep *Depth)
 	hbpro.wsDepthHandleMap[sub] = handle
 	return hbpro.ws.Subscribe(map[string]interface{}{
 		"id":  2,
+		"sub": sub})
+}
+
+func (hbpro *HuoBiPro) GetTradeWithWs(pair CurrencyPair, handle func(dep *Trade)) error {
+	hbpro.createWsConn()
+	sub := fmt.Sprintf("market.%s.trade.detail", strings.ToLower(pair.ToSymbol("")))
+	hbpro.wsTradeHandleMap[sub] = handle
+	return hbpro.ws.Subscribe(map[string]interface{}{
+		"id":  3,
 		"sub": sub})
 }
