@@ -571,9 +571,16 @@ func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair, since int64) ([]Tra
 		amount := item["amount"].(float64)
 		price := item["price"].(float64)
 		time := int64(item["date_ms"].(float64))
-		trades = append(trades, Trade{tid, direction, amount, price, time})
-	}
 
+		var side TradeSide
+		if direction == "buy" {
+			side = BUY
+		} else {
+			side = SELL
+		}
+
+		trades = append(trades, Trade{tid, side, amount, price, time, currencyPair})
+	}
 
 	return trades, nil
 }
