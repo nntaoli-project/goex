@@ -39,6 +39,7 @@ type OKEx struct {
 	createWsLock      sync.Mutex
 	wsTickerHandleMap map[string]func(*Ticker)
 	wsDepthHandleMap  map[string]func(*Depth)
+	wsTradeHandleMap  map[string]func(*Trade)
 }
 
 func NewOKEx(client *http.Client, api_key, secret_key string) *OKEx {
@@ -667,7 +668,14 @@ func (okFuture *OKEx) GetTrades(contract_type string, currencyPair CurrencyPair,
 		amount := item["amount"].(float64)
 		price := item["price"].(float64)
 		time := int64(item["date_ms"].(float64))
-		trades = append(trades, Trade{tid, direction, amount, price, time})
+
+		var TradeSide TradeSide
+		if direction == "buy" {
+			TradeSide = BUY
+		} else {
+			TradeSide = SELL
+		}
+		trades = append(trades, Trade{tid, TradeSide, amount, price, time, currencyPair})
 	}
 
 	return trades, nil
