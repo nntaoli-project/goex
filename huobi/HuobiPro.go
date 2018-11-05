@@ -16,6 +16,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"regexp"
 )
 
 var HBPOINT = NewCurrency("HBPOINT", "")
@@ -645,28 +646,55 @@ func (hbpro *HuoBiPro) createWsConn() {
 
 }
 
+func Between(str, starting, ending string) string {
+	s := strings.Index(str, starting)
+	if s < 0 {
+		return ""
+	}
+	s += len(starting)
+	e := strings.Index(str[s:], ending)
+	if e < 0 {
+		return ""
+	}
+	return str[s: s+e]
+}
+
 func (hbpro *HuoBiPro) getPairFromChannel(ch string) CurrencyPair {
 
-	var currA, currB string
-	if strings.HasSuffix(ch, "usdt.detail") {
+	var currA, currB, symbol string
+
+	//命中topic 类型  Trade Detail
+	if s := regexp.MustCompile(`market.(.*).kline.*`).FindStringSubmatch(ch); len(s) > 1 {
+		symbol = s[1]
+	}else if s := regexp.MustCompile(`market.(.*).depth.*`).FindStringSubmatch(ch); len(s) > 1 {
+		symbol = s[1]
+	}else if s := regexp.MustCompile(`market.(.*).trade.detail`).FindStringSubmatch(ch); len(s) > 1 {
+		symbol = s[1]
+	}else if s := regexp.MustCompile(`market.(.*).detail	`).FindStringSubmatch(ch); len(s) > 1 {
+		symbol = s[1]
+	}else if s := regexp.MustCompile(`orders.(.*)`).FindStringSubmatch(ch); len(s) > 1 {
+		symbol = s[1]
+	}
+
+	if strings.HasSuffix(symbol, "usdt") {
 		currB = "usdt"
-	} else if strings.HasSuffix(ch, "husd.detail") {
+	} else if strings.HasSuffix(symbol, "husd") {
 		currB = "husd"
-	} else if strings.HasSuffix(ch, "btc.detail") {
+	} else if strings.HasSuffix(symbol, "btc") {
 		currB = "btc"
-	} else if strings.HasSuffix(ch, "eth.detail") {
+	} else if strings.HasSuffix(symbol, "eth") {
 		currB = "eth"
-	} else if strings.HasSuffix(ch, "ht.detail") {
+	} else if strings.HasSuffix(symbol, "ht") {
 		currB = "ht"
 	}
 
-	currA = strings.TrimPrefix(ch, "market.")
-	currA = strings.TrimSuffix(currA, currB+".detail")
+	currA = strings.TrimSuffix(symbol, currB)
 
 	a := NewCurrency(currA, "")
 	b := NewCurrency(currB, "")
 
 	pair := NewCurrencyPair(a, b)
+
 	return pair
 }
 
@@ -717,10 +745,10 @@ func (hbpro *HuoBiPro) parseTradeData(tick map[string]interface{}) (trades []*Tr
 		trade.Amount = ToFloat64(z["amount"])
 		trade.Price = ToFloat64(z["price"])
 		trade.Date = int64(ToUint64(z["ts"]))
-		direction  := z["direction"].(string)
+		direction := z["direction"].(string)
 		if direction == "buy" {
 			trade.Type = BUY
-		}else{
+		} else {
 			trade.Type = SELL
 		}
 

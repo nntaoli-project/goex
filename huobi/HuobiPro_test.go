@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 	"log"
+	"fmt"
 )
 
 var httpProxyClient = &http.Client{
@@ -127,4 +128,15 @@ func TestHuoBiPro_GetTradeWithWs(t *testing.T) {
 		log.Printf("%+v", trade)
 	})
 	time.Sleep(time.Minute)
+}
+
+func TestHuoBiPro_getPairFromChannel(t *testing.T) {
+
+	var ch string
+	ch = "market.eosusdt.trade.detail"
+	ch = "market.eosusdt.depth.step3"
+
+	a := hbpro.getPairFromChannel(ch)
+	fmt.Printf("%q", a)
+	//hbpro.getPairFromChannel(ch)
 }
