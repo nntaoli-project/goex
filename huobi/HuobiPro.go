@@ -612,19 +612,23 @@ func (hbpro *HuoBiPro) createWsConn() {
 			tick := datamap["tick"].(map[string]interface{})
 
 			pair := hbpro.getPairFromChannel(ch)
-			if hbpro.wsTickerHandleMap[ch] != nil {
-				tick := hbpro.parseTickerData(tick)
-				tick.Pair = pair
-				tick.Date = ToUint64(datamap["ts"])
-				(hbpro.wsTickerHandleMap[ch])(tick)
-				return
+			if strings.Contains(ch, ".detail") {
+				if hbpro.wsTickerHandleMap[ch] != nil {
+					tick := hbpro.parseTickerData(tick)
+					tick.Pair = pair
+					tick.Date = ToUint64(datamap["ts"])
+					(hbpro.wsTickerHandleMap[ch])(tick)
+					return
+				}
 			}
 
-			if hbpro.wsDepthHandleMap[ch] != nil {
-				depth := hbpro.parseDepthData(tick)
-				depth.Pair = pair
-				(hbpro.wsDepthHandleMap[ch])(depth)
-				return
+			if strings.Contains(ch, ".depth.step") {
+				if hbpro.wsDepthHandleMap[ch] != nil {
+					depth := hbpro.parseDepthData(tick)
+					depth.Pair = pair
+					(hbpro.wsDepthHandleMap[ch])(depth)
+					return
+				}
 			}
 
 			if strings.Contains(ch, ".trade.detail") {
