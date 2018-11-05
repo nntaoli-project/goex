@@ -99,4 +99,5 @@ const (
 	FCOIN       = "fcoin.com"
 	HITBTC      = "hitbtc.com"
 	BITMEX      = "bitmex.com"
+	CRYPTOPIA   = "cryptopia.co.nz"
 )
