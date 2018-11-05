@@ -427,14 +427,20 @@ func (bo *Bigone) GetDepth(size int, currencyPair goex.CurrencyPair) (*goex.Dept
 
 	depth := new(goex.Depth)
 
-	for _, bid := range resp.Data.Bids {
+	for index, bid := range resp.Data.Bids {
+		if size > 0 && index >= size{
+			break
+		}
 		amount := goex.ToFloat64(bid.Amount)
 		price := goex.ToFloat64(bid.Price)
 		dr := goex.DepthRecord{Amount: amount, Price: price}
 		depth.BidList = append(depth.BidList, dr)
 	}
 
-	for _, ask := range resp.Data.Asks {
+	for index, ask := range resp.Data.Asks {
+		if size > 0 && index >= size{
+			break
+		}
 		amount := goex.ToFloat64(ask.Amount)
 		price := goex.ToFloat64(ask.Price)
 		dr := goex.DepthRecord{Amount: amount, Price: price}

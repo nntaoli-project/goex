@@ -118,7 +118,10 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 
 	depth := new(Depth)
 	depth.Pair = currencyPair
-	for _, bid := range bids {
+	for index, bid := range bids {
+		if size > 0 && index >= size{
+			break
+		}
 		_bid := bid.([]interface{})
 		amount := ToFloat64(_bid[1])
 		price := ToFloat64(_bid[0])
@@ -126,7 +129,10 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 		depth.BidList = append(depth.BidList, dr)
 	}
 
-	for _, ask := range asks {
+	for index, ask := range asks {
+		if size > 0 && index >= size{
+			break
+		}
 		_ask := ask.([]interface{})
 		amount := ToFloat64(_ask[1])
 		price := ToFloat64(_ask[0])
