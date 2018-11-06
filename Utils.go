@@ -2,6 +2,7 @@ package goex
 
 import (
 	"strconv"
+	"encoding/json"
 )
 
 func ToFloat64(v interface{}) float64 {
@@ -16,6 +17,9 @@ func ToFloat64(v interface{}) float64 {
 		vStr := v.(string)
 		vF, _ := strconv.ParseFloat(vStr, 64)
 		return vF
+	case json.Number:
+		i,_ :=  v.(json.Number).Float64()
+		return i
 	default:
 		panic("to float64 error.")
 	}
@@ -47,6 +51,8 @@ func ToUint64(v interface{}) uint64 {
 	}
 
 	switch v.(type) {
+	case int64:
+		return uint64(v.(int64))
 	case int:
 		return uint64(v.(int))
 	case float64:
@@ -54,6 +60,9 @@ func ToUint64(v interface{}) uint64 {
 	case string:
 		uV, _ := strconv.ParseUint(v.(string), 10, 64)
 		return uV
+	case json.Number:
+		i ,_ := v.(json.Number).Int64()
+		return uint64(i)
 	default:
 		panic("to uint64 error.")
 	}

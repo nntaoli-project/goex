@@ -124,10 +124,10 @@ func TestHuobiPro_GetDepthWithWs(t *testing.T) {
 }
 
 func TestHuoBiPro_GetTradeWithWs(t *testing.T) {
-	hbpro.GetTradeWithWs(goex.BTC_USDT, func(trade *goex.Trade) {
-		log.Printf("%+v", trade)
+	hbpro.GetTradeWithWs(goex.EOS_USDT, func(trade *goex.Trade) {
+		//log.Printf("%+v", trade)
 	})
-	time.Sleep(time.Minute)
+	time.Sleep(time.Minute*100)
 }
 
 func TestHuoBiPro_getPairFromChannel(t *testing.T) {

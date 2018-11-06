@@ -26,6 +26,7 @@ type Trade struct {
 	Price  float64      `json:"price,string"`
 	Date   int64        `json:"date_ms"`
 	Pair   CurrencyPair `json:"omitempty"`
+	BigId  string       `json:"big_id"`			//增对于火币网的超大int
 }
 
 type SubAccount struct {

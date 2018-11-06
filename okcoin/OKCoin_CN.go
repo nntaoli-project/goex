@@ -579,7 +579,7 @@ func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair, since int64) ([]Tra
 			side = SELL
 		}
 
-		trades = append(trades, Trade{tid, side, amount, price, time, currencyPair})
+		trades = append(trades, Trade{tid, side, amount, price, time, currencyPair,""})
 	}
 
 	return trades, nil

@@ -675,7 +675,7 @@ func (okFuture *OKEx) GetTrades(contract_type string, currencyPair CurrencyPair,
 		} else {
 			TradeSide = SELL
 		}
-		trades = append(trades, Trade{tid, TradeSide, amount, price, time, currencyPair})
+		trades = append(trades, Trade{tid, TradeSide, amount, price, time, currencyPair,""})
 	}
 
 	return trades, nil

@@ -580,7 +580,12 @@ func (hbpro *HuoBiPro) createWsConn() {
 			gzipreader, _ := gzip.NewReader(bytes.NewReader(msg))
 			data, _ := ioutil.ReadAll(gzipreader)
 			datamap := make(map[string]interface{})
-			err := json.Unmarshal(data, &datamap)
+			//err := json.Unmarshal(data, &datamap)
+
+			decoder := json.NewDecoder(bytes.NewBuffer(data))
+			decoder.UseNumber() // UseNumber causes the Decoder to unmarshal a number into an interface{} as a Number instead of as a float64.
+
+			err := decoder.Decode(&datamap)
 			if err != nil {
 				log.Println("json unmarshal error for ", string(data))
 				return
@@ -634,9 +639,10 @@ func (hbpro *HuoBiPro) createWsConn() {
 
 			if strings.Contains(ch, ".trade.detail") {
 				trades := hbpro.parseTradeData(tick)
-				for _, t := range trades {
-					t.Pair = pair
-					(hbpro.wsTradeHandleMap[ch])(t)
+				//反向是为了和app服务端顺序一致
+				for i := len(trades) - 1; i >= 0; i-- {
+					trades[i].Pair = pair
+					(hbpro.wsTradeHandleMap[ch])(trades[i])
 				}
 			}
 
@@ -666,13 +672,13 @@ func (hbpro *HuoBiPro) getPairFromChannel(ch string) CurrencyPair {
 	//命中topic 类型  Trade Detail
 	if s := regexp.MustCompile(`market.(.*).kline.*`).FindStringSubmatch(ch); len(s) > 1 {
 		symbol = s[1]
-	}else if s := regexp.MustCompile(`market.(.*).depth.*`).FindStringSubmatch(ch); len(s) > 1 {
+	} else if s := regexp.MustCompile(`market.(.*).depth.*`).FindStringSubmatch(ch); len(s) > 1 {
 		symbol = s[1]
-	}else if s := regexp.MustCompile(`market.(.*).trade.detail`).FindStringSubmatch(ch); len(s) > 1 {
+	} else if s := regexp.MustCompile(`market.(.*).trade.detail`).FindStringSubmatch(ch); len(s) > 1 {
 		symbol = s[1]
-	}else if s := regexp.MustCompile(`market.(.*).detail	`).FindStringSubmatch(ch); len(s) > 1 {
+	} else if s := regexp.MustCompile(`market.(.*).detail	`).FindStringSubmatch(ch); len(s) > 1 {
 		symbol = s[1]
-	}else if s := regexp.MustCompile(`orders.(.*)`).FindStringSubmatch(ch); len(s) > 1 {
+	} else if s := regexp.MustCompile(`orders.(.*)`).FindStringSubmatch(ch); len(s) > 1 {
 		symbol = s[1]
 	}
 
@@ -738,21 +744,27 @@ func (hbpro *HuoBiPro) parseTradeData(tick map[string]interface{}) (trades []*Tr
 
 	arr, _ := tick["data"].([]interface{})
 
+	//经过发现，高并发时,火币的接口中返回的数据中有重复值，BigId相同
+	tMap := make(map[string]*Trade)
 	for _, t := range arr {
 		trade := new(Trade)
 		z := t.(map[string]interface{})
-		trade.Tid = int64(ToUint64(z["id"]))
+		trade.BigId = z["id"].(json.Number).String()
 		trade.Amount = ToFloat64(z["amount"])
 		trade.Price = ToFloat64(z["price"])
-		trade.Date = int64(ToUint64(z["ts"]))
+		trade.Date, _ = z["ts"].(json.Number).Int64()
 		direction := z["direction"].(string)
 		if direction == "buy" {
 			trade.Type = BUY
 		} else {
 			trade.Type = SELL
 		}
+		tMap[trade.BigId] = trade
+	}
 
-		trades = append(trades, trade)
+	//利用map特性去重，然后转换成切片
+	for _, v := range tMap {
+		trades = append(trades, v)
 	}
 
 	return trades
