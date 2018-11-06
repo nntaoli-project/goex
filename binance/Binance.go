@@ -92,14 +92,15 @@ func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
+	requestSize := size
 	if size > 100 {
-		size = 100
+		requestSize = 100
 	} else if size < 5 {
-		size = 5
+		requestSize = 5
 	}
 	currencyPair2 := bn.adaptCurrencyPair(currencyPair)
 
-	apiUrl := fmt.Sprintf(API_V1+DEPTH_URI, currencyPair2.ToSymbol(""), size)
+	apiUrl := fmt.Sprintf(API_V1+DEPTH_URI, currencyPair2.ToSymbol(""), requestSize)
 	resp, err := HttpGet(bn.httpClient, apiUrl)
 	if err != nil {
 		log.Println("GetDepth error:", err)
