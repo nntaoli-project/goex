@@ -21,6 +21,18 @@ import (
 var HBPOINT = NewCurrency("HBPOINT", "")
 var onceWsConn sync.Once
 
+var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
+	KLINE_PERIOD_1MIN:   "1min",
+	KLINE_PERIOD_5MIN:   "5min",
+	KLINE_PERIOD_15MIN:  "15min",
+	KLINE_PERIOD_30MIN:  "30min",
+	KLINE_PERIOD_60MIN:  "60min",
+	KLINE_PERIOD_1DAY:   "1day",
+	KLINE_PERIOD_1WEEK:  "1week",
+	KLINE_PERIOD_1MONTH: "1mon",
+	KLINE_PERIOD_1YEAR: "1year",
+}
+
 const (
 	HB_POINT_ACCOUNT = "point"
 	HB_SPOT_ACCOUNT  = "spot"
@@ -43,6 +55,7 @@ type HuoBiPro struct {
 	createWsLock      sync.Mutex
 	wsTickerHandleMap map[string]func(*Ticker)
 	wsDepthHandleMap  map[string]func(*Depth)
+	wsKLineHandleMap  map[string]func(*Kline)
 }
 
 func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoBiPro {
@@ -54,6 +67,7 @@ func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoB
 	hbpro.accountId = accountId
 	hbpro.wsDepthHandleMap = make(map[string]func(*Depth))
 	hbpro.wsTickerHandleMap = make(map[string]func(*Ticker))
+	hbpro.wsKLineHandleMap = make(map[string]func(*Kline))
 	return hbpro
 }
 
@@ -469,31 +483,13 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 	return hbpro.parseDepthData(tick), nil
 }
 
+
 //倒序
 func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	url := hbpro.baseUrl + "/market/history/kline?period=%s&size=%d&symbol=%s"
 	symbol := strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol(""))
-	periodS := "1min"
-	switch period {
-	case KLINE_PERIOD_1MIN:
-		periodS = "1min"
-	case KLINE_PERIOD_5MIN:
-		periodS = "5min"
-	case KLINE_PERIOD_15MIN:
-		periodS = "15min"
-	case KLINE_PERIOD_30MIN:
-		periodS = "30min"
-	case KLINE_PERIOD_60MIN:
-		periodS = "60min"
-	case KLINE_PERIOD_1DAY:
-		periodS = "1day"
-	case KLINE_PERIOD_1WEEK:
-		periodS = "1week"
-	case KLINE_PERIOD_1MONTH:
-		periodS = "1mon"
-	case KLINE_PERIOD_1YEAR:
-		periodS = "1year"
-	default:
+	periodS, isOk := _INERNAL_KLINE_PERIOD_CONVERTER[period]
+	if isOk != true {
 		periodS = "1min"
 	}
 
@@ -623,6 +619,14 @@ func (hbpro *HuoBiPro) createWsConn() {
 				return
 			}
 
+			if hbpro.wsKLineHandleMap[ch] != nil {
+				kline := hbpro.parseWsKLineData(tick)
+				kline.Pair = pair
+				kline.Timestamp = int64(ToUint64(datamap["ts"]))
+				(hbpro.wsKLineHandleMap[ch])(kline)
+				return
+			}
+
 			//log.Println(string(data))
 		})
 	})
@@ -630,26 +634,24 @@ func (hbpro *HuoBiPro) createWsConn() {
 }
 
 func (hbpro *HuoBiPro) getPairFromChannel(ch string) CurrencyPair {
-
+	s := strings.Split(ch, ".")
 	var currA, currB string
-	if strings.HasSuffix(ch, "usdt.detail") {
+	if strings.HasSuffix(s[1], "usdt") {
 		currB = "usdt"
-	} else if strings.HasSuffix(ch, "husd.detail") {
+	} else if strings.HasSuffix(ch, "husd") {
 		currB = "husd"
-	} else if strings.HasSuffix(ch, "btc.detail") {
+	} else if strings.HasSuffix(ch, "btc") {
 		currB = "btc"
-	} else if strings.HasSuffix(ch, "eth.detail") {
+	} else if strings.HasSuffix(ch, "eth") {
 		currB = "eth"
-	} else if strings.HasSuffix(ch, "ht.detail") {
+	} else if strings.HasSuffix(ch, "ht") {
 		currB = "ht"
 	}
 
-	currA = strings.TrimPrefix(ch, "market.")
-	currA = strings.TrimSuffix(currA, currB+".detail")
+	currA = strings.TrimSuffix(s[1], currB)
 
 	a := NewCurrency(currA, "")
 	b := NewCurrency(currB, "")
-
 	pair := NewCurrencyPair(a, b)
 	return pair
 }
@@ -690,6 +692,15 @@ func (hbpro *HuoBiPro) parseDepthData(tick map[string]interface{}) *Depth {
 	return depth
 }
 
+func (hbpro *HuoBiPro) parseWsKLineData(tick map[string]interface{}) *Kline {
+	return &Kline{
+		Open:      ToFloat64(tick["open"]),
+		Close:     ToFloat64(tick["close"]),
+		High:      ToFloat64(tick["high"]),
+		Low:       ToFloat64(tick["low"]),
+		Vol:       ToFloat64(tick["vol"])}
+}
+
 func (hbpro *HuoBiPro) GetExchangeName() string {
 	return HUOBI_PRO
 }
@@ -709,5 +720,19 @@ func (hbpro *HuoBiPro) GetDepthWithWs(pair CurrencyPair, handle func(dep *Depth)
 	hbpro.wsDepthHandleMap[sub] = handle
 	return hbpro.ws.Subscribe(map[string]interface{}{
 		"id":  2,
+		"sub": sub})
+}
+
+func (hbpro *HuoBiPro) GetKLineWithWs(pair CurrencyPair, period int, handle func(kline *Kline)) error {
+	hbpro.createWsConn()
+	periodS, isOk := _INERNAL_KLINE_PERIOD_CONVERTER[period]
+	if isOk != true {
+		periodS = "1min"
+	}
+
+	sub := fmt.Sprintf("market.%s.kline.%s", strings.ToLower(pair.ToSymbol("")), periodS)
+	hbpro.wsKLineHandleMap[sub] = handle
+	return hbpro.ws.Subscribe(map[string]interface{}{
+		"id":  3,
 		"sub": sub})
 }
