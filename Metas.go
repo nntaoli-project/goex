@@ -20,11 +20,12 @@ type Order struct {
 }
 
 type Trade struct {
-	Tid    int64   `json:"tid"`
-	Type   string  `json:"type"`
-	Amount float64 `json:"amount,string"`
-	Price  float64 `json:"price,string"`
-	Date   int64   `json:"date_ms"`
+	Tid    int64        `json:"tid"`
+	Type   TradeSide    `json:"type"`
+	Amount float64      `json:"amount,string"`
+	Price  float64      `json:"price,string"`
+	Date   int64        `json:"date_ms"`
+	Pair   CurrencyPair `json:"omitempty"`
 }
 
 type SubAccount struct {

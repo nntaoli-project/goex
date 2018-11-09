@@ -1,9 +1,12 @@
 package okcoin
 
 import (
+	"bytes"
+	"compress/flate"
 	"encoding/json"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
+	"io/ioutil"
 	"log"
 	"strings"
 	"time"
@@ -19,19 +22,27 @@ func (okFuture *OKEx) createWsConn() {
 			okFuture.wsTickerHandleMap = make(map[string]func(*Ticker))
 			okFuture.wsDepthHandleMap = make(map[string]func(*Depth))
 
-			okFuture.ws = NewWsConn("wss://real.okex.com:10440/websocket/okexapi")
+			okFuture.ws = NewWsConn("wss://real.okex.com:10440/ws/v1")
 			okFuture.ws.Heartbeat(func() interface{} { return map[string]string{"event": "ping"} }, 30*time.Second)
 			okFuture.ws.ReConnect()
-			okFuture.ws.ReceiveMessage(func(msg []byte) {
+			okFuture.ws.ReceiveMessage(func(d []byte) {
+				reader := flate.NewReader(bytes.NewReader(d))
+				msg, err := ioutil.ReadAll(reader)
+
+				if err != nil {
+					log.Println(err)
+					return
+				}
+
 				if string(msg) == "{\"event\":\"pong\"}" {
 					okFuture.ws.UpdateActivedTime()
 					return
 				}
 
 				var data []interface{}
-				err := json.Unmarshal(msg, &data)
+				err = json.Unmarshal(msg, &data)
 				if err != nil {
-					log.Print(err)
+					log.Println(err)
 					return
 				}
 

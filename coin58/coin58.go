@@ -19,6 +19,7 @@ type Coin58 struct {
 	apiurl       string
 }
 
+//58coin.com  closed the trade api
 func New58Coin(client *http.Client, apikey string, apisecretkey string) *Coin58 {
 	return &Coin58{client: client, apikey: apikey, apisecretkey: apisecretkey, apiurl: "https://api.58coin.com/v1/"}
 }
@@ -226,7 +227,7 @@ func (coin58 *Coin58) GetDepth(size int, currency CurrencyPair) (*Depth, error) 
 	depurl := coin58.apiurl + "spot/order_book?symbol=" + currency.AdaptUsdToUsdt().ToSymbol("_") + "&limit=" + fmt.Sprint(size)
 	m, err := HttpGet(coin58.client, depurl)
 	if err != nil {
-		return nil, HTTP_ERR_CODE
+		return nil, HTTP_ERR_CODE.OriginErr(err.Error())
 	}
 
 	error := m["error"]

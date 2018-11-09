@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	EXX			 = "EXX"
 	API_BASE_URL = "https://api.exx.com/"
 	MARKET_URL   = "http://api.exx.com/data/v1/"
 	TICKER_API   = "ticker?currency=%s"

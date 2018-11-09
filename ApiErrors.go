@@ -10,6 +10,11 @@ func (e ApiError) Error() string {
 	return e.ErrMsg
 }
 
+func (e ApiError) OriginErr(err string) ApiError {
+	e.ErrMsg = err
+	return e
+}
+
 var (
 	API_ERR                      = ApiError{ErrCode: "EX_ERR_0000", ErrMsg: "unknown error"}
 	HTTP_ERR_CODE                = ApiError{ErrCode: "HTTP_ERR_0001", ErrMsg: "http request error"}

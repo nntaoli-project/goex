@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	MARKET_URL = "http://api.bitkk.com/data/v1/"
+	MARKET_URL = "http://api.zb.com/data/v1/"
 	TICKER_API = "ticker?market=%s"
 	DEPTH_API  = "depth?market=%s&size=%d"
 
@@ -269,7 +269,7 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 	order.Price = ordermap["price"].(float64)
 	//	order.Fee = ordermap["fees"].(float64)
 	if order.DealAmount > 0 {
-		order.AvgPrice = ordermap["trade_money"].(float64) / order.DealAmount
+		order.AvgPrice = ToFloat64(ordermap["trade_money"]) / order.DealAmount
 	} else {
 		order.AvgPrice = 0
 	}

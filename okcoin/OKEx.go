@@ -39,6 +39,7 @@ type OKEx struct {
 	createWsLock      sync.Mutex
 	wsTickerHandleMap map[string]func(*Ticker)
 	wsDepthHandleMap  map[string]func(*Depth)
+	wsTradeHandleMap  map[string]func(*Trade)
 }
 
 func NewOKEx(client *http.Client, api_key, secret_key string) *OKEx {
@@ -516,6 +517,34 @@ func (ok *OKEx) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType 
 	return ok.parseOrders(body, currencyPair)
 }
 
+func (ok *OKEx) GetFutureOrder(orderId string, currencyPair CurrencyPair, contractType string) (*FutureOrder, error) {
+	postData := url.Values{}
+	postData.Set("order_id", orderId)
+	postData.Set("contract_type", contractType)
+	postData.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
+	//postData.Set("status", "1")
+	postData.Set("current_page", "1")
+	postData.Set("page_length", "2")
+
+	ok.buildPostForm(&postData)
+
+	body, err := HttpPostForm(ok.client, FUTURE_API_BASE_URL+FUTURE_ORDER_INFO_URI, postData)
+	if err != nil {
+		return nil, err
+	}
+
+	//println(string(body))
+	orders, err := ok.parseOrders(body, currencyPair)
+	if err != nil {
+		return nil, err
+	}
+	if len(orders) == 0 {
+		return nil, errors.New("找不到订单")
+	}
+
+	return &orders[0], nil
+}
+
 func (ok *OKEx) GetFee() (float64, error) {
 	return 0.03, nil //期货固定0.03%手续费
 }
@@ -555,10 +584,10 @@ func (ok *OKEx) GetDeliveryTime() (int, int, int, int) {
 	return 4, 16, 0, 0 //星期五，下午4点交割
 }
 
-func (ok *OKEx) GetKlineRecords(contract_type string, currencyPair CurrencyPair, period string, size, since int) ([]FutureKline, error) {
+func (ok *OKEx) GetKlineRecords(contract_type string, currencyPair CurrencyPair, period, size, since int) ([]FutureKline, error) {
 	params := url.Values{}
 	params.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
-	params.Set("type", period)
+	params.Set("type", _INERNAL_KLINE_PERIOD_CONVERTER[period])
 	params.Set("contract_type", contract_type)
 	params.Set("size", fmt.Sprintf("%d", size))
 	params.Set("since", fmt.Sprintf("%d", since))
@@ -611,8 +640,45 @@ func (ok *OKEx) GetKlineRecords(contract_type string, currencyPair CurrencyPair,
 	return klineRecords, nil
 }
 
-func (okFuture *OKEx) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	panic("unimplements")
+func (okFuture *OKEx) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	params := url.Values{}
+	params.Set("symbol", strings.ToLower(currencyPair.ToSymbol("_")))
+	params.Set("contract_type", contract_type)
+	//log.Println(params.Encode())
+
+	url := FUTURE_API_BASE_URL + TRADES_URI + "?" + params.Encode()
+	body, err := HttpGet5(okFuture.client, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(string(body))
+
+	var trades []Trade
+	var resp []interface{}
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		return nil, errors.New(string(body))
+	}
+
+	for _, v := range resp {
+		item := v.(map[string]interface{})
+
+		tid := int64(item["tid"].(float64))
+		direction := item["type"].(string)
+		amount := item["amount"].(float64)
+		price := item["price"].(float64)
+		time := int64(item["date_ms"].(float64))
+
+		var TradeSide TradeSide
+		if direction == "buy" {
+			TradeSide = BUY
+		} else {
+			TradeSide = SELL
+		}
+		trades = append(trades, Trade{tid, TradeSide, amount, price, time, currencyPair})
+	}
+
+	return trades, nil
 }
 
 func (okFuture *OKEx) errorWrapper(errorCode int) ApiError {

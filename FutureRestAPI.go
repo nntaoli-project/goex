@@ -72,6 +72,11 @@ type FutureRestAPI interface {
 	GetFutureOrders(orderIds []string, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error)
 
 	/**
+	 *获取单个订单信息
+	 */
+	GetFutureOrder(orderId string, currencyPair CurrencyPair, contractType string) (*FutureOrder, error)
+
+	/**
 	 *获取未完成订单信息
 	 */
 	GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType string) ([]FutureOrder, error)
@@ -99,5 +104,10 @@ type FutureRestAPI interface {
 	/**
 	 * 获取K线数据
 	 */
-	GetKlineRecords(contract_type string, currency CurrencyPair, period string, size, since int) ([]FutureKline, error)
+	GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error)
+
+	/**
+	 * 获取Trade数据
+	 */
+	GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error)
 }

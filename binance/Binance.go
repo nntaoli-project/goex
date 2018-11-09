@@ -349,7 +349,7 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 
 		orders = append(orders, Order{
 			OrderID:   ToInt(ord["orderId"]),
-			OrderID2:  fmt.Sprint(ToInt(ord["id"])),
+			OrderID2:  fmt.Sprint(ToInt(ord["orderId"])),
 			Currency:  currencyPair,
 			Price:     ToFloat64(ord["price"]),
 			Amount:    ToFloat64(ord["origQty"]),
