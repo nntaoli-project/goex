@@ -30,7 +30,7 @@ var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
 	KLINE_PERIOD_1DAY:   "1day",
 	KLINE_PERIOD_1WEEK:  "1week",
 	KLINE_PERIOD_1MONTH: "1mon",
-	KLINE_PERIOD_1YEAR: "1year",
+	KLINE_PERIOD_1YEAR:  "1year",
 }
 
 const (
@@ -483,7 +483,6 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 	return hbpro.parseDepthData(tick), nil
 }
 
-
 //倒序
 func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	url := hbpro.baseUrl + "/market/history/kline?period=%s&size=%d&symbol=%s"
@@ -622,7 +621,6 @@ func (hbpro *HuoBiPro) createWsConn() {
 			if hbpro.wsKLineHandleMap[ch] != nil {
 				kline := hbpro.parseWsKLineData(tick)
 				kline.Pair = pair
-				kline.Timestamp = int64(ToUint64(datamap["ts"]))
 				(hbpro.wsKLineHandleMap[ch])(kline)
 				return
 			}
@@ -698,7 +696,8 @@ func (hbpro *HuoBiPro) parseWsKLineData(tick map[string]interface{}) *Kline {
 		Close:     ToFloat64(tick["close"]),
 		High:      ToFloat64(tick["high"]),
 		Low:       ToFloat64(tick["low"]),
-		Vol:       ToFloat64(tick["vol"])}
+		Vol:       ToFloat64(tick["vol"]),
+		Timestamp: int64(ToUint64(tick["id"]))}
 }
 
 func (hbpro *HuoBiPro) GetExchangeName() string {
