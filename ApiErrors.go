@@ -7,7 +7,7 @@ type ApiError struct {
 }
 
 func (e ApiError) Error() string {
-	return e.ErrMsg
+	return e.ErrCode + " " + e.ErrMsg
 }
 
 var (
