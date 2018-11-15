@@ -94,13 +94,12 @@ func (zb *Zb) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		depth.BidList = append(depth.BidList, r)
 	}
 
-	for _, e := range asks {
-		var r DepthRecord
-		ee := e.([]interface{})
-		r.Amount = ee[1].(float64)
-		r.Price = ee[0].(float64)
-
-		depth.AskList = append(depth.AskList, r)
+	for i:=len(asks)-1; i >= len(asks)-size && i >= 0; i--{
+		_ask := asks[i].([]interface{})
+		amount := ToFloat64(_ask[1])
+		price := ToFloat64(_ask[0])
+		dr := DepthRecord{Amount: amount, Price: price}
+		depth.AskList = append(depth.AskList, dr)
 	}
 
 	return depth, nil
