@@ -264,17 +264,18 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 	//order.Currency = currency;
 	order.OrderID, _ = strconv.Atoi(ordermap["id"].(string))
 	order.OrderID2 = ordermap["id"].(string)
-	order.Amount = ordermap["total_amount"].(float64)
-	order.DealAmount = ordermap["trade_amount"].(float64)
+	order.Amount = ToFloat64(ordermap["total_amount"])
+	order.DealAmount = ToFloat64(ordermap["trade_amount"])
 	order.Price = ordermap["price"].(float64)
 	//	order.Fee = ordermap["fees"].(float64)
 	if order.DealAmount > 0 {
-		order.AvgPrice = ordermap["trade_money"].(float64) / order.DealAmount
+		trade_money := ToFloat64(ordermap["trade_money"])
+		order.AvgPrice = trade_money / order.DealAmount
 	} else {
 		order.AvgPrice = 0
 	}
 
-	order.OrderTime = int(ordermap["trade_date"].(float64))
+	order.OrderTime = int(ToFloat64(ordermap["trade_date"]))
 
 	orType := ordermap["type"].(float64)
 	switch orType {
@@ -286,7 +287,7 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 		log.Printf("unknown order type %f", orType)
 	}
 
-	_status := TradeStatus(ordermap["status"].(float64))
+	_status := TradeStatus(ToFloat64(ordermap["status"]))
 	switch _status {
 	case 0:
 		order.Status = ORDER_UNFINISH
