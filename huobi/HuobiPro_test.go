@@ -145,9 +145,19 @@ func TestHuobiPro_GetTickerWithWs(t *testing.T) {
 }
 
 func TestHuobiPro_GetKLineWithWs(t *testing.T) {
-	//return
+	return
 	hbpro.GetKLineWithWs(goex.BTC_USDT, goex.KLINE_PERIOD_60MIN, func(kline *goex.Kline) {
 		log.Println("%+v", *kline)
 	})
 	time.Sleep(time.Minute)
+}
+
+func TestHuobiPro_GetCurrenciesList(t *testing.T) {
+	return
+	hbpro.GetCurrenciesList()
+}
+
+func TestHuobiPro_GetCurrenciesPrecision(t *testing.T) {
+	//return
+	t.Log(hbpro.GetCurrenciesPrecision())
 }
