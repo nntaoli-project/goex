@@ -24,6 +24,7 @@ const (
 	ORDER_URI              = "order?"
 	UNFINISHED_ORDERS_INFO = "openOrders?"
 	KLINE_URI              = "klines"
+	SERVER_TIME_URL        = "api/v1/time"
 )
 
 var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
@@ -48,11 +49,12 @@ type Binance struct {
 	accessKey,
 	secretKey string
 	httpClient *http.Client
+	timeoffset int64 //nanosecond
 }
 
 func (bn *Binance) buildParamsSigned(postForm *url.Values) error {
 	postForm.Set("recvWindow", "6000000")
-	tonce := strconv.FormatInt(time.Now().UnixNano(), 10)[0:13]
+	tonce := strconv.FormatInt(time.Now().UnixNano()+bn.timeoffset, 10)[0:13]
 	postForm.Set("timestamp", tonce)
 	payload := postForm.Encode()
 	sign, _ := GetParamHmacSHA256Sign(bn.secretKey, payload)
@@ -61,11 +63,27 @@ func (bn *Binance) buildParamsSigned(postForm *url.Values) error {
 }
 
 func New(client *http.Client, api_key, secret_key string) *Binance {
-	return &Binance{api_key, secret_key, client}
+	bn := &Binance{accessKey: api_key, secretKey: secret_key, httpClient: client}
+	bn.setTimeOffset()
+	return bn
 }
 
 func (bn *Binance) GetExchangeName() string {
 	return BINANCE
+}
+
+func (bn *Binance) setTimeOffset() error {
+	respmap, err := HttpGet(bn.httpClient, API_BASE_URL+SERVER_TIME_URL)
+	if err != nil {
+		return err
+	}
+
+	stime := int64(ToInt(respmap["serverTime"]))
+	st := time.Unix(stime/1000, 1000000*(stime%1000))
+	lt := time.Now()
+	offset := st.Sub(lt).Nanoseconds()
+	bn.timeoffset = int64(offset)
+	return nil
 }
 
 func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
@@ -304,6 +322,8 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	}
 
 	switch status {
+	case "NEW":
+		ord.Status = ORDER_UNFINISH
 	case "FILLED":
 		ord.Status = ORDER_FINISH
 	case "PARTIALLY_FILLED":
