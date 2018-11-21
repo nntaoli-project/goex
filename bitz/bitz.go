@@ -318,8 +318,9 @@ func (ctx *BitZ) GetKlineRecords(currency CurrencyPair, period, size, since int)
 	list := data["bars"].([]interface{})
 
 	var klineRecords []Kline
-	for _, record := range list {
-		_record := record.(map[string]interface{})
+
+	for i:=len(list)-1; i >= 0; i--{
+		_record := list[i].(map[string]interface{})
 		r := Kline{
 			Pair:currency,
 			Timestamp:int64(ToFloat64(_record["time"])),
@@ -351,8 +352,8 @@ func (ctx *BitZ) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, err
 	data := bodyDataMap["data"].([]interface{})
 
 	trades := []Trade{}
-	for _, trade := range data {
-		_trade := trade.(map[string]interface{})
+	for i:=len(data)-1; i >= 0; i--{
+		_trade := data[i].(map[string]interface{})
 		item := Trade{
 			Tid: int64(ToFloat64(_trade["id"])),
 			Type:_trade["s"].(string),
