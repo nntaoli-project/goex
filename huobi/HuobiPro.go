@@ -58,6 +58,15 @@ type HuoBiPro struct {
 	wsKLineHandleMap  map[string]func(*Kline)
 }
 
+type HuoBiProSymbol struct {
+	BaseCurrency string
+	QuoteCurrency string
+	PricePrecision float64
+	AmountPrecision float64
+	SymbolPartition string
+	Symbol string
+}
+
 func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoBiPro {
 	hbpro := new(HuoBiPro)
 	hbpro.baseUrl = "https://api.huobi.br.com"
@@ -636,13 +645,13 @@ func (hbpro *HuoBiPro) getPairFromChannel(ch string) CurrencyPair {
 	var currA, currB string
 	if strings.HasSuffix(s[1], "usdt") {
 		currB = "usdt"
-	} else if strings.HasSuffix(ch, "husd") {
+	} else if strings.HasSuffix(s[1], "husd") {
 		currB = "husd"
-	} else if strings.HasSuffix(ch, "btc") {
+	} else if strings.HasSuffix(s[1], "btc") {
 		currB = "btc"
-	} else if strings.HasSuffix(ch, "eth") {
+	} else if strings.HasSuffix(s[1], "eth") {
 		currB = "eth"
-	} else if strings.HasSuffix(ch, "ht") {
+	} else if strings.HasSuffix(s[1], "ht") {
 		currB = "ht"
 	}
 
@@ -702,6 +711,50 @@ func (hbpro *HuoBiPro) parseWsKLineData(tick map[string]interface{}) *Kline {
 
 func (hbpro *HuoBiPro) GetExchangeName() string {
 	return HUOBI_PRO
+}
+
+func (hbpro *HuoBiPro) GetCurrenciesList() ([]string, error)  {
+	url := hbpro.baseUrl + "/v1/common/currencys"
+
+	ret, err := HttpGet(hbpro.httpClient, url)
+	if err != nil {
+		return nil, err
+	}
+
+	data, ok := ret["data"].([]interface{})
+	if !ok {
+		return nil, errors.New("response format error")
+	}
+	fmt.Println(data)
+	return nil, nil
+}
+
+func (hbpro *HuoBiPro) GetCurrenciesPrecision() ([]HuoBiProSymbol, error)  {
+	url := hbpro.baseUrl + "/v1/common/symbols"
+
+	ret, err := HttpGet(hbpro.httpClient, url)
+	if err != nil {
+		return nil, err
+	}
+
+	data, ok := ret["data"].([]interface{})
+	if !ok {
+		return nil, errors.New("response format error")
+	}
+	var Symbols []HuoBiProSymbol
+	for _, v := range data {
+		_sym := v.(map[string]interface{})
+		var sym HuoBiProSymbol
+		sym.BaseCurrency = _sym["base-currency"].(string)
+		sym.QuoteCurrency = _sym["quote-currency"].(string)
+		sym.PricePrecision = _sym["price-precision"].(float64)
+		sym.AmountPrecision = _sym["amount-precision"].(float64)
+		sym.SymbolPartition = _sym["symbol-partition"].(string)
+		sym.Symbol = _sym["symbol"].(string)
+		Symbols = append(Symbols, sym)
+	}
+	//fmt.Println(Symbols)
+	return Symbols, nil
 }
 
 func (hbpro *HuoBiPro) GetTickerWithWs(pair CurrencyPair, handle func(ticker *Ticker)) error {
