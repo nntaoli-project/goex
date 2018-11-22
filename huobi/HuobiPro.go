@@ -22,6 +22,18 @@ import (
 var HBPOINT = NewCurrency("HBPOINT", "")
 var onceWsConn sync.Once
 
+var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
+	KLINE_PERIOD_1MIN:   "1min",
+	KLINE_PERIOD_5MIN:   "5min",
+	KLINE_PERIOD_15MIN:  "15min",
+	KLINE_PERIOD_30MIN:  "30min",
+	KLINE_PERIOD_60MIN:  "60min",
+	KLINE_PERIOD_1DAY:   "1day",
+	KLINE_PERIOD_1WEEK:  "1week",
+	KLINE_PERIOD_1MONTH: "1mon",
+	KLINE_PERIOD_1YEAR:  "1year",
+}
+
 const (
 	HB_POINT_ACCOUNT = "point"
 	HB_SPOT_ACCOUNT  = "spot"
@@ -45,6 +57,16 @@ type HuoBiPro struct {
 	wsTickerHandleMap map[string]func(*Ticker)
 	wsDepthHandleMap  map[string]func(*Depth)
 	wsTradeHandleMap  map[string]func(*Trade)
+	wsKLineHandleMap  map[string]func(*Kline)
+}
+
+type HuoBiProSymbol struct {
+	BaseCurrency string
+	QuoteCurrency string
+	PricePrecision float64
+	AmountPrecision float64
+	SymbolPartition string
+	Symbol string
 }
 
 func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoBiPro {
@@ -57,7 +79,7 @@ func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoB
 	hbpro.wsDepthHandleMap = make(map[string]func(*Depth))
 	hbpro.wsTickerHandleMap = make(map[string]func(*Ticker))
 	hbpro.wsTradeHandleMap = make(map[string]func(*Trade))
-
+	hbpro.wsKLineHandleMap = make(map[string]func(*Kline))
 	return hbpro
 }
 
@@ -477,27 +499,8 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	url := hbpro.baseUrl + "/market/history/kline?period=%s&size=%d&symbol=%s"
 	symbol := strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol(""))
-	periodS := "1min"
-	switch period {
-	case KLINE_PERIOD_1MIN:
-		periodS = "1min"
-	case KLINE_PERIOD_5MIN:
-		periodS = "5min"
-	case KLINE_PERIOD_15MIN:
-		periodS = "15min"
-	case KLINE_PERIOD_30MIN:
-		periodS = "30min"
-	case KLINE_PERIOD_60MIN:
-		periodS = "60min"
-	case KLINE_PERIOD_1DAY:
-		periodS = "1day"
-	case KLINE_PERIOD_1WEEK:
-		periodS = "1week"
-	case KLINE_PERIOD_1MONTH:
-		periodS = "1mon"
-	case KLINE_PERIOD_1YEAR:
-		periodS = "1year"
-	default:
+	periodS, isOk := _INERNAL_KLINE_PERIOD_CONVERTER[period]
+	if isOk != true {
 		periodS = "1min"
 	}
 
@@ -646,6 +649,13 @@ func (hbpro *HuoBiPro) createWsConn() {
 				}
 			}
 
+			if hbpro.wsKLineHandleMap[ch] != nil {
+				kline := hbpro.parseWsKLineData(tick)
+				kline.Pair = pair
+				(hbpro.wsKLineHandleMap[ch])(kline)
+				return
+			}
+
 			//log.Println(string(data))
 		})
 	})
@@ -666,6 +676,7 @@ func Between(str, starting, ending string) string {
 }
 
 func (hbpro *HuoBiPro) getPairFromChannel(ch string) CurrencyPair {
+
 
 	var currA, currB, symbol string
 
@@ -696,9 +707,10 @@ func (hbpro *HuoBiPro) getPairFromChannel(ch string) CurrencyPair {
 
 	currA = strings.TrimSuffix(symbol, currB)
 
+
+
 	a := NewCurrency(currA, "")
 	b := NewCurrency(currB, "")
-
 	pair := NewCurrencyPair(a, b)
 
 	return pair
@@ -769,9 +781,62 @@ func (hbpro *HuoBiPro) parseTradeData(tick map[string]interface{}) (trades []*Tr
 
 	return trades
 }
+func (hbpro *HuoBiPro) parseWsKLineData(tick map[string]interface{}) *Kline {
+	return &Kline{
+		Open:      ToFloat64(tick["open"]),
+		Close:     ToFloat64(tick["close"]),
+		High:      ToFloat64(tick["high"]),
+		Low:       ToFloat64(tick["low"]),
+		Vol:       ToFloat64(tick["vol"]),
+		Timestamp: int64(ToUint64(tick["id"]))}
+}
 
 func (hbpro *HuoBiPro) GetExchangeName() string {
 	return HUOBI_PRO
+}
+
+func (hbpro *HuoBiPro) GetCurrenciesList() ([]string, error)  {
+	url := hbpro.baseUrl + "/v1/common/currencys"
+
+	ret, err := HttpGet(hbpro.httpClient, url)
+	if err != nil {
+		return nil, err
+	}
+
+	data, ok := ret["data"].([]interface{})
+	if !ok {
+		return nil, errors.New("response format error")
+	}
+	fmt.Println(data)
+	return nil, nil
+}
+
+func (hbpro *HuoBiPro) GetCurrenciesPrecision() ([]HuoBiProSymbol, error)  {
+	url := hbpro.baseUrl + "/v1/common/symbols"
+
+	ret, err := HttpGet(hbpro.httpClient, url)
+	if err != nil {
+		return nil, err
+	}
+
+	data, ok := ret["data"].([]interface{})
+	if !ok {
+		return nil, errors.New("response format error")
+	}
+	var Symbols []HuoBiProSymbol
+	for _, v := range data {
+		_sym := v.(map[string]interface{})
+		var sym HuoBiProSymbol
+		sym.BaseCurrency = _sym["base-currency"].(string)
+		sym.QuoteCurrency = _sym["quote-currency"].(string)
+		sym.PricePrecision = _sym["price-precision"].(float64)
+		sym.AmountPrecision = _sym["amount-precision"].(float64)
+		sym.SymbolPartition = _sym["symbol-partition"].(string)
+		sym.Symbol = _sym["symbol"].(string)
+		Symbols = append(Symbols, sym)
+	}
+	//fmt.Println(Symbols)
+	return Symbols, nil
 }
 
 func (hbpro *HuoBiPro) GetTickerWithWs(pair CurrencyPair, handle func(ticker *Ticker)) error {
@@ -796,6 +861,20 @@ func (hbpro *HuoBiPro) GetTradeWithWs(pair CurrencyPair, handle func(dep *Trade)
 	hbpro.createWsConn()
 	sub := fmt.Sprintf("market.%s.trade.detail", strings.ToLower(pair.ToSymbol("")))
 	hbpro.wsTradeHandleMap[sub] = handle
+  return hbpro.ws.Subscribe(map[string]interface{}{
+		"id":  3,
+		"sub": sub})
+}
+
+func (hbpro *HuoBiPro) GetKLineWithWs(pair CurrencyPair, period int, handle func(kline *Kline)) error {
+	hbpro.createWsConn()
+	periodS, isOk := _INERNAL_KLINE_PERIOD_CONVERTER[period]
+	if isOk != true {
+		periodS = "1min"
+	}
+
+	sub := fmt.Sprintf("market.%s.kline.%s", strings.ToLower(pair.ToSymbol("")), periodS)
+	hbpro.wsKLineHandleMap[sub] = handle
 	return hbpro.ws.Subscribe(map[string]interface{}{
 		"id":  3,
 		"sub": sub})
