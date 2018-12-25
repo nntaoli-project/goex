@@ -76,6 +76,7 @@ var (
 
 //exchanges const
 const (
+	ALLCOIN   	= "allcoin.ca"
 	OKCOIN_CN   = "okcoin.cn"
 	OKCOIN_COM  = "okcoin.com"
 	OKEX        = "okex.com"

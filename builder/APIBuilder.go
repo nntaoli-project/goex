@@ -26,6 +26,7 @@ import (
 	"github.com/nntaoli-project/GoEx/bigone"
 	"github.com/nntaoli-project/GoEx/hitbtc"
 	"github.com/nntaoli-project/GoEx/bitz"
+	"github.com/nntaoli-project/GoEx/allcoin"
 )
 
 type APIBuilder struct {
@@ -92,6 +93,8 @@ func (builder *APIBuilder) HttpTimeout(timeout time.Duration) (_builder *APIBuil
 func (builder *APIBuilder) Build(exName string) (api API) {
 	var _api API
 	switch exName {
+	case ALLCOIN:
+		_api = allcoin.New(builder.client, builder.apiKey, builder.secretkey)
 	case OKCOIN_CN:
 		_api = okcoin.New(builder.client, builder.apiKey, builder.secretkey)
 	case POLONIEX:
@@ -142,6 +145,8 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 func (builder *APIBuilder) BuildNew(exName string, params map[string]interface{}) (api API) {
 	var _api API
 	switch exName {
+	case ALLCOIN:
+		_api = allcoin.New(builder.client, builder.apiKey, builder.secretkey)
 	case OKCOIN_CN:
 		_api = okcoin.New(builder.client, builder.apiKey, builder.secretkey)
 	case POLONIEX:

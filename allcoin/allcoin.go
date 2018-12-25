@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"fmt"
 )
 
 const (
@@ -55,51 +56,51 @@ func (ac *Allcoin) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	//wg.Add(2)
 	//go func() {
 	//	defer wg.Done()
-	//currency2 := ac.adaptCurrencyPair(currency)
-	//params := url.Values{}
-	//params.Set("symbol", strings.ToLower(currency2.ToSymbol("2")))
-	//path := API_BASE_URL + TICKER_URI_2
-	//resp, err := HttpPostForm(ac.httpClient, path, params)
-	//log.Println("resp:", string(resp), "err:", err)
-	//if err != nil {
-	//	//return nil, err
-	//}
-	//
-	//respmap := make(map[string]interface{})
-	//err = json.Unmarshal(resp, &respmap)
-	//if err != nil {
-	//	log.Println(string(resp))
-	//	//return nil, err
-	//}
-	//code := respmap["code"].(float64)
-	//msg := respmap["msg"].(string)
-	//log.Println("code=", code, "msg:", msg)
-	//if code != 0 {
-	//	//return nil, errors.New(respmap["msg"].(string))
-	//}
-	//data := respmap["data"].(map[string]interface{})
-	//log.Println("1", data)
-	//}()
-
-	//go func() {
-	//	defer wg.Done()
 	currency2 := ac.adaptCurrencyPair(currency)
 	params := url.Values{}
-	params.Set("part", strings.ToLower(currency2.CurrencyB.String()))
-	params.Set("coin", strings.ToLower(currency2.CurrencyA.String()))
-	path := API_BASE_URL + TICKER_URI
+	params.Set("symbol", strings.ToLower(currency2.ToSymbol("2")))
+	path := API_BASE_URL + TICKER_URI_2
 	resp, err := HttpPostForm(ac.httpClient, path, params)
 	//log.Println("resp:", string(resp), "err:", err)
 	if err != nil {
-		return nil, err
+		//return nil, err
 	}
 
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
 		log.Println(string(resp))
-		return nil, err
+		//return nil, err
 	}
+	code := respmap["code"].(float64)
+	//msg := respmap["msg"].(string)
+	//log.Println("code=", code, "msg:", msg)
+	if code != 0 {
+		return nil, errors.New(respmap["msg"].(string))
+	}
+	data := respmap["data"].(map[string]interface{})
+	//log.Println("1", data)
+	//}()
+
+	//go func() {
+	//	defer wg.Done()
+	//currency2 := ac.adaptCurrencyPair(currency)
+	//params := url.Values{}
+	//params.Set("part", strings.ToLower(currency2.CurrencyB.String()))
+	//params.Set("coin", strings.ToLower(currency2.CurrencyA.String()))
+	//path := API_BASE_URL + TICKER_URI
+	//resp, err := HttpPostForm(ac.httpClient, path, params)
+	////log.Println("resp:", string(resp), "err:", err)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//respmap := make(map[string]interface{})
+	//err = json.Unmarshal(resp, &respmap)
+	//if err != nil {
+	//	log.Println(string(resp))
+	//	return nil, err
+	//}
 
 	//log.Println("2", respmap)
 	//}()
@@ -107,12 +108,12 @@ func (ac *Allcoin) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	var ticker Ticker
 	ticker.Pair = currency
 	ticker.Date = uint64(time.Now().Unix())
-	ticker.Last = ToFloat64(respmap["price"])
-	ticker.Buy = ToFloat64(respmap["buy"])
-	ticker.Sell = ToFloat64(respmap["sale"])
-	ticker.Low = ToFloat64(respmap["min"])
-	ticker.High = ToFloat64(respmap["max"])
-	ticker.Vol = ToFloat64(respmap["volume_24h"])
+	ticker.Last = ToFloat64(data["last"])
+	ticker.Buy = ToFloat64(data["buy"])
+	ticker.Sell = ToFloat64(data["sell"])
+	ticker.Low = ToFloat64(data["low"])
+	ticker.High = ToFloat64(data["high"])
+	ticker.Vol = ToFloat64(data["vol"])
 	return &ticker, nil
 }
 
@@ -135,13 +136,13 @@ func (ac *Allcoin) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 		return nil, err
 	}
 	code := respmap["code"].(float64)
-	msg := respmap["msg"].(string)
-	log.Println("code=", code, "msg:", msg)
+	//msg := respmap["msg"].(string)
+	//log.Println("code=", code, "msg:", msg)
 	if code != 0 {
 		return nil, errors.New(respmap["msg"].(string))
 	}
 	data := respmap["data"].(map[string]interface{})
-	log.Println("1", data)
+	//log.Println("1", data)
 
 	bids := data["bids"].([]interface{})
 	asks := data["asks"].([]interface{})
@@ -150,20 +151,27 @@ func (ac *Allcoin) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 	//log.Println("len asks", len(asks))
 	depth := new(Depth)
 	depth.Pair = currencyPair
-	for _, bid := range bids {
+
+	for n, bid := range bids {
 		_bid := bid.([]interface{})
 		amount := ToFloat64(_bid[1])
 		price := ToFloat64(_bid[0])
 		dr := DepthRecord{Amount: amount, Price: price}
 		depth.BidList = append(depth.BidList, dr)
+		if n == size {
+			break
+		}
 	}
 
-	for _, ask := range asks {
+	for n, ask := range asks {
 		_ask := ask.([]interface{})
 		amount := ToFloat64(_ask[1])
 		price := ToFloat64(_ask[0])
 		dr := DepthRecord{Amount: amount, Price: price}
 		depth.AskList = append(depth.AskList, dr)
+		if n == size {
+			break
+		}
 	}
 	sort.Sort(depth.AskList)
 	return depth, nil
@@ -267,7 +275,7 @@ func (ac *Allcoin) GetAccount() (*Account, error) {
 			}
 		}
 	}
-	log.Println(acc)
+	//log.Println(acc)
 	return &acc, nil
 }
 
@@ -310,7 +318,7 @@ func (ac *Allcoin) CancelOrder(orderId string, currencyPair CurrencyPair) (bool,
 		log.Println(string(resp))
 		return false, err
 	}
-	code := respmap["code"].(int)
+	code := respmap["code"].(float64)
 	if code != 0 {
 		return false, errors.New(respmap["msg"].(string))
 	}
@@ -417,34 +425,49 @@ func (ac *Allcoin) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	if code != 0 {
 		return nil, errors.New(respmap["msg"].(string))
 	}
-	data, isok := respmap["data"].([]map[string]interface{})
+	list, _ := respmap["data"].([]interface{})
 
 	orders := make([]Order, 0)
-	if isok != true {
-		return orders, nil
-	}
-	for _, ord := range data {
-		//ord := v.(map[string]interface{})
-
-		//side := ord["side"].(string)
-		//orderSide := SELL
-		//if side == "BUY" {
-		//	orderSide = BUY
-		//}
-
+	for _, v := range list {
+		ord := v.(map[string]interface{})
 		orders = append(orders, Order{
 			OrderID:  ToInt(ord["id"]),
-			OrderID2: ord["id"].(string),
+			OrderID2: fmt.Sprintf("%d", ToInt(ord["id"])),
 			Currency: currencyPair,
 			Price:    ToFloat64(ord["price"]),
 			Amount:   ToFloat64(ord["number"]),
-			//Side:      TradeSide(orderSide),
-			//Status:    ORDER_UNFINISH,
-			OrderTime: ToInt(ord["created"])})
+			DealAmount: ToFloat64(ord["numberdeal"]),
+			Side:      orderTypeAdapter(ord["flag"].(string)),
+			Status:     orderStatusAdapter(ToInt(ord["status"])),
+			OrderTime: ToInt(ord["created"]) * 1000})
 	}
+
 	return orders, nil
 }
 
+func orderTypeAdapter(side string) TradeSide {
+	switch side { //类型:sale和?
+	case "sale":
+		return SELL
+	default:
+		return BUY
+	}
+}
+
+func orderStatusAdapter(s int) TradeStatus {
+	switch s {
+	case 0:
+		return ORDER_UNFINISH
+	case 1:
+		return ORDER_PART_FINISH
+	case 2:
+		return ORDER_FINISH
+	case 3:
+		return ORDER_CANCEL
+	}
+	return ORDER_REJECT
+
+}
 func (ac *Allcoin) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	panic("not implements")
 }
