@@ -368,24 +368,12 @@ func (ac *Allcoin) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	ord.Currency = currencyPair
 	//ord.OrderID = ToInt(orderId)
 	ord.OrderID2 = orderId
+	ord.Status = orderStatusAdapter(ToInt(status))
 
 	if side == "sale" {
 		ord.Side = SELL
 	} else {
 		ord.Side = BUY
-	}
-
-	switch status {
-	case "1": ///////////////////////////////////////////////////////////////////////////////////#################TODO
-		ord.Status = ORDER_FINISH
-	case "2":
-		ord.Status = ORDER_PART_FINISH
-	case "3":
-		ord.Status = ORDER_CANCEL
-	case "PENDING_CANCEL":
-		ord.Status = ORDER_CANCEL_ING
-	case "REJECTED":
-		ord.Status = ORDER_REJECT
 	}
 
 	ord.Amount = ToFloat64(data["number"])
@@ -430,7 +418,7 @@ func (ac *Allcoin) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	orders := make([]Order, 0)
 	for _, v := range list {
 		ord := v.(map[string]interface{})
-		orders = append(orders, Order{
+		order := Order{
 			OrderID:  ToInt(ord["id"]),
 			OrderID2: fmt.Sprintf("%d", ToInt(ord["id"])),
 			Currency: currencyPair,
@@ -439,7 +427,12 @@ func (ac *Allcoin) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 			DealAmount: ToFloat64(ord["numberdeal"]),
 			Side:      orderTypeAdapter(ord["flag"].(string)),
 			Status:     orderStatusAdapter(ToInt(ord["status"])),
-			OrderTime: ToInt(ord["created"]) * 1000})
+			OrderTime: ToInt(ord["created"]) * 1000}
+
+		if order.Status == ORDER_FINISH{
+			continue
+		}
+		orders = append(orders, order)
 	}
 
 	return orders, nil
@@ -464,9 +457,12 @@ func orderStatusAdapter(s int) TradeStatus {
 		return ORDER_FINISH
 	case 3:
 		return ORDER_CANCEL
+	//case "PENDING_CANCEL":
+	//	return ORDER_CANCEL_ING
+	//case "REJECTED":
+	//	return ORDER_REJECT
 	}
-	return ORDER_REJECT
-
+	return ORDER_UNFINISH
 }
 func (ac *Allcoin) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	panic("not implements")
