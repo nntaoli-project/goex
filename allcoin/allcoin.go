@@ -376,7 +376,7 @@ func (ac *Allcoin) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 
 	ord.Amount = ToFloat64(data["number"])
 	ord.Price = ToFloat64(data["price"])
-	ord.DealAmount = ord.Amount - ToFloat64(data["numberdeal"])
+	ord.DealAmount = ToFloat64(data["numberdeal"])
 	ord.AvgPrice = ToFloat64(data["avg_price"]) // response no avg price ， fill price
 
 	return &ord, nil
