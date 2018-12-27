@@ -163,16 +163,14 @@ func (ac *Allcoin) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 		}
 	}
 
-	for n, ask := range asks {
-		_ask := ask.([]interface{})
+	for i:=len(asks)-1; i >= len(asks)-size && i >= 0; i--{
+		_ask := asks[i].([]interface{})
 		amount := ToFloat64(_ask[1])
 		price := ToFloat64(_ask[0])
 		dr := DepthRecord{Amount: amount, Price: price}
 		depth.AskList = append(depth.AskList, dr)
-		if n == size {
-			break
-		}
 	}
+
 	sort.Sort(depth.AskList)
 	return depth, nil
 }
