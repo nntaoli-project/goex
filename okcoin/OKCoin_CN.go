@@ -516,6 +516,7 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 		order.DealAmount = orderMap["deal_amount"].(float64)
 		order.AvgPrice = orderMap["avg_price"].(float64)
 		order.OrderTime = int(orderMap["create_date"].(float64))
+		order.Side = AdaptTradeSide(orderMap["type"].(string))
 
 		//status:-1:已撤销  0:未成交  1:部分成交  2:完全成交 4:撤单处理中
 		switch int(orderMap["status"].(float64)) {
@@ -529,13 +530,6 @@ func (ctx *OKCoinCN_API) GetOrderHistorys(currency CurrencyPair, currentPage, pa
 			order.Status = ORDER_FINISH
 		case 4:
 			order.Status = ORDER_CANCEL_ING
-		}
-
-		switch orderMap["type"].(string) {
-		case "buy":
-			order.Side = BUY
-		case "sell":
-			order.Side = SELL
 		}
 
 		orderAr = append(orderAr, order)
@@ -571,7 +565,7 @@ func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair, since int64) ([]Tra
 		amount := item["amount"].(float64)
 		price := item["price"].(float64)
 		time := int64(item["date_ms"].(float64))
-		trades = append(trades, Trade{tid, direction, amount, price, time})
+		trades = append(trades, Trade{tid, AdaptTradeSide(direction), amount, price, time , currencyPair})
 	}
 
 

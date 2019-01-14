@@ -495,7 +495,7 @@ func (hitbtc *Hitbtc) GetTrades(currencyPair goex.CurrencyPair, since int64) ([]
 	for _, e := range resp {
 		one := goex.Trade{
 			Tid:    int64(goex.ToUint64(e["id"])),
-			Type:   e["side"].(string),
+			Type:   goex.AdaptTradeSide(e["side"].(string)),
 			Amount: goex.ToFloat64(e["quantity"]),
 			Price:  goex.ToFloat64(e["price"]),
 			Date:   parseTime(e["timestamp"].(string)),

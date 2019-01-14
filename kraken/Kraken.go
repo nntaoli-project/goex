@@ -113,7 +113,7 @@ func (k *Kraken) toOrder(orderinfo interface{}) Order {
 		Price:      ToFloat64(descmap["price"]),
 		DealAmount: ToFloat64(omap["vol_exec"]),
 		AvgPrice:   ToFloat64(omap["price"]),
-		Side:       k.convertSide(descmap["type"].(string)),
+		Side:       AdaptTradeSide(descmap["type"].(string)),
 		Status:     k.convertOrderStatus(omap["status"].(string)),
 		Fee:        ToFloat64(omap["fee"]),
 		OrderTime:  ToInt(omap["opentm"]),
@@ -354,16 +354,6 @@ func (k *Kraken) convertPair(pair CurrencyPair) CurrencyPair {
 	}
 
 	return pair
-}
-
-func (k *Kraken) convertSide(typeS string) TradeSide {
-	switch typeS {
-	case "sell":
-		return SELL
-	case "buy":
-		return BUY
-	}
-	return SELL
 }
 
 func (k *Kraken) convertOrderStatus(status string) TradeStatus {

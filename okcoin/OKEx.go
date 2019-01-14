@@ -669,13 +669,7 @@ func (okFuture *OKEx) GetTrades(contract_type string, currencyPair CurrencyPair,
 		price := item["price"].(float64)
 		time := int64(item["date_ms"].(float64))
 
-		var TradeSide TradeSide
-		if direction == "buy" {
-			TradeSide = BUY
-		} else {
-			TradeSide = SELL
-		}
-		trades = append(trades, Trade{tid, TradeSide, amount, price, time, currencyPair})
+		trades = append(trades, Trade{tid, AdaptTradeSide(direction), amount, price, time, currencyPair})
 	}
 
 	return trades, nil
