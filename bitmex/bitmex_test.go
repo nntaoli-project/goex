@@ -3,10 +3,10 @@ package bitmex
 import (
 	"github.com/nntaoli-project/GoEx"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"testing"
-	"net/url"
 	"net"
+	"net/http"
+	"net/url"
+	"testing"
 	"time"
 )
 
@@ -23,10 +23,16 @@ var httpProxyClient = &http.Client{
 	},
 	Timeout: 10 * time.Second,
 }
-var mex = New(httpProxyClient, "", "")
+var bm = New(httpProxyClient, "", "")
 
 func TestBitmex_GetDepth(t *testing.T) {
-	dep, err := mex.GetDepth(2, goex.NewCurrencyPair(goex.XBT, goex.USD))
+	return
+	dep, err := bm.GetDepth(2, goex.NewCurrencyPair(goex.XBT, goex.USD))
 	assert.Nil(t, err)
 	t.Log(dep)
+}
+
+func TestBitmex_GetAccount(t *testing.T) {
+	acc, err := bm.GetAccount()
+	t.Log(acc, err)
 }
