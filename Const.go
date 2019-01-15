@@ -80,6 +80,7 @@ const (
 	OKCOIN_COM  = "okcoin.com"
 	OKEX        = "okex.com"
 	OKEX_FUTURE = "okex.com"
+	OKEX_SWAP   = "okex.com_swap"
 	HUOBI       = "huobi.com"
 	HUOBI_PRO   = "huobi.pro"
 	BITSTAMP    = "bitstamp.net"
