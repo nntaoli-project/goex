@@ -82,10 +82,14 @@ type Depth struct {
 }
 
 type APIConfig struct {
-	HttpClient *http.Client
-	ApiUrl,
-	AccessKey,
-	SecretKey string
+	HttpClient    *http.Client
+	Endpoint      string
+	ApiKey        string
+	ApiSecretKey  string
+	ApiPassphrase string //for okex.com v3 api
+	ClientId      string //for bitstamp.net , huobi.pro
+
+	Lever int //杠杆倍数 , for future
 }
 
 type Kline struct {
@@ -117,6 +121,7 @@ type FutureAccount struct {
 }
 
 type FutureOrder struct {
+	OrderID2     string //请尽量用这个字段替代OrderID字段
 	Price        float64
 	Amount       float64
 	AvgPrice     float64

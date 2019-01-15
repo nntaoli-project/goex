@@ -73,6 +73,7 @@ var (
 	BCD     = Currency{"BCD", ""}
 	NEO     = Currency{"NEO", ""}
 	HSR     = Currency{"HSR", ""}
+	BSV     = Currency{"BSV", ""}
 
 	//currency pair
 
@@ -104,6 +105,7 @@ var (
 	BCD_USD = CurrencyPair{BCD, USD}
 	EOS_USD = CurrencyPair{EOS, USD}
 	BTG_USD = CurrencyPair{BTG, USD}
+	BSV_USD = CurrencyPair{BSV, USD}
 
 	BTC_USDT = CurrencyPair{BTC, USDT}
 	LTC_USDT = CurrencyPair{LTC, USDT}
@@ -116,6 +118,7 @@ var (
 	EOS_USDT = CurrencyPair{EOS, USDT}
 	XRP_USDT = CurrencyPair{XRP, USDT}
 	HSR_USDT = CurrencyPair{HSR, USDT}
+	BSV_USDT = CurrencyPair{BSV, USDT}
 
 	XRP_EUR = CurrencyPair{XRP, EUR}
 
@@ -137,6 +140,7 @@ var (
 	NEO_BTC = CurrencyPair{NEO, BTC}
 	EOS_BTC = CurrencyPair{EOS, BTC}
 	HSR_BTC = CurrencyPair{HSR, BTC}
+	BSV_BTC = CurrencyPair{BSV, BTC}
 
 	ETC_ETH = CurrencyPair{ETC, ETH}
 	EOS_ETH = CurrencyPair{EOS, ETH}
