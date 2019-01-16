@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	models "github.com/sumorf/bitmexwrap/bitmex/models"
+	models "github.com/nntaoli-project/GoEx/bitmex/models"
 )
 
 // OrderClosePositionReader is a Reader for the OrderClosePosition structure.

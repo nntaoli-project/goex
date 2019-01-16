@@ -23,16 +23,18 @@ var httpProxyClient = &http.Client{
 	},
 	Timeout: 10 * time.Second,
 }
-var bm = New(httpProxyClient, "", "")
+var proxyURL = "socks5://127.0.0.1:1080"
+
+var bm = New(httpProxyClient, "", "", BaseURL, proxyURL)
 
 func TestBitmex_GetDepth(t *testing.T) {
-	return
-	dep, err := bm.GetDepth(2, goex.NewCurrencyPair(goex.XBT, goex.USD))
+	//return
+	dep, err := bm.GetFutureDepth(goex.NewCurrencyPair(goex.XBT, goex.USD), "", 2)
 	assert.Nil(t, err)
 	t.Log(dep)
 }
 
 func TestBitmex_GetAccount(t *testing.T) {
-	acc, err := bm.GetAccount()
-	t.Log(acc, err)
+	//acc, err := bm.GetAccount()
+	//t.Log(acc, err)
 }

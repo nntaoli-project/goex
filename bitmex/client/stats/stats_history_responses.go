@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	models "github.com/sumorf/bitmexwrap/bitmex/models"
+	models "github.com/nntaoli-project/GoEx/bitmex/models"
 )
 
 // StatsHistoryReader is a Reader for the StatsHistory structure.

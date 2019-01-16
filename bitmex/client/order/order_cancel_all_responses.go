@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	models "github.com/sumorf/bitmexwrap/bitmex/models"
+	models "github.com/nntaoli-project/GoEx/bitmex/models"
 )
 
 // OrderCancelAllReader is a Reader for the OrderCancelAll structure.

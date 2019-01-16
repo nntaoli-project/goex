@@ -14,7 +14,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	models "github.com/sumorf/bitmexwrap/bitmex/models"
+	models "github.com/nntaoli-project/GoEx/bitmex/models"
 )
 
 // LeaderboardGetNameReader is a Reader for the LeaderboardGetName structure.
