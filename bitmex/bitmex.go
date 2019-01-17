@@ -17,7 +17,6 @@ import (
 
 	"errors"
 	"io/ioutil"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -58,9 +57,9 @@ type Info struct {
 	Timestamp int64  `json:"timestamp"`
 }
 
-func New(client *http.Client, accesskey, secretkey, baseUrl, proxyUrl string) *Bitmex {
+func New(client *http.Client, accesskey, secretkey, baseUrl string) *Bitmex {
 	b := new(Bitmex)
-	b.setProxy(proxyUrl)
+
 	cfg := &apiclient.TransportConfig{}
 	cfg.Host = baseUrl
 	cfg.BasePath = BasePath
@@ -68,15 +67,11 @@ func New(client *http.Client, accesskey, secretkey, baseUrl, proxyUrl string) *B
 
 	b.api = apiclient.NewHTTPClientWithConfig(nil, cfg)
 	b.trans = NewTransport(cfg.Host, cfg.BasePath, accesskey, secretkey, cfg.Schemes)
+	b.trans.Runtime.Transport = client.Transport
 	b.api.SetTransport(b.trans)
 	b.setTimeOffset()
 	//b.setDebug(true)
 	return b
-}
-
-func (b *Bitmex) setProxy(proxyUrl string) {
-	os.Setenv("HTTP_PROXY", proxyUrl)
-	os.Setenv("HTTPS_PROXY", proxyUrl)
 }
 
 func (b *Bitmex) setDebug(bDebug bool) {
@@ -112,22 +107,11 @@ func (b *Bitmex) info() (info Info, err error) {
 	return
 }
 
-/**
- * 期货行情
- * @param currency_pair   btc_usd:比特币    ltc_usd :莱特币
- * @param contractType  合约类型: this_week:当周   next_week:下周   month:当月   quarter:季度
- */
 func (b *Bitmex) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
 	panic("not implements")
 }
 
-/**
- * 期货深度
- * @param currencyPair  btc_usd:比特币    ltc_usd :莱特币
- * @param contractType  合约类型: this_week:当周   next_week:下周   month:当月   quarter:季度
- * @param size 获取深度档数
- * @return
- */
+// Before  Get OrderBook Data  ,   Please be sure to add apikey , apisecretkey
 func (b *Bitmex) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
 	nDepth := int32(size)
 	ret, err := b.api.OrderBook.OrderBookGetL2(&order_book.OrderBookGetL2Params{Depth: &nDepth, Symbol: b.pairToSymbol(currencyPair)})
@@ -135,6 +119,7 @@ func (b *Bitmex) GetFutureDepth(currencyPair CurrencyPair, contractType string, 
 		return nil, err
 	}
 	depth := new(Depth)
+	depth.Pair = currencyPair
 	for _, v := range ret.Payload {
 		if *v.Side == "Sell" {
 			depth.AskList = append(depth.AskList,
@@ -185,9 +170,9 @@ func (b *Bitmex) GetFutureUserinfo() (*FutureAccount, error) {
 		Currency:      XBT,
 		AccountRights: float64(wallet.Payload.AvailableMargin), //账户权益
 		KeepDeposit:   float64(wallet.Payload.InitMargin),
-		//ProfitReal    : float64(wallet.Payload.), //已实现盈亏
-		ProfitUnreal: float64(wallet.Payload.UnrealisedPnl),
-		RiskRate:     float64(wallet.Payload.RiskValue), //保证金率
+		ProfitReal:    float64(wallet.Payload.RealisedPnl),
+		ProfitUnreal:  float64(wallet.Payload.UnrealisedPnl),
+		RiskRate:      float64(wallet.Payload.RiskValue), //保证金率
 
 	}
 	balances[XBT] = balance
@@ -197,15 +182,6 @@ func (b *Bitmex) GetFutureUserinfo() (*FutureAccount, error) {
 
 }
 
-/**
- * 期货下单
- * @param currencyPair   btc_usd:比特币    ltc_usd :莱特币
- * @param contractType   合约类型: this_week:当周   next_week:下周   month:当月   quarter:季度
- * @param price  价格
- * @param amount  委托数量
- * @param openType   1:开多   2:开空   3:平多   4:平空
- * @param matchPrice  是否为对手价 0:不是    1:是   ,当取值为1时,price无效
- */
 func (b *Bitmex) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
 	ord := new(FutureOrder)
 	var err error
@@ -345,13 +321,6 @@ func (b *Bitmex) MarketSell(amount, price string, currency CurrencyPair) (*Futur
 
 }
 
-/**
- * 取消订单
- * @param symbol   btc_usd:比特币    ltc_usd :莱特币
- * @param contractType    合约类型: this_week:当周   next_week:下周   month:当月   quarter:季度
- * @param orderId   订单ID
-
- */
 func (b *Bitmex) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
 	comment := "cancle order with bitmex api"
 	params := order.OrderCancelParams{
@@ -374,12 +343,6 @@ func (b *Bitmex) FutureCancelOrder(currencyPair CurrencyPair, contractType, orde
 
 }
 
-/**
- * 用户持仓查询
- * @param symbol   btc_usd:比特币    ltc_usd :莱特币
- * @param contractType   合约类型: this_week:当周   next_week:下周   month:当月   quarter:季度
- * @return
- */
 func (b *Bitmex) GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error) {
 	symbols := b.pairToSymbol(currencyPair)
 	filters := `{"isOpen": true, "symbol": "` + symbols + `"}`

@@ -3,24 +3,22 @@ package bitmex
 import (
 	"github.com/nntaoli-project/GoEx"
 	"github.com/stretchr/testify/assert"
-	"net"
 	"net/http"
-	"net/url"
 	"testing"
 	"time"
 )
 
 var httpProxyClient = &http.Client{
-	Transport: &http.Transport{
-		Proxy: func(req *http.Request) (*url.URL, error) {
-			return &url.URL{
-				Scheme: "socks5",
-				Host:   "127.0.0.1:1080"}, nil
-		},
-		Dial: (&net.Dialer{
-			Timeout: 10 * time.Second,
-		}).Dial,
-	},
+	//Transport: &http.Transport{
+	//	Proxy: func(req *http.Request) (*url.URL, error) {
+	//		return &url.URL{
+	//			Scheme: "socks5",
+	//			Host:   "127.0.0.1:1080"}, nil
+	//	},
+	//	Dial: (&net.Dialer{
+	//		Timeout: 10 * time.Second,
+	//	}).Dial,
+	//},
 	Timeout: 10 * time.Second,
 }
 var (
@@ -28,19 +26,18 @@ var (
 	bm_key    = ""
 	bm_secret = ""
 )
-var bm = New(httpProxyClient, bm_key, bm_secret, TestBaseURL, proxyURL)
+var bm = New(httpProxyClient, bm_key, bm_secret, BaseURL)
 
 func TestBitmex_GetDepth(t *testing.T) {
-	return
 	dep, err := bm.GetFutureDepth(goex.NewCurrencyPair(goex.XBT, goex.USD), "", 2)
 	assert.Nil(t, err)
 	t.Log(dep)
 }
 
 func TestBitmex_GetAccount(t *testing.T) {
-	return
-	//acc, err := bm.GetAccount()
-	//t.Log(acc, err)
+	//return
+	acc, err := bm.GetFutureUserinfo()
+	t.Log(acc, err)
 }
 
 func TestBitmex_GetUnfinishFutureOrders(t *testing.T) {
