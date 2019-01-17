@@ -46,9 +46,10 @@ var (
 type Bitmex struct {
 	accessKey,
 	secretKey string
-	lever float64
-	trans *Transport
-	api   *apiclient.APIClient
+	lever      float64
+	trans      *Transport
+	api        *apiclient.APIClient
+	httpClient *http.Client
 }
 
 type Info struct {
@@ -59,7 +60,8 @@ type Info struct {
 
 func New(client *http.Client, accesskey, secretkey, baseUrl string) *Bitmex {
 	b := new(Bitmex)
-
+	b.httpClient = client
+	
 	cfg := &apiclient.TransportConfig{}
 	cfg.Host = baseUrl
 	cfg.BasePath = BasePath
@@ -93,7 +95,7 @@ func (b *Bitmex) setTimeOffset() error {
 func (b *Bitmex) info() (info Info, err error) {
 	url := fmt.Sprintf("https://%v%v", b.trans.Host, b.trans.BasePath)
 	var response *http.Response
-	response, err = http.Get(url)
+	response, err = b.httpClient.Get(url)
 	if err != nil {
 		return
 	}
