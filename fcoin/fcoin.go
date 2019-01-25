@@ -203,11 +203,16 @@ func (ft *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (
 }
 
 func (ft *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, para url.Values) string {
-	param := ""
+
+	var (
+		param = ""
+		err   error
+	)
+
 	if para != nil {
 		param = para.Encode()
 	}
-	param = strings.Replace(param, "%2C", ",", -1)
+
 	if "GET" == httpmethod && param != "" {
 		apiurl += "?" + param
 	}
@@ -217,9 +222,12 @@ func (ft *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 		signStr += param
 	}
 
-	//log.Println(signStr)
+	signStr2, err := url.QueryUnescape(signStr) // 不需要编码
+	if err != nil {
+		signStr2 = signStr
+	}
 
-	sign := base64.StdEncoding.EncodeToString([]byte(signStr))
+	sign := base64.StdEncoding.EncodeToString([]byte(signStr2))
 
 	mac := hmac.New(sha1.New, []byte(ft.secretKey))
 
