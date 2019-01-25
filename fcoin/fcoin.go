@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -186,7 +185,7 @@ func (ft *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (
 
 		json.Unmarshal(respbody, &respmap)
 	}
-	log.Println(respmap)
+	//log.Println(respmap)
 	if ToInt(respmap["status"]) != 0 {
 		return nil, errors.New(respmap["msg"].(string))
 	}
@@ -195,7 +194,12 @@ func (ft *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (
 }
 
 func (ft *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, para url.Values) string {
-	param := ""
+
+	var (
+		param = ""
+		err   error
+	)
+
 	if para != nil {
 		param = para.Encode()
 	}
@@ -209,9 +213,12 @@ func (ft *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 		signStr += param
 	}
 
-	log.Println(signStr)
+	signStr2, err := url.QueryUnescape(signStr) // 不需要编码
+	if err != nil {
+		signStr2 = signStr
+	}
 
-	sign := base64.StdEncoding.EncodeToString([]byte(signStr))
+	sign := base64.StdEncoding.EncodeToString([]byte(signStr2))
 
 	mac := hmac.New(sha1.New, []byte(ft.secretKey))
 
@@ -219,7 +226,7 @@ func (ft *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 	sum := mac.Sum(nil)
 
 	s := base64.StdEncoding.EncodeToString(sum)
-	log.Println(s)
+	//log.Println(s)
 	return s
 }
 
@@ -331,7 +338,7 @@ func (ft *FCoin) GetOrdersList() {
 func (ft *FCoin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params := url.Values{}
 	params.Set("symbol", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
-	params.Set("states", "submitted")
+	params.Set("states", "submitted,partial_filled")
 	//params.Set("before", "1")
 	//params.Set("after", "0")
 	params.Set("limit", "100")
