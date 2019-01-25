@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -40,6 +39,15 @@ type FCoin struct {
 	accessKey,
 	secretKey string
 	timeoffset int64
+}
+
+type TradeSymbols struct {
+	Name          string `json:"name"`
+	BaseCurrency  string `json:"base_currency"`
+	QuoteCurrency string `json:"quote_currency"`
+	PriceDecimal  int    `json:"price_decimal"`
+	AmountDecimal int    `json:"amount_decimal"`
+	Tradable      bool   `json:"tradable"`
 }
 
 func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
@@ -75,7 +83,7 @@ func (ft *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 
 	////log.Println("ticker respmap:", respmap)
 	if respmap["status"].(float64) != 0 {
-		return nil, errors.New(respmap["err-msg"].(string))
+		return nil, errors.New(respmap["msg"].(string))
 	}
 
 	//
@@ -112,7 +120,7 @@ func (ft *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	}
 
 	if respmap["status"].(float64) != 0 {
-		return nil, errors.New(respmap["err-msg"].(string))
+		return nil, errors.New(respmap["msg"].(string))
 	}
 
 	datamap := respmap["data"].(map[string]interface{})
@@ -186,7 +194,7 @@ func (ft *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (
 
 		json.Unmarshal(respbody, &respmap)
 	}
-	log.Println(respmap)
+	//log.Println(respmap)
 	if ToInt(respmap["status"]) != 0 {
 		return nil, errors.New(respmap["msg"].(string))
 	}
@@ -199,7 +207,7 @@ func (ft *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 	if para != nil {
 		param = para.Encode()
 	}
-
+	param = strings.Replace(param, "%2C", ",", -1)
 	if "GET" == httpmethod && param != "" {
 		apiurl += "?" + param
 	}
@@ -209,7 +217,7 @@ func (ft *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 		signStr += param
 	}
 
-	log.Println(signStr)
+	//log.Println(signStr)
 
 	sign := base64.StdEncoding.EncodeToString([]byte(signStr))
 
@@ -219,7 +227,7 @@ func (ft *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 	sum := mac.Sum(nil)
 
 	s := base64.StdEncoding.EncodeToString(sum)
-	log.Println(s)
+	//log.Println(s)
 	return s
 }
 
@@ -295,6 +303,8 @@ func (ft *FCoin) toOrder(o map[string]interface{}, pair CurrencyPair) *Order {
 		orderStatus = ORDER_PART_FINISH
 	case "filled":
 		orderStatus = ORDER_FINISH
+	case "pending_cancel":
+		orderStatus = ORDER_CANCEL_ING
 	case "canceled", "partial_canceled":
 		orderStatus = ORDER_CANCEL
 	}
@@ -331,7 +341,7 @@ func (ft *FCoin) GetOrdersList() {
 func (ft *FCoin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params := url.Values{}
 	params.Set("symbol", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
-	params.Set("states", "submitted")
+	params.Set("states", "submitted,partial_filled")
 	//params.Set("before", "1")
 	//params.Set("after", "0")
 	params.Set("limit", "100")
@@ -387,4 +397,33 @@ func (ft *FCoin) GetKlineRecords(currency CurrencyPair, period, size, since int)
 //非个人，整个交易所的交易记录
 func (ft *FCoin) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("not implement")
+}
+
+//交易符号
+func (ft *FCoin) GetTradeSymbols(currencyPair CurrencyPair) (*TradeSymbols, error) {
+	respmap, err := HttpGet(ft.httpClient, ft.baseUrl+"public/symbols")
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(float64) != 0 {
+		return nil, errors.New(respmap["msg"].(string))
+	}
+
+	datamap := respmap["data"].([]interface{})
+
+	symbol := new(TradeSymbols)
+	for _, v := range datamap {
+		vv := v.(map[string]interface{})
+		if vv["name"].(string) == strings.ToLower(currencyPair.ToSymbol("")) {
+			symbol.Name = vv["name"].(string)
+			symbol.BaseCurrency = vv["base_currency"].(string)
+			symbol.QuoteCurrency = vv["quote_currency"].(string)
+			symbol.PriceDecimal = int(vv["price_decimal"].(float64))
+			symbol.AmountDecimal = int(vv["amount_decimal"].(float64))
+			symbol.Tradable = vv["tradable"].(bool)
+			return symbol, nil
+		}
+	}
+	return nil, errors.New("symbol not found")
 }
