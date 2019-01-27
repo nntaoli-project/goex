@@ -56,6 +56,7 @@ const (
 	KLINE_PERIOD_15MIN
 	KLINE_PERIOD_30MIN
 	KLINE_PERIOD_60MIN
+	KLINE_PERIOD_1H
 	KLINE_PERIOD_2H
 	KLINE_PERIOD_4H
 	KLINE_PERIOD_6H
@@ -101,4 +102,5 @@ const (
 	HITBTC      = "hitbtc.com"
 	BITMEX      = "bitmex.com"
 	CRYPTOPIA   = "cryptopia.co.nz"
+	HBDM        = "hbdm.com"
 )
