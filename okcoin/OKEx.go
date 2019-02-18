@@ -454,6 +454,7 @@ func (ok *OKEx) parseOrders(body []byte, currencyPair CurrencyPair) ([]FutureOrd
 		vv := v.(map[string]interface{})
 		futureOrder := FutureOrder{}
 		futureOrder.OrderID = int64(vv["order_id"].(float64))
+		futureOrder.OrderID2 = fmt.Sprint(int64(vv["order_id"].(float64)))
 		futureOrder.Amount = vv["amount"].(float64)
 		futureOrder.Price = vv["price"].(float64)
 		futureOrder.AvgPrice = vv["price_avg"].(float64)
