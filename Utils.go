@@ -1,6 +1,8 @@
 package goex
 
 import (
+	"encoding/json"
+	"net/url"
 	"strconv"
 )
 
@@ -57,4 +59,16 @@ func ToUint64(v interface{}) uint64 {
 	default:
 		panic("to uint64 error.")
 	}
+}
+
+func ValuesToJson(v url.Values) ([]byte, error) {
+	parammap := make(map[string]interface{})
+	for k, vv := range v {
+		if len(vv) == 1 {
+			parammap[k] = vv[0]
+		} else {
+			parammap[k] = vv
+		}
+	}
+	return json.Marshal(parammap)
 }
