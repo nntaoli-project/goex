@@ -184,7 +184,7 @@ func (ctx *OKCoinCN_API) getOrders(orderId string, currency CurrencyPair) ([]Ord
 	ctx.buildPostForm(&postData)
 
 	body, err := HttpPostForm(ctx.client, ctx.api_base_url+url_order_info, postData)
-	//println(string(body))
+
 	if err != nil {
 		return nil, err
 	}
@@ -369,12 +369,13 @@ func (ctx *OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.Low, _ = strconv.ParseFloat(tickerMap["low"].(string), 64)
 	ticker.High, _ = strconv.ParseFloat(tickerMap["high"].(string), 64)
 	ticker.Vol, _ = strconv.ParseFloat(tickerMap["vol"].(string), 64)
-
+	ticker.Pair = currency
 	return &ticker, nil
 }
 
 func (ctx *OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	var depth Depth
+	depth.Pair = currency
 
 	url := ctx.api_base_url + url_depth + "?symbol=" + strings.ToLower(currency.ToSymbol("_")) + "&size=" + strconv.Itoa(size)
 	//fmt.Println(url)
@@ -565,9 +566,8 @@ func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair, since int64) ([]Tra
 		amount := item["amount"].(float64)
 		price := item["price"].(float64)
 		time := int64(item["date_ms"].(float64))
-		trades = append(trades, Trade{tid, AdaptTradeSide(direction), amount, price, time , currencyPair})
+		trades = append(trades, Trade{tid, AdaptTradeSide(direction), amount, price, time, currencyPair})
 	}
-
 
 	return trades, nil
 }

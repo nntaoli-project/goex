@@ -1,25 +1,20 @@
 package huobi
 
 import (
-	"bytes"
-	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"io/ioutil"
 	"log"
 	"math/big"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 )
 
 var HBPOINT = NewCurrency("HBPOINT", "")
-var onceWsConn sync.Once
 
 var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
 	KLINE_PERIOD_1MIN:   "1min",
@@ -45,26 +40,21 @@ type AccountInfo struct {
 }
 
 type HuoBiPro struct {
-	httpClient        *http.Client
-	baseUrl           string
-	accountId         string
-	accessKey         string
-	secretKey         string
-	ECDSAPrivateKey   string
-	ws                *WsConn
-	createWsLock      sync.Mutex
-	wsTickerHandleMap map[string]func(*Ticker)
-	wsDepthHandleMap  map[string]func(*Depth)
-	wsKLineHandleMap  map[string]func(*Kline)
+	httpClient *http.Client
+	baseUrl    string
+	accountId  string
+	accessKey  string
+	secretKey  string
+	//ECDSAPrivateKey string
 }
 
 type HuoBiProSymbol struct {
-	BaseCurrency string
-	QuoteCurrency string
-	PricePrecision float64
+	BaseCurrency    string
+	QuoteCurrency   string
+	PricePrecision  float64
 	AmountPrecision float64
 	SymbolPartition string
-	Symbol string
+	Symbol          string
 }
 
 func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoBiPro {
@@ -74,9 +64,6 @@ func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoB
 	hbpro.accessKey = apikey
 	hbpro.secretKey = secretkey
 	hbpro.accountId = accountId
-	hbpro.wsDepthHandleMap = make(map[string]func(*Depth))
-	hbpro.wsTickerHandleMap = make(map[string]func(*Ticker))
-	hbpro.wsKLineHandleMap = make(map[string]func(*Kline))
 	return hbpro
 }
 
@@ -448,7 +435,7 @@ func (hbpro *HuoBiPro) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	}
 
 	if respmap["status"].(string) == "error" {
-		return nil, errors.New(respmap["err-msg"].(string))
+		return nil, errors.New(respmap["err_msg"].(string))
 	}
 
 	tickmap, ok := respmap["tick"].(map[string]interface{})
@@ -457,6 +444,7 @@ func (hbpro *HuoBiPro) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	}
 
 	ticker := new(Ticker)
+	ticker.Pair = currencyPair
 	ticker.Vol = ToFloat64(tickmap["amount"])
 	ticker.Low = ToFloat64(tickmap["low"])
 	ticker.High = ToFloat64(tickmap["high"])
@@ -489,7 +477,10 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 
 	tick, _ := respmap["tick"].(map[string]interface{})
 
-	return hbpro.parseDepthData(tick), nil
+	dep := hbpro.parseDepthData(tick)
+	dep.Pair = currency
+
+	return dep, nil
 }
 
 //倒序
@@ -567,112 +558,6 @@ func (hbpro *HuoBiPro) toJson(params url.Values) string {
 	return string(jsonData)
 }
 
-func (hbpro *HuoBiPro) createWsConn() {
-
-	onceWsConn.Do(func() {
-		hbpro.ws = NewWsConn("wss://api.huobi.br.com/ws")
-		hbpro.ws.Heartbeat(func() interface{} {
-			return map[string]interface{}{
-				"ping": time.Now().Unix()}
-		}, 5*time.Second)
-		hbpro.ws.ReConnect()
-		hbpro.ws.ReceiveMessage(func(msg []byte) {
-			gzipreader, _ := gzip.NewReader(bytes.NewReader(msg))
-			data, _ := ioutil.ReadAll(gzipreader)
-			datamap := make(map[string]interface{})
-			err := json.Unmarshal(data, &datamap)
-			if err != nil {
-				log.Println("json unmarshal error for ", string(data))
-				return
-			}
-
-			if datamap["ping"] != nil {
-				//log.Println(datamap)
-				hbpro.ws.UpdateActivedTime()
-				hbpro.ws.SendWriteJSON(map[string]interface{}{
-					"pong": datamap["ping"]}) // 回应心跳
-				return
-			}
-
-			if datamap["pong"] != nil { //
-				hbpro.ws.UpdateActivedTime()
-				return
-			}
-
-			if datamap["id"] != nil { //忽略订阅成功的回执消息
-				log.Println(string(data))
-				return
-			}
-
-			ch, isok := datamap["ch"].(string)
-			if !isok {
-				log.Println("error:", string(data))
-				return
-			}
-
-			tick := datamap["tick"].(map[string]interface{})
-			pair := hbpro.getPairFromChannel(ch)
-			if hbpro.wsTickerHandleMap[ch] != nil {
-				tick := hbpro.parseTickerData(tick)
-				tick.Pair = pair
-				tick.Date = ToUint64(datamap["ts"])
-				(hbpro.wsTickerHandleMap[ch])(tick)
-				return
-			}
-
-			if hbpro.wsDepthHandleMap[ch] != nil {
-				depth := hbpro.parseDepthData(tick)
-				depth.Pair = pair
-				(hbpro.wsDepthHandleMap[ch])(depth)
-				return
-			}
-
-			if hbpro.wsKLineHandleMap[ch] != nil {
-				kline := hbpro.parseWsKLineData(tick)
-				kline.Pair = pair
-				(hbpro.wsKLineHandleMap[ch])(kline)
-				return
-			}
-
-			//log.Println(string(data))
-		})
-	})
-
-}
-
-func (hbpro *HuoBiPro) getPairFromChannel(ch string) CurrencyPair {
-	s := strings.Split(ch, ".")
-	var currA, currB string
-	if strings.HasSuffix(s[1], "usdt") {
-		currB = "usdt"
-	} else if strings.HasSuffix(s[1], "husd") {
-		currB = "husd"
-	} else if strings.HasSuffix(s[1], "btc") {
-		currB = "btc"
-	} else if strings.HasSuffix(s[1], "eth") {
-		currB = "eth"
-	} else if strings.HasSuffix(s[1], "ht") {
-		currB = "ht"
-	}
-
-	currA = strings.TrimSuffix(s[1], currB)
-
-	a := NewCurrency(currA, "")
-	b := NewCurrency(currB, "")
-	pair := NewCurrencyPair(a, b)
-	return pair
-}
-
-func (hbpro *HuoBiPro) parseTickerData(tick map[string]interface{}) *Ticker {
-	t := new(Ticker)
-
-	t.Last = ToFloat64(tick["close"])
-	t.Low = ToFloat64(tick["low"])
-	t.Vol = ToFloat64(tick["vol"])
-	t.High = ToFloat64(tick["high"])
-	return t
-}
-
 func (hbpro *HuoBiPro) parseDepthData(tick map[string]interface{}) *Depth {
 	bids, _ := tick["bids"].([]interface{})
 	asks, _ := tick["asks"].([]interface{})
@@ -699,21 +584,11 @@ func (hbpro *HuoBiPro) parseDepthData(tick map[string]interface{}) *Depth {
 	return depth
 }
 
-func (hbpro *HuoBiPro) parseWsKLineData(tick map[string]interface{}) *Kline {
-	return &Kline{
-		Open:      ToFloat64(tick["open"]),
-		Close:     ToFloat64(tick["close"]),
-		High:      ToFloat64(tick["high"]),
-		Low:       ToFloat64(tick["low"]),
-		Vol:       ToFloat64(tick["vol"]),
-		Timestamp: int64(ToUint64(tick["id"]))}
-}
-
 func (hbpro *HuoBiPro) GetExchangeName() string {
 	return HUOBI_PRO
 }
 
-func (hbpro *HuoBiPro) GetCurrenciesList() ([]string, error)  {
+func (hbpro *HuoBiPro) GetCurrenciesList() ([]string, error) {
 	url := hbpro.baseUrl + "/v1/common/currencys"
 
 	ret, err := HttpGet(hbpro.httpClient, url)
@@ -729,7 +604,7 @@ func (hbpro *HuoBiPro) GetCurrenciesList() ([]string, error)  {
 	return nil, nil
 }
 
-func (hbpro *HuoBiPro) GetCurrenciesPrecision() ([]HuoBiProSymbol, error)  {
+func (hbpro *HuoBiPro) GetCurrenciesPrecision() ([]HuoBiProSymbol, error) {
 	url := hbpro.baseUrl + "/v1/common/symbols"
 
 	ret, err := HttpGet(hbpro.httpClient, url)
@@ -755,36 +630,4 @@ func (hbpro *HuoBiPro) GetCurrenciesPrecision() ([]HuoBiProSymbol, error)  {
 	}
 	//fmt.Println(Symbols)
 	return Symbols, nil
-}
-
-func (hbpro *HuoBiPro) GetTickerWithWs(pair CurrencyPair, handle func(ticker *Ticker)) error {
-	hbpro.createWsConn()
-	sub := fmt.Sprintf("market.%s.detail", strings.ToLower(pair.ToSymbol("")))
-	hbpro.wsTickerHandleMap[sub] = handle
-	return hbpro.ws.Subscribe(map[string]interface{}{
-		"id":  1,
-		"sub": sub})
-}
-
-func (hbpro *HuoBiPro) GetDepthWithWs(pair CurrencyPair, handle func(dep *Depth)) error {
-	hbpro.createWsConn()
-	sub := fmt.Sprintf("market.%s.depth.step0", strings.ToLower(pair.ToSymbol("")))
-	hbpro.wsDepthHandleMap[sub] = handle
-	return hbpro.ws.Subscribe(map[string]interface{}{
-		"id":  2,
-		"sub": sub})
-}
-
-func (hbpro *HuoBiPro) GetKLineWithWs(pair CurrencyPair, period int, handle func(kline *Kline)) error {
-	hbpro.createWsConn()
-	periodS, isOk := _INERNAL_KLINE_PERIOD_CONVERTER[period]
-	if isOk != true {
-		periodS = "1min"
-	}
-
-	sub := fmt.Sprintf("market.%s.kline.%s", strings.ToLower(pair.ToSymbol("")), periodS)
-	hbpro.wsKLineHandleMap[sub] = handle
-	return hbpro.ws.Subscribe(map[string]interface{}{
-		"id":  3,
-		"sub": sub})
 }
