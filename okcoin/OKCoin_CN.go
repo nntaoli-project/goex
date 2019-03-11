@@ -59,7 +59,7 @@ var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
 //	}
 //}
 
-func New(client *http.Client, api_key, secret_key string) *OKCoinCN_API {
+func NewOKCoinCn(client *http.Client, api_key, secret_key string) *OKCoinCN_API {
 	return &OKCoinCN_API{client, api_key, secret_key, "https://www.okex.com/api/v1/"}
 }
 

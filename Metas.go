@@ -43,15 +43,24 @@ type Account struct {
 }
 
 type Ticker struct {
-	ContractType string       `json:"omitempty"`
-	Pair         CurrencyPair `json:"omitempty"`
-	Last         float64      `json:"last"`
-	Buy          float64      `json:"buy"`
-	Sell         float64      `json:"sell"`
-	High         float64      `json:"high"`
-	Low          float64      `json:"low"`
-	Vol          float64      `json:"vol"`
-	Date         uint64       `json:"date"` // 单位:秒(second)
+	Pair CurrencyPair `json:"omitempty"`
+	Last float64      `json:"last,string"`
+	Buy  float64      `json:"buy,string"`
+	Sell float64      `json:"sell,string"`
+	High float64      `json:"high,string"`
+	Low  float64      `json:"low,string"`
+	Vol  float64      `json:"vol,string"`
+	Date uint64       `json:"date"` // 单位:秒(second)
+}
+
+type FutureTicker struct {
+	*Ticker
+	ContractType string  `json:"omitempty"`
+	ContractId   int     `json:"contractId"`
+	LimitHigh    float64 `json:"limitHigh,string"`
+	LimitLow     float64 `json:"limitLow,string"`
+	HoldAmount   float64 `json:"hold_amount,string"`
+	UnitAmount   float64 `json:"unitAmount,string"`
 }
 
 type DepthRecord struct {
