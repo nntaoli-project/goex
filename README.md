@@ -6,7 +6,8 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
 | ---   | ---     | ---     | ---   |  
 | hbg.com | Y | Y | 1 |   
 | hbdm.com | Y| Y |  1 |  
-| okex.com | Y (REST / WS) | Y | 1 |  
+| okex.com (spot/future)| Y (REST / WS) | Y | 1 |  
+| okex.com (swap future) | Y | Y | 2 |
 | binance.com | Y | Y | 1 |  
 | bitstamp.net | Y | Y | 1 |  
 | bitfinex.com | Y | Y | 1 |  
