@@ -91,8 +91,8 @@ func (builder *APIBuilder) HttpTimeout(timeout time.Duration) (_builder *APIBuil
 func (builder *APIBuilder) Build(exName string) (api API) {
 	var _api API
 	switch exName {
-	case OKCOIN_CN:
-		_api = okcoin.New(builder.client, builder.apiKey, builder.secretkey)
+	//case OKCOIN_CN:
+	//	_api = okcoin.New(builder.client, builder.apiKey, builder.secretkey)
 	case POLONIEX:
 		_api = poloniex.New(builder.client, builder.apiKey, builder.secretkey)
 	case OKCOIN_COM:
