@@ -184,7 +184,6 @@ func (ctx *OKCoinCN_API) getOrders(orderId string, currency CurrencyPair) ([]Ord
 	ctx.buildPostForm(&postData)
 
 	body, err := HttpPostForm(ctx.client, ctx.api_base_url+url_order_info, postData)
-
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +360,15 @@ func (ctx *OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		return nil, err
 	}
 
-	tickerMap = bodyDataMap["ticker"].(map[string]interface{})
+	if errCode, is := bodyDataMap["error_code"].(int); is {
+		return nil, errors.New(fmt.Sprint(errCode))
+	}
+
+	tickerMap, isok := bodyDataMap["ticker"].(map[string]interface{})
+	if !isok {
+		return nil, errors.New(fmt.Sprintf("%+v", bodyDataMap))
+	}
+
 	ticker.Date, _ = strconv.ParseUint(bodyDataMap["date"].(string), 10, 64)
 	ticker.Last, _ = strconv.ParseFloat(tickerMap["last"].(string), 64)
 	ticker.Buy, _ = strconv.ParseFloat(tickerMap["buy"].(string), 64)
@@ -450,6 +457,7 @@ func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period, size, si
 
 	for _, record := range klines {
 		r := Kline{}
+		r.Pair = currency
 		for i, e := range record {
 			switch i {
 			case 0:
