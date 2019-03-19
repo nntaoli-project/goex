@@ -2,34 +2,6 @@ package goex
 
 import "strings"
 
-// ETH_BTC --> ethbtc
-type Symbols map[CurrencyPair]string
-
-// huobi.com --> symbols
-type ExSymbols map[string]Symbols
-
-var exSymbols ExSymbols
-
-func GetExSymbols(exName string) Symbols {
-	ret, ok := exSymbols[exName]
-	if !ok {
-		return nil
-	}
-	return ret
-}
-
-func RegisterExSymbol(exName string, pair CurrencyPair) {
-	if exSymbols == nil {
-		exSymbols = make(ExSymbols)
-	}
-
-	if _, ok := exSymbols[exName]; !ok {
-		exSymbols[exName] = make(Symbols)
-	}
-
-	exSymbols[exName][pair] = pair.ToSymbol("")
-}
-
 type Currency struct {
 	Symbol string
 	Desc   string
@@ -257,7 +229,7 @@ func (pair CurrencyPair) ToSymbol2(joinChar string) string {
 
 func (pair CurrencyPair) AdaptUsdtToUsd() CurrencyPair {
 	CurrencyB := pair.CurrencyB
-	if pair.CurrencyB == USDT {
+	if pair.CurrencyB.Eq(USDT) {
 		CurrencyB = USD
 	}
 	return CurrencyPair{pair.CurrencyA, CurrencyB}
@@ -265,7 +237,7 @@ func (pair CurrencyPair) AdaptUsdtToUsd() CurrencyPair {
 
 func (pair CurrencyPair) AdaptUsdToUsdt() CurrencyPair {
 	CurrencyB := pair.CurrencyB
-	if pair.CurrencyB == USD {
+	if pair.CurrencyB.Eq(USD) {
 		CurrencyB = USDT
 	}
 	return CurrencyPair{pair.CurrencyA, CurrencyB}
@@ -274,10 +246,17 @@ func (pair CurrencyPair) AdaptUsdToUsdt() CurrencyPair {
 //It is currently applicable to binance and zb
 func (pair CurrencyPair) AdaptBchToBcc() CurrencyPair {
 	CurrencyA := pair.CurrencyA
-	if pair.CurrencyA == BCH {
+	if pair.CurrencyA.Eq(BCH) {
 		CurrencyA = BCC
 	}
 	return CurrencyPair{CurrencyA, pair.CurrencyB}
+}
+
+func (pair CurrencyPair) AdaptBccToBch() CurrencyPair {
+	if pair.CurrencyA.Eq(BCC) {
+		return CurrencyPair{BCH, pair.CurrencyB}
+	}
+	return pair
 }
 
 //for to symbol lower , Not practical '==' operation method
