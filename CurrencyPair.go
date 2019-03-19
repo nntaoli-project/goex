@@ -39,6 +39,10 @@ func (c Currency) String() string {
 	return c.Symbol
 }
 
+func (c Currency) Eq(c2 Currency) bool {
+	return c.Symbol == c2.Symbol
+}
+
 // A->B(A兑换为B)
 type CurrencyPair struct {
 	CurrencyA Currency
@@ -50,10 +54,12 @@ var (
 	CNY     = Currency{"CNY", ""}
 	USD     = Currency{"USD", ""}
 	USDT    = Currency{"USDT", ""}
+	PAX     = Currency{"PAX", "https://www.paxos.com/"}
+	USDC    = Currency{"USDC", "https://www.centre.io/"}
 	EUR     = Currency{"EUR", ""}
 	KRW     = Currency{"KRW", ""}
 	JPY     = Currency{"JPY", ""}
-	BTC     = Currency{"BTC", ""}
+	BTC     = Currency{"BTC", "https://bitcoin.org/"}
 	XBT     = Currency{"XBT", ""}
 	BCC     = Currency{"BCC", ""}
 	BCH     = Currency{"BCH", ""}
@@ -74,6 +80,9 @@ var (
 	NEO     = Currency{"NEO", ""}
 	HSR     = Currency{"HSR", ""}
 	BSV     = Currency{"BSV", ""}
+	OKB     = Currency{"OKB", "OKB is a global utility token issued by OK Blockchain Foundation"}
+	HT      = Currency{"HT", "HuoBi Token"}
+	BNB     = Currency{"BNB", "BNB, or Binance Coin, is a cryptocurrency created by Binance."}
 
 	//currency pair
 
@@ -119,6 +128,9 @@ var (
 	XRP_USDT = CurrencyPair{XRP, USDT}
 	HSR_USDT = CurrencyPair{HSR, USDT}
 	BSV_USDT = CurrencyPair{BSV, USDT}
+	OKB_USDT = CurrencyPair{OKB, USDT}
+	HT_USDT  = CurrencyPair{HT, USDT}
+	BNB_USDT = CurrencyPair{BNB, USDT}
 
 	XRP_EUR = CurrencyPair{XRP, EUR}
 
@@ -141,18 +153,26 @@ var (
 	EOS_BTC = CurrencyPair{EOS, BTC}
 	HSR_BTC = CurrencyPair{HSR, BTC}
 	BSV_BTC = CurrencyPair{BSV, BTC}
+	OKB_BTC = CurrencyPair{OKB, BTC}
+	HT_BTC  = CurrencyPair{HT, BTC}
+	BNB_BTC = CurrencyPair{BNB, BTC}
 
 	ETC_ETH = CurrencyPair{ETC, ETH}
 	EOS_ETH = CurrencyPair{EOS, ETH}
 	ZEC_ETH = CurrencyPair{ZEC, ETH}
 	NEO_ETH = CurrencyPair{NEO, ETH}
 	HSR_ETH = CurrencyPair{HSR, ETH}
+	LTC_ETH = CurrencyPair{LTC, ETH}
 
 	UNKNOWN_PAIR = CurrencyPair{UNKNOWN, UNKNOWN}
 )
 
 func (c CurrencyPair) String() string {
 	return c.ToSymbol("_")
+}
+
+func (c CurrencyPair) Eq(c2 CurrencyPair) bool {
+	return c.String() == c2.String()
 }
 
 func (c Currency) AdaptBchToBcc() Currency {
@@ -177,6 +197,10 @@ func NewCurrency(symbol, desc string) Currency {
 		return USDT
 	case "usd", "USD":
 		return USD
+	case "usdc", "USDC":
+		return USDC
+	case "pax", "PAX":
+		return PAX
 	case "jpy", "JPY":
 		return JPY
 	case "krw", "KRW":
@@ -199,6 +223,12 @@ func NewCurrency(symbol, desc string) Currency {
 		return ANS
 	case "neo", "NEO":
 		return NEO
+	case "okb", "OKB":
+		return OKB
+	case "ht", "HT":
+		return HT
+	case "bnb", "BNB":
+		return BNB
 	default:
 		return Currency{strings.ToUpper(symbol), desc}
 	}
@@ -252,18 +282,10 @@ func (pair CurrencyPair) AdaptBchToBcc() CurrencyPair {
 
 //for to symbol lower , Not practical '==' operation method
 func (pair CurrencyPair) ToLower() CurrencyPair {
-	return CurrencyPair{NewCurrency(strings.ToLower(pair.CurrencyA.Symbol), ""),
-		NewCurrency(strings.ToLower(pair.CurrencyB.Symbol), "")}
+	return CurrencyPair{Currency{strings.ToLower(pair.CurrencyA.Symbol), ""},
+		Currency{strings.ToLower(pair.CurrencyB.Symbol), ""}}
 }
 
-type CurrencyPair2 struct {
-	CurrencyPair
-}
-
-func (pair CurrencyPair) Reverse() CurrencyPair2 {
-	return CurrencyPair2{CurrencyPair{pair.CurrencyB, pair.CurrencyA}}
-}
-
-func (pair CurrencyPair2) ToSymbol(joinChar string) string {
-	return strings.Join([]string{pair.CurrencyA.Symbol, pair.CurrencyB.Symbol}, joinChar)
+func (pair CurrencyPair) Reverse() CurrencyPair {
+	return CurrencyPair{pair.CurrencyB, pair.CurrencyA}
 }
