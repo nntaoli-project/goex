@@ -28,6 +28,41 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
 | btcchina.com | Y | Y | 1 |
 | coinbig.com | Y | Y | * |
 
+###安装GoEx库  ``` go get github.com/nntaoli-project/GoEx ```
+
+### 例子
+```golang
+
+   package main
+   
+   import (
+   	"github.com/nntaoli-project/GoEx"
+   	"github.com/nntaoli-project/GoEx/builder"
+   	"log"
+   	"time"
+   )
+   
+   func main() {
+   	apiBuilder := builder.NewAPIBuilder().HttpTimeout(5 * time.Second)
+   	
+   	//build spot api
+   	api := apiBuilder.APIKey("").APISecretkey("").ClientID("123").Build(goex.BITSTAMP)
+   	log.Println(api.GetExchangeName())
+   	log.Println(api.GetTicker(goex.BTC_USD))
+   	log.Println(api.GetDepth(2, goex.BTC_USD))
+   	//log.Println(api.GetAccount())
+   	//log.Println(api.GetUnfinishOrders(goex.BTC_USD))
+   
+   	//build future api
+   	futureApi := apiBuilder.APIKey("").APISecretkey("").BuildFuture(goex.HBDM)
+   	log.Println(futureApi.GetExchangeName())
+   	log.Println(futureApi.GetFutureTicker(goex.BTC_USD, goex.QUARTER_CONTRACT))
+   	log.Println(futureApi.GetFutureDepth(goex.BTC_USD, goex.QUARTER_CONTRACT, 5))
+   	//log.Println(futureApi.GetFutureUserinfo()) // account
+   	//log.Println(futureApi.GetFuturePosition(goex.BTC_USD , goex.QUARTER_CONTRACT))//position info
+   }
+
+```
 
 ### 注意事项
 1. 推荐使用GoLand开发。
