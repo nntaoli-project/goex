@@ -551,8 +551,18 @@ func (hbpro *HuoBiPro) GetTrades(currencyPair CurrencyPair, since int64) ([]Trad
 
 	for _, d := range ret.Data {
 		for _, t := range d.Data {
+
+			//fix huobi   Weird rules of tid
+			//火币交易ID规定固定23位, 导致超出int64范围，每个交易对有不同的固定填充前缀
+			//实际交易ID远远没有到23位数字。
+			tid := ToInt64(strings.TrimPrefix(t.Id.String()[4:], "0"))
+			if tid == 0 {
+				tid = ToInt64(strings.TrimPrefix(t.Id.String()[5:], "0"))
+			}
+			///
+
 			trades = append(trades, Trade{
-				Tid:    ToInt64(strings.TrimPrefix(t.Id.String(), "1003200")), //remove prefix ,
+				Tid:    ToInt64(tid),
 				Pair:   currencyPair,
 				Amount: t.Amount,
 				Price:  t.Price,
