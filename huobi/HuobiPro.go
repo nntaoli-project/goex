@@ -435,7 +435,7 @@ func (hbpro *HuoBiPro) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	}
 
 	if respmap["status"].(string) == "error" {
-		return nil, errors.New(respmap["err_msg"].(string))
+		return nil, errors.New(respmap["err-msg"].(string))
 	}
 
 	tickmap, ok := respmap["tick"].(map[string]interface{})
@@ -519,8 +519,49 @@ func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, sinc
 }
 
 //非个人，整个交易所的交易记录
+//https://github.com/huobiapi/API_Docs/wiki/REST_api_reference#get-markettrade-获取-trade-detail-数据
 func (hbpro *HuoBiPro) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	panic("not implement")
+	var (
+		trades []Trade
+		ret    struct {
+			Status string
+			ErrMsg string `json:"err-msg"`
+			Data   []struct {
+				Ts   int64
+				Data []struct {
+					Id        big.Int
+					Amount    float64
+					Price     float64
+					Direction string
+					Ts        int64
+				}
+			}
+		}
+	)
+
+	url := hbpro.baseUrl + "/market/history/trade?size=100&symbol=" + currencyPair.AdaptUsdToUsdt().ToLower().ToSymbol("")
+	err := HttpGet4(hbpro.httpClient, url, map[string]string{}, &ret)
+	if err != nil {
+		return nil, err
+	}
+
+	if ret.Status != "ok" {
+		return nil, errors.New(ret.ErrMsg)
+	}
+
+	for _, d := range ret.Data {
+		for _, t := range d.Data {
+			trades = append(trades, Trade{
+				Tid:    ToInt64(strings.TrimPrefix(t.Id.String(), "1003200")), //remove prefix ,
+				Pair:   currencyPair,
+				Amount: t.Amount,
+				Price:  t.Price,
+				Type:   AdaptTradeSide(t.Direction),
+				Date:   t.Ts})
+		}
+	}
+
+	return trades, nil
 }
 
 type ecdsaSignature struct {
