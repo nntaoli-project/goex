@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"internal/log"
+	"log"
 	"net/url"
 	"sort"
 	"strings"

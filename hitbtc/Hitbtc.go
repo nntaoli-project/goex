@@ -105,8 +105,7 @@ curl "https://api.hitbtc.com/api/2/public/ticker"
 ]
 */
 func (hitbtc *Hitbtc) GetTicker(currency goex.CurrencyPair) (*goex.Ticker, error) {
-	currency = hitbtc.adaptCurrencyPair(currency)
-	curr := currency.ToSymbol("")
+	curr := hitbtc.adaptCurrencyPair(currency).ToSymbol("")
 	tickerUri := API_BASE_URL + API_V2 + TICKER_URI + curr
 	bodyDataMap, err := goex.HttpGet(hitbtc.httpClient, tickerUri)
 	if err != nil {
@@ -119,6 +118,7 @@ func (hitbtc *Hitbtc) GetTicker(currency goex.CurrencyPair) (*goex.Ticker, error
 
 	tickerMap := bodyDataMap
 	var ticker goex.Ticker
+	ticker.Pair = currency
 
 	timestamp := time.Now().Unix()
 	ticker.Date = uint64(timestamp)
@@ -211,7 +211,7 @@ func (hitbtc *Hitbtc) placeOrder(ty goex.TradeSide, amount, price string, curren
 		return nil, errors.New(errObj.(map[string]string)["message"])
 	}
 
-	return toOrder(resp), nil
+	return hitbtc.toOrder(resp), nil
 }
 
 func (hitbtc *Hitbtc) LimitBuy(amount, price string, currency goex.CurrencyPair) (*goex.Order, error) {
@@ -265,7 +265,7 @@ func (hitbtc *Hitbtc) GetOneOrder(orderId string, currency goex.CurrencyPair) (*
 		return nil, errors.New(errObj.(map[string]string)["message"])
 	}
 
-	return toOrder(resp), nil
+	return hitbtc.toOrder(resp), nil
 }
 
 func (hitbtc *Hitbtc) GetUnfinishOrders(currency goex.CurrencyPair) ([]goex.Order, error) {
@@ -281,7 +281,7 @@ func (hitbtc *Hitbtc) GetUnfinishOrders(currency goex.CurrencyPair) ([]goex.Orde
 
 	orders := []goex.Order{}
 	for _, e := range resp {
-		o := toOrder(e)
+		o := hitbtc.toOrder(e)
 		if o.Status == goex.ORDER_UNFINISH || o.Status == goex.ORDER_PART_FINISH {
 			orders = append(orders, *o)
 		}
@@ -304,7 +304,7 @@ func (hitbtc *Hitbtc) GetOrderHistorys(currency goex.CurrencyPair, currentPage, 
 
 	orders := []goex.Order{}
 	for _, e := range resp {
-		o := toOrder(e)
+		o := hitbtc.toOrder(e)
 		orders = append(orders, *o)
 	}
 	return orders, nil
@@ -505,25 +505,6 @@ func (hitbtc *Hitbtc) GetTrades(currencyPair goex.CurrencyPair, since int64) ([]
 	return trades, nil
 }
 
-func (hitbtc *Hitbtc) adaptCurrencyPair(pair goex.CurrencyPair) goex.CurrencyPair {
-	var currencyA goex.Currency
-	var currencyB goex.Currency
-
-	if pair.CurrencyA == goex.BCC {
-		currencyA = goex.BCH
-	} else {
-		currencyA = pair.CurrencyA
-	}
-	//currencyB = pair.BaseCurrency
-	if pair.CurrencyB == goex.USDT {
-		currencyB = goex.USD
-	} else {
-		currencyB = pair.CurrencyB
-	}
-
-	return goex.NewCurrencyPair(currencyA, currencyB)
-}
-
 func (hitbtc *Hitbtc) doRequest(reqMethod, uri string, ret interface{}) error {
 	url := API_BASE_URL + API_V2 + uri
 	req, _ := http.NewRequest(reqMethod, url, strings.NewReader(""))
@@ -571,7 +552,7 @@ func (hitbtc *Hitbtc) doRequest(reqMethod, uri string, ret interface{}) error {
 	"updatedAt": "2017-05-15T17:01:05.092Z"
 }
 */
-func toOrder(resp map[string]interface{}) *goex.Order {
+func (hitbtc *Hitbtc) toOrder(resp map[string]interface{}) *goex.Order {
 	return &goex.Order{
 		Price:      goex.ToFloat64(resp["price"]),
 		Amount:     goex.ToFloat64(resp["quantity"]),
@@ -580,7 +561,7 @@ func toOrder(resp map[string]interface{}) *goex.Order {
 		OrderID:    goex.ToInt(resp["id"]),
 		OrderTime:  int(parseTime(resp["createdAt"].(string))),
 		Status:     parseStatus(resp["status"].(string)),
-		Currency:   parseSymbol(resp["symbol"].(string)),
+		Currency:   hitbtc.adaptSymbolToCurrencyPair(resp["symbol"].(string)),
 		Side:       parseSide(resp["side"].(string), resp["type"].(string)),
 	}
 }
@@ -605,19 +586,41 @@ func parseStatus(s string) goex.TradeStatus {
 	return status
 }
 
+func (hitbtc *Hitbtc) adaptCurrencyPair(pair goex.CurrencyPair) goex.CurrencyPair {
+	return pair.AdaptUsdtToUsd().AdaptBccToBch()
+}
+
+func (hitbtc *Hitbtc) adaptSymbolToCurrencyPair(pair string) goex.CurrencyPair {
+	pair = strings.ToUpper(pair)
+	if strings.HasSuffix(pair, "BTC") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "BTC"), "BTC"))
+	} else if strings.HasSuffix(pair, "TUSD") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "TUSD"), "TUSD"))
+	} else if strings.HasSuffix(pair, "GUSD") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "GUSD"), "GUSD"))
+	} else if strings.HasSuffix(pair, "USDC") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "USDC"), "USDC"))
+	} else if strings.HasSuffix(pair, "USD") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "USD"), "USD"))
+	} else if strings.HasSuffix(pair, "ETH") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "ETH"), "ETH"))
+	} else if strings.HasSuffix(pair, "KRWB") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "KRWB"), "KRWB"))
+	} else if strings.HasSuffix(pair, "PAX") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "PAX"), "PAX"))
+	} else if strings.HasSuffix(pair, "DAI") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "DAI"), "DAI"))
+	} else if strings.HasSuffix(pair, "EOS") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "EOS"), "EOS"))
+	} else if strings.HasSuffix(pair, "EURS") {
+		return goex.NewCurrencyPair2(fmt.Sprintf("%s_%s", strings.TrimSuffix(pair, "EURS"), "EURS"))
+	}
+	return goex.UNKNOWN_PAIR
+}
+
 func parseTime(timeStr string) int64 {
 	t, _ := time.Parse(time.RFC3339, timeStr) // UTC
 	return t.Unix()
-}
-
-// ETHBTC --> ETH_BTC
-func parseSymbol(str string) goex.CurrencyPair {
-	for pair, symbol := range goex.GetExSymbols(EXCHANGE_NAME) {
-		if symbol == str {
-			return pair
-		}
-	}
-	panic(str + " Not Found")
 }
 
 func parseSide(side, oType string) goex.TradeSide {

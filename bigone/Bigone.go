@@ -153,7 +153,7 @@ func (bo *Bigone) placeOrder(amount, price string, pair goex.CurrencyPair, order
 
 	return &goex.Order{
 		Currency:   pair,
-		OrderID2:   fmt.Sprintf("%d", resp.Data.ID),
+		OrderID2:   resp.Data.ID,
 		Price:      goex.ToFloat64(resp.Data.Price),
 		Amount:     goex.ToFloat64(resp.Data.Amount),
 		DealAmount: 0,

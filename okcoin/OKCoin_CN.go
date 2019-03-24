@@ -59,7 +59,7 @@ var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
 //	}
 //}
 
-func New(client *http.Client, api_key, secret_key string) *OKCoinCN_API {
+func NewOKCoinCn(client *http.Client, api_key, secret_key string) *OKCoinCN_API {
 	return &OKCoinCN_API{client, api_key, secret_key, "https://www.okex.com/api/v1/"}
 }
 
@@ -184,7 +184,6 @@ func (ctx *OKCoinCN_API) getOrders(orderId string, currency CurrencyPair) ([]Ord
 	ctx.buildPostForm(&postData)
 
 	body, err := HttpPostForm(ctx.client, ctx.api_base_url+url_order_info, postData)
-	//println(string(body))
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +360,15 @@ func (ctx *OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		return nil, err
 	}
 
-	tickerMap = bodyDataMap["ticker"].(map[string]interface{})
+	if errCode, is := bodyDataMap["error_code"].(int); is {
+		return nil, errors.New(fmt.Sprint(errCode))
+	}
+
+	tickerMap, isok := bodyDataMap["ticker"].(map[string]interface{})
+	if !isok {
+		return nil, errors.New(fmt.Sprintf("%+v", bodyDataMap))
+	}
+
 	ticker.Date, _ = strconv.ParseUint(bodyDataMap["date"].(string), 10, 64)
 	ticker.Last, _ = strconv.ParseFloat(tickerMap["last"].(string), 64)
 	ticker.Buy, _ = strconv.ParseFloat(tickerMap["buy"].(string), 64)
@@ -369,12 +376,13 @@ func (ctx *OKCoinCN_API) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	ticker.Low, _ = strconv.ParseFloat(tickerMap["low"].(string), 64)
 	ticker.High, _ = strconv.ParseFloat(tickerMap["high"].(string), 64)
 	ticker.Vol, _ = strconv.ParseFloat(tickerMap["vol"].(string), 64)
-
+	ticker.Pair = currency
 	return &ticker, nil
 }
 
 func (ctx *OKCoinCN_API) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	var depth Depth
+	depth.Pair = currency
 
 	url := ctx.api_base_url + url_depth + "?symbol=" + strings.ToLower(currency.ToSymbol("_")) + "&size=" + strconv.Itoa(size)
 	//fmt.Println(url)
@@ -449,6 +457,7 @@ func (ctx *OKCoinCN_API) GetKlineRecords(currency CurrencyPair, period, size, si
 
 	for _, record := range klines {
 		r := Kline{}
+		r.Pair = currency
 		for i, e := range record {
 			switch i {
 			case 0:
@@ -565,9 +574,8 @@ func (ok *OKCoinCN_API) GetTrades(currencyPair CurrencyPair, since int64) ([]Tra
 		amount := item["amount"].(float64)
 		price := item["price"].(float64)
 		time := int64(item["date_ms"].(float64))
-		trades = append(trades, Trade{tid, AdaptTradeSide(direction), amount, price, time , currencyPair})
+		trades = append(trades, Trade{tid, AdaptTradeSide(direction), amount, price, time, currencyPair})
 	}
-
 
 	return trades, nil
 }
