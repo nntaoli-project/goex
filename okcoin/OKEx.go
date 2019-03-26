@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 const (
@@ -34,12 +33,7 @@ const (
 type OKEx struct {
 	apiKey,
 	apiSecretKey string
-	client            *http.Client
-	ws                *WsConn
-	createWsLock      sync.Mutex
-	wsTickerHandleMap map[string]func(*Ticker)
-	wsDepthHandleMap  map[string]func(*Depth)
-	wsTradeHandleMap  map[string]func(*Trade)
+	client *http.Client
 }
 
 func NewOKEx(client *http.Client, api_key, secret_key string) *OKEx {
@@ -580,7 +574,7 @@ func (ok *OKEx) GetContractValue(currencyPair CurrencyPair) (float64, error) {
 	case LTC_USD, ETH_USD, ETC_USD, BCH_USD:
 		return 10, nil
 	default:
-		return 10 , nil
+		return 10, nil
 	}
 
 	return -1, errors.New("error")

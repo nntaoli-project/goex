@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/nntaoli-project/GoEx"
 	"github.com/pkg/errors"
-	"internal/log"
+	"log"
 	"strings"
 	"time"
 )

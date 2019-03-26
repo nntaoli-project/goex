@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -24,10 +23,6 @@ type Bitstamp struct {
 	clientId,
 	accessKey,
 	secretkey string
-	ws                *WsConn
-	createWsLock      sync.Mutex
-	wsTickerHandleMap map[string]func(*Ticker)
-	wsDepthHandleMap  map[string]func(*Depth)
 }
 
 func NewBitstamp(client *http.Client, accessKey, secertkey, clientId string) *Bitstamp {
@@ -255,7 +250,7 @@ func (bitstamp *Bitstamp) GetOneOrder(orderId string, currency CurrencyPair) (*O
 		var (
 			dealAmount  float64
 			tradeAmount float64
-			fee float64
+			fee         float64
 		)
 
 		currencyStr := strings.ToLower(currency.CurrencyA.Symbol)
