@@ -16,7 +16,7 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
 | poloniex.com | Y | Y | * |  
 | aacoin.com | Y | Y | 1 |   
 | allcoin.ca | Y | Y | * |  
-| big.one | Y | Y | 2 | 
+| big.one | Y | Y | 2\|3 | 
 | fcoin.com | Y | Y | 2 |  
 | hitbtc.com | Y | Y | * |
 | coinex.com | Y | Y | 1 |
