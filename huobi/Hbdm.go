@@ -444,6 +444,18 @@ func (dm *Hbdm) GetKlineRecords(contract_type string, currency CurrencyPair, per
 	return klines, nil
 }
 
+func (dm *Hbdm) GetDeliveryTime() (int, int, int, int) {
+	return 0, 4, 0, 0
+}
+
+func (dm *Hbdm) GetFee() (float64, error) {
+	return 0.003, nil
+}
+
+func (dm *Hbdm) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	panic("not supported.")
+}
+
 func (dm *Hbdm) adaptSymbol(pair CurrencyPair, contractType string) string {
 	symbol := pair.CurrencyA.Symbol + "_"
 	switch contractType {
@@ -550,7 +562,7 @@ func (dm *Hbdm) buildPostForm(reqMethod, path string, postForm *url.Values) erro
 func (dm *Hbdm) doRequest(path string, params *url.Values, data interface{}) error {
 	dm.buildPostForm("POST", path, params)
 	jsonD, _ := ValuesToJson(*params)
-	log.Println(string(jsonD))
+	//log.Println(string(jsonD))
 
 	var ret BaseResponse
 
@@ -561,7 +573,7 @@ func (dm *Hbdm) doRequest(path string, params *url.Values, data interface{}) err
 		return err
 	}
 
-	log.Println(string(resp))
+	//log.Println(string(resp))
 	err = json.Unmarshal(resp, &ret)
 	if err != nil {
 		return err

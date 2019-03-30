@@ -62,9 +62,12 @@ func (builder *APIBuilder) APISecretkey(key string) (_builder *APIBuilder) {
 }
 
 func (builder *APIBuilder) HttpProxy(proxyUrl string) (_builder *APIBuilder) {
+	if proxyUrl == "" {
+		 return builder
+	}
 	proxy, err := url.Parse(proxyUrl)
 	if err != nil {
-		return
+		return builder
 	}
 	transport := builder.client.Transport.(*http.Transport)
 	transport.Proxy = http.ProxyURL(proxy)
