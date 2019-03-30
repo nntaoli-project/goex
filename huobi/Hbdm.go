@@ -385,6 +385,19 @@ func (dm *Hbdm) GetFutureDepth(currencyPair CurrencyPair, contractType string, s
 	return dep, nil
 }
 
+func (dm *Hbdm) GetDeliveryTime() (int, int, int, int) {
+	panic("GetDeliveryTime not implement!")
+}
+func (dm *Hbdm) GetExchangeRate() (float64, error) {
+	panic("GetExchangeRate not implement!")
+}
+func (dm *Hbdm) GetFee() (float64, error) {
+	panic("GetFee not implement!")
+}
+func (dm *Hbdm) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
+	panic("GetTrades not implement!")
+}
+
 func (dm *Hbdm) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
 	ret, err := HttpGet(dm.config.HttpClient, apiUrl+"/api/v1/contract_index?symbol="+currencyPair.CurrencyA.Symbol)
 	if err != nil {

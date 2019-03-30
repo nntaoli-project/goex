@@ -99,7 +99,7 @@ func (ft *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 
 	ticker := new(Ticker)
 	ticker.Pair = currencyPair
-	ticker.Date = uint64(time.Now().Nanosecond() / 1000)
+	ticker.Date = uint64(time.Now().Unix())
 	ticker.Last = ToFloat64(tickmap[0])
 	ticker.Vol = ToFloat64(tickmap[9])
 	ticker.Low = ToFloat64(tickmap[8])
