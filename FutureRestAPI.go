@@ -89,7 +89,7 @@ type FutureRestAPI interface {
 	/**
 	 *获取交易所的美元人民币汇率
 	 */
-	GetExchangeRate() (float64, error)
+	//GetExchangeRate() (float64, error)
 
 	/**
 	 *获取每张合约价值

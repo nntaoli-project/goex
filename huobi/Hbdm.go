@@ -448,6 +448,10 @@ func (dm *Hbdm) GetDeliveryTime() (int, int, int, int) {
 	return 0, 4, 0, 0
 }
 
+func (dm *Hbdm) GetExchangeRate() (float64, error) {
+	panic("not supported.")
+}
+
 func (dm *Hbdm) GetFee() (float64, error) {
 	return 0.003, nil
 }
