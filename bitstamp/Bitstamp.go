@@ -293,7 +293,7 @@ func (bitstamp *Bitstamp) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 		log.Println(string(resp))
 		return nil, err
 	}
-	log.Println(respmap)
+	//log.Println(respmap)
 	orders := make([]Order, 0)
 	for _, v := range respmap {
 		ord := v.(map[string]interface{})
@@ -333,6 +333,7 @@ func (bitstamp *Bitstamp) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	//log.Println(respmap)
 	timestamp, _ := strconv.ParseUint(respmap["timestamp"].(string), 10, 64)
 	return &Ticker{
+		Pair: currency,
 		Last: ToFloat64(respmap["last"]),
 		High: ToFloat64(respmap["high"]),
 		Low:  ToFloat64(respmap["low"]),
@@ -361,6 +362,7 @@ func (bitstamp *Bitstamp) GetDepth(size int, currency CurrencyPair) (*Depth, err
 
 	i := 0
 	dep := new(Depth)
+	dep.Pair = currency
 	for _, v := range bids {
 		bid := v.([]interface{})
 		dep.BidList = append(dep.BidList, DepthRecord{ToFloat64(bid[0]), ToFloat64(bid[1])})

@@ -358,7 +358,7 @@ func (dm *Hbdm) GetFutureDepth(currencyPair CurrencyPair, contractType string, s
 	if s == "error" {
 		return nil, errors.New(ret["err_msg"].(string))
 	}
-	log.Println(ret)
+	//log.Println(ret)
 	dep := new(Depth)
 	dep.Pair = currencyPair
 	dep.ContractType = symbol

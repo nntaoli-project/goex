@@ -453,7 +453,7 @@ func (ok *OKExSwap) GetExchangeRate() (float64, error) {
 
 func (ok *OKExSwap) doRequest(httpMethod, uri, reqBody string, response interface{}) error {
 	url := Endpoint + uri
-	log.Println(url)
+	//log.Println(url)
 	sign, timestamp := doParamSign(httpMethod, ok.config.ApiSecretKey, uri, reqBody)
 	//log.Println(sign, timestamp)
 	resp, err := NewHttpRequest(ok.config.HttpClient, httpMethod, url, reqBody, map[string]string{

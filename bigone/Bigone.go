@@ -74,7 +74,7 @@ func (bo *Bigone) GetTicker(currency goex.CurrencyPair) (*goex.Ticker, error) {
 	tickerURI := fmt.Sprintf(TICKER_URI, bo.baseUri, currency.ToSymbol("-"))
 
 	var resp TickerResp
-	log.Printf("GetTicker -> %s", tickerURI)
+	//log.Printf("GetTicker -> %s", tickerURI)
 	err := goex.HttpGet4(bo.httpClient, tickerURI, nil, &resp)
 
 	if err != nil {
@@ -83,6 +83,7 @@ func (bo *Bigone) GetTicker(currency goex.CurrencyPair) (*goex.Ticker, error) {
 	}
 
 	var ticker goex.Ticker
+	ticker.Pair = currency
 	ticker.Date = uint64(time.Now().Unix())
 	ticker.Last = goex.ToFloat64(resp.Data.Close)
 	ticker.Buy = goex.ToFloat64(resp.Data.Bid.Price)

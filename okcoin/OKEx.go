@@ -124,6 +124,7 @@ func (ok *OKEx) GetFutureTicker(currencyPair CurrencyPair, contractType string) 
 	tickerMap := bodyMap["ticker"].(map[string]interface{})
 
 	ticker := new(Ticker)
+	ticker.Pair = currencyPair
 	ticker.Date, _ = strconv.ParseUint(bodyMap["date"].(string), 10, 64)
 	ticker.Buy = tickerMap["buy"].(float64)
 	ticker.Sell = tickerMap["sell"].(float64)
@@ -167,6 +168,9 @@ func (ok *OKEx) GetFutureDepth(currencyPair CurrencyPair, contractType string, s
 	}
 
 	depth := new(Depth)
+	depth.Pair = currencyPair
+	depth.ContractType = contractType
+
 	size2 := len(bodyMap["asks"].([]interface{}))
 	skipSize := 0
 	if size < size2 {
