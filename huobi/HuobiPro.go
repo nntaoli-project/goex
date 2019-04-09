@@ -191,7 +191,7 @@ func (hbpro *HuoBiPro) placeOrder(amount, price string, pair CurrencyPair, order
 	params := url.Values{}
 	params.Set("account-id", hbpro.accountId)
 	params.Set("amount", amount)
-	params.Set("symbol", strings.ToLower(pair.ToSymbol("")))
+	params.Set("symbol", pair.AdaptUsdToUsdt().ToLower().ToSymbol(""))
 	params.Set("type", orderType)
 
 	switch orderType {
@@ -394,7 +394,7 @@ type queryOrdersParams struct {
 func (hbpro *HuoBiPro) getOrders(queryparams queryOrdersParams) ([]Order, error) {
 	path := "/v1/order/orders"
 	params := url.Values{}
-	params.Set("symbol", strings.ToLower(queryparams.pair.ToSymbol("")))
+	params.Set("symbol", strings.ToLower(queryparams.pair.AdaptUsdToUsdt().ToSymbol("")))
 	params.Set("states", queryparams.states)
 
 	if queryparams.direct != "" {
@@ -428,7 +428,8 @@ func (hbpro *HuoBiPro) getOrders(queryparams queryOrdersParams) ([]Order, error)
 }
 
 func (hbpro *HuoBiPro) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
-	url := hbpro.baseUrl + "/market/detail/merged?symbol=" + strings.ToLower(currencyPair.ToSymbol(""))
+	pair := currencyPair.AdaptUsdToUsdt()
+	url := hbpro.baseUrl + "/market/detail/merged?symbol=" + strings.ToLower(pair.ToSymbol(""))
 	respmap, err := HttpGet(hbpro.httpClient, url)
 	if err != nil {
 		return nil, err
@@ -466,7 +467,8 @@ func (hbpro *HuoBiPro) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 
 func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	url := hbpro.baseUrl + "/market/depth?symbol=%s&type=step0"
-	respmap, err := HttpGet(hbpro.httpClient, fmt.Sprintf(url, strings.ToLower(currency.ToSymbol(""))))
+	pair := currency.AdaptUsdToUsdt()
+	respmap, err := HttpGet(hbpro.httpClient, fmt.Sprintf(url, strings.ToLower(pair.ToSymbol(""))))
 	if err != nil {
 		return nil, err
 	}
@@ -539,7 +541,7 @@ func (hbpro *HuoBiPro) GetTrades(currencyPair CurrencyPair, since int64) ([]Trad
 		}
 	)
 
-	url := hbpro.baseUrl + "/market/history/trade?size=100&symbol=" + currencyPair.AdaptUsdToUsdt().ToLower().ToSymbol("")
+	url := hbpro.baseUrl + "/market/history/trade?size=2000&symbol=" + currencyPair.AdaptUsdToUsdt().ToLower().ToSymbol("")
 	err := HttpGet4(hbpro.httpClient, url, map[string]string{}, &ret)
 	if err != nil {
 		return nil, err
