@@ -44,9 +44,11 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
    
    func main() {
    	apiBuilder := builder.NewAPIBuilder().HttpTimeout(5 * time.Second)
+   	//apiBuilder := builder.NewAPIBuilder().HttpTimeout(5 * time.Second).HttpProxy("socks5://127.0.0.1:1080")
    	
    	//build spot api
-   	api := apiBuilder.APIKey("").APISecretkey("").ClientID("123").Build(goex.BITSTAMP)
+   	//api := apiBuilder.APIKey("").APISecretkey("").ClientID("123").Build(goex.BITSTAMP)
+   	api := apiBuilder.APIKey("").APISecretkey("").Build(goex.HUOBI_PRO)
    	log.Println(api.GetExchangeName())
    	log.Println(api.GetTicker(goex.BTC_USD))
    	log.Println(api.GetDepth(2, goex.BTC_USD))
