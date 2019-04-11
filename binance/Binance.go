@@ -164,7 +164,6 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	params.Set("type", orderType)
 
 	params.Set("quantity", amount)
-	params.Set("type", "LIMIT")
 	params.Set("timeInForce", "GTC")
 
 	switch orderType {
