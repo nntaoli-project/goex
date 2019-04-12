@@ -221,7 +221,7 @@ func (hbdmWs *HbdmWs) parseDepth(r DepthResponse) Depth {
 		dep.AskList = append(dep.AskList, DepthRecord{ask[0], ask[1]})
 	}
 
-	sort.Sort(dep.BidList)
+	sort.Sort(sort.Reverse(dep.BidList))
 	sort.Sort(sort.Reverse(dep.AskList))
 	return dep
 }
