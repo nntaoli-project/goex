@@ -66,6 +66,35 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
 
 ```
 
+###websocket 使用例子
+```golang
+import (
+	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/huobi"
+	//"github.com/nntaoli-project/GoEx/okcoin"
+	"log"
+)
+
+func main() {
+
+	//ws := okcoin.NewOKExFutureWs() //ok期货
+	ws := huobi.NewHbdmWs() //huobi期货
+	//设置回调函数
+	ws.SetCallbacks(func(ticker *goex.FutureTicker) {
+		log.Println(ticker)
+	}, func(depth *goex.Depth) {
+		log.Println(depth)
+	}, func(trade *goex.Trade, contract string) {
+		log.Println(contract, trade)
+	})
+	//订阅行情
+	ws.SubscribeTrade(goex.BTC_USDT, goex.NEXT_WEEK_CONTRACT)
+	ws.SubscribeDepth(goex.BTC_USDT, goex.QUARTER_CONTRACT, 5)
+	ws.SubscribeTicker(goex.BTC_USDT, goex.QUARTER_CONTRACT)
+}  
+
+```
+
 ### 注意事项
 1. 推荐使用GoLand开发。
 2. 推荐关闭自动格式化功能。
