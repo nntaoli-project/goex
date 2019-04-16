@@ -6,17 +6,18 @@ import (
 )
 
 type Order struct {
-	Price,
-	Amount,
-	AvgPrice,
-	DealAmount,
-	Fee float64
-	OrderID2  string
-	OrderID   int
-	OrderTime int
-	Status    TradeStatus
-	Currency  CurrencyPair
-	Side      TradeSide
+	Price      float64
+	Amount     float64
+	AvgPrice   float64
+	DealAmount float64
+	Fee        float64
+	Cid        string //客户端自定义ID
+	OrderID2   string
+	OrderID    int //deprecated
+	OrderTime  int
+	Status     TradeStatus
+	Currency   CurrencyPair
+	Side       TradeSide
 }
 
 type Trade struct {
@@ -29,10 +30,10 @@ type Trade struct {
 }
 
 type SubAccount struct {
-	Currency Currency
-	Amount,
-	ForzenAmount,
-	LoanAmount float64
+	Currency     Currency
+	Amount       float64
+	ForzenAmount float64
+	LoanAmount   float64
 }
 
 type Account struct {
@@ -50,7 +51,7 @@ type Ticker struct {
 	High float64      `json:"high,string"`
 	Low  float64      `json:"low,string"`
 	Vol  float64      `json:"vol,string"`
-	Date uint64       `json:"date"` // 单位:秒(second)
+	Date uint64       `json:"date"` // 单位:ms
 }
 
 type FutureTicker struct {
@@ -64,7 +65,7 @@ type FutureTicker struct {
 }
 
 type DepthRecord struct {
-	Price,
+	Price  float64
 	Amount float64
 }
 
@@ -86,8 +87,8 @@ type Depth struct {
 	ContractType string //for future
 	Pair         CurrencyPair
 	UTime        time.Time
-	AskList,
-	BidList DepthRecords
+	AskList      DepthRecords // Descending order
+	BidList      DepthRecords // Descending order
 }
 
 type APIConfig struct {
@@ -104,11 +105,11 @@ type APIConfig struct {
 type Kline struct {
 	Pair      CurrencyPair
 	Timestamp int64
-	Open,
-	Close,
-	High,
-	Low,
-	Vol float64
+	Open      float64
+	Close     float64
+	High      float64
+	Low       float64
+	Vol       float64
 }
 
 type FutureKline struct {
@@ -135,7 +136,7 @@ type FutureOrder struct {
 	Amount       float64
 	AvgPrice     float64
 	DealAmount   float64
-	OrderID      int64
+	OrderID      int64 //deprecated
 	OrderTime    int64
 	Status       TradeStatus
 	Currency     CurrencyPair
