@@ -63,7 +63,7 @@ func (builder *APIBuilder) APISecretkey(key string) (_builder *APIBuilder) {
 
 func (builder *APIBuilder) HttpProxy(proxyUrl string) (_builder *APIBuilder) {
 	if proxyUrl == "" {
-		 return builder
+		return builder
 	}
 	proxy, err := url.Parse(proxyUrl)
 	if err != nil {
@@ -140,7 +140,7 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 	case HITBTC:
 		_api = hitbtc.New(builder.client, builder.apiKey, builder.secretkey)
 	default:
-		panic("exchange name error [" + exName + "].")
+		println("exchange name error [" + exName + "].")
 
 	}
 	return _api
@@ -155,6 +155,7 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 	case OKEX_SWAP:
 		return okex.NewOKExSwap(&APIConfig{HttpClient: builder.client, Endpoint: "https://www.okex.com", ApiKey: builder.apiKey, ApiSecretKey: builder.secretkey, ApiPassphrase: builder.apiPassphrase})
 	default:
-		panic(fmt.Sprintf("%s not support", exName))
+		println(fmt.Sprintf("%s not support", exName))
+		return nil
 	}
 }
