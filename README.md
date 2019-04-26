@@ -36,8 +36,8 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
    package main
    
    import (
-   	"github.com/nntaoli-project/GoEx"
-   	"github.com/nntaoli-project/GoEx/builder"
+   	"github.com/merkles/GoEx"
+   	"github.com/merkles/GoEx/builder"
    	"log"
    	"time"
    )
@@ -69,9 +69,9 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
 ###websocket 使用例子
 ```golang
 import (
-	"github.com/nntaoli-project/GoEx"
-	"github.com/nntaoli-project/GoEx/huobi"
-	//"github.com/nntaoli-project/GoEx/okcoin"
+	"github.com/merkles/GoEx"
+	"github.com/merkles/GoEx/huobi"
+	//"github.com/merkles/GoEx/okcoin"
 	"log"
 )
 
