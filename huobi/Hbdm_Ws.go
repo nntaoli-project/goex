@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/merkles/GoEx"
 	"log"
 	"sort"
 	"strings"
@@ -208,7 +208,7 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 }
 
 func (hbdmWs *HbdmWs) parseTicker(r DetailResponse) FutureTicker {
-	return FutureTicker{Ticker: &Ticker{High: r.High, Low: r.Low, Vol: r.Amount},}
+	return FutureTicker{Ticker: &Ticker{High: r.High, Low: r.Low, Vol: r.Amount}}
 }
 
 func (hbdmWs *HbdmWs) parseDepth(r DepthResponse) Depth {

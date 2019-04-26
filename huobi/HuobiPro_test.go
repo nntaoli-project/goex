@@ -1,14 +1,14 @@
 package huobi
 
 import (
-	"github.com/nntaoli-project/GoEx"
+	"github.com/merkles/GoEx"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"testing"
 	"time"
-	"log"
 )
 
 var httpProxyClient = &http.Client{

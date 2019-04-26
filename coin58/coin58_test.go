@@ -1,9 +1,9 @@
 package coin58
 
 import (
-	"testing"
+	"github.com/merkles/GoEx"
 	"net/http"
-	"github.com/nntaoli-project/GoEx"
+	"testing"
 	"time"
 )
 
@@ -15,7 +15,7 @@ func TestCoin58_GetTicker(t *testing.T) {
 
 func TestCoin58_GetDepth(t *testing.T) {
 	b := time.Now()
-	dep , _ := coin58.GetDepth(1 , goex.NewCurrencyPair2("58b_ucc"))
+	dep, _ := coin58.GetDepth(1, goex.NewCurrencyPair2("58b_ucc"))
 	//dep, _ := coin58.GetDepth(2, goex.BTC_USD)
 	t.Log(time.Now().Sub(b))
 	t.Log(dep.BidList)
@@ -23,20 +23,20 @@ func TestCoin58_GetDepth(t *testing.T) {
 }
 
 func TestCoin58_GetAccount(t *testing.T) {
-	acc , err := coin58.GetAccount()
+	acc, err := coin58.GetAccount()
 	t.Log(err)
 	t.Log(acc)
 }
 
 func TestCoin58_LimitSell(t *testing.T) {
-	ord , err := coin58.LimitSell("11.2" , "0.17" , goex.NewCurrencyPair2("58b_ucc"))
+	ord, err := coin58.LimitSell("11.2", "0.17", goex.NewCurrencyPair2("58b_ucc"))
 	t.Log(err)
 	t.Log(ord)
 }
 
 func TestCoin58_GetOneOrder(t *testing.T) {
-	ord , _ := coin58.GetOneOrder("23613" , goex.NewCurrencyPair2("58b_ucc")) //23478
-	t.Logf("%+v" , ord)
+	ord, _ := coin58.GetOneOrder("23613", goex.NewCurrencyPair2("58b_ucc")) //23478
+	t.Logf("%+v", ord)
 }
 
 func TestCoin58_GetUnfinishOrders(t *testing.T) {
@@ -44,6 +44,5 @@ func TestCoin58_GetUnfinishOrders(t *testing.T) {
 }
 
 func TestCoin58_CancelOrder(t *testing.T) {
-	t.Log(coin58.CancelOrder("72" , goex.NewCurrencyPair2("58b_usdt")))
+	t.Log(coin58.CancelOrder("72", goex.NewCurrencyPair2("58b_usdt")))
 }
-

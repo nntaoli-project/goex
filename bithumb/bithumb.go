@@ -3,15 +3,15 @@ package bithumb
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/merkles/GoEx"
 	"log"
 	"net/http"
 	"net/url"
 	"sort"
 	"strconv"
 	"time"
-	"errors"
 )
 
 type Bithumb struct {

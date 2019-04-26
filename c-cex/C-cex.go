@@ -1,7 +1,7 @@
 package c_cex
 
 import (
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/merkles/GoEx"
 	//"log"
 	"net/http"
 	"strings"

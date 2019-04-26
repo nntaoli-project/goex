@@ -2,7 +2,7 @@ package coincheck
 
 import (
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/merkles/GoEx"
 	"log"
 	"net/http"
 	//"strconv"
@@ -107,7 +107,6 @@ func (cc *Coincheck) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return &depth, nil
 }
 
-
 func (cc *Coincheck) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
 	return nil, nil
 }
@@ -144,7 +143,7 @@ func (cc *Coincheck) GetAccount() (*Account, error) {
 	return nil, nil
 }
 
-func (cc *Coincheck) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
+func (cc *Coincheck) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	return nil, nil
 }
 

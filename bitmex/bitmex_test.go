@@ -1,12 +1,12 @@
 package bitmex
 
 import (
-	"github.com/nntaoli-project/GoEx"
+	"github.com/merkles/GoEx"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"testing"
-	"net/url"
 	"net"
+	"net/http"
+	"net/url"
+	"testing"
 	"time"
 )
 

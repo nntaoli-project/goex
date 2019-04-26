@@ -1,14 +1,14 @@
 package okcoin
 
 import (
-	"github.com/nntaoli-project/GoEx"
+	"github.com/merkles/GoEx"
 	"testing"
 	"time"
 )
 
 func TestNewOKExSpotWs(t *testing.T) {
 	okSpotWs := NewOKExSpotWs()
-//	okSpotWs.ProxyUrl("socks5://127.0.0.1:1080")
+	//	okSpotWs.ProxyUrl("socks5://127.0.0.1:1080")
 
 	okSpotWs.SetCallbacks(func(ticker *goex.Ticker) {
 		t.Log(ticker)

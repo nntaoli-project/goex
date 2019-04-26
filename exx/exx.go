@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/merkles/GoEx"
 	"log"
 	"net/http"
 	"net/url"
@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	EXX			 = "EXX"
+	EXX          = "EXX"
 	API_BASE_URL = "https://api.exx.com/"
 	MARKET_URL   = "http://api.exx.com/data/v1/"
 	TICKER_API   = "ticker?currency=%s"

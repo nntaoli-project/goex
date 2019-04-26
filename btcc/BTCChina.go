@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/merkles/GoEx"
 	"net/http"
 	"strconv"
 	"strings"
@@ -107,7 +107,7 @@ func (btch *BTCChina) GetDepth(size int, currency CurrencyPair) (*Depth, error) 
 	return &depth, nil
 }
 
-func (btch *BTCChina) GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error) {
+func (btch *BTCChina) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	panic("unimplement")
 }
 

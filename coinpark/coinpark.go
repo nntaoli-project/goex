@@ -4,7 +4,7 @@ import (
 	"net/http"
 	//"log"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/merkles/GoEx"
 	//"net/url"
 	"encoding/json"
 	"errors"
