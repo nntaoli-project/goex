@@ -98,6 +98,16 @@ func (builder *APIBuilder) ApiPassphrase(apiPassphrase string) (_builder *APIBui
 	return builder
 }
 
+func (builder *APIBuilder) GetAPIConfig() *APIConfig {
+	return &APIConfig{
+		HttpClient:    builder.client,
+		ApiKey:        builder.apiKey,
+		ApiSecretKey:  builder.secretkey,
+		ApiPassphrase: builder.apiPassphrase,
+		ClientId:      builder.clientId,
+	}
+}
+
 func (builder *APIBuilder) Build(exName string) (api API) {
 	var _api API
 	switch exName {
