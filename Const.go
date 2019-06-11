@@ -1,5 +1,9 @@
 package goex
 
+import (
+	"fmt"
+)
+
 type TradeSide int
 
 const (
@@ -69,10 +73,30 @@ const (
 	KLINE_PERIOD_1YEAR
 )
 
+type OrderType int
+
+func (ot OrderType) String() string {
+	if ot > 0 && int(ot) <= len(orderTypeSymbol) {
+		return orderTypeSymbol[ot - 1]
+	}
+	return fmt.Sprintf("UNKNOWN_ORDER_TYPE(%d)", ot)
+}
+
+var orderTypeSymbol = [...]string{"LIMIT", "MARKET", "FAK", "IOC", "POST_ONLY"}
+
+const (
+	ORDER_TYPE_LIMIT = 1 + iota
+	ORDER_TYPE_MARKET
+	ORDER_TYPE_FAK
+	ORDER_TYPE_IOC
+	ORDER_TYPE_POST_ONLY
+)
+
 var (
 	THIS_WEEK_CONTRACT = "this_week" //周合约
 	NEXT_WEEK_CONTRACT = "next_week" //次周合约
 	QUARTER_CONTRACT   = "quarter"   //季度合约
+	SWAP_CONTRACT      = "swap"      //永续合约
 )
 
 //exchanges const
