@@ -45,7 +45,7 @@ type HttpClientConfig struct {
 }
 
 func (c HttpClientConfig) String() string {
-	return fmt.Sprintf("{ProxyUrl:'%s',HttpTimeout:'%s',MaxIdleConns:%d}", c.Proxy.String(), c.HttpTimeout.String(), c.MaxIdleConns)
+	return fmt.Sprintf("{ProxyUrl:\"%s\",HttpTimeout:%s,MaxIdleConns:%d}", c.Proxy, c.HttpTimeout.String(), c.MaxIdleConns)
 }
 
 func (c *HttpClientConfig) SetHttpTimeout(timeout time.Duration) *HttpClientConfig {
