@@ -180,27 +180,55 @@ func TestOKEV3_GetContractValue(t *testing.T) {
 	testGetContractValue(t, EOS_USD)
 }
 
+func isEqualDiff(klines []FutureKline, seconds int64) bool {
+	miliseconds := seconds * 1000
+	for i := 0; i < len(klines) - 1; i ++ {
+		diff := klines[i + 1].Timestamp-klines[i].Timestamp
+		if diff != miliseconds {
+			return false
+		}
+	}
+	return true
+}
+
 func testGetKlineRecords(t *testing.T, contractType string, currency CurrencyPair, maxSize int) {
 	now := time.Now().UTC()
-	timestamp := (now.UnixNano() - 6*int64(time.Hour)) / int64(time.Millisecond)
+	timestamp := (now.UnixNano() - 20*int64(time.Hour)) / int64(time.Millisecond)
 	size := 10
 	period := KLINE_PERIOD_1MIN
+	seconds := int64(60)
 	kline, err := okexV3.GetKlineRecords(contractType, currency, period, size, 0)
 	assert.Nil(t, err)
 	assert.True(t, len(kline) == size)
 	t.Log(len(kline))
+	assert.True(t, isEqualDiff(kline, seconds))
 	kline, err = okexV3.GetKlineRecords(contractType, currency, period, size, int(timestamp))
 	assert.Nil(t, err)
 	assert.True(t, len(kline) == size)
+	t.Log(len(kline))
+	assert.True(t, isEqualDiff(kline, seconds))
 	size = maxSize
 	kline, err = okexV3.GetKlineRecords(contractType, currency, period, size, 0)
 	assert.Nil(t, err)
 	assert.True(t, len(kline) == size)
 	t.Log(len(kline))
+	assert.True(t, isEqualDiff(kline, seconds))
 	kline, err = okexV3.GetKlineRecords(contractType, currency, period, size, int(timestamp))
 	assert.Nil(t, err)
 	assert.True(t, len(kline) == size)
 	t.Log(len(kline))
+	assert.True(t, isEqualDiff(kline, seconds))
+	size = 3 * maxSize
+	kline, err = okexV3.GetKlineRecords(contractType, currency, period, size, 0)
+	assert.Nil(t, err)
+	assert.True(t, len(kline) == size)
+	t.Log(len(kline))
+	assert.True(t, isEqualDiff(kline, seconds))
+	kline, err = okexV3.GetKlineRecords(contractType, currency, period, size, int(timestamp))
+	assert.Nil(t, err)
+	assert.True(t, len(kline) == size)
+	t.Log(len(kline))
+	assert.True(t, isEqualDiff(kline, seconds))
 }
 
 func TestOKEV3_GetKlineRecords(t *testing.T) {

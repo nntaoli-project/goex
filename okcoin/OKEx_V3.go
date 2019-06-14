@@ -1,6 +1,7 @@
 package okcoin
 
 import (
+	"reflect"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1312,39 +1313,32 @@ var KlineTypeSecondsMap = map[int]int{
 	KLINE_PERIOD_1WEEK: 604800,
 }
 
-func (okv3 *OKExV3) GetKlineRecords(contractType string, currencyPair CurrencyPair, period, size, since int) ([]FutureKline, error) {
-	var fallback []FutureKline
+func (okv3 *OKExV3) mergeKlineRecords(klines [][]*FutureKline) []FutureKline {
+	ret := make([]FutureKline, 0)
+	for _, kline := range klines {
+		for _, k := range kline {
+			ret = append(ret, *k)
+		}
+	}
+	return ret
+}
 
+func (okv3 *OKExV3) getKlineRecords(contractType string, currencyPair CurrencyPair, seconds int, start, end *time.Time) ([]*FutureKline, error) {
+	var fallback []*FutureKline
 	var requestURL string
-	var maxSize int
 	if contractType == SWAP_CONTRACT {
 		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_GET_KLINE_URI
-		maxSize = 200
 	} else {
 		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_GET_KLINE_URI
-		maxSize = 300
-	}
-
-	seconds, ok := KlineTypeSecondsMap[period]
-	if !ok {
-		return nil, fmt.Errorf("invalid kline period for okex %d", period)
 	}
 	params := url.Values{}
 	params.Set("granularity", strconv.Itoa(seconds))
-	if since > 0 {
-		startTime := int64ToTime(int64(since))
-		params.Set("start", startTime.Format(time.RFC3339))
-		if size > 0 && size < maxSize {
-			endTime := startTime.Add(time.Duration(seconds*size) * time.Second)
-			params.Set("end", endTime.Format(time.RFC3339))
-		}
-	} else {
-		endTime := time.Now().UTC()
-		params.Set("end", endTime.Format(time.RFC3339))
-		if size > 0 && size < maxSize {
-			startTime := endTime.Add(-time.Duration(seconds*size) * time.Second)
-			params.Set("start", startTime.Format(time.RFC3339))
-		}
+
+	if start != nil {
+		params.Set("start", start.Format(time.RFC3339))
+	}
+	if end != nil {
+		params.Set("end", end.Format(time.RFC3339))
 	}
 
 	contract, err := okv3.GetContract(currencyPair, contractType)
@@ -1371,7 +1365,7 @@ func (okv3 *OKExV3) GetKlineRecords(contractType string, currencyPair CurrencyPa
 		return fallback, err
 	}
 
-	var klineRecords []FutureKline
+	var klineRecords []*FutureKline
 	for _, record := range klines {
 		r := FutureKline{}
 		r.Kline = new(Kline)
@@ -1393,10 +1387,136 @@ func (okv3 *OKExV3) GetKlineRecords(contractType string, currencyPair CurrencyPa
 				r.Vol2, _ = strconv.ParseFloat(e.(string), 64)
 			}
 		}
-		klineRecords = append(klineRecords, r)
+		klineRecords = append(klineRecords, &r)
+	}
+	reverse(klineRecords)
+	return klineRecords, nil
+}
+
+func reverse(s interface{}) {
+    n := reflect.ValueOf(s).Len()
+    swap := reflect.Swapper(s)
+    for i, j := 0, n-1; i < j; i, j = i+1, j-1 {
+        swap(i, j)
+    }
+}
+
+func (okv3 *OKExV3) GetKlineRecords(contractType string, currencyPair CurrencyPair, period, size, since int) ([]FutureKline, error) {
+	var fallback []FutureKline
+
+	var maxSize int
+	if contractType == SWAP_CONTRACT {
+		maxSize = 200
+	} else {
+		maxSize = 300
 	}
 
-	return klineRecords, nil
+	seconds, ok := KlineTypeSecondsMap[period]
+	if !ok {
+		return nil, fmt.Errorf("invalid kline period for okex %d", period)
+	}
+
+	starts := make([]*time.Time, 0)
+	ends := make([]*time.Time, 0)
+
+	if since > 0 {
+		startTime := int64ToTime(int64(since))
+		for start, left := startTime, size; true; {
+			if left > maxSize {
+				s := start
+				e := s.Add(time.Duration(seconds*maxSize) * time.Second)
+				starts = append(starts, &s)
+				ends = append(ends, &e)
+				start = e.Add(1) // a little trick
+				left -= maxSize
+			} else {
+				s := start
+				starts = append(starts, &s)
+				ends = append(ends, nil)
+				break
+			}
+		}
+		lock := &sync.Mutex{}
+		klinesSlice := make([][]*FutureKline, len(starts))
+		var err error
+		wg := &sync.WaitGroup{}
+		wg.Add(len(starts))
+		for i := 0; i < len(starts); i++ {
+			go func(i int) {
+				defer wg.Done()
+				klines, err2 := okv3.getKlineRecords(contractType, currencyPair, seconds, starts[i], ends[i])
+				lock.Lock()
+				defer lock.Unlock()
+				if err2 != nil {
+					if err == nil {
+						err = err2
+					}
+					log.Println("error when get kline: ", err2)
+				}
+				klinesSlice[i] = klines
+			}(i)
+		}
+		wg.Wait()
+		if err != nil {
+			return fallback, err
+		}
+		klines := okv3.mergeKlineRecords(klinesSlice)
+		l := len(klines)
+		if l > size {
+			klines = klines[0:size]
+		}
+		return klines, nil
+	} else {
+		endTime := time.Now().UTC()
+		for end, left := endTime, size; true; {
+			if left > maxSize {
+				e := end
+				s := e.Add(-time.Duration(seconds*maxSize) * time.Second)
+				starts = append(starts, &s)
+				ends = append(ends, &e)
+				end = s.Add(-1) // a little trick
+				left -= maxSize
+			} else {
+				e := end
+				starts = append(starts, nil)
+				ends = append(ends, &e)
+				break
+			}
+		}
+		reverse(starts)
+		reverse(ends)
+
+		lock := &sync.Mutex{}
+		klinesSlice := make([][]*FutureKline, len(starts))
+		var err error
+		wg := &sync.WaitGroup{}
+		wg.Add(len(starts))
+		for i := 0; i < len(starts); i++ {
+			go func(i int) {
+				defer wg.Done()
+				klines, err2 := okv3.getKlineRecords(contractType, currencyPair, seconds, starts[i], ends[i])
+				lock.Lock()
+				defer lock.Unlock()
+				if err2 != nil {
+					if err == nil {
+						err = err2
+					}
+					log.Println("error when get kline: ", err2)
+				}
+				klinesSlice[i] = klines
+			}(i)
+		}
+		wg.Wait()
+		if err != nil {
+			return fallback, err
+		}
+		klines := okv3.mergeKlineRecords(klinesSlice)
+		l := len(klines)
+		if l > size {
+			klines = klines[l-size:l]
+		}
+		return klines, nil
+	}
 }
 
 func (okv3 *OKExV3) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
@@ -1589,7 +1709,7 @@ func (okv3 *OKExV3) GetFutureUserinfo() (*FutureAccount, error) {
 					subAccount.KeepDeposit = totalMargin
 					subAccount.ProfitReal = totalRealizedPnl
 					subAccount.ProfitUnreal = totalUnrealizedPnl
-				}		
+				}
 			}
 			account.FutureSubAccounts[symbol] = subAccount
 		}(v)
