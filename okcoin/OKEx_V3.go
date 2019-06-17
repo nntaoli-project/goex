@@ -171,6 +171,7 @@ type OKExV3 struct {
 	apiKey,
 	apiSecretKey,
 	passphrase string
+	dataParser     *OKExV3DataParser
 	client         *http.Client
 	contractsMap   futureContractsMap
 	contractsIDMap map[string]*futureContract
@@ -184,6 +185,7 @@ func NewOKExV3(client *http.Client, api_key, secret_key, passphrase string) *OKE
 	okv3.client = client
 	okv3.passphrase = passphrase
 	okv3.contractsRW = &sync.RWMutex{}
+	okv3.dataParser = NewOKExV3DataParser(okv3)
 	contracts, err := okv3.getAllContracts()
 	if err != nil {
 		panic(err)
@@ -435,78 +437,7 @@ func (okv3 *OKExV3) GetFutureDepth(currencyPair CurrencyPair, contractType strin
 	depth := new(Depth)
 	depth.Pair = currencyPair
 	depth.ContractType = contractType
-
-	var timeStr string
-	//name of timestamp field is different between swap and future api
-	if bodyMap["time"] != nil {
-		timeStr = bodyMap["time"].(string)
-	} else if bodyMap["timestamp"] != nil {
-		timeStr = bodyMap["timestamp"].(string)
-	} else {
-		return nil, fmt.Errorf("no time field in %v", bodyMap)
-	}
-
-	depth.UTime, err = time.Parse(time.RFC3339, timeStr)
-	if err != nil {
-		return nil, err
-	}
-
-	size2 := len(bodyMap["asks"].([]interface{}))
-	skipSize := 0
-	if size < size2 {
-		skipSize = size2 - size
-	}
-
-	for _, v := range bodyMap["asks"].([]interface{}) {
-		if skipSize > 0 {
-			skipSize--
-			continue
-		}
-
-		var dr DepthRecord
-		for i, vv := range v.([]interface{}) {
-			switch i {
-			case 0:
-				dr.Price, err = strconv.ParseFloat(vv.(string), 64)
-				if err != nil {
-					return nil, err
-				}
-			case 1:
-				dr.Amount, err = strconv.ParseFloat(vv.(string), 64)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-		depth.AskList = append(depth.AskList, dr)
-	}
-
-	for _, v := range bodyMap["bids"].([]interface{}) {
-		var dr DepthRecord
-		for i, vv := range v.([]interface{}) {
-			switch i {
-			case 0:
-				dr.Price, err = strconv.ParseFloat(vv.(string), 64)
-				if err != nil {
-					return nil, err
-				}
-			case 1:
-				dr.Amount, err = strconv.ParseFloat(vv.(string), 64)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-		depth.BidList = append(depth.BidList, dr)
-
-		size--
-		if size == 0 {
-			break
-		}
-	}
-
-	// fmt.Println(bodyMap)
-	return depth, nil
+	return okv3.dataParser.ParseDepth(depth, bodyMap, size)
 }
 
 func (okv3 *OKExV3) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
@@ -683,74 +614,8 @@ func (okv3 *OKExV3) FutureCancelOrder(currencyPair CurrencyPair, contractType, o
 }
 
 func (okv3 *OKExV3) parseOrder(respMap map[string]interface{}, currencyPair CurrencyPair, contractType string) (*FutureOrder, error) {
-	var err error
-
-	futureOrder := &FutureOrder{}
-	// swap orderID is not in int format, so just skip this error
-	futureOrder.OrderID, _ = strconv.ParseInt(respMap["order_id"].(string), 10, 64)
-	futureOrder.OrderID2 = respMap["order_id"].(string)
-	futureOrder.Amount, err = strconv.ParseFloat(respMap["size"].(string), 64)
-	if err != nil {
-		return nil, err
-	}
-	futureOrder.Price, err = strconv.ParseFloat(respMap["price"].(string), 64)
-	if err != nil {
-		return nil, err
-	}
-	futureOrder.AvgPrice, err = strconv.ParseFloat(respMap["price_avg"].(string), 64)
-	if err != nil {
-		return nil, err
-	}
-	futureOrder.DealAmount, err = strconv.ParseFloat(respMap["filled_qty"].(string), 64)
-	if err != nil {
-		return nil, err
-	}
-	futureOrder.Fee, err = strconv.ParseFloat(respMap["fee"].(string), 64)
-	if err != nil {
-		return nil, err
-	}
-	if i, err := strconv.ParseInt(respMap["type"].(string), 10, 64); err == nil {
-		futureOrder.OType = int(i)
-	} else {
-		return nil, err
-	}
-	futureOrder.OrderTime, err = timeStringToInt64(respMap["timestamp"].(string))
-	if err != nil {
-		return nil, err
-	}
-	if respMap["leverage"] != nil {
-		i, err := strconv.ParseInt(respMap["leverage"].(string), 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		futureOrder.LeverRate = int(i)
-	}
-	futureOrder.ContractName = respMap["instrument_id"].(string)
-	futureOrder.Currency = currencyPair
-
-	state, err := strconv.ParseInt(respMap["state"].(string), 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	switch state {
-	case 0:
-		futureOrder.Status = ORDER_UNFINISH
-	case 1:
-		futureOrder.Status = ORDER_PART_FINISH
-	case 2:
-		futureOrder.Status = ORDER_FINISH
-	case 4:
-		futureOrder.Status = ORDER_CANCEL_ING
-	case -1:
-		futureOrder.Status = ORDER_CANCEL
-	case 3:
-		futureOrder.Status = ORDER_UNFINISH
-	case -2:
-		futureOrder.Status = ORDER_REJECT
-	default:
-		return nil, fmt.Errorf("unknown order status: %v", respMap)
-	}
-	return futureOrder, nil
+	order, _, err := okv3.dataParser.ParseFutureOrder(respMap)
+	return order, err
 }
 
 func (okv3 *OKExV3) parseOrders(body []byte, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
@@ -1554,20 +1419,13 @@ func (okv3 *OKExV3) GetTrades(contractType string, currencyPair CurrencyPair, si
 
 	for _, v := range resp {
 		item := v.(map[string]interface{})
-
-		tid, _ := strconv.ParseInt(item["trade_id"].(string), 10, 64)
-		direction := item["side"].(string)
-		var amountStr string
-		// wtf api
-		if item["qty"] != nil {
-			amountStr = item["qty"].(string)
-		} else if item["size"] != nil {
-			amountStr = item["size"].(string)
+		trade := new(Trade)
+		trade.Pair = currencyPair
+		trade, _, err := okv3.dataParser.ParseTrade(trade, contractType, item)
+		if err != nil {
+			return nil, err
 		}
-		amount, _ := strconv.ParseFloat(amountStr, 64)
-		price, _ := strconv.ParseFloat(item["price"].(string), 64)
-		time, _ := timeStringToInt64(item["timestamp"].(string))
-		trades = append(trades, Trade{tid, AdaptTradeSide(direction), amount, price, time, currencyPair})
+		trades = append(trades, *trade)
 	}
 
 	return trades, nil

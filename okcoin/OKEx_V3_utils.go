@@ -1,9 +1,10 @@
 package okcoin
 
 import (
-	"time"
-	"strconv"
 	"fmt"
+	"strconv"
+	"time"
+
 	. "github.com/nntaoli-project/GoEx"
 )
 
@@ -16,11 +17,11 @@ type OKExV3DataParser struct {
 	contractIDProvider IContractIDProvider
 }
 
-func NewOKExV3DataParser(contractIDProvider IContractIDProvider)*OKExV3DataParser {
+func NewOKExV3DataParser(contractIDProvider IContractIDProvider) *OKExV3DataParser {
 	return &OKExV3DataParser{contractIDProvider: contractIDProvider}
 }
 
-func (okV3dp *OKExV3DataParser) ParseFutureTicker(data interface{})(*FutureTicker, error) {
+func (okV3dp *OKExV3DataParser) ParseFutureTicker(data interface{}) (*FutureTicker, error) {
 	var fallback *FutureTicker
 	switch v := data.(type) {
 	case map[string]interface{}:
@@ -48,20 +49,25 @@ func (okV3dp *OKExV3DataParser) ParseFutureTicker(data interface{})(*FutureTicke
 	return fallback, fmt.Errorf("unknown FutureTicker data: %v", data)
 }
 
-func (okV3dp *OKExV3DataParser) ParseDepth(data interface{}, size int)(*Depth, error) {
+func (okV3dp *OKExV3DataParser) ParseDepth(depth *Depth, data interface{}, size int) (*Depth, error) {
 	var fallback *Depth
+	if depth == nil {
+		depth = new(Depth)
+	}
 	switch v := data.(type) {
 	case map[string]interface{}:
-		contractID := v["instrument_id"].(string)
-		currencyPair, contractType, err := okV3dp.contractIDProvider.ParseContractID(contractID)
-		if err != nil {
-			return fallback, err
+		if !okV3dp.checkContractInfo(depth.Pair, depth.ContractType) {
+			if v["instrument_id"] != nil {
+				contractID := v["instrument_id"].(string)
+				currencyPair, contractType, err := okV3dp.contractIDProvider.ParseContractID(contractID)
+				if err != nil {
+					return fallback, err
+				}
+				depth.Pair = currencyPair
+				depth.ContractType = contractType
+			}
 		}
-
-		depth := new(Depth)
-		depth.Pair = currencyPair
-		depth.ContractType = contractType
-
+		var err error
 		var timeStr string
 		//name of timestamp field is different between swap and future api
 		if v["time"] != nil {
@@ -129,14 +135,26 @@ func (okV3dp *OKExV3DataParser) ParseDepth(data interface{}, size int)(*Depth, e
 			if size == 0 {
 				break
 			}
-		}	
+		}
 		return depth, nil
 	}
 
 	return fallback, fmt.Errorf("unknown Depth data: %v", data)
 }
 
-func (okV3dp *OKExV3DataParser) ParseFutureOrder(data interface{})(*FutureOrder, string, error) {
+var emptyPair = CurrencyPair{}
+
+func (okV3dp *OKExV3DataParser) checkContractInfo(currencyPair CurrencyPair, contractType string) bool {
+	if currencyPair.Eq(emptyPair) || currencyPair.Eq(UNKNOWN_PAIR) {
+		return false
+	}
+	if contractType == "" {
+		return false
+	}
+	return true
+}
+
+func (okV3dp *OKExV3DataParser) ParseFutureOrder(data interface{}) (*FutureOrder, string, error) {
 	var fallback *FutureOrder
 	switch v := data.(type) {
 	case map[string]interface{}:
@@ -218,15 +236,25 @@ func (okV3dp *OKExV3DataParser) ParseFutureOrder(data interface{})(*FutureOrder,
 	return fallback, "", fmt.Errorf("unknown FutureOrder data: %v", data)
 }
 
-func (okV3dp *OKExV3DataParser) ParseTrade(data interface{})(*Trade, string, error) {
+func (okV3dp *OKExV3DataParser) ParseTrade(trade *Trade, contractType string, data interface{}) (*Trade, string, error) {
 	var fallback *Trade
+	if trade == nil {
+		trade = new(Trade)
+	}
 	switch v := data.(type) {
 	case map[string]interface{}:
-		contractID := v["instrument_id"].(string)
-		currencyPair, contractType, err := okV3dp.contractIDProvider.ParseContractID(contractID)
-		if err != nil {
-			return fallback, "", err
+		if !okV3dp.checkContractInfo(trade.Pair, contractType) {
+			if v["instrument_id"] != nil {
+				contractID := v["instrument_id"].(string)
+				currencyPair, _contractType, err := okV3dp.contractIDProvider.ParseContractID(contractID)
+				if err != nil {
+					return fallback, "", err
+				}
+				trade.Pair = currencyPair
+				contractType = _contractType
+			}
 		}
+
 		tid, _ := strconv.ParseInt(v["trade_id"].(string), 10, 64)
 		direction := v["side"].(string)
 		var amountStr string
@@ -239,7 +267,11 @@ func (okV3dp *OKExV3DataParser) ParseTrade(data interface{})(*Trade, string, err
 		amount, _ := strconv.ParseFloat(amountStr, 64)
 		price, _ := strconv.ParseFloat(v["price"].(string), 64)
 		time, _ := timeStringToInt64(v["timestamp"].(string))
-		trade := &Trade{tid, AdaptTradeSide(direction), amount, price, time, currencyPair}
+		trade.Tid = tid
+		trade.Type = AdaptTradeSide(direction)
+		trade.Amount = amount
+		trade.Price = price
+		trade.Date = time
 		return trade, contractType, nil
 	}
 	return fallback, "", fmt.Errorf("unknown Trade data: %v", data)

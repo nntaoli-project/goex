@@ -372,7 +372,7 @@ func (okV3Ws *OKExV3FutureWs) handle(msg []byte) error {
 			if ok {
 				valid := true
 				for _, v := range data {
-					depth, err := okV3Ws.dataParser.ParseDepth(v, 5)
+					depth, err := okV3Ws.dataParser.ParseDepth(nil, v, 5)
 					if err != nil {
 						valid = false
 						break
@@ -388,7 +388,7 @@ func (okV3Ws *OKExV3FutureWs) handle(msg []byte) error {
 			if ok {
 				valid := true
 				for _, v := range data {
-					trade, contractType, err := okV3Ws.dataParser.ParseTrade(v)
+					trade, contractType, err := okV3Ws.dataParser.ParseTrade(nil, "", v)
 					if err != nil {
 						valid = false
 						break
