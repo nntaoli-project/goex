@@ -19,8 +19,13 @@ type OKExV3FutureWs struct {
 	wsConn             *WsConn
 	loginCh            chan interface{}
 	logined            bool
+	loginLock          *sync.Mutex
 	dataParser         *OKExV3DataParser
 	contractIDProvider IContractIDProvider
+	apiKey             string
+	apiSecretKey       string
+	passphrase         string
+	authoriedSubs      []map[string]interface{}
 
 	tickerCallback func(*FutureTicker)
 	depthCallback  func(*Depth)
@@ -40,6 +45,8 @@ func NewOKExV3FutureWs(contractIDProvider IContractIDProvider) *OKExV3FutureWs {
 	okV3Ws.dataParser = NewOKExV3DataParser(contractIDProvider)
 	okV3Ws.loginCh = make(chan interface{})
 	okV3Ws.logined = false
+	okV3Ws.loginLock = &sync.Mutex{}
+	okV3Ws.authoriedSubs = make([]map[string]interface{}, 0)
 	okV3Ws.WsBuilder = NewWsBuilder().
 		WsUrl("wss://real.okex.com:10440/ws/v3").
 		Heartbeat([]byte("ping"), 30*time.Second).
@@ -83,8 +90,19 @@ func (okV3Ws *OKExV3FutureWs) SetCallbacks(tickerCallback func(*FutureTicker),
 }
 
 func (okV3Ws *OKExV3FutureWs) Login(apiKey string, apiSecretKey string, passphrase string) error {
+	// already logined
+	if okV3Ws.logined {
+		return nil
+	}
 	okV3Ws.connectWs()
-	return okV3Ws.login(apiKey, apiSecretKey, passphrase)
+	okV3Ws.apiKey = apiKey
+	okV3Ws.apiSecretKey = apiSecretKey
+	okV3Ws.passphrase = passphrase
+	err := okV3Ws.login()
+	if err == nil {
+		okV3Ws.logined = true
+	}
+	return err
 }
 
 func (okV3Ws *OKExV3FutureWs) getTimestamp() string {
@@ -92,14 +110,24 @@ func (okV3Ws *OKExV3FutureWs) getTimestamp() string {
 	return fmt.Sprintf("%.3f", seconds)
 }
 
-func (okV3Ws *OKExV3FutureWs) login(apiKey string, apiSecretKey string, passphrase string) error {
-	if okV3Ws.logined {
-		return nil
-	} // already logined
-	select {
-	case <-okV3Ws.loginCh:
-	default:
-	} //clear last login result
+func (okV3Ws *OKExV3FutureWs) clearChan(c chan interface{}) {
+	for {
+		if len(c) > 0 {
+			<-c
+		} else {
+			break
+		}
+	}
+}
+
+func (okV3Ws *OKExV3FutureWs) login() error {
+	okV3Ws.loginLock.Lock()
+	defer okV3Ws.loginLock.Unlock()
+	okV3Ws.clearChan(okV3Ws.loginCh)
+	apiKey := okV3Ws.apiKey
+	apiSecretKey := okV3Ws.apiSecretKey
+	passphrase := okV3Ws.passphrase
+	//clear last login result
 	timestamp := okV3Ws.getTimestamp()
 	method := "GET"
 	url := "/users/self/verify"
@@ -122,8 +150,6 @@ func (okV3Ws *OKExV3FutureWs) login(apiKey string, apiSecretKey string, passphra
 			success = s == "true"
 		}
 		if success {
-			okV3Ws.logined = true
-			okV3Ws.wsConn.Subscribe(op) //trick, wanna to add op to wsConn.subs.
 			log.Println("login success:", event)
 			return nil
 		}
@@ -232,9 +258,20 @@ func (okV3Ws *OKExV3FutureWs) SubscribeOrder(currencyPair CurrencyPair, contract
 
 	chName := fmt.Sprintf("%s/order:%s", okV3Ws.getTablePrefix(currencyPair, contractType), symbol)
 
-	return okV3Ws.subscribe(map[string]interface{}{
+	return okV3Ws.authoriedSubscribe(map[string]interface{}{
 		"op":   "subscribe",
 		"args": []string{chName}})
+}
+
+func (okV3Ws *OKExV3FutureWs) authoriedSubscribe(data map[string]interface{}) error {
+	okV3Ws.authoriedSubs = append(okV3Ws.authoriedSubs, data)
+	return okV3Ws.subscribe(data)
+}
+
+func (okV3Ws *OKExV3FutureWs) reSubscribeAuthoriedChannel() {
+	for _, d := range okV3Ws.authoriedSubs {
+		okV3Ws.wsConn.SendJsonMessage(d)
+	}
 }
 
 func (okV3Ws *OKExV3FutureWs) connectWs() {
@@ -261,14 +298,15 @@ func (okV3Ws *OKExV3FutureWs) handle(msg []byte) error {
 	if resp["event"] != nil {
 		switch resp["event"].(string) {
 		case "subscribe":
-			log.Println("subscribe:", resp["channel"].(string))
+			log.Println("subscribed:", resp["channel"].(string))
 			return nil
 		case "login":
 			select {
 			case okV3Ws.loginCh <- resp:
+				return nil
 			default:
+				return nil
 			}
-			return nil
 		case "error":
 			var errorCode int
 			switch v := resp["errorCode"].(type) {
@@ -277,13 +315,25 @@ func (okV3Ws *OKExV3FutureWs) handle(msg []byte) error {
 			case float64:
 				errorCode = int(v) // float64 okex牛逼嗷
 			case string:
-				i, _  := strconv.ParseInt(v, 10, 64)
+				i, _ := strconv.ParseInt(v, 10, 64)
 				errorCode = int(i)
 			}
+
+			switch errorCode {
 			// event:error message:Already logged in errorCode:30042
-			if errorCode == 30042 {
-				return nil 
+			case 30041:
+				if okV3Ws.logined { // have logined successfully
+					go func() {
+						okV3Ws.login()
+						okV3Ws.reSubscribeAuthoriedChannel()
+					}()
+				} // else skip, or better hanle?
+				return nil
+			case 30042:
+				return nil
 			}
+
+			// TODO: clearfy which errors should be treated as login result.
 			select {
 			case okV3Ws.loginCh <- resp:
 				return nil
