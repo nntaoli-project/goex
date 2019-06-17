@@ -20,9 +20,9 @@ func getEnv(key, fallback string) string {
 }
 
 var (
-	apiKey       = getEnv("GOEX_API_KEY", "")
-	apiSecretKey = getEnv("GOEX_API_SECRET_KEY", "")
-	passphrase   = getEnv("GOEX_PASSPHRASE", "")
+	apiKey       = getEnv("GOEX_OKEX_API_KEY", "")
+	apiSecretKey = getEnv("GOEX_OKEX_API_SECRET_KEY", "")
+	passphrase   = getEnv("GOEX_OKEX_PASSPHRASE", "")
 	authed       = len(apiKey) > 0 && len(apiSecretKey) > 0 && len(passphrase) > 0
 	okexV3       = NewOKExV3(http.DefaultClient, apiKey, apiSecretKey, passphrase)
 )
