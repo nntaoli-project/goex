@@ -1,13 +1,13 @@
 package okcoin
 
 import (
-	"reflect"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	V3_FUTURE_HOST_URL        = "https://www.okex.me/"
+	V3_FUTURE_HOST_URL        = "https://www.okex.com/"
 	V3_FUTURE_API_BASE_URL    = "api/futures/v3/"
 	V3_SWAP_API_BASE_URL      = "api/swap/v3/"
 	V3_FUTRUR_INSTRUMENTS_URL = "instruments"
@@ -170,7 +170,8 @@ func newFutureContractsIDMap(contracts futureContracts) futureContractsIDMap {
 type OKExV3 struct {
 	apiKey,
 	apiSecretKey,
-	passphrase string
+	passphrase,
+	endpoint string
 	dataParser     *OKExV3DataParser
 	client         *http.Client
 	contractsMap   futureContractsMap
@@ -178,7 +179,7 @@ type OKExV3 struct {
 	contractsRW    *sync.RWMutex
 }
 
-func NewOKExV3(client *http.Client, api_key, secret_key, passphrase string) *OKExV3 {
+func NewOKExV3(client *http.Client, api_key, secret_key, passphrase, endpoint string) *OKExV3 {
 	okv3 := new(OKExV3)
 	okv3.apiKey = api_key
 	okv3.apiSecretKey = secret_key
@@ -186,12 +187,25 @@ func NewOKExV3(client *http.Client, api_key, secret_key, passphrase string) *OKE
 	okv3.passphrase = passphrase
 	okv3.contractsRW = &sync.RWMutex{}
 	okv3.dataParser = NewOKExV3DataParser(okv3)
+	okv3.endpoint = endpoint
 	contracts, err := okv3.getAllContracts()
 	if err != nil {
 		panic(err)
 	}
 	okv3.setContracts(contracts)
 	return okv3
+}
+
+func (okv3 *OKExV3) GetUrlRoot() (url string) {
+	if okv3.endpoint != "" {
+		url = okv3.endpoint
+	} else {
+		url = V3_FUTURE_HOST_URL
+	}
+	if url[len(url)-1] != '/' {
+		url = url + "/"
+	}
+	return
 }
 
 func (okv3 *OKExV3) setContracts(contracts futureContracts) {
@@ -303,7 +317,7 @@ func (okv3 *OKExV3) getTimestamp() string {
 }
 
 func (okv3 *OKExV3) getSign(timestamp, method, url, body string) (string, error) {
-	relURL := "/" + strings.TrimPrefix(url, V3_FUTURE_HOST_URL)
+	relURL := "/" + strings.TrimPrefix(url, okv3.GetUrlRoot())
 	data := timestamp + method + relURL + body
 	return GetParamHmacSHA256Base64Sign(okv3.apiSecretKey, data)
 }
@@ -346,7 +360,7 @@ func (okv3 *OKExV3) getSignedHTTPHeader3(method, url string, postData map[string
 }
 
 func (okv3 *OKExV3) getSwapContracts() (futureContracts, error) {
-	url := V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTRUR_INSTRUMENTS_URL
+	url := okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTRUR_INSTRUMENTS_URL
 	headers, err := okv3.getSignedHTTPHeader("GET", url)
 	if err != nil {
 		return nil, err
@@ -369,7 +383,7 @@ func (okv3 *OKExV3) getSwapContracts() (futureContracts, error) {
 }
 
 func (okv3 *OKExV3) getFutureContracts() (futureContracts, error) {
-	url := V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTRUR_INSTRUMENTS_URL
+	url := okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTRUR_INSTRUMENTS_URL
 	headers, err := okv3.getSignedHTTPHeader("GET", url)
 	if err != nil {
 		return nil, err
@@ -391,9 +405,9 @@ func (okv3 *OKExV3) getFutureContracts() (futureContracts, error) {
 func (okv3 *OKExV3) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
 	var url string
 	if contractType == SWAP_CONTRACT {
-		url = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_SWAP_DEPTH_URI
+		url = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_SWAP_DEPTH_URI
 	} else {
-		url = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_DEPTH_URI
+		url = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_DEPTH_URI
 	}
 
 	contract, err := okv3.GetContract(currencyPair, contractType)
@@ -443,9 +457,9 @@ func (okv3 *OKExV3) GetFutureDepth(currencyPair CurrencyPair, contractType strin
 func (okv3 *OKExV3) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
 	var url string
 	if contractType == SWAP_CONTRACT {
-		url = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTURE_TICKER_URI
+		url = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTURE_TICKER_URI
 	} else {
-		url = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_TICKER_URI
+		url = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_TICKER_URI
 	}
 
 	contract, err := okv3.GetContract(currencyPair, contractType)
@@ -500,9 +514,9 @@ func (okv3 *OKExV3) GetFutureTicker(currencyPair CurrencyPair, contractType stri
 func (okv3 *OKExV3) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
 	var requestURL string
 	if contractType == SWAP_CONTRACT {
-		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTURE_ORDER_URI
+		requestURL = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTURE_ORDER_URI
 	} else {
-		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_ORDER_URI
+		requestURL = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_ORDER_URI
 	}
 
 	contract, err := okv3.GetContract(currencyPair, contractType)
@@ -563,9 +577,9 @@ func (okv3 *OKExV3) PlaceFutureOrder(currencyPair CurrencyPair, contractType, pr
 func (okv3 *OKExV3) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderID string) (bool, error) {
 	var requestURL string
 	if contractType == SWAP_CONTRACT {
-		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTURE_CANCEL_URI
+		requestURL = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTURE_CANCEL_URI
 	} else {
-		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_CANCEL_URI
+		requestURL = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_CANCEL_URI
 	}
 
 	contract, err := okv3.GetContract(currencyPair, contractType)
@@ -672,9 +686,9 @@ func (okv3 *OKExV3) parseOrders(body []byte, currencyPair CurrencyPair, contract
 func (okv3 *OKExV3) GetFutureOrder(orderID string, currencyPair CurrencyPair, contractType string) (*FutureOrder, error) {
 	var requestURL string
 	if contractType == SWAP_CONTRACT {
-		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTURE_ORDER_INFO_URI
+		requestURL = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTURE_ORDER_INFO_URI
 	} else {
-		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_ORDER_INFO_URI
+		requestURL = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_ORDER_INFO_URI
 	}
 
 	contract, err := okv3.GetContract(currencyPair, contractType)
@@ -812,9 +826,9 @@ func (okv3 *OKExV3) filterOrdersByIDs(orderIDs []string, orders []FutureOrder) [
 func (okv3 *OKExV3) GetFutureOrdersByIDsAndState(orderIDs []string, state string, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
 	var requestURL string
 	if contractType == SWAP_CONTRACT {
-		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTURE_ORDERS_INFO_URI
+		requestURL = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTURE_ORDERS_INFO_URI
 	} else {
-		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_ORDERS_INFO_URI
+		requestURL = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_ORDERS_INFO_URI
 	}
 
 	postData := url.Values{}
@@ -882,9 +896,9 @@ var OKexOrderTypeMap = map[int]int{
 func (okv3 *OKExV3) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, orderType, openType, matchPrice, leverRate int) (string, error) {
 	var requestURL string
 	if contractType == SWAP_CONTRACT {
-		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTURE_ORDER_URI
+		requestURL = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTURE_ORDER_URI
 	} else {
-		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_ORDER_URI
+		requestURL = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_ORDER_URI
 	}
 
 	contract, err := okv3.GetContract(currencyPair, contractType)
@@ -976,7 +990,7 @@ func (okv3 *OKExV3) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64,
 	if err != nil {
 		return fallback, err
 	}
-	requestURL := V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_ESTIMATED_PRICE
+	requestURL := okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_ESTIMATED_PRICE
 	requestURL = fmt.Sprintf(requestURL, contract.InstrumentID)
 	headers, err := okv3.getSignedHTTPHeader("GET", requestURL)
 	if err != nil {
@@ -1121,9 +1135,9 @@ func (okv3 *OKExV3) GetFuturePosition(currencyPair CurrencyPair, contractType st
 
 	var requestURL string
 	if contractType == SWAP_CONTRACT {
-		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTURE_POSITION_URI
+		requestURL = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTURE_POSITION_URI
 	} else {
-		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_POSITION_URI
+		requestURL = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_POSITION_URI
 	}
 
 	contract, err := okv3.GetContract(currencyPair, contractType)
@@ -1192,9 +1206,9 @@ func (okv3 *OKExV3) getKlineRecords(contractType string, currencyPair CurrencyPa
 	var fallback []*FutureKline
 	var requestURL string
 	if contractType == SWAP_CONTRACT {
-		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_GET_KLINE_URI
+		requestURL = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_GET_KLINE_URI
 	} else {
-		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_GET_KLINE_URI
+		requestURL = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_GET_KLINE_URI
 	}
 	params := url.Values{}
 	params.Set("granularity", strconv.Itoa(seconds))
@@ -1259,11 +1273,11 @@ func (okv3 *OKExV3) getKlineRecords(contractType string, currencyPair CurrencyPa
 }
 
 func reverse(s interface{}) {
-    n := reflect.ValueOf(s).Len()
-    swap := reflect.Swapper(s)
-    for i, j := 0, n-1; i < j; i, j = i+1, j-1 {
-        swap(i, j)
-    }
+	n := reflect.ValueOf(s).Len()
+	swap := reflect.Swapper(s)
+	for i, j := 0, n-1; i < j; i, j = i+1, j-1 {
+		swap(i, j)
+	}
 }
 
 func (okv3 *OKExV3) GetKlineRecords(contractType string, currencyPair CurrencyPair, period, size, since int) ([]FutureKline, error) {
@@ -1378,7 +1392,7 @@ func (okv3 *OKExV3) GetKlineRecords(contractType string, currencyPair CurrencyPa
 		klines := okv3.mergeKlineRecords(klinesSlice)
 		l := len(klines)
 		if l > size {
-			klines = klines[l-size:l]
+			klines = klines[l-size : l]
 		}
 		return klines, nil
 	}
@@ -1389,9 +1403,9 @@ func (okv3 *OKExV3) GetTrades(contractType string, currencyPair CurrencyPair, si
 
 	var requestURL string
 	if contractType == SWAP_CONTRACT {
-		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTURE_TRADES_URI
+		requestURL = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTURE_TRADES_URI
 	} else {
-		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_TRADES_URI
+		requestURL = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_TRADES_URI
 	}
 
 	contract, err := okv3.GetContract(currencyPair, contractType)
@@ -1438,9 +1452,9 @@ func (okv3 *OKExV3) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
 
 	var requestURL string
 	if contractType == SWAP_CONTRACT {
-		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTURE_INDEX_PRICE
+		requestURL = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTURE_INDEX_PRICE
 	} else {
-		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_INDEX_PRICE
+		requestURL = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_INDEX_PRICE
 	}
 
 	contract, err := okv3.GetContract(currencyPair, contractType)
@@ -1496,9 +1510,9 @@ func (okv3 *OKExV3) GetFutureUserinfo() (*FutureAccount, error) {
 
 	var requestURL string
 	if contractType == SWAP_CONTRACT {
-		requestURL = V3_FUTURE_HOST_URL + V3_SWAP_API_BASE_URL + V3_FUTURE_USERINFOS_URI
+		requestURL = okv3.GetUrlRoot() + V3_SWAP_API_BASE_URL + V3_FUTURE_USERINFOS_URI
 	} else {
-		requestURL = V3_FUTURE_HOST_URL + V3_FUTURE_API_BASE_URL + V3_FUTURE_USERINFOS_URI
+		requestURL = okv3.GetUrlRoot() + V3_FUTURE_API_BASE_URL + V3_FUTURE_USERINFOS_URI
 	}
 
 	currencies := okv3.getAllCurrencies()

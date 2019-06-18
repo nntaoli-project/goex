@@ -23,8 +23,9 @@ var (
 	apiKey       = getEnv("GOEX_OKEX_API_KEY", "")
 	apiSecretKey = getEnv("GOEX_OKEX_API_SECRET_KEY", "")
 	passphrase   = getEnv("GOEX_OKEX_PASSPHRASE", "")
+	endpoint     = getEnv("GOEX_OKEX_RESTFUL_URL", "https://www.okex.me/")
 	authed       = len(apiKey) > 0 && len(apiSecretKey) > 0 && len(passphrase) > 0
-	okexV3       = NewOKExV3(http.DefaultClient, apiKey, apiSecretKey, passphrase)
+	okexV3       = NewOKExV3(http.DefaultClient, apiKey, apiSecretKey, passphrase, endpoint)
 )
 
 func TestOKExV3_GetFutureDepth(t *testing.T) {

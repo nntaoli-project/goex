@@ -102,9 +102,15 @@ func placeAndCancel(currencyPair goex.CurrencyPair, contractType string) {
 	price := fmt.Sprintf("%f", dep.BidList[depth-1].Price)
 	symbol, _ := okexV3.GetContract(currencyPair, contractType)
 	amount := symbol.getSizeIncrement()
-	orderID, _ := okexV3.PlaceFutureOrder(
+	orderID, err := okexV3.PlaceFutureOrder(
 		currencyPair, contractType, price, amount, goex.OPEN_BUY, 0, leverage)
-	okexV3.FutureCancelOrder(currencyPair, contractType, orderID)
+	if err != nil {
+		log.Println(err)
+	}
+	_, err = okexV3.FutureCancelOrder(currencyPair, contractType, orderID)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func TestOKExV3FutureWsOrderCallback(t *testing.T) {
