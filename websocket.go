@@ -17,6 +17,7 @@ type WsConfig struct {
 	ReqHeaders            map[string][]string          //连接的时候加入的头部信息
 	HeartbeatIntervalTime time.Duration                //
 	HeartbeatData         []byte                       //心跳数据
+	HeartbeatFunc         func() interface{}           //心跳数据2
 	ReconnectIntervalTime time.Duration                //定时重连时间间隔
 	ProtoHandleFunc       func([]byte) error           //协议处理函数
 	UnCompressFunc        func([]byte) ([]byte, error) //解压函数
@@ -71,6 +72,11 @@ func (b *WsBuilder) Dump() *WsBuilder {
 func (b *WsBuilder) Heartbeat(data []byte, t time.Duration) *WsBuilder {
 	b.wsConfig.HeartbeatIntervalTime = t
 	b.wsConfig.HeartbeatData = data
+	return b
+}
+func (b *WsBuilder) Heartbeat2(heartbeat func() interface{}, t time.Duration) *WsBuilder {
+	b.wsConfig.HeartbeatIntervalTime = t
+	b.wsConfig.HeartbeatFunc = heartbeat
 	return b
 }
 
@@ -236,7 +242,7 @@ func (ws *WsConn) checkStatusTimer() {
 }
 
 func (ws *WsConn) HeartbeatTimer() {
-	log.Println("heartbeat interval time =  ", ws.HeartbeatIntervalTime)
+	log.Println("heartbeat interval time = ", ws.HeartbeatIntervalTime)
 	if ws.HeartbeatIntervalTime == 0 {
 		return
 	}
@@ -248,7 +254,12 @@ func (ws *WsConn) HeartbeatTimer() {
 		for {
 			select {
 			case <-timer.C:
-				err := ws.SendTextMessage(ws.HeartbeatData)
+				var err error
+				if ws.HeartbeatFunc != nil {
+					err = ws.SendJsonMessage(ws.HeartbeatFunc())
+				} else {
+					err = ws.SendTextMessage(ws.HeartbeatData)
+				}
 				if err != nil {
 					log.Println("heartbeat error , ", err)
 					time.Sleep(time.Second)
@@ -263,6 +274,7 @@ func (ws *WsConn) HeartbeatTimer() {
 }
 
 func (ws *WsConn) Subscribe(subEvent interface{}) error {
+	log.Println("Subscribe:", subEvent)
 	err := ws.SendJsonMessage(subEvent)
 	if err != nil {
 		return err
