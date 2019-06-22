@@ -1,16 +1,15 @@
 package fcoin
 
 import (
+	"errors"
 	"fmt"
+	"github.com/json-iterator/go"
 	. "github.com/nntaoli-project/GoEx"
 	"math/rand"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
-
-	"errors"
-	"github.com/json-iterator/go"
-	"net/http"
 )
 
 const (
@@ -53,6 +52,19 @@ var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
 	KLINE_PERIOD_1DAY:   "D1",
 	KLINE_PERIOD_1WEEK:  "W1",
 	KLINE_PERIOD_1MONTH: "MN",
+}
+var _INERNAL_KLINE_PERIOD_REVERTER = map[string]int{
+	"M1":  KLINE_PERIOD_1MIN,
+	"M3":  KLINE_PERIOD_3MIN,
+	"M5":  KLINE_PERIOD_5MIN,
+	"M15": KLINE_PERIOD_15MIN,
+	"M30": KLINE_PERIOD_30MIN,
+	"H1":  KLINE_PERIOD_60MIN,
+	"H4":  KLINE_PERIOD_4H,
+	"H6":  KLINE_PERIOD_6H,
+	"D1":  KLINE_PERIOD_1DAY,
+	"W1":  KLINE_PERIOD_1WEEK,
+	"MN":  KLINE_PERIOD_1MONTH,
 }
 
 func NewFCoinWs(client *http.Client) *FCoinWs {
@@ -223,19 +235,6 @@ func (fcWs *FCoinWs) parseKlineData(tickmap []interface{}) *Ticker {
 	return t
 }
 
-func (fcWs *FCoinWs) parseTradeData(tickmap []interface{}) *Ticker {
-	t := new(Ticker)
-	t.Date = uint64(time.Now().UnixNano() / 1000000)
-	t.Last = ToFloat64(tickmap[0])
-	t.Vol = ToFloat64(tickmap[9])
-	t.Low = ToFloat64(tickmap[8])
-	t.High = ToFloat64(tickmap[7])
-	t.Buy = ToFloat64(tickmap[2])
-	t.Sell = ToFloat64(tickmap[4])
-
-	return t
-}
-
 func (fcWs *FCoinWs) handle(msg []byte) error {
 	//fmt.Println("ws msg:", string(msg))
 	datamap := make(map[string]interface{})
@@ -278,6 +277,21 @@ func (fcWs *FCoinWs) handle(msg []byte) error {
 			fcWs.depthCallback(dep)
 			return nil
 		case "candle":
+			period := _INERNAL_KLINE_PERIOD_REVERTER[resp[1]]
+			kline := &Kline{
+				Timestamp: int64(ToInt(datamap["id"])),
+				Open:      ToFloat64(datamap["open"]),
+				Close:     ToFloat64(datamap["close"]),
+				High:      ToFloat64(datamap["high"]),
+				Low:       ToFloat64(datamap["low"]),
+				Vol:       ToFloat64(datamap["quote_vol"]),
+			}
+			pair, err := fcWs.getPairFromType(resp[2])
+			if err != nil {
+				panic(err)
+			}
+			kline.Pair = pair
+			fcWs.klineCallback(kline, period)
 			return nil
 		case "trade":
 			side := BUY

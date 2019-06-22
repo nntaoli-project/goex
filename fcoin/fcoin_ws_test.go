@@ -42,22 +42,22 @@ func printfKline(kline *goex.Kline, period int) {
 }
 
 func TestFCoinWs_GetTickerWithWs(t *testing.T) {
-	//return
+	return
 	fcws.SubscribeTicker(goex.BTC_USDT)
 	time.Sleep(time.Second * 10)
 }
 func TestFCoinWs_GetDepthWithWs(t *testing.T) {
 	return
 	fcws.SubscribeDepth(goex.BTC_USDT, 20)
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 10)
 }
 func TestFCoinWs_GetKLineWithWs(t *testing.T) {
-	return
+	//return
 	fcws.SubscribeKline(goex.BTC_USDT, goex.KLINE_PERIOD_1MIN)
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 120)
 }
 func TestFCoinWs_GetTradesWithWs(t *testing.T) {
 	return
 	fcws.SubscribeTrade(goex.BTC_USDT)
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 10)
 }
