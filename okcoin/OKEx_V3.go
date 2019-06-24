@@ -1,6 +1,7 @@
 package okcoin
 
 import (
+	"regexp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -73,19 +74,32 @@ type futureContract struct {
 	Alias           string `json:"alias"`
 }
 
+var tail_zero_re = regexp.MustCompile("0+$")
+
+func normalizeByIncrement(num float64, increment string) (string, error){
+	precision := 0
+	i := strings.Index(increment, ".")
+	// increment is decimal
+	if i > -1 {
+		decimal := increment[i+1:]
+		trimTailZero := tail_zero_re.ReplaceAllString(decimal, "")
+		precision = len(trimTailZero)
+		return fmt.Sprintf("%."+fmt.Sprintf("%df", precision), num), nil
+	} 
+	// increment is int
+	incrementInt, err := strconv.ParseInt(increment, 10, 64)
+	if err != nil {
+		return "", err
+	}
+	return strconv.Itoa(int(num) / int(incrementInt)), nil
+}
+
 func (fc futureContract) normalizePrice(price float64) (string, error) {
 	tickSize := fc.TickSize
 	if len(tickSize) == 0 {
 		return "", fmt.Errorf("no tick size info in contract %v", fc)
 	}
-
-	precision := 0
-	i := strings.Index(tickSize, ".")
-	if i > -1 {
-		decimal := tickSize[i+1:]
-		precision = len(decimal) - len(strings.TrimPrefix(decimal, "0")) + 1
-	}
-	return fmt.Sprintf("%."+fmt.Sprintf("%df", precision), price), nil
+	return normalizeByIncrement(price, tickSize)
 }
 
 func (fc futureContract) normalizePriceString(price string) (string, error) {
@@ -110,14 +124,7 @@ func (fc futureContract) normalizeAmount(amount float64) (string, error) {
 	if len(increment) == 0 {
 		return "", fmt.Errorf("no trade incrument info in contract %v", fc)
 	}
-
-	precision := 0
-	i := strings.Index(increment, ".")
-	if i > -1 {
-		decimal := increment[i+1:]
-		precision = len(decimal) - len(strings.TrimPrefix(decimal, "0")) + 1
-	}
-	return fmt.Sprintf("%."+fmt.Sprintf("%df", precision), amount), nil
+	return normalizeByIncrement(amount, increment)
 }
 
 func (fc futureContract) normalizeAmountString(amount string) (string, error) {
@@ -1252,6 +1259,7 @@ func (okv3 *OKExV3) getKlineRecords(contractType string, currencyPair CurrencyPa
 			switch i {
 			case 0:
 				r.Timestamp, _ = timeStringToInt64(e.(string)) //to unix timestramp
+				r.Timestamp = r.Timestamp / 1000 // Timestamp in kline is seconds not miliseconds
 			case 1:
 				r.Open, _ = strconv.ParseFloat(e.(string), 64)
 			case 2:
