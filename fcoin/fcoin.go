@@ -13,19 +13,6 @@ import (
 	"time"
 )
 
-const (
-	DEPTH_API       = "market/depth/%s/%s"
-	TRADE_URL       = "orders"
-	GET_ACCOUNT_API = "accounts/balance"
-	GET_ORDER_API   = "orders/%s"
-	//GET_ORDERS_LIST_API             = ""
-	GET_UNFINISHED_ORDERS_API = "getUnfinishedOrdersIgnoreTradeType"
-	PLACE_ORDER_API           = "order"
-	WITHDRAW_API              = "withdraw"
-	CANCELWITHDRAW_API        = "cancelWithdraw"
-	SERVER_TIME               = "public/server-time"
-)
-
 type FCoinTicker struct {
 	Ticker
 	SellAmount,
@@ -53,7 +40,12 @@ type TradeSymbol struct {
 func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
 	fc := &FCoin{baseUrl: "https://api.fcoin.com/v2/", accessKey: apikey, secretKey: secretkey, httpClient: client}
 	fc.setTimeOffset()
-	fc.tradeSymbols, _ = fc.getTradeSymbols()
+	var err error
+	fc.tradeSymbols, err = fc.getTradeSymbols()
+	if len(fc.tradeSymbols) == 0 || err != nil {
+		panic("trade symbol is empty, pls check connection...")
+	}
+
 	return fc
 }
 
@@ -82,12 +74,10 @@ func (fc *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 		return nil, err
 	}
 
-	////log.Println("ticker respmap:", respmap)
 	if respmap["status"].(float64) != 0 {
 		return nil, errors.New(respmap["msg"].(string))
 	}
 
-	//
 	tick, ok := respmap["data"].(map[string]interface{})
 	if !ok {
 		return nil, API_ERR
@@ -107,15 +97,17 @@ func (fc *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	ticker.High = ToFloat64(tickmap[7])
 	ticker.Buy = ToFloat64(tickmap[2])
 	ticker.Sell = ToFloat64(tickmap[4])
-	//ticker.SellAmount = ToFloat64(tickmap[5])
-	//ticker.BuyAmount = ToFloat64(tickmap[3])
-
 	return ticker, nil
-
 }
 
 func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+fmt.Sprintf("market/depth/L20/%s", strings.ToLower(currency.ToSymbol(""))))
+	var uri string
+	if size <= 20 {
+		uri = fmt.Sprintf("market/depth/L20/%s", strings.ToLower(currency.ToSymbol("")))
+	} else {
+		uri = fmt.Sprintf("market/depth/L150/%s", strings.ToLower(currency.ToSymbol("")))
+	}
+	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+uri)
 	if err != nil {
 		return nil, err
 	}
@@ -156,8 +148,6 @@ func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		}
 	}
 
-	//sort.Sort(sort.Reverse(depth.AskList))
-
 	return depth, nil
 }
 func (fc *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (interface{}, error) {
@@ -195,7 +185,6 @@ func (fc *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (
 
 		json.Unmarshal(respbody, &respmap)
 	}
-	//log.Println(respmap)
 	if ToInt(respmap["status"]) != 0 {
 		return nil, errors.New(respmap["msg"].(string))
 	}
@@ -236,7 +225,6 @@ func (fc *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 	sum := mac.Sum(nil)
 
 	s := base64.StdEncoding.EncodeToString(sum)
-	//log.Println(s)
 	return s
 }
 
@@ -350,7 +338,6 @@ func (fc *FCoin) GetOneOrder(orderId string, currency CurrencyPair) (*Order, err
 }
 
 func (fc *FCoin) GetOrdersList() {
-	//path := API_URL + fmt.Sprintf(CANCEL_ORDER_API, strings.ToLower(currency.ToSymbol("")))
 
 }
 
