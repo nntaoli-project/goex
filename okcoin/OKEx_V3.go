@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -73,19 +74,32 @@ type futureContract struct {
 	Alias           string `json:"alias"`
 }
 
+var tail_zero_re = regexp.MustCompile("0+$")
+
+func normalizeByIncrement(num float64, increment string) (string, error) {
+	precision := 0
+	i := strings.Index(increment, ".")
+	// increment is decimal
+	if i > -1 {
+		decimal := increment[i+1:]
+		trimTailZero := tail_zero_re.ReplaceAllString(decimal, "")
+		precision = len(trimTailZero)
+		return fmt.Sprintf("%."+fmt.Sprintf("%df", precision), num), nil
+	}
+	// increment is int
+	incrementInt, err := strconv.ParseInt(increment, 10, 64)
+	if err != nil {
+		return "", err
+	}
+	return strconv.Itoa(int(num) / int(incrementInt)), nil
+}
+
 func (fc futureContract) normalizePrice(price float64) (string, error) {
 	tickSize := fc.TickSize
 	if len(tickSize) == 0 {
 		return "", fmt.Errorf("no tick size info in contract %v", fc)
 	}
-
-	precision := 0
-	i := strings.Index(tickSize, ".")
-	if i > -1 {
-		decimal := tickSize[i+1:]
-		precision = len(decimal) - len(strings.TrimPrefix(decimal, "0")) + 1
-	}
-	return fmt.Sprintf("%."+fmt.Sprintf("%df", precision), price), nil
+	return normalizeByIncrement(price, tickSize)
 }
 
 func (fc futureContract) normalizePriceString(price string) (string, error) {
@@ -110,14 +124,7 @@ func (fc futureContract) normalizeAmount(amount float64) (string, error) {
 	if len(increment) == 0 {
 		return "", fmt.Errorf("no trade incrument info in contract %v", fc)
 	}
-
-	precision := 0
-	i := strings.Index(increment, ".")
-	if i > -1 {
-		decimal := increment[i+1:]
-		precision = len(decimal) - len(strings.TrimPrefix(decimal, "0")) + 1
-	}
-	return fmt.Sprintf("%."+fmt.Sprintf("%df", precision), amount), nil
+	return normalizeByIncrement(amount, increment)
 }
 
 func (fc futureContract) normalizeAmountString(amount string) (string, error) {
@@ -834,9 +841,22 @@ func (okv3 *OKExV3) GetFutureOrdersByIDsAndState(orderIDs []string, state string
 	postData := url.Values{}
 	if len(orderIDs) > 0 {
 		sort.Strings(orderIDs)
-		// 设计api像cxk, from 参数对应的订单竟然不包含在查询结果中
-		// postData.Set("from", orderIDs[len(orderIDs) - 1])
-		postData.Set("to", orderIDs[0])
+		if contractType == SWAP_CONTRACT {
+			// 设计api像cxk, from 参数对应的订单竟然不包含在查询结果中
+			to, _ := strconv.ParseInt(orderIDs[0], 10, 64)
+			// to = to - 1
+			postData.Set("to", fmt.Sprintf("%d", to))
+			// from, _ := strconv.ParseInt(orderIDs[len(orderIDs) - 1], 10, 64)
+			// from = from + 1
+			// postData.Set("from", fmt.Sprintf("%d", from))
+		} else {
+			before, _ := strconv.ParseInt(orderIDs[0], 10, 64)
+			before = before - 1
+			postData.Set("before", fmt.Sprintf("%d", before))
+			after, _ := strconv.ParseInt(orderIDs[len(orderIDs)-1], 10, 64)
+			after = after + 1
+			postData.Set("after", fmt.Sprintf("%d", after))
+		}
 	}
 	postData.Set("state", state)
 
@@ -889,8 +909,8 @@ func (okv3 *OKExV3) GetFinishedFutureOrders(currencyPair CurrencyPair, contractT
 var OKexOrderTypeMap = map[int]int{
 	ORDER_TYPE_LIMIT:     0,
 	ORDER_TYPE_POST_ONLY: 1,
-	ORDER_TYPE_FAK:       2,
-	ORDER_TYPE_IOC:       3,
+	ORDER_TYPE_FOK:       2,
+	ORDER_TYPE_FAK:       3,
 }
 
 func (okv3 *OKExV3) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, orderType, openType, matchPrice, leverRate int) (string, error) {
@@ -1252,6 +1272,7 @@ func (okv3 *OKExV3) getKlineRecords(contractType string, currencyPair CurrencyPa
 			switch i {
 			case 0:
 				r.Timestamp, _ = timeStringToInt64(e.(string)) //to unix timestramp
+				r.Timestamp = r.Timestamp / 1000               // Timestamp in kline is seconds not miliseconds
 			case 1:
 				r.Open, _ = strconv.ParseFloat(e.(string), 64)
 			case 2:

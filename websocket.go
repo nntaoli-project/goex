@@ -243,7 +243,7 @@ func (ws *WsConn) checkStatusTimer() {
 
 func (ws *WsConn) HeartbeatTimer() {
 	log.Println("heartbeat interval time = ", ws.HeartbeatIntervalTime)
-	if ws.HeartbeatIntervalTime == 0 {
+	if ws.HeartbeatIntervalTime == 0 || (ws.HeartbeatFunc == nil && ws.HeartbeatData == nil) {
 		return
 	}
 

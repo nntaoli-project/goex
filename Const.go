@@ -77,7 +77,7 @@ type OrderType int
 
 func (ot OrderType) String() string {
 	if ot > 0 && int(ot) <= len(orderTypeSymbol) {
-		return orderTypeSymbol[ot - 1]
+		return orderTypeSymbol[ot-1]
 	}
 	return fmt.Sprintf("UNKNOWN_ORDER_TYPE(%d)", ot)
 }
@@ -87,9 +87,10 @@ var orderTypeSymbol = [...]string{"LIMIT", "MARKET", "FAK", "IOC", "POST_ONLY"}
 const (
 	ORDER_TYPE_LIMIT = 1 + iota
 	ORDER_TYPE_MARKET
+	ORDER_TYPE_FOK
 	ORDER_TYPE_FAK
-	ORDER_TYPE_IOC
 	ORDER_TYPE_POST_ONLY
+	ORDER_TYPE_IOC = ORDER_TYPE_FAK
 )
 
 var (

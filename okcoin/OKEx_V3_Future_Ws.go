@@ -48,7 +48,7 @@ func NewOKExV3FutureWs(contractIDProvider IContractIDProvider) *OKExV3FutureWs {
 	okV3Ws.loginLock = &sync.Mutex{}
 	okV3Ws.authoriedSubs = make([]map[string]interface{}, 0)
 	okV3Ws.WsBuilder = NewWsBuilder().
-		WsUrl("wss://real.okex.com:10440/ws/v3").
+		WsUrl("wss://real.okex.com:10442/ws/v3").
 		Heartbeat([]byte("ping"), 30*time.Second).
 		ReconnectIntervalTime(24 * time.Hour).
 		UnCompressFunc(FlateUnCompress).
