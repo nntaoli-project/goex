@@ -86,6 +86,7 @@ func NewAPIBuilder2(config *HttpClientConfig) *APIBuilder {
 	if config == nil {
 		config = DefaultHttpClientConfig
 	}
+
 	return &APIBuilder{
 		HttpClientConfig: config,
 		client: &http.Client{
@@ -96,6 +97,8 @@ func NewAPIBuilder2(config *HttpClientConfig) *APIBuilder {
 				},
 				MaxIdleConns:          config.MaxIdleConns,
 				IdleConnTimeout:       5 * config.HttpTimeout,
+				MaxConnsPerHost:       2,
+				MaxIdleConnsPerHost:   2,
 				TLSHandshakeTimeout:   config.HttpTimeout,
 				ResponseHeaderTimeout: config.HttpTimeout,
 				ExpectContinueTimeout: config.HttpTimeout,
@@ -182,6 +185,14 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = huobi.NewHuoBiProSpot(builder.client, builder.apiKey, builder.secretkey)
 	case OKEX:
 		_api = okcoin.NewOKExSpot(builder.client, builder.apiKey, builder.secretkey)
+	case OKEX_V3:
+		_api = okex.NewOKEx(&APIConfig{
+			HttpClient:    builder.client,
+			ApiKey:        builder.apiKey,
+			ApiSecretKey:  builder.secretkey,
+			ApiPassphrase: builder.apiPassphrase,
+			Endpoint:      "https://www.okex.com",
+		})
 	case BITFINEX:
 		_api = bitfinex.New(builder.client, builder.apiKey, builder.secretkey)
 	case KRAKEN:

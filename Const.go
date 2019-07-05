@@ -34,15 +34,16 @@ func (ts TradeStatus) String() string {
 	return tradeStatusSymbol[ts]
 }
 
-var tradeStatusSymbol = [...]string{"UNFINISH", "PART_FINISH", "FINISH", "CANCEL", "REJECT", "CANCEL_ING"}
+var tradeStatusSymbol = [...]string{"UNFINISH", "PART_FINISH", "FINISH", "CANCEL", "REJECT", "CANCEL_ING", "FAIL"}
 
 const (
-	ORDER_UNFINISH = iota
+	ORDER_UNFINISH TradeStatus = iota
 	ORDER_PART_FINISH
 	ORDER_FINISH
 	ORDER_CANCEL
 	ORDER_REJECT
 	ORDER_CANCEL_ING
+	ORDER_FAIL
 )
 
 const (
@@ -105,7 +106,8 @@ const (
 	OKCOIN_CN   = "okcoin.cn"
 	OKCOIN_COM  = "okcoin.com"
 	OKEX        = "okex.com"
-	OKEX_FUTURE = "okex.com"
+	OKEX_V3     = "okex.com_v3"
+	OKEX_FUTURE = "okex.com_future"
 	OKEX_SWAP   = "okex.com_swap"
 	HUOBI       = "huobi.com"
 	HUOBI_PRO   = "huobi.pro"
