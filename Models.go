@@ -131,6 +131,7 @@ type FutureAccount struct {
 }
 
 type FutureOrder struct {
+	ClientOid    string //自定义ID，GoEx内部自动生成
 	OrderID2     string //请尽量用这个字段替代OrderID字段
 	Price        float64
 	Amount       float64
@@ -140,6 +141,7 @@ type FutureOrder struct {
 	OrderTime    int64
 	Status       TradeStatus
 	Currency     CurrencyPair
+	OrderType    int     //ORDINARY=0 POST_ONLY=1 FOK= 2 IOC= 3
 	OType        int     //1：开多 2：开空 3：平多 4： 平空
 	LeverRate    int     //倍数
 	Fee          float64 //手续费

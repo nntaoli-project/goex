@@ -9,12 +9,6 @@ import (
 	"time"
 )
 
-const (
-	POST_ONLY = 1
-	FOK       = 2
-	IOC       = 3
-)
-
 type OKExSpot struct {
 	*OKEx
 }
@@ -212,7 +206,7 @@ func (ok *OKExSpot) adaptOrder(response OrderResponse) *Order {
 		Amount:     response.Size,
 		AvgPrice:   ToFloat64(response.PriceAvg),
 		DealAmount: ToFloat64(response.FilledSize),
-	}
+		Status:     ok.adaptOrderState(response.State)}
 
 	switch response.Side {
 	case "buy":
@@ -229,23 +223,6 @@ func (ok *OKExSpot) adaptOrder(response OrderResponse) *Order {
 		} else {
 			ordInfo.Side = SELL
 		}
-	}
-
-	switch response.State {
-	case -2:
-		ordInfo.Status = ORDER_FAIL
-	case -1:
-		ordInfo.Status = ORDER_CANCEL
-	case 0:
-		ordInfo.Status = ORDER_UNFINISH
-	case 1:
-		ordInfo.Status = ORDER_PART_FINISH
-	case 2:
-		ordInfo.Status = ORDER_FINISH
-	case 3:
-		ordInfo.Status = ORDER_UNFINISH
-	case 4:
-		ordInfo.Status = ORDER_CANCEL_ING
 	}
 
 	date, err := time.Parse(time.RFC3339, response.Timestamp)

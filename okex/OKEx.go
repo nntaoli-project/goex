@@ -9,7 +9,15 @@ import (
 	. "github.com/nntaoli-project/GoEx"
 	"log"
 	"strings"
+	"sync"
 	"time"
+)
+
+const (
+	ORDINARY  = 0
+	POST_ONLY = 1
+	FOK       = 2
+	IOC       = 3
 )
 
 type OKEx struct {
@@ -22,7 +30,7 @@ type OKEx struct {
 func NewOKEx(config *APIConfig) *OKEx {
 	okex := &OKEx{config: config}
 	okex.OKExSpot = &OKExSpot{okex}
-	okex.OKExFuture = &OKExFuture{okex}
+	okex.OKExFuture = &OKExFuture{OKEx: okex, Locker: new(sync.Mutex)}
 	return okex
 }
 
@@ -36,7 +44,7 @@ func (ok *OKEx) UUID() string {
 
 func (ok *OKEx) DoRequest(httpMethod, uri, reqBody string, response interface{}) error {
 	url := ok.config.Endpoint + uri
-	//log.Println(url)
+	log.Println(url)
 	sign, timestamp := ok.doParamSign(httpMethod, uri, reqBody)
 	//log.Println(sign, timestamp)
 	resp, err := NewHttpRequest(ok.config.HttpClient, httpMethod, url, reqBody, map[string]string{
@@ -54,6 +62,26 @@ func (ok *OKEx) DoRequest(httpMethod, uri, reqBody string, response interface{})
 		log.Println(string(resp))
 		return json.Unmarshal(resp, &response)
 	}
+}
+
+func (ok *OKEx) adaptOrderState(state int) TradeStatus {
+	switch state {
+	case -2:
+		return ORDER_FAIL
+	case -1:
+		return ORDER_CANCEL
+	case 0:
+		return ORDER_UNFINISH
+	case 1:
+		return ORDER_PART_FINISH
+	case 2:
+		return ORDER_FINISH
+	case 3:
+		return ORDER_UNFINISH
+	case 4:
+		return ORDER_CANCEL_ING
+	}
+	return ORDER_UNFINISH
 }
 
 /*
