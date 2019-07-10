@@ -5,9 +5,8 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
 | 交易所 | 行情接口 | 交易接口 | 版本号 |   
 | ---   | ---     | ---     | ---   |  
 | hbg.com | Y | Y | 1 |   
-| hbdm.com | Y| Y |  1 |  
-| okex.com (spot/future)| Y (REST / WS) | Y | 1 |  
-| okex.com (swap future) | Y | Y | 2 |
+| hbdm.com | Y| Y |  1 |    
+| okex.com  | Y | Y | 3 |
 | binance.com | Y | Y | 1 |  
 | bitstamp.net | Y | Y | 1 |  
 | bitfinex.com | Y | Y | 1 |  
@@ -100,7 +99,8 @@ func main() {
 2. 推荐关闭自动格式化功能。
 3. 不建议对现已存在的文件进行重新格式化，这样会导致commit特别糟糕。
 4. 请用OrderID2这个字段代替OrderID
-5. 交流QQ群：574829125
+5. 请不要使用deprecated关键字标注的方法和字段，后面版本可能随时删除的
+6. 交流QQ群：574829125
 -----------------
 
 ### 欢迎为作者付一碗面钱
