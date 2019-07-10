@@ -29,12 +29,42 @@ func TestOKExSpot_GetAccount(t *testing.T) {
 	t.Log(okex.GetAccount())
 }
 
+func TestOKExSpot_BatchPlaceOrders(t *testing.T) {
+	t.Log(okex.OKExSpot.BatchPlaceOrders([]goex.Order{
+		goex.Order{
+			Cid:       okex.UUID(),
+			Currency:  goex.XRP_USD,
+			Amount:    10,
+			Price:     0.32,
+			Side:      goex.BUY,
+			Type:      "limit",
+			OrderType: ORDINARY,
+		},
+		{
+			Cid:       okex.UUID(),
+			Currency:  goex.EOS_USD,
+			Amount:    1,
+			Price:     5.2,
+			Side:      goex.BUY,
+			OrderType: ORDINARY,
+		},
+		goex.Order{
+			Cid:       okex.UUID(),
+			Currency:  goex.XRP_USD,
+			Amount:    10,
+			Price:     0.33,
+			Side:      goex.BUY,
+			Type:      "limit",
+			OrderType: ORDINARY,
+		}}))
+}
+
 func TestOKExSpot_LimitBuy(t *testing.T) {
 	t.Log(okex.OKExSpot.LimitBuy("0.001", "9910", goex.BTC_USD))
 }
 
 func TestOKExSpot_CancelOrder(t *testing.T) {
-	t.Log(okex.OKExSpot.CancelOrder("3117823911340032", goex.BTC_USD))
+	t.Log(okex.OKExSpot.CancelOrder("2a647e51435647708b1c840802bf70e5", goex.BTC_USD))
 
 }
 
@@ -60,6 +90,10 @@ func TestOKExSpot_GetDepth(t *testing.T) {
 func TestOKExFuture_GetFutureTicker(t *testing.T) {
 	t.Log(okex.OKExFuture.GetFutureTicker(goex.BTC_USD, "BTC-USD-190927"))
 	t.Log(okex.OKExFuture.GetFutureTicker(goex.BTC_USD, goex.QUARTER_CONTRACT))
+	t.Log(okex.OKExFuture.GetFutureDepth(goex.BTC_USD, goex.QUARTER_CONTRACT, 2))
+	t.Log(okex.OKExFuture.GetContractValue(goex.XRP_USD))
+	t.Log(okex.OKExFuture.GetFutureIndex(goex.EOS_USD))
+	t.Log(okex.OKExFuture.GetFutureEstimatedPrice(goex.EOS_USD))
 }
 
 func TestOKExFuture_GetFutureUserinfo(t *testing.T) {

@@ -18,6 +18,8 @@ type Order struct {
 	Status     TradeStatus
 	Currency   CurrencyPair
 	Side       TradeSide
+	Type       string //limit / market
+	OrderType  int    //0:default,1:maker,2:fok,3:ioc
 }
 
 type Trade struct {

@@ -55,29 +55,65 @@ func (ok *OKExSpot) GetAccount() (*Account, error) {
 	return account, nil
 }
 
+type PlaceOrderParam struct {
+	ClientOid    string  `json:"client_oid"`
+	Type         string  `json:"type"`
+	Side         string  `json:"side"`
+	InstrumentId string  `json:"instrument_id"`
+	OrderType    int     `json:"order_type"`
+	Price        float64 `json:"price"`
+	Size         float64 `json:"size"`
+	Notional     float64 `json:"notional"`
+}
+
+type PlaceOrderResponse struct {
+	OrderId      string `json:"order_id"`
+	ClientOid    string `json:"client_oid"`
+	Result       bool   `json:"result"`
+	ErrorCode    string `json:"error_code"`
+	ErrorMessage string `json:"error_message"`
+}
+
+/**
+Must Set Client Oid
+*/
+func (ok *OKExSpot) BatchPlaceOrders(orders []Order) ([]PlaceOrderResponse, error) {
+	var param []PlaceOrderParam
+	var response map[string][]PlaceOrderResponse
+
+	for _, ord := range orders {
+		param = append(param, PlaceOrderParam{
+			InstrumentId: ord.Currency.AdaptUsdToUsdt().ToSymbol("-"),
+			ClientOid:    ord.Cid,
+			Side:         strings.ToLower(ord.Side.String()),
+			Size:         ord.Amount,
+			Price:        ord.Price,
+			Type:         "limit",
+			OrderType:    ord.OrderType})
+	}
+	reqBody, _, _ := ok.BuildRequestBody(param)
+	err := ok.DoRequest("POST", "/api/spot/v3/batch_orders", reqBody, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var ret []PlaceOrderResponse
+
+	for _, v := range response {
+		ret = append(ret, v...)
+	}
+
+	return ret, nil
+}
+
 func (ok *OKExSpot) PlaceOrder(ty string, ord *Order) (*Order, error) {
 	urlPath := "/api/spot/v3/orders"
-	param := struct {
-		ClientOid    string  `json:"client_oid"`
-		Type         string  `json:"type"`
-		Side         string  `json:"side"`
-		InstrumentId string  `json:"instrument_id"`
-		OrderType    int     `json:"order_type"`
-		Price        float64 `json:"price"`
-		Size         float64 `json:"size"`
-		Notional     float64 `json:"notional"`
-	}{
+	param := PlaceOrderParam{
 		ClientOid:    ok.UUID(),
 		InstrumentId: ord.Currency.AdaptUsdToUsdt().ToLower().ToSymbol("-"),
 	}
 
-	var response struct {
-		OrderId      string `json:"order_id"`
-		ClientOid    string `json:"client_oid"`
-		Result       bool   `json:"result"`
-		ErrorCode    string `json:"error_code"`
-		ErrorMessage string `json:"error_message"`
-	}
+	var response PlaceOrderResponse
 
 	switch ord.Side {
 	case BUY, SELL:
@@ -160,6 +196,7 @@ func (ok *OKExSpot) MarketSell(amount, price string, currency CurrencyPair) (*Or
 	})
 }
 
+//orderId can set client oid or orderId
 func (ok *OKExSpot) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
 	urlPath := "/api/spot/v3/cancel_orders/" + orderId
 	param := struct {
@@ -236,6 +273,7 @@ func (ok *OKExSpot) adaptOrder(response OrderResponse) *Order {
 	return ordInfo
 }
 
+//orderId can set client oid or orderId
 func (ok *OKExSpot) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
 	urlPath := "/api/spot/v3/orders/" + orderId + "?instrument_id=" + currency.AdaptUsdToUsdt().ToSymbol("-")
 	//param := struct {
