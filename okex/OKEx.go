@@ -25,12 +25,14 @@ type OKEx struct {
 	OKExSpot   *OKExSpot
 	OKExFuture *OKExFuture
 	OKExSwap   *OKExSwap
+	OKExWallet *OKExWallet
 }
 
 func NewOKEx(config *APIConfig) *OKEx {
 	okex := &OKEx{config: config}
 	okex.OKExSpot = &OKExSpot{okex}
 	okex.OKExFuture = &OKExFuture{OKEx: okex, Locker: new(sync.Mutex)}
+	okex.OKExWallet = &OKExWallet{okex}
 	return okex
 }
 

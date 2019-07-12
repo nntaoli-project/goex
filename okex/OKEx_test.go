@@ -3,6 +3,7 @@ package okex
 import (
 	goex "github.com/nntaoli-project/GoEx"
 	"github.com/stretchr/testify/assert"
+	"net/http"
 	"testing"
 )
 
@@ -17,13 +18,14 @@ var config2 = &goex.APIConfig{
 	//				Host:   "127.0.0.1:1080"}, nil
 	//		},
 	//	},
-	//},
+	//}, //需要代理的这样配置
+	HttpClient:    http.DefaultClient,
 	ApiKey:        "",
 	ApiSecretKey:  "",
 	ApiPassphrase: "",
 }
 
-var okex = NewOKEx(config2)
+var okex = NewOKEx(config2) //线上请用APIBuilder构建
 
 func TestOKExSpot_GetAccount(t *testing.T) {
 	t.Log(okex.GetAccount())
@@ -137,4 +139,44 @@ func TestOKExFuture_MarketCloseAllPosition(t *testing.T) {
 
 func TestOKExFuture_GetRate(t *testing.T) {
 	t.Log(okex.OKExFuture.GetRate())
+}
+
+func TestOKExWallet_GetAccount(t *testing.T) {
+	t.Log(okex.OKExWallet.GetAccount())
+}
+
+func TestOKExWallet_Transfer(t *testing.T) {
+	t.Log(okex.OKExWallet.Transfer(TransferParameter{
+		Currency:     goex.EOS.Symbol,
+		From:         SPOT,
+		To:           SPOT_MARGIN,
+		Amount:       20,
+		InstrumentId: goex.EOS_USDT.ToLower().ToSymbol("-")}))
+}
+
+func TestOKExWallet_Withdrawal(t *testing.T) {
+	t.Log(okex.OKExWallet.Withdrawal(WithdrawParameter{
+		Currency:    goex.EOS.Symbol,
+		Amount:      100,
+		Destination: 2,
+		ToAddress:   "",
+		TradePwd:    "",
+		Fee:         "0.01",
+	}))
+}
+
+func TestOKExWallet_GetDepositAddress(t *testing.T) {
+	t.Log(okex.OKExWallet.GetDepositAddress(goex.BTC))
+}
+
+func TestOKExWallet_GetWithDrawalFee(t *testing.T) {
+	t.Log(okex.OKExWallet.GetWithDrawalFee(nil))
+}
+
+func TestOKExWallet_GetDepositHistory(t *testing.T) {
+	t.Log(okex.OKExWallet.GetDepositHistory(&goex.BTC))
+}
+
+func TestOKExWallet_GetWithDrawalHistory(t *testing.T) {
+	t.Log(okex.OKExWallet.GetWithDrawalHistory(&goex.XRP))
 }
