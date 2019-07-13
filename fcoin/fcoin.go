@@ -37,6 +37,15 @@ type TradeSymbol struct {
 	Tradable      bool   `json:"tradable"`
 }
 
+type Asset struct {
+	Currency  Currency
+	Avaliable float64
+	Frozen    float64
+	Finances  float64
+	Lock      float64
+	Total     float64
+}
+
 func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
 	fc := &FCoin{baseUrl: "https://api.fcoin.com/v2/", accessKey: apikey, secretKey: secretkey, httpClient: client}
 	fc.setTimeOffset()
@@ -458,12 +467,10 @@ func (fc *FCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize i
 }
 
 func (fc *FCoin) GetAccount() (*Account, error) {
-
 	r, err := fc.doAuthenticatedRequest("GET", "accounts/balance", url.Values{})
 	if err != nil {
 		return nil, err
 	}
-
 	acc := new(Account)
 	acc.SubAccounts = make(map[Currency]SubAccount)
 	acc.Exchange = fc.GetExchangeName()
@@ -478,9 +485,42 @@ func (fc *FCoin) GetAccount() (*Account, error) {
 			ForzenAmount: ToFloat64(vv["frozen"]),
 		}
 	}
-
 	return acc, nil
+}
 
+func (fc *FCoin) GetAssets() ([]Asset, error) {
+	r, err := fc.doAuthenticatedRequest("GET", "assets/accounts/balance", url.Values{})
+	if err != nil {
+		return nil, err
+	}
+	assets := make([]Asset, 0)
+	balances := r.([]interface{})
+	for _, v := range balances {
+		vv := v.(map[string]interface{})
+		currency := NewCurrency(vv["currency"].(string), "")
+		assets = append(assets, Asset{
+			Currency:  currency,
+			Avaliable: ToFloat64(vv["available"]),
+			Frozen:    ToFloat64(vv["frozen"]),
+			Finances:  ToFloat64(vv["demand_deposit"]),
+			Lock:      ToFloat64(vv["lock_deposit"]),
+			Total:     ToFloat64(vv["balance"]),
+		})
+	}
+	return assets, nil
+}
+
+// from, to: assets, spot
+func (fc *FCoin) AssetTransfer(currency Currency, amount, from, to string) (bool, error) {
+	params := url.Values{}
+	params.Set("currency", strings.ToLower(currency.String()))
+	params.Set("amount", amount)
+	_, err := fc.doAuthenticatedRequest("POST", fmt.Sprintf("assets/accounts/%s-to-%s", from, to), params)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (fc *FCoin) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
