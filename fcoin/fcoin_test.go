@@ -2,14 +2,28 @@ package fcoin
 
 import (
 	"github.com/nntaoli-project/GoEx"
+	"net"
 	"net/http"
+	"net/url"
 	"testing"
+	"time"
 )
 
-var ft = NewFCoin(http.DefaultClient, "", "")
+var ft = NewFCoin(&http.Client{
+	Transport: &http.Transport{
+		Proxy: func(req *http.Request) (*url.URL, error) {
+			return url.Parse("socks5://127.0.0.1:1080")
+			return nil, nil
+		},
+		Dial: (&net.Dialer{
+			Timeout: 10 * time.Second,
+		}).Dial,
+	},
+	Timeout: 10 * time.Second,
+}, "", "")
 
 func TestFCoin_GetTicker(t *testing.T) {
-	t.Log(ft.GetTicker(goex.NewCurrencyPair2("BNB_USDT")))
+	t.Log(ft.GetTicker(goex.NewCurrencyPair2("BTC_USDT")))
 }
 
 func TestFCoin_GetDepth(t *testing.T) {
@@ -41,4 +55,17 @@ func TestFCoin_CancelOrder(t *testing.T) {
 
 func TestFCoin_GetUnfinishOrders(t *testing.T) {
 	t.Log(ft.GetUnfinishOrders(goex.ETC_USDT))
+}
+
+func TestFCoin_GetOrderHistorys(t *testing.T) {
+	t.Log(ft.GetOrderHistorys(goex.BTC_USDT, 1, 1))
+}
+
+func TestFCoin_AssetTransfer(t *testing.T) {
+	ft.AssetTransfer(goex.NewCurrency("FT", ""), "0.000945618753747253", "assets", "spot")
+}
+
+func TestFCoin_GetAssets(t *testing.T) {
+	acc, _ := ft.GetAssets()
+	t.Log(acc)
 }

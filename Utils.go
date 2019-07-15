@@ -1,7 +1,12 @@
 package goex
 
 import (
+	"bytes"
+	"compress/flate"
+	"compress/gzip"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/url"
 	"strconv"
 )
@@ -61,6 +66,35 @@ func ToUint64(v interface{}) uint64 {
 	}
 }
 
+func ToInt64(v interface{}) int64 {
+	if v == nil {
+		return 0
+	}
+
+	switch v.(type) {
+	case float64:
+		return int64(v.(float64))
+	default:
+		vv := fmt.Sprint(v)
+
+		if vv == "" {
+			return 0
+		}
+
+		vvv, err := strconv.ParseInt(vv, 0, 64)
+		if err != nil {
+			return 0
+		}
+
+		return vvv
+	}
+}
+
+//n :保留的小数点位数
+func FloatToString(v float64, n int) string {
+	return fmt.Sprintf(fmt.Sprintf("%%.%df", n), v)
+}
+
 func ValuesToJson(v url.Values) ([]byte, error) {
 	parammap := make(map[string]interface{})
 	for k, vv := range v {
@@ -71,4 +105,16 @@ func ValuesToJson(v url.Values) ([]byte, error) {
 		}
 	}
 	return json.Marshal(parammap)
+}
+
+func GzipUnCompress(data []byte) ([]byte, error) {
+	r, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(r)
+}
+
+func FlateUnCompress(data []byte) ([]byte, error) {
+	return ioutil.ReadAll(flate.NewReader(bytes.NewReader(data)))
 }

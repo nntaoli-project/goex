@@ -1,19 +1,25 @@
 package okcoin
 
 import (
-	"testing"
-	"net/http"
 	"github.com/nntaoli-project/GoEx"
-	"log"
+	"testing"
 	"time"
 )
 
-var okexFuture = NewOKEx(http.DefaultClient, "", "")
-
-func TestOKEx_GetDepthWithWs(t *testing.T) {
-	okexFuture.GetDepthWithWs(goex.BTC_USD, goex.QUARTER_CONTRACT, func(depth *goex.Depth) {
-		log.Print(depth)
+func TestNewOKExFutureWs(t *testing.T) {
+	okWs := NewOKExFutureWs()
+	okWs.ErrorHandleFunc(func(err error) {
+		t.Log(err)
 	})
-	time.Sleep(1 * time.Minute)
-	okexFuture.ws.CloseWs()
+	okWs.SetCallbacks(func(ticker *goex.FutureTicker) {
+		t.Log(ticker, ticker.Ticker)
+	}, func(depth *goex.Depth) {
+		t.Log(depth.ContractType, depth.Pair, depth.AskList, depth.BidList)
+	}, func(trade *goex.Trade, contract string) {
+		t.Log(contract, trade)
+	})
+	okWs.SubscribeTicker(goex.LTC_USD, goex.QUARTER_CONTRACT)
+	okWs.SubscribeDepth(goex.LTC_USD, goex.QUARTER_CONTRACT, 5)
+	okWs.SubscribeTrade(goex.LTC_USD, goex.QUARTER_CONTRACT)
+	time.Sleep(3 * time.Minute)
 }

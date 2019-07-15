@@ -6,17 +6,20 @@ import (
 )
 
 type Order struct {
-	Price,
-	Amount,
-	AvgPrice,
-	DealAmount,
-	Fee float64
-	OrderID2  string
-	OrderID   int
-	OrderTime int
-	Status    TradeStatus
-	Currency  CurrencyPair
-	Side      TradeSide
+	Price      float64
+	Amount     float64
+	AvgPrice   float64
+	DealAmount float64
+	Fee        float64
+	Cid        string //客户端自定义ID
+	OrderID2   string
+	OrderID    int //deprecated
+	OrderTime  int
+	Status     TradeStatus
+	Currency   CurrencyPair
+	Side       TradeSide
+	Type       string //limit / market
+	OrderType  int    //0:default,1:maker,2:fok,3:ioc
 }
 
 type Trade struct {
@@ -29,10 +32,10 @@ type Trade struct {
 }
 
 type SubAccount struct {
-	Currency Currency
-	Amount,
-	ForzenAmount,
-	LoanAmount float64
+	Currency     Currency
+	Amount       float64
+	ForzenAmount float64
+	LoanAmount   float64
 }
 
 type Account struct {
@@ -43,19 +46,28 @@ type Account struct {
 }
 
 type Ticker struct {
-	ContractType string       `json:"omitempty"`
-	Pair         CurrencyPair `json:"omitempty"`
-	Last         float64      `json:"last"`
-	Buy          float64      `json:"buy"`
-	Sell         float64      `json:"sell"`
-	High         float64      `json:"high"`
-	Low          float64      `json:"low"`
-	Vol          float64      `json:"vol"`
-	Date         uint64       `json:"date"` // 单位:秒(second)
+	Pair CurrencyPair `json:"omitempty"`
+	Last float64      `json:"last,string"`
+	Buy  float64      `json:"buy,string"`
+	Sell float64      `json:"sell,string"`
+	High float64      `json:"high,string"`
+	Low  float64      `json:"low,string"`
+	Vol  float64      `json:"vol,string"`
+	Date uint64       `json:"date"` // 单位:ms
+}
+
+type FutureTicker struct {
+	*Ticker
+	ContractType string  `json:"omitempty"`
+	ContractId   int     `json:"contractId"`
+	LimitHigh    float64 `json:"limitHigh,string"`
+	LimitLow     float64 `json:"limitLow,string"`
+	HoldAmount   float64 `json:"hold_amount,string"`
+	UnitAmount   float64 `json:"unitAmount,string"`
 }
 
 type DepthRecord struct {
-	Price,
+	Price  float64
 	Amount float64
 }
 
@@ -77,8 +89,8 @@ type Depth struct {
 	ContractType string //for future
 	Pair         CurrencyPair
 	UTime        time.Time
-	AskList,
-	BidList DepthRecords
+	AskList      DepthRecords // Descending order
+	BidList      DepthRecords // Descending order
 }
 
 type APIConfig struct {
@@ -95,11 +107,11 @@ type APIConfig struct {
 type Kline struct {
 	Pair      CurrencyPair
 	Timestamp int64
-	Open,
-	Close,
-	High,
-	Low,
-	Vol float64
+	Open      float64
+	Close     float64
+	High      float64
+	Low       float64
+	Vol       float64
 }
 
 type FutureKline struct {
@@ -121,15 +133,17 @@ type FutureAccount struct {
 }
 
 type FutureOrder struct {
+	ClientOid    string //自定义ID，GoEx内部自动生成
 	OrderID2     string //请尽量用这个字段替代OrderID字段
 	Price        float64
 	Amount       float64
 	AvgPrice     float64
 	DealAmount   float64
-	OrderID      int64
+	OrderID      int64 //deprecated
 	OrderTime    int64
 	Status       TradeStatus
 	Currency     CurrencyPair
+	OrderType    int     //ORDINARY=0 POST_ONLY=1 FOK= 2 IOC= 3
 	OType        int     //1：开多 2：开空 3：平多 4： 平空
 	LeverRate    int     //倍数
 	Fee          float64 //手续费

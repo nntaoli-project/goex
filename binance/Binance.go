@@ -164,7 +164,6 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	params.Set("type", orderType)
 
 	params.Set("quantity", amount)
-	params.Set("type", "LIMIT")
 	params.Set("timeInForce", "GTC")
 
 	switch orderType {
@@ -432,5 +431,13 @@ func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize
 	panic("not implements")
 }
 func (ba *Binance) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
-	return pair.AdaptBchToBcc().AdaptUsdToUsdt()
+	if pair.CurrencyA.Eq(BCH) || pair.CurrencyA.Eq(BCC) {
+		return NewCurrencyPair(NewCurrency("BCHABC", ""), pair.CurrencyB).AdaptUsdToUsdt()
+	}
+
+	if pair.CurrencyA.Symbol == "BSV" {
+		return NewCurrencyPair(NewCurrency("BCHSV", ""), pair.CurrencyB).AdaptUsdToUsdt()
+	}
+
+	return pair.AdaptUsdToUsdt()
 }

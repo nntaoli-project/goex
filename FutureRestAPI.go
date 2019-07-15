@@ -39,6 +39,7 @@ type FutureRestAPI interface {
 	GetFutureUserinfo() (*FutureAccount, error)
 
 	/**
+	 * @deprecated
 	 * 期货下单
 	 * @param currencyPair   btc_usd:比特币    ltc_usd :莱特币
 	 * @param contractType   合约类型: this_week:当周   next_week:下周   month:当月   quarter:季度
@@ -89,7 +90,7 @@ type FutureRestAPI interface {
 	/**
 	 *获取交易所的美元人民币汇率
 	 */
-	GetExchangeRate() (float64, error)
+	//GetExchangeRate() (float64, error)
 
 	/**
 	 *获取每张合约价值

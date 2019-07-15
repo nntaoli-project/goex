@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var okcn = New(http.DefaultClient, "", "")
+var okcn = NewOKCoinCn(http.DefaultClient, "", "")
 
 func TestOKCoinCN_API_GetTicker(t *testing.T) {
 	ticker, _ := okcn.GetTicker(goex.BTC_CNY)

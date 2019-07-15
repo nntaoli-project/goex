@@ -1,159 +1,187 @@
 package okcoin
 
 import (
-	"bytes"
-	"compress/flate"
 	"encoding/json"
+	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"io/ioutil"
 	"log"
 	"strings"
+	"sync"
 	"time"
 )
 
-func (okFuture *OKEx) createWsConn() {
-	if okFuture.ws == nil {
-		//connect wsx
-		okFuture.createWsLock.Lock()
-		defer okFuture.createWsLock.Unlock()
+type OKExFutureWs struct {
+	*WsBuilder
+	sync.Once
+	wsConn *WsConn
 
-		if okFuture.ws == nil {
-			okFuture.wsTickerHandleMap = make(map[string]func(*Ticker))
-			okFuture.wsDepthHandleMap = make(map[string]func(*Depth))
-
-			okFuture.ws = NewWsConn("wss://real.okex.com:10440/ws/v1")
-			okFuture.ws.Heartbeat(func() interface{} { return map[string]string{"event": "ping"} }, 30*time.Second)
-			okFuture.ws.ReConnect()
-			okFuture.ws.ReceiveMessage(func(d []byte) {
-				reader := flate.NewReader(bytes.NewReader(d))
-				msg, err := ioutil.ReadAll(reader)
-
-				if err != nil {
-					log.Println(err)
-					return
-				}
-
-				if string(msg) == "{\"event\":\"pong\"}" {
-					okFuture.ws.UpdateActivedTime()
-					return
-				}
-
-				var data []interface{}
-				err = json.Unmarshal(msg, &data)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-
-				if len(data) == 0 {
-					return
-				}
-
-				datamap := data[0].(map[string]interface{})
-				channel := datamap["channel"].(string)
-				if channel == "addChannel" {
-					return
-				}
-
-				tickmap := datamap["data"].(map[string]interface{})
-				pair := okFuture.getPairFromChannel(channel)
-				contractType := okFuture.getContractFromChannel(channel)
-
-				if strings.HasSuffix(channel, "_ticker") {
-					ticker := okFuture.parseTicker(tickmap)
-					ticker.Pair = pair
-					ticker.ContractType = contractType
-					okFuture.wsTickerHandleMap[channel](ticker)
-				} else if strings.Contains(channel, "depth_") {
-					dep := okFuture.parseDepth(tickmap)
-					dep.Pair = pair
-					dep.ContractType = contractType
-					okFuture.wsDepthHandleMap[channel](dep)
-				}
-			})
-		}
-	}
+	tickerCallback func(*FutureTicker)
+	depthCallback  func(*Depth)
+	tradeCallback  func(*Trade, string)
 }
 
-func (okFuture *OKEx) GetDepthWithWs(pair CurrencyPair, contractType string, handle func(*Depth)) error {
-	okFuture.createWsConn()
-	channel := fmt.Sprintf("ok_sub_futureusd_%s_depth_%s_5", strings.ToLower(pair.CurrencyA.Symbol), contractType)
-	okFuture.wsDepthHandleMap[channel] = handle
-	return okFuture.ws.Subscribe(map[string]string{
+func NewOKExFutureWs() *OKExFutureWs {
+	okWs := &OKExFutureWs{WsBuilder: NewWsBuilder()}
+	okWs.WsBuilder = okWs.WsBuilder.
+		WsUrl("wss://real.okex.com:10440/ws/v1").
+		Heartbeat([]byte("{\"event\": \"ping\"} "), 30*time.Second).
+		ReconnectIntervalTime(24 * time.Hour).
+		UnCompressFunc(FlateUnCompress).
+		ProtoHandleFunc(okWs.handle)
+	return okWs
+}
+
+func (okWs *OKExFutureWs) SetCallbacks(tickerCallback func(*FutureTicker),
+	depthCallback func(*Depth),
+	tradeCallback func(*Trade, string)) {
+	okWs.tickerCallback = tickerCallback
+	okWs.depthCallback = depthCallback
+	okWs.tradeCallback = tradeCallback
+}
+
+func (okWs *OKExFutureWs) SubscribeTicker(pair CurrencyPair, contract string) error {
+	if okWs.tickerCallback == nil {
+		return errors.New("please set ticker callback func")
+	}
+	return okWs.subscribe(map[string]interface{}{
 		"event":   "addChannel",
-		"channel": channel})
+		"channel": fmt.Sprintf("ok_sub_futureusd_%s_ticker_%s", strings.ToLower(pair.CurrencyA.Symbol), contract)})
 }
 
-func (okFuture *OKEx) GetTickerWithWs(pair CurrencyPair, contractType string, handle func(*Ticker)) error {
-	okFuture.createWsConn()
-	channel := fmt.Sprintf("ok_sub_futureusd_%s_ticker_%s", strings.ToLower(pair.CurrencyA.Symbol), contractType)
-	okFuture.wsTickerHandleMap[channel] = handle
-	return okFuture.ws.Subscribe(map[string]string{
+func (okWs *OKExFutureWs) SubscribeDepth(pair CurrencyPair, contract string, size int) error {
+	if okWs.depthCallback == nil {
+		return errors.New("please set depth callback func")
+	}
+	return okWs.subscribe(map[string]interface{}{
 		"event":   "addChannel",
-		"channel": channel})
+		"channel": fmt.Sprintf("ok_sub_futureusd_%s_depth_%s_%d", strings.ToLower(pair.CurrencyA.Symbol), contract, size)})
 }
 
-func (okFuture *OKEx) parseTicker(tickmap map[string]interface{}) *Ticker {
-	return &Ticker{
-		Last: ToFloat64(tickmap["last"]),
-		Low:  ToFloat64(tickmap["low"]),
-		High: ToFloat64(tickmap["high"]),
-		Vol:  ToFloat64(tickmap["vol"]),
-		Sell: ToFloat64(tickmap["sell"]),
-		Buy:  ToFloat64(tickmap["buy"]),
-		Date: ToUint64(tickmap["timestamp"])}
+func (okWs *OKExFutureWs) SubscribeTrade(pair CurrencyPair, contract string) error {
+	if okWs.tradeCallback == nil {
+		return errors.New("please set trade callback func")
+	}
+	return okWs.subscribe(map[string]interface{}{
+		"event":   "addChannel",
+		"channel": fmt.Sprintf("ok_sub_futureusd_%s_trade_%s", strings.ToLower(pair.CurrencyA.Symbol), contract)})
 }
 
-func (okFuture *OKEx) parseDepth(tickmap map[string]interface{}) *Depth {
-	asks := tickmap["asks"].([]interface{})
-	bids := tickmap["bids"].([]interface{})
+func (okWs *OKExFutureWs) subscribe(sub map[string]interface{}) error {
+	okWs.connectWs()
+	return okWs.wsConn.Subscribe(sub)
+}
 
-	var depth Depth
-	for _, v := range asks {
-		var dr DepthRecord
-		for i, vv := range v.([]interface{}) {
-			switch i {
-			case 0:
-				dr.Price = ToFloat64(vv)
-			case 1:
-				dr.Amount = ToFloat64(vv)
-			}
-		}
-		depth.AskList = append(depth.AskList, dr)
+func (okWs *OKExFutureWs) connectWs() {
+	okWs.Do(func() {
+		okWs.wsConn = okWs.WsBuilder.Build()
+		okWs.wsConn.ReceiveMessage()
+	})
+}
+
+func (okWs *OKExFutureWs) handle(msg []byte) error {
+	//log.Println(string(msg))
+	if string(msg) == "{\"event\":\"pong\"}" {
+		//	log.Println(string(msg))
+		okWs.wsConn.UpdateActiveTime()
+		return nil
 	}
 
-	for _, v := range bids {
-		var dr DepthRecord
-		for i, vv := range v.([]interface{}) {
-			switch i {
-			case 0:
-				dr.Price = ToFloat64(vv)
-			case 1:
-				dr.Amount = ToFloat64(vv)
-			}
-		}
-		depth.BidList = append(depth.BidList, dr)
+	var resp []WsBaseResp
+	err := json.Unmarshal(msg, &resp)
+	if err != nil {
+		return err
 	}
-	return &depth
+
+	if len(resp) < 0 {
+		return nil
+	}
+
+	if resp[0].Channel == "addChannel" {
+		log.Println("subscribe:", string(resp[0].Data))
+		return nil
+	}
+
+	pair, contract, ch := okWs.parseChannel(resp[0].Channel)
+
+	if ch == "ticker" {
+		var t FutureTicker
+		err := json.Unmarshal(resp[0].Data, &t)
+		if err != nil {
+			return err
+		}
+		t.ContractType = contract
+		t.Pair = pair
+		okWs.tickerCallback(&t)
+		return nil
+	}
+
+	if ch == "depth" {
+		var (
+			d    Depth
+			data struct {
+				Asks      [][]float64 `json:"asks"`
+				Bids      [][]float64 `json:"bids"`
+				Timestamp int64       `json:"timestamp"`
+			}
+		)
+
+		err := json.Unmarshal(resp[0].Data, &data)
+		if err != nil {
+			return err
+		}
+
+		for _, a := range data.Asks {
+			d.AskList = append(d.AskList, DepthRecord{a[0], a[1]})
+		}
+
+		for _, b := range data.Bids {
+			d.BidList = append(d.BidList, DepthRecord{b[0], b[1]})
+		}
+
+		d.Pair = pair
+		d.ContractType = contract
+		d.UTime = time.Unix(data.Timestamp/1000, 0)
+		okWs.depthCallback(&d)
+
+		return nil
+	}
+
+	if ch == "trade" {
+		var data TradeData
+		err := json.Unmarshal(resp[0].Data, &data)
+		if err != nil {
+			return err
+		}
+
+		for _, td := range data {
+			side := TradeSide(SELL)
+			if td[4] == "bid" {
+				side = BUY
+			}
+			okWs.tradeCallback(&Trade{Pair: pair, Tid: ToInt64(td[0]), Price: ToFloat64(td[1]),
+				Amount: ToFloat64(td[2]), Type: side, Date: okWs.adaptTime(td[3])}, contract)
+		}
+
+		return nil
+	}
+
+	return errors.New("unknown channel for " + resp[0].Channel)
 }
 
-func (okFuture *OKEx) getPairFromChannel(channel string) CurrencyPair {
+func (okWs *OKExFutureWs) parseChannel(channel string) (pair CurrencyPair, contract string, ch string) {
 	metas := strings.Split(channel, "_")
-	return NewCurrencyPair2(metas[3] + "_usd")
+	pair = NewCurrencyPair2(strings.ToUpper(metas[3] + "_USD"))
+	contract = metas[5]
+	ch = metas[4]
+	return pair, contract, ch
 }
 
-func (okFuture *OKEx) getContractFromChannel(channel string) string {
-	if strings.Contains(channel, THIS_WEEK_CONTRACT) {
-		return THIS_WEEK_CONTRACT
-	}
+func (okWs *OKExFutureWs) adaptTime(tm string) int64 {
+	format := "2006-01-02 15:04:05"
+	day := time.Now().Format("2006-01-02")
+	local, _ := time.LoadLocation("Asia/Chongqing")
+	t, _ := time.ParseInLocation(format, day+" "+tm, local)
+	return t.UnixNano() / 1e6
 
-	if strings.Contains(channel, NEXT_WEEK_CONTRACT) {
-		return NEXT_WEEK_CONTRACT
-	}
-
-	if strings.Contains(channel, QUARTER_CONTRACT) {
-		return QUARTER_CONTRACT
-	}
-	return ""
 }

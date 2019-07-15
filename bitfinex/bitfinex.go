@@ -46,6 +46,7 @@ func (bfx *Bitfinex) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 
 	//fmt.Println(resp)
 	ticker := new(Ticker)
+	ticker.Pair = currencyPair
 	ticker.Last = ToFloat64(resp["last_price"])
 	ticker.Vol = ToFloat64(resp["volume"])
 	ticker.High = ToFloat64(resp["high"])

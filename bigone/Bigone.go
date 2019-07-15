@@ -3,24 +3,22 @@ package bigone
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-
 	"log"
+	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/nntaoli-project/GoEx"
 	"github.com/nubo/jwt"
-
-	"github.com/google/uuid"
 )
 
 const (
-	API_BASE_URL = "https://big.one/api/v2"
-	TICKER_URI   = API_BASE_URL + "/markets/%s/ticker"
-	DEPTH_URI    = API_BASE_URL + "/markets/%s/depth"
-	ACCOUNT_URI  = API_BASE_URL + "/viewer/accounts"
-	ORDERS_URI   = API_BASE_URL + "/viewer/orders"
-	//TRADE_URI    = "orders"
+	V2          = "https://big.one/api/v2"
+	V3          = "https://big.one/api/v3"
+	TICKER_URI  = "%s/markets/%s/ticker"
+	DEPTH_URI   = "%s/markets/%s/depth"
+	ACCOUNT_URI = "%s/viewer/accounts"
+	ORDERS_URI  = "%s/viewer/orders"
 )
 
 type Bigone struct {
@@ -28,10 +26,12 @@ type Bigone struct {
 	secretKey string
 	httpClient *http.Client
 	uid        string
+	baseUri    string
+	timeOffset int64
 }
 
 func New(client *http.Client, api_key, secret_key string) *Bigone {
-	return &Bigone{api_key, secret_key, client, uuid.New().String()}
+	return &Bigone{accessKey: api_key, secretKey: secret_key, httpClient: client, uid: uuid.New().String(), baseUri: V2}
 }
 
 func (bo *Bigone) GetExchangeName() string {
@@ -71,10 +71,10 @@ type TickerResp struct {
 }
 
 func (bo *Bigone) GetTicker(currency goex.CurrencyPair) (*goex.Ticker, error) {
-	tickerURI := fmt.Sprintf(TICKER_URI, currency.ToSymbol("-"))
+	tickerURI := fmt.Sprintf(TICKER_URI, bo.baseUri, currency.ToSymbol("-"))
 
 	var resp TickerResp
-	log.Printf("GetTicker -> %s", tickerURI)
+	//log.Printf("GetTicker -> %s", tickerURI)
 	err := goex.HttpGet4(bo.httpClient, tickerURI, nil, &resp)
 
 	if err != nil {
@@ -83,6 +83,7 @@ func (bo *Bigone) GetTicker(currency goex.CurrencyPair) (*goex.Ticker, error) {
 	}
 
 	var ticker goex.Ticker
+	ticker.Pair = currency
 	ticker.Date = uint64(time.Now().Unix())
 	ticker.Last = goex.ToFloat64(resp.Data.Close)
 	ticker.Buy = goex.ToFloat64(resp.Data.Bid.Price)
@@ -105,22 +106,25 @@ type PlaceOrderResp struct {
 	} `json:"errors"`
 
 	Data struct {
-		Amount       string `json:"amount"`
-		AvgDealPrice string `json:"avg_deal_price"`
-		FilledAmount string `json:"filled_amount"`
-		ID           string `json:"id"`
-		InsertedAt   string `json:"inserted_at"`
-		MarketID     string `json:"market_id"`
-		MarketUUID   string `json:"market_uuid"`
-		Price        string `json:"price"`
-		Side         string `json:"side"`
-		State        string `json:"state"`
-		UpdatedAt    string `json:"updated_at"`
+		Amount        string `json:"amount"`
+		AvgDealPrice  string `json:"avg_deal_price"`
+		FilledAmount  string `json:"filled_amount"`
+		ID            string `json:"id"`
+		OrderID       int64  `json:"id"`
+		InsertedAt    string `json:"inserted_at"`
+		CreatedAt     string `json:"created_at"`
+		MarketID      string `json:"market_id"`
+		AssetPairName string `json:"asset_pair_name"`
+		MarketUUID    string `json:"market_uuid"`
+		Price         string `json:"price"`
+		Side          string `json:"side"`
+		State         string `json:"state"`
+		UpdatedAt     string `json:"updated_at"`
 	} `json:"data"`
 }
 
 func (bo *Bigone) placeOrder(amount, price string, pair goex.CurrencyPair, orderType, orderSide string) (*goex.Order, error) {
-	path := ORDERS_URI
+	path := fmt.Sprintf(ORDERS_URI, bo.baseUri)
 	params := make(map[string]string)
 	params["market_id"] = pair.ToSymbol("-")
 	params["side"] = orderSide
@@ -153,7 +157,7 @@ func (bo *Bigone) placeOrder(amount, price string, pair goex.CurrencyPair, order
 
 	return &goex.Order{
 		Currency:   pair,
-		OrderID2:   fmt.Sprintf("%d", resp.Data.ID),
+		OrderID2:   resp.Data.ID,
 		Price:      goex.ToFloat64(resp.Data.Price),
 		Amount:     goex.ToFloat64(resp.Data.Amount),
 		DealAmount: 0,
@@ -232,8 +236,8 @@ type OrderListResp struct {
 
 func (bo *Bigone) getOrdersList(currencyPair goex.CurrencyPair, size int, sts goex.TradeStatus) ([]goex.Order, error) {
 	apiURL := ""
-	apiURL = fmt.Sprintf("%s?market_id=%s",
-		ORDERS_URI, currencyPair.ToSymbol("-"))
+	apiURL = fmt.Sprintf(ORDERS_URI+"?market_id=%s",
+		bo.baseUri, currencyPair.ToSymbol("-"))
 
 	if sts == goex.ORDER_FINISH {
 		apiURL += "&state=FILLED"
@@ -298,19 +302,23 @@ type CancelOrderResp struct {
 	} `json:"errors"`
 
 	Data struct {
-		ID           string `json:"id"`
-		MarketUUID   string `json:"market_uuid"`
-		Price        string `json:"price"`
-		Amount       string `json:"amount"`
-		FilledAmount string `json:"filled_amount"`
-		AvgDealPrice string `json:"avg_deal_price"`
-		Side         string `json:"side"`
-		State        string `json:"state"`
+		ID            string `json:"id"`
+		OrderID       string `json:"id"`
+		MarketUUID    string `json:"market_uuid"`
+		AssetPairName string `json:"asset_pair_name"`
+		Price         string `json:"price"`
+		Amount        string `json:"amount"`
+		FilledAmount  string `json:"filled_amount"`
+		AvgDealPrice  string `json:"avg_deal_price"`
+		Side          string `json:"side"`
+		State         string `json:"state"`
+		CreatedAt     string `json:"created_at"`
+		UpdatedAt     string `json:"updated_at"`
 	}
 }
 
 func (bo *Bigone) CancelOrder(orderId string, currency goex.CurrencyPair) (bool, error) {
-	path := ORDERS_URI + "/" + orderId + "/cancel"
+	path := fmt.Sprintf(ORDERS_URI+"/%s/cancel", bo.baseUri, orderId)
 	params := make(map[string]string)
 	params["order_id"] = orderId
 
@@ -356,7 +364,8 @@ type AccountResp struct {
 
 	Data []struct {
 		AssetID       string `json:"asset_id"`
-		AssetUUID     string `json:"asset_uuid"`
+		AssetSymbol   string `json:"asset_symbol"`
+		AssetUUID     string `json:"asset_uuid,omitempty"`
 		Balance       string `json:"balance"`
 		LockedBalance string `json:"locked_balance"`
 	} `json:"data"`
@@ -364,7 +373,7 @@ type AccountResp struct {
 
 func (bo *Bigone) GetAccount() (*goex.Account, error) {
 	var resp AccountResp
-	apiUrl := ACCOUNT_URI
+	apiUrl := fmt.Sprintf(ACCOUNT_URI, bo.baseUri)
 
 	err := goex.HttpGet4(bo.httpClient, apiUrl, bo.privateHeader(), &resp)
 	if err != nil {
@@ -378,7 +387,12 @@ func (bo *Bigone) GetAccount() (*goex.Account, error) {
 
 	for _, v := range resp.Data {
 		//log.Println(v)
-		currency := goex.NewCurrency(v.AssetID, "")
+		var currency goex.Currency
+		if v.AssetID != "" {
+			currency = goex.NewCurrency(v.AssetID, "")
+		} else {
+			currency = goex.NewCurrency(v.AssetSymbol, "")
+		}
 
 		acc.SubAccounts[currency] = goex.SubAccount{
 			Currency:     currency,
@@ -402,23 +416,26 @@ type DepthResp struct {
 	} `json:"errors"`
 
 	Data struct {
-		MarketID string `json:"market_id"`
-		Bids     []struct {
+		MarketID      string `json:"market_id"`
+		AssetPairName string `json:"asset_pair_name"`
+		Bids          []struct {
 			Price      string `json:"price"`
 			OrderCount int    `json:"order_count"`
-			Amount     string `json:"amount"`
+			Amount     string `json:"amount,omitempty"`
+			Quantity   string `json:"quantity,omitempty"`
 		} `json:"bids"`
 		Asks []struct {
 			Price      string `json:"price"`
 			OrderCount int    `json:"order_count"`
-			Amount     string `json:"amount"`
+			Amount     string `json:"amount,omitempty"`
+			Quantity   string `json:"quantity,omitempty"`
 		} `json:"asks"`
 	}
 }
 
 func (bo *Bigone) GetDepth(size int, currencyPair goex.CurrencyPair) (*goex.Depth, error) {
 	var resp DepthResp
-	apiURL := fmt.Sprintf(DEPTH_URI, currencyPair.ToSymbol("-"))
+	apiURL := fmt.Sprintf(DEPTH_URI, bo.baseUri, currencyPair.ToSymbol("-"))
 	err := goex.HttpGet4(bo.httpClient, apiURL, nil, &resp)
 	if err != nil {
 		log.Println("GetDepth error:", err)
@@ -428,19 +445,29 @@ func (bo *Bigone) GetDepth(size int, currencyPair goex.CurrencyPair) (*goex.Dept
 	depth := new(goex.Depth)
 
 	for _, bid := range resp.Data.Bids {
-		amount := goex.ToFloat64(bid.Amount)
+		var amount float64
+		if bid.Amount == "" {
+			amount = goex.ToFloat64(bid.Amount)
+		} else {
+			amount = goex.ToFloat64(bid.Quantity)
+		}
 		price := goex.ToFloat64(bid.Price)
 		dr := goex.DepthRecord{Amount: amount, Price: price}
 		depth.BidList = append(depth.BidList, dr)
 	}
 
 	for _, ask := range resp.Data.Asks {
-		amount := goex.ToFloat64(ask.Amount)
+		var amount float64
+		if ask.Amount == "" {
+			amount = goex.ToFloat64(ask.Amount)
+		} else {
+			amount = goex.ToFloat64(ask.Quantity)
+		}
 		price := goex.ToFloat64(ask.Price)
 		dr := goex.DepthRecord{Amount: amount, Price: price}
 		depth.AskList = append(depth.AskList, dr)
 	}
-
+	depth.Pair = currencyPair
 	return depth, nil
 }
 

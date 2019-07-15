@@ -1,10 +1,8 @@
 package goex
 
 import (
-	"bytes"
-	"compress/gzip"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -13,42 +11,34 @@ func Test_time(t *testing.T) {
 	t.Log(time.Now().Unix())
 }
 
+func ProtoHandle(data []byte) error {
+	println(string(data))
+	return nil
+}
+
 func TestNewWsConn(t *testing.T) {
-	//os.Setenv("https_proxy" , "socks5://127.0.0.1:1080")
-	ws := NewWsConn("wss://api.huobipro.com/ws")
-	//ws := NewWsConn("wss://real.okex.com:10441/websocket")
-	time.Sleep(time.Second)
+	clientId := "a"
+	ts := time.Now().Unix()*1000 + 42029
+	args := make([]interface{}, 0)
+	args = append(args, ts)
 
-	ws.Heartbeat(func() interface{} {
-		return map[string]interface{}{"ping": time.Duration(time.Now().Nanosecond())}
-	}, 5*time.Second)
+	ping := fmt.Sprintf("{\"cmd\":\"ping\",\"args\":[%d],\"id\":\"%s\"}", ts, clientId)
+	ping2 := map[string]interface{}{
+		"cmd":  "ping",
+		"id":   clientId,
+		"args": args}
+	ping3, err := json.Marshal(ping2)
 
-	ws.ReConnect()
+	fmt.Println(ping)
+	fmt.Println(ping2)
+	fmt.Println(err, string(ping3))
 
-	ws.Subscribe(map[string]string{
-		"sub": "market.btcusdt.detail",
-		"id":  "2"})
-	ws.Subscribe(map[string]string{
-		"sub": "market.btcusdt.depth.step0",
-		"id":  "1"})
-
-	//ws.WriteJSON(map[string]string{"event": "addChannel", "channel": "ok_sub_spot_bch_btc_ticker"})
-	ws.ReceiveMessage(func(msg []byte) {
-		println("receive message...")
-		gzipreader, _ := gzip.NewReader(bytes.NewReader(msg))
-		data, _ := ioutil.ReadAll(gzipreader)
-		var resp map[string]interface{}
-		json.Unmarshal(data, &resp)
-		if resp["ping"] != nil {
-			ws.WriteJSON(map[string]interface{}{"pong": resp["ping"]})
-			ws.actived = time.Now()
-		}
-		println(string(data))
-	})
-
-	time.Sleep(2 * time.Minute)
-
+	ws := NewWsBuilder().Dump().WsUrl("wss://api.fcoin.com/v2/ws").ProxyUrl("socks5://127.0.0.1:1080").
+		Heartbeat([]byte(ping3), 5*time.Second).ProtoHandleFunc(ProtoHandle).Build()
+	//t.Log(ws.Subscribe(map[string]string{
+	//	//"cmd":"sub", "args":"[\"ticker.btcusdt\"]", "id": clientId}))
+	//	"cmd":"sub", "args":"ticker.btcusdt", "id": clientId}))
+	ws.ReceiveMessage()
+	time.Sleep(time.Second * 20)
 	ws.CloseWs()
-
-	time.Sleep(time.Second)
 }
