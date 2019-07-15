@@ -505,8 +505,68 @@ func (ok *OKExFuture) GetDeliveryTime() (int, int, int, int) {
 	return 4, 16, 0, 0 //星期五，下午4点交割
 }
 
+/**
+  since : 单位秒,开始时间
+*/
 func (ok *OKExFuture) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
-	panic("")
+	urlPath := "/api/futures/v3/instruments/%s/candles?start=%s&granularity=%d"
+	contractId := ok.getFutureContractId(currency, contract_type)
+	sinceTime := time.Unix(int64(since), 0).UTC()
+
+	if since/int(time.Second) != 1 { //如果不为秒，转为秒
+		sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
+	}
+
+	granularity := 60
+	switch period {
+	case KLINE_PERIOD_1MIN:
+		granularity = 60
+	case KLINE_PERIOD_3MIN:
+		granularity = 180
+	case KLINE_PERIOD_5MIN:
+		granularity = 300
+	case KLINE_PERIOD_15MIN:
+		granularity = 900
+	case KLINE_PERIOD_30MIN:
+		granularity = 1800
+	case KLINE_PERIOD_1H, KLINE_PERIOD_60MIN:
+		granularity = 3600
+	case KLINE_PERIOD_2H:
+		granularity = 7200
+	case KLINE_PERIOD_4H:
+		granularity = 14400
+	case KLINE_PERIOD_6H:
+		granularity = 21600
+	case KLINE_PERIOD_1DAY:
+		granularity = 86400
+	case KLINE_PERIOD_1WEEK:
+		granularity = 604800
+	default:
+		granularity = 1800
+	}
+
+	var response [][]interface{}
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, sinceTime.Format(time.RFC3339), granularity), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var klines []FutureKline
+	for _, itm := range response {
+		t, _ := time.Parse(time.RFC3339, fmt.Sprint(itm[0]))
+		klines = append(klines, FutureKline{
+			Kline: &Kline{
+				Timestamp: t.Unix(),
+				Pair:      currency,
+				Open:      ToFloat64(itm[1]),
+				High:      ToFloat64(itm[2]),
+				Low:       ToFloat64(itm[3]),
+				Close:     ToFloat64(itm[4]),
+				Vol:       ToFloat64(itm[5])},
+			Vol2: ToFloat64(itm[6])})
+	}
+
+	return klines, nil
 }
 
 func (ok *OKExFuture) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
