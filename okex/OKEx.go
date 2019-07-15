@@ -26,6 +26,7 @@ type OKEx struct {
 	OKExFuture *OKExFuture
 	OKExSwap   *OKExSwap
 	OKExWallet *OKExWallet
+	OKExMargin *OKExMargin
 }
 
 func NewOKEx(config *APIConfig) *OKEx {
@@ -33,6 +34,7 @@ func NewOKEx(config *APIConfig) *OKEx {
 	okex.OKExSpot = &OKExSpot{okex}
 	okex.OKExFuture = &OKExFuture{OKEx: okex, Locker: new(sync.Mutex)}
 	okex.OKExWallet = &OKExWallet{okex}
+	okex.OKExMargin = &OKExMargin{okex}
 	return okex
 }
 
