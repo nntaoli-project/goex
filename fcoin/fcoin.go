@@ -264,12 +264,13 @@ func (fc *FCoin) placeOrder(orderType, orderSide, amount, price string, pair Cur
 	}
 
 	return &Order{
-		Currency: pair,
-		OrderID2: r.(string),
-		Amount:   ToFloat64(amount),
-		Price:    ToFloat64(price),
-		Side:     TradeSide(side),
-		Status:   ORDER_UNFINISH}, nil
+		Currency:  pair,
+		OrderID2:  r.(string),
+		Amount:    ToFloat64(amount),
+		Price:     ToFloat64(price),
+		Side:      TradeSide(side),
+		Status:    ORDER_UNFINISH,
+		OrderTime: int(time.Now().UnixNano() / 1000000)}, nil
 }
 
 func (fc *FCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
@@ -343,10 +344,6 @@ func (fc *FCoin) GetOneOrder(orderId string, currency CurrencyPair) (*Order, err
 	}
 
 	return fc.toOrder(r.(map[string]interface{}), currency), nil
-
-}
-
-func (fc *FCoin) GetOrdersList() {
 
 }
 
@@ -524,7 +521,40 @@ func (fc *FCoin) AssetTransfer(currency Currency, amount, from, to string) (bool
 }
 
 func (fc *FCoin) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	panic("not implement")
+
+	uri := fmt.Sprintf("market/candles/%s/%s?limit=%d", _INERNAL_KLINE_PERIOD_CONVERTER[period], strings.ToLower(currency.ToSymbol("")), size)
+
+	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+uri)
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(float64) != 0 {
+		return nil, errors.New(respmap["msg"].(string))
+	}
+
+	datamap, isOk := respmap["data"].([]interface{})
+
+	if !isOk {
+		return nil, errors.New("kline error")
+	}
+
+	var klineRecords []Kline
+
+	for _, record := range datamap {
+		r := record.(map[string]interface{})
+		klineRecords = append(klineRecords, Kline{
+			Pair:      currency,
+			Timestamp: int64(ToInt(r["id"])),
+			Open:      ToFloat64(r["open"]),
+			Close:     ToFloat64(r["close"]),
+			High:      ToFloat64(r["high"]),
+			Low:       ToFloat64(r["low"]),
+			Vol:       ToFloat64(r["quote_vol"]),
+		})
+	}
+
+	return klineRecords, nil
 }
 
 //非个人，整个交易所的交易记录
