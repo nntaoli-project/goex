@@ -60,3 +60,12 @@ func TestFCoin_GetUnfinishOrders(t *testing.T) {
 func TestFCoin_GetOrderHistorys(t *testing.T) {
 	t.Log(ft.GetOrderHistorys(goex.BTC_USDT, 1, 1))
 }
+
+func TestFCoin_AssetTransfer(t *testing.T) {
+	ft.AssetTransfer(goex.NewCurrency("FT", ""), "0.000945618753747253", "assets", "spot")
+}
+
+func TestFCoin_GetAssets(t *testing.T) {
+	acc, _ := ft.GetAssets()
+	t.Log(acc)
+}

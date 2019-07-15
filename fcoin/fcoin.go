@@ -13,19 +13,6 @@ import (
 	"time"
 )
 
-const (
-	DEPTH_API       = "market/depth/%s/%s"
-	TRADE_URL       = "orders"
-	GET_ACCOUNT_API = "accounts/balance"
-	GET_ORDER_API   = "orders/%s"
-	//GET_ORDERS_LIST_API             = ""
-	GET_UNFINISHED_ORDERS_API = "getUnfinishedOrdersIgnoreTradeType"
-	PLACE_ORDER_API           = "order"
-	WITHDRAW_API              = "withdraw"
-	CANCELWITHDRAW_API        = "cancelWithdraw"
-	SERVER_TIME               = "public/server-time"
-)
-
 type FCoinTicker struct {
 	Ticker
 	SellAmount,
@@ -50,10 +37,24 @@ type TradeSymbol struct {
 	Tradable      bool   `json:"tradable"`
 }
 
+type Asset struct {
+	Currency  Currency
+	Avaliable float64
+	Frozen    float64
+	Finances  float64
+	Lock      float64
+	Total     float64
+}
+
 func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
 	fc := &FCoin{baseUrl: "https://api.fcoin.com/v2/", accessKey: apikey, secretKey: secretkey, httpClient: client}
 	fc.setTimeOffset()
-	fc.tradeSymbols, _ = fc.getTradeSymbols()
+	var err error
+	fc.tradeSymbols, err = fc.getTradeSymbols()
+	if len(fc.tradeSymbols) == 0 || err != nil {
+		panic("trade symbol is empty, pls check connection...")
+	}
+
 	return fc
 }
 
@@ -82,12 +83,10 @@ func (fc *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 		return nil, err
 	}
 
-	////log.Println("ticker respmap:", respmap)
 	if respmap["status"].(float64) != 0 {
 		return nil, errors.New(respmap["msg"].(string))
 	}
 
-	//
 	tick, ok := respmap["data"].(map[string]interface{})
 	if !ok {
 		return nil, API_ERR
@@ -107,15 +106,17 @@ func (fc *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	ticker.High = ToFloat64(tickmap[7])
 	ticker.Buy = ToFloat64(tickmap[2])
 	ticker.Sell = ToFloat64(tickmap[4])
-	//ticker.SellAmount = ToFloat64(tickmap[5])
-	//ticker.BuyAmount = ToFloat64(tickmap[3])
-
 	return ticker, nil
-
 }
 
 func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+fmt.Sprintf("market/depth/L20/%s", strings.ToLower(currency.ToSymbol(""))))
+	var uri string
+	if size <= 20 {
+		uri = fmt.Sprintf("market/depth/L20/%s", strings.ToLower(currency.ToSymbol("")))
+	} else {
+		uri = fmt.Sprintf("market/depth/L150/%s", strings.ToLower(currency.ToSymbol("")))
+	}
+	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+uri)
 	if err != nil {
 		return nil, err
 	}
@@ -156,8 +157,6 @@ func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		}
 	}
 
-	//sort.Sort(sort.Reverse(depth.AskList))
-
 	return depth, nil
 }
 func (fc *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (interface{}, error) {
@@ -195,7 +194,6 @@ func (fc *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (
 
 		json.Unmarshal(respbody, &respmap)
 	}
-	//log.Println(respmap)
 	if ToInt(respmap["status"]) != 0 {
 		return nil, errors.New(respmap["msg"].(string))
 	}
@@ -236,7 +234,6 @@ func (fc *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 	sum := mac.Sum(nil)
 
 	s := base64.StdEncoding.EncodeToString(sum)
-	//log.Println(s)
 	return s
 }
 
@@ -267,12 +264,13 @@ func (fc *FCoin) placeOrder(orderType, orderSide, amount, price string, pair Cur
 	}
 
 	return &Order{
-		Currency: pair,
-		OrderID2: r.(string),
-		Amount:   ToFloat64(amount),
-		Price:    ToFloat64(price),
-		Side:     TradeSide(side),
-		Status:   ORDER_UNFINISH}, nil
+		Currency:  pair,
+		OrderID2:  r.(string),
+		Amount:    ToFloat64(amount),
+		Price:     ToFloat64(price),
+		Side:      TradeSide(side),
+		Status:    ORDER_UNFINISH,
+		OrderTime: int(time.Now().UnixNano() / 1000000)}, nil
 }
 
 func (fc *FCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
@@ -346,11 +344,6 @@ func (fc *FCoin) GetOneOrder(orderId string, currency CurrencyPair) (*Order, err
 	}
 
 	return fc.toOrder(r.(map[string]interface{}), currency), nil
-
-}
-
-func (fc *FCoin) GetOrdersList() {
-	//path := API_URL + fmt.Sprintf(CANCEL_ORDER_API, strings.ToLower(currency.ToSymbol("")))
 
 }
 
@@ -471,12 +464,10 @@ func (fc *FCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize i
 }
 
 func (fc *FCoin) GetAccount() (*Account, error) {
-
 	r, err := fc.doAuthenticatedRequest("GET", "accounts/balance", url.Values{})
 	if err != nil {
 		return nil, err
 	}
-
 	acc := new(Account)
 	acc.SubAccounts = make(map[Currency]SubAccount)
 	acc.Exchange = fc.GetExchangeName()
@@ -491,13 +482,79 @@ func (fc *FCoin) GetAccount() (*Account, error) {
 			ForzenAmount: ToFloat64(vv["frozen"]),
 		}
 	}
-
 	return acc, nil
+}
 
+func (fc *FCoin) GetAssets() ([]Asset, error) {
+	r, err := fc.doAuthenticatedRequest("GET", "assets/accounts/balance", url.Values{})
+	if err != nil {
+		return nil, err
+	}
+	assets := make([]Asset, 0)
+	balances := r.([]interface{})
+	for _, v := range balances {
+		vv := v.(map[string]interface{})
+		currency := NewCurrency(vv["currency"].(string), "")
+		assets = append(assets, Asset{
+			Currency:  currency,
+			Avaliable: ToFloat64(vv["available"]),
+			Frozen:    ToFloat64(vv["frozen"]),
+			Finances:  ToFloat64(vv["demand_deposit"]),
+			Lock:      ToFloat64(vv["lock_deposit"]),
+			Total:     ToFloat64(vv["balance"]),
+		})
+	}
+	return assets, nil
+}
+
+// from, to: assets, spot
+func (fc *FCoin) AssetTransfer(currency Currency, amount, from, to string) (bool, error) {
+	params := url.Values{}
+	params.Set("currency", strings.ToLower(currency.String()))
+	params.Set("amount", amount)
+	_, err := fc.doAuthenticatedRequest("POST", fmt.Sprintf("assets/accounts/%s-to-%s", from, to), params)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (fc *FCoin) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	panic("not implement")
+
+	uri := fmt.Sprintf("market/candles/%s/%s?limit=%d", _INERNAL_KLINE_PERIOD_CONVERTER[period], strings.ToLower(currency.ToSymbol("")), size)
+
+	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+uri)
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(float64) != 0 {
+		return nil, errors.New(respmap["msg"].(string))
+	}
+
+	datamap, isOk := respmap["data"].([]interface{})
+
+	if !isOk {
+		return nil, errors.New("kline error")
+	}
+
+	var klineRecords []Kline
+
+	for _, record := range datamap {
+		r := record.(map[string]interface{})
+		klineRecords = append(klineRecords, Kline{
+			Pair:      currency,
+			Timestamp: int64(ToInt(r["id"])),
+			Open:      ToFloat64(r["open"]),
+			Close:     ToFloat64(r["close"]),
+			High:      ToFloat64(r["high"]),
+			Low:       ToFloat64(r["low"]),
+			Vol:       ToFloat64(r["quote_vol"]),
+		})
+	}
+
+	return klineRecords, nil
 }
 
 //非个人，整个交易所的交易记录
