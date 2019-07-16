@@ -56,14 +56,15 @@ func (ok *OKExSpot) GetAccount() (*Account, error) {
 }
 
 type PlaceOrderParam struct {
-	ClientOid    string  `json:"client_oid"`
-	Type         string  `json:"type"`
-	Side         string  `json:"side"`
-	InstrumentId string  `json:"instrument_id"`
-	OrderType    int     `json:"order_type"`
-	Price        float64 `json:"price"`
-	Size         float64 `json:"size"`
-	Notional     float64 `json:"notional"`
+	ClientOid     string  `json:"client_oid"`
+	Type          string  `json:"type"`
+	Side          string  `json:"side"`
+	InstrumentId  string  `json:"instrument_id"`
+	OrderType     int     `json:"order_type"`
+	Price         float64 `json:"price"`
+	Size          float64 `json:"size"`
+	Notional      float64 `json:"notional"`
+	MarginTrading string  `json:"margin_trading,omitempty"`
 }
 
 type PlaceOrderResponse struct {

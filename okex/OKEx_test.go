@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+	"time"
 )
 
 //
@@ -141,6 +142,15 @@ func TestOKExFuture_GetRate(t *testing.T) {
 	t.Log(okex.OKExFuture.GetRate())
 }
 
+func TestOKExFuture_GetKlineRecords(t *testing.T) {
+	since := time.Now().Add(-24 * time.Hour).Unix()
+	kline,err := okex.OKExFuture.GetKlineRecords(goex.QUARTER_CONTRACT, goex.BTC_USD, goex.KLINE_PERIOD_4H, 0, int(since))
+	assert.Nil(t,err)
+	for _,k := range kline {
+		t.Logf("%+v",k.Kline)
+	}
+}
+
 func TestOKExWallet_GetAccount(t *testing.T) {
 	t.Log(okex.OKExWallet.GetAccount())
 }
@@ -179,4 +189,48 @@ func TestOKExWallet_GetDepositHistory(t *testing.T) {
 
 func TestOKExWallet_GetWithDrawalHistory(t *testing.T) {
 	t.Log(okex.OKExWallet.GetWithDrawalHistory(&goex.XRP))
+}
+
+func TestOKExMargin_GetMarginAccount(t *testing.T) {
+	t.Log(okex.OKExMargin.GetMarginAccount(goex.EOS_USDT))
+}
+
+func TestOKExMargin_Borrow(t *testing.T) {
+	t.Log(okex.OKExMargin.Borrow(goex.BorrowParameter{
+		Currency:     goex.EOS,
+		CurrencyPair: goex.EOS_USDT,
+		Amount:       10,
+	}))
+}
+
+func TestOKExMargin_Repayment(t *testing.T) {
+	t.Log(okex.OKExMargin.Repayment(goex.RepaymentParameter{
+		BorrowParameter: goex.BorrowParameter{
+			Currency:     goex.EOS,
+			CurrencyPair: goex.EOS_USDT,
+			Amount:       10},
+		BorrowId: "123"}))
+}
+
+func TestOKExMargin_PlaceOrder(t *testing.T) {
+	t.Log(okex.OKExMargin.PlaceOrder(&goex.Order{
+		Currency:  goex.EOS_USDT,
+		Amount:    0.2,
+		Price:     6,
+		Type:      "limit",
+		OrderType: ORDINARY,
+		Side:      goex.SELL,
+	}))
+}
+
+func TestOKExMargin_GetUnfinishOrders(t *testing.T) {
+	t.Log(okex.OKExMargin.GetUnfinishOrders(goex.EOS_USDT))
+}
+
+func TestOKExMargin_CancelOrder(t *testing.T) {
+	t.Log(okex.OKExMargin.CancelOrder("3174778420532224", goex.EOS_USDT))
+}
+
+func TestOKExMargin_GetOneOrder(t *testing.T) {
+	t.Log(okex.OKExMargin.GetOneOrder("3174778420532224", goex.EOS_USDT))
 }

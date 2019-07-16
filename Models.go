@@ -38,6 +38,22 @@ type SubAccount struct {
 	LoanAmount   float64
 }
 
+type MarginSubAccount struct {
+	Balance     float64
+	Frozen      float64
+	Available   float64
+	CanWithdraw float64
+	Loan        float64
+	LendingFee  float64
+}
+
+type MarginAccount struct {
+	Sub              map[Currency]MarginSubAccount
+	LiquidationPrice float64
+	RiskRate         float64
+	MarginRatio      float64
+}
+
 type Account struct {
 	Exchange    string
 	Asset       float64 //总资产
@@ -167,4 +183,17 @@ type FuturePosition struct {
 	ContractType   string
 	ContractId     int64
 	ForceLiquPrice float64 //预估爆仓价
+}
+
+//api parameter struct
+
+type BorrowParameter struct {
+	CurrencyPair CurrencyPair
+	Currency     Currency
+	Amount       float64
+}
+
+type RepaymentParameter struct {
+	BorrowParameter
+	BorrowId string
 }

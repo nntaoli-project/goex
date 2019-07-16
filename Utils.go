@@ -90,9 +90,9 @@ func ToInt64(v interface{}) int64 {
 	}
 }
 
-//n :保留的小数点位数
+//n :保留的小数点位数,去除末尾多余的0(StripTrailingZeros)
 func FloatToString(v float64, n int) string {
-	return fmt.Sprintf(fmt.Sprintf("%%.%df", n), v)
+	return strconv.FormatFloat(v, 'g', n+1, 64)
 }
 
 func ValuesToJson(v url.Values) ([]byte, error) {
