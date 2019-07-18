@@ -1,10 +1,10 @@
 package okex
 
 import (
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	. "github.com/nntaoli-project/GoEx"
-	"github.com/pkg/errors"
 	"sort"
 	"strings"
 	"sync"
@@ -259,7 +259,9 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 		ClientOid    string `json:"client_oid"`
 		OrderId      string `json:"order_id"`
 	}
-
+	if ord == nil {
+		return nil, errors.New("ord param is nil")
+	}
 	param.InstrumentId = ok.getFutureContractId(ord.Currency, ord.ContractName)
 	param.ClientOid = strings.Replace(uuid.New().String(), "-", "", 32)
 	param.Type = ord.OType
