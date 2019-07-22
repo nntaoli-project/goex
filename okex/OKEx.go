@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"strings"
 	"sync"
 	"time"
@@ -48,7 +47,6 @@ func (ok *OKEx) UUID() string {
 
 func (ok *OKEx) DoRequest(httpMethod, uri, reqBody string, response interface{}) error {
 	url := ok.config.Endpoint + uri
-	log.Println(url)
 	sign, timestamp := ok.doParamSign(httpMethod, uri, reqBody)
 	//log.Println(sign, timestamp)
 	resp, err := NewHttpRequest(ok.config.HttpClient, httpMethod, url, reqBody, map[string]string{
@@ -63,7 +61,7 @@ func (ok *OKEx) DoRequest(httpMethod, uri, reqBody string, response interface{})
 		//log.Println(err)
 		return err
 	} else {
-		log.Println(string(resp))
+		//	log.Println(string(resp))
 		return json.Unmarshal(resp, &response)
 	}
 }
@@ -136,27 +134,27 @@ func (ok *OKEx) LimitSell(amount, price string, currency CurrencyPair) (*Order, 
 }
 
 func (ok *OKEx) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return ok.MarketBuy(amount, price, currency)
+	return ok.OKExSpot.MarketBuy(amount, price, currency)
 }
 
 func (ok *OKEx) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return ok.MarketSell(amount, price, currency)
+	return ok.OKExSpot.MarketSell(amount, price, currency)
 }
 
 func (ok *OKEx) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
-	return ok.OKExSpot.CancelOrder(orderId, currency)
+	return ok.OKExSpot.OKExSpot.CancelOrder(orderId, currency)
 }
 
 func (ok *OKEx) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
-	return ok.GetOneOrder(orderId, currency)
+	return ok.OKExSpot.GetOneOrder(orderId, currency)
 }
 
 func (ok *OKEx) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
-	return ok.GetUnfinishOrders(currency)
+	return ok.OKExSpot.GetUnfinishOrders(currency)
 }
 
 func (ok *OKEx) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
-	return ok.GetOrderHistorys(currency, currentPage, pageSize)
+	return ok.OKExSpot.GetOrderHistorys(currency, currentPage, pageSize)
 }
 
 func (ok *OKEx) GetAccount() (*Account, error) {
@@ -168,7 +166,7 @@ func (ok *OKEx) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (ok *OKEx) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	return ok.GetDepth(size, currency)
+	return ok.OKExSpot.GetDepth(size, currency)
 }
 
 func (ok *OKEx) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
