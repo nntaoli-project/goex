@@ -12,13 +12,6 @@ import (
 	"time"
 )
 
-const (
-	ORDINARY  = 0
-	POST_ONLY = 1
-	FOK       = 2
-	IOC       = 3
-)
-
 type OKEx struct {
 	config     *APIConfig
 	OKExSpot   *OKExSpot

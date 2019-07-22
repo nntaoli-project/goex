@@ -131,3 +131,27 @@ const (
 	CRYPTOPIA   = "cryptopia.co.nz"
 	HBDM        = "hbdm.com"
 )
+
+type OderType int
+
+const (
+	ORDINARY  = 0 // normal order
+	POST_ONLY = 1 // only maker
+	FOK       = 2 // fill or kill
+	IOC       = 3 // Immediate or Cancel
+)
+
+func (ot OderType) String() string {
+	switch ot {
+	case ORDINARY:
+		return "ORDINARY"
+	case POST_ONLY:
+		return "POST_ONLY"
+	case FOK:
+		return "FOK"
+	case IOC:
+		return "IOC"
+	default:
+		return "UNKNOWN"
+	}
+}

@@ -1,7 +1,7 @@
 package okex
 
 import (
-	goex "github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
@@ -41,7 +41,7 @@ func TestOKExSpot_BatchPlaceOrders(t *testing.T) {
 			Price:     0.32,
 			Side:      goex.BUY,
 			Type:      "limit",
-			OrderType: ORDINARY,
+			OrderType: goex.ORDINARY,
 		},
 		{
 			Cid:       okex.UUID(),
@@ -49,7 +49,7 @@ func TestOKExSpot_BatchPlaceOrders(t *testing.T) {
 			Amount:    1,
 			Price:     5.2,
 			Side:      goex.BUY,
-			OrderType: ORDINARY,
+			OrderType: goex.ORDINARY,
 		},
 		goex.Order{
 			Cid:       okex.UUID(),
@@ -58,7 +58,7 @@ func TestOKExSpot_BatchPlaceOrders(t *testing.T) {
 			Price:     0.33,
 			Side:      goex.BUY,
 			Type:      "limit",
-			OrderType: ORDINARY,
+			OrderType: goex.ORDINARY,
 		}}))
 }
 
@@ -116,7 +116,7 @@ func TestOKExFuture_PlaceFutureOrder2(t *testing.T) {
 		Currency:     goex.EOS_USD,
 		ContractName: goex.QUARTER_CONTRACT,
 		OType:        goex.OPEN_BUY,
-		OrderType:    ORDINARY,
+		OrderType:    goex.ORDINARY,
 		Price:        5.9,
 		Amount:       10,
 		LeverRate:    10}))
@@ -144,10 +144,10 @@ func TestOKExFuture_GetRate(t *testing.T) {
 
 func TestOKExFuture_GetKlineRecords(t *testing.T) {
 	since := time.Now().Add(-24 * time.Hour).Unix()
-	kline,err := okex.OKExFuture.GetKlineRecords(goex.QUARTER_CONTRACT, goex.BTC_USD, goex.KLINE_PERIOD_4H, 0, int(since))
-	assert.Nil(t,err)
-	for _,k := range kline {
-		t.Logf("%+v",k.Kline)
+	kline, err := okex.OKExFuture.GetKlineRecords(goex.QUARTER_CONTRACT, goex.BTC_USD, goex.KLINE_PERIOD_4H, 0, int(since))
+	assert.Nil(t, err)
+	for _, k := range kline {
+		t.Logf("%+v", k.Kline)
 	}
 }
 
@@ -218,7 +218,7 @@ func TestOKExMargin_PlaceOrder(t *testing.T) {
 		Amount:    0.2,
 		Price:     6,
 		Type:      "limit",
-		OrderType: ORDINARY,
+		OrderType: goex.ORDINARY,
 		Side:      goex.SELL,
 	}))
 }
