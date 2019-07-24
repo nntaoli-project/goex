@@ -48,7 +48,7 @@ func (ok *OKExSpot) GetAccount() (*Account, error) {
 		account.SubAccounts[currency] = SubAccount{
 			Currency:     currency,
 			ForzenAmount: itm.Hold,
-			Amount:       itm.Balance,
+			Amount:       itm.Available,
 		}
 	}
 
