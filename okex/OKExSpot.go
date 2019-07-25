@@ -48,7 +48,7 @@ func (ok *OKExSpot) GetAccount() (*Account, error) {
 		account.SubAccounts[currency] = SubAccount{
 			Currency:     currency,
 			ForzenAmount: itm.Hold,
-			Amount:       itm.Balance,
+			Amount:       itm.Available,
 		}
 	}
 
@@ -346,6 +346,7 @@ func (ok *OKExSpot) GetTicker(currency CurrencyPair) (*Ticker, error) {
 		Vol:  response.BaseVolume24h,
 		Date: uint64(time.Duration(date.UnixNano() / int64(time.Millisecond)))}, nil
 }
+
 func (ok *OKExSpot) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	urlPath := fmt.Sprintf("/api/spot/v3/instruments/%s/book?size=%d", currency.AdaptUsdToUsdt().ToSymbol("-"), size)
 
@@ -382,8 +383,66 @@ func (ok *OKExSpot) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	return dep, nil
 }
+
 func (ok *OKExSpot) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	panic("unsupported")
+	urlPath := "/api/spot/v3/instruments/%s/candles?granularity=%d"
+
+	if since > 0 {
+		sinceTime := time.Unix(int64(since), 0).UTC()
+		if since/int(time.Second) != 1 { //如果不为秒，转为秒
+			sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
+		}
+		urlPath += "&start=" + sinceTime.Format(time.RFC3339)
+	}
+
+	granularity := 60
+	switch period {
+	case KLINE_PERIOD_1MIN:
+		granularity = 60
+	case KLINE_PERIOD_3MIN:
+		granularity = 180
+	case KLINE_PERIOD_5MIN:
+		granularity = 300
+	case KLINE_PERIOD_15MIN:
+		granularity = 900
+	case KLINE_PERIOD_30MIN:
+		granularity = 1800
+	case KLINE_PERIOD_1H, KLINE_PERIOD_60MIN:
+		granularity = 3600
+	case KLINE_PERIOD_2H:
+		granularity = 7200
+	case KLINE_PERIOD_4H:
+		granularity = 14400
+	case KLINE_PERIOD_6H:
+		granularity = 21600
+	case KLINE_PERIOD_1DAY:
+		granularity = 86400
+	case KLINE_PERIOD_1WEEK:
+		granularity = 604800
+	default:
+		granularity = 1800
+	}
+
+	var response [][]interface{}
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, currency.AdaptUsdToUsdt().ToSymbol("-"), granularity), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var klines []Kline
+	for _, itm := range response {
+		t, _ := time.Parse(time.RFC3339, fmt.Sprint(itm[0]))
+		klines = append(klines, Kline{
+			Timestamp: t.Unix(),
+			Pair:      currency,
+			Open:      ToFloat64(itm[1]),
+			High:      ToFloat64(itm[2]),
+			Low:       ToFloat64(itm[3]),
+			Close:     ToFloat64(itm[4]),
+			Vol:       ToFloat64(itm[5])})
+	}
+
+	return klines, nil
 }
 
 //非个人，整个交易所的交易记录

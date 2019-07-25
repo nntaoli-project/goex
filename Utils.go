@@ -6,9 +6,11 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 func ToFloat64(v interface{}) float64 {
@@ -92,7 +94,8 @@ func ToInt64(v interface{}) int64 {
 
 //n :保留的小数点位数,去除末尾多余的0(StripTrailingZeros)
 func FloatToString(v float64, n int) string {
-	return strconv.FormatFloat(v, 'g', n+1, 64)
+	ret := strconv.FormatFloat(v, 'f', n, 64)
+	return strconv.FormatFloat(ToFloat64(ret), 'f', -1, 64) //StripTrailingZeros
 }
 
 func ValuesToJson(v url.Values) ([]byte, error) {
@@ -117,4 +120,8 @@ func GzipUnCompress(data []byte) ([]byte, error) {
 
 func FlateUnCompress(data []byte) ([]byte, error) {
 	return ioutil.ReadAll(flate.NewReader(bytes.NewReader(data)))
+}
+
+func UUID() string {
+	return strings.Replace(uuid.New().String(), "-", "", 32)
 }
