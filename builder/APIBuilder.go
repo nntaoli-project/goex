@@ -8,6 +8,7 @@ import (
 	"github.com/nntaoli-project/GoEx/binance"
 	"github.com/nntaoli-project/GoEx/bitfinex"
 	"github.com/nntaoli-project/GoEx/bithumb"
+	"github.com/nntaoli-project/GoEx/bitmex"
 	"github.com/nntaoli-project/GoEx/bitstamp"
 	"github.com/nntaoli-project/GoEx/bittrex"
 	//"github.com/nntaoli-project/GoEx/coin58"
@@ -228,6 +229,12 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 
 func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 	switch exName {
+	case BITMEX:
+		return bitmex.New(&APIConfig{
+			Endpoint:     "https://www.bitmex.com/",
+			HttpClient:   builder.client,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey})
 	case OKEX_FUTURE:
 		return okcoin.NewOKEx(builder.client, builder.apiKey, builder.secretkey)
 	case HBDM:

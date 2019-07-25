@@ -6,9 +6,11 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 func ToFloat64(v interface{}) float64 {
@@ -118,4 +120,8 @@ func GzipUnCompress(data []byte) ([]byte, error) {
 
 func FlateUnCompress(data []byte) ([]byte, error) {
 	return ioutil.ReadAll(flate.NewReader(bytes.NewReader(data)))
+}
+
+func UUID() string {
+	return strings.Replace(uuid.New().String(), "-", "", 32)
 }
