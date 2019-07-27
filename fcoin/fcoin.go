@@ -24,8 +24,9 @@ type FCoin struct {
 	baseUrl,
 	accessKey,
 	secretKey string
-	timeoffset   int64
-	tradeSymbols []TradeSymbol
+	timeoffset    int64
+	tradeSymbols  []TradeSymbol
+	tradeSymbols2 []TradeSymbol2
 }
 
 type TradeSymbol struct {
@@ -35,6 +36,18 @@ type TradeSymbol struct {
 	PriceDecimal  int    `json:"price_decimal"`
 	AmountDecimal int    `json:"amount_decimal"`
 	Tradable      bool   `json:"tradable"`
+}
+
+type TradeSymbol2 struct {
+	TradeSymbol
+	Category           string  `json:"category"`
+	LeveragedMultiple  int     `json:"leveraged_multiple"`
+	MarketOrderEnabled bool    `json:"market_order_enabled"`
+	LimitAmountMin     float64 `json:"limit_amount_min"`
+	LimitAmountMax     float64 `json:"limit_amount_max"`
+	MainTag            string  `json:"main_tag"`
+	DailyOpenAt        string  `json:"daily_open_at"`
+	DailyCloseAt       string  `json:"daily_close_at"`
 }
 
 type Asset struct {
@@ -603,6 +616,60 @@ func (fc *FCoin) GetTradeSymbols(currencyPair CurrencyPair) (*TradeSymbol, error
 	for k, v := range fc.tradeSymbols {
 		if v.Name == strings.ToLower(currencyPair.ToSymbol("")) {
 			return &fc.tradeSymbols[k], nil
+		}
+	}
+	return nil, errors.New("symbol not found")
+}
+
+func (fc *FCoin) getTradeSymbols2() ([]TradeSymbol2, error) {
+	respmap, err := HttpGet(fc.httpClient, "https://www.fcoin.com/openapi/v2/symbols")
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(string) != "ok" {
+		return nil, errors.New(respmap["msg"].(string))
+	}
+
+	datamap := respmap["data"].(map[string]interface{})
+	symbols := datamap["symbols"].(map[string]interface{})
+	tradeSymbols := make([]TradeSymbol2, 0)
+	for _, v := range symbols {
+		vv := v.(map[string]interface{})
+		var symbol TradeSymbol2
+		symbol.Name = vv["symbol"].(string)
+		symbol.BaseCurrency = vv["base_currency"].(string)
+		symbol.QuoteCurrency = vv["quote_currency"].(string)
+		symbol.PriceDecimal = int(vv["price_decimal"].(float64))
+		symbol.AmountDecimal = int(vv["amount_decimal"].(float64))
+		symbol.Tradable = vv["tradable"].(bool)
+		symbol.Category = vv["category"].(string)
+		symbol.LeveragedMultiple = vv["leveraged_multiple"].(int)
+		symbol.MarketOrderEnabled = vv["market_order_enabled"].(bool)
+		symbol.LimitAmountMin = vv["limit_amount_min"].(float64)
+		symbol.LimitAmountMax = vv["limit_amount_max"].(float64)
+		symbol.MainTag = vv["main_tag"].(string)
+		symbol.DailyOpenAt = vv["daily_open_at"].(string)
+		symbol.DailyCloseAt = vv["daily_close_at"].(string)
+
+		if symbol.Tradable {
+			tradeSymbols = append(tradeSymbols, symbol)
+		}
+	}
+	return tradeSymbols, nil
+}
+
+func (fc *FCoin) GetTradeSymbols2(currencyPair CurrencyPair) (*TradeSymbol2, error) {
+	if len(fc.tradeSymbols2) == 0 {
+		var err error
+		fc.tradeSymbols2, err = fc.getTradeSymbols2()
+		if err != nil {
+			return nil, err
+		}
+	}
+	for k, v := range fc.tradeSymbols2 {
+		if v.Name == strings.ToLower(currencyPair.ToSymbol("")) {
+			return &fc.tradeSymbols2[k], nil
 		}
 	}
 	return nil, errors.New("symbol not found")

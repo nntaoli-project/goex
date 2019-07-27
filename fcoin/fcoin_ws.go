@@ -83,7 +83,6 @@ func NewFCoinWs(client *http.Client) *FCoinWs {
 
 		}, 25*time.Second).
 		ReconnectIntervalTime(24 * time.Hour).
-		UnCompressFunc(FlateUnCompress).
 		ProtoHandleFunc(fcWs.handle)
 	fc := NewFCoin(client, "", "")
 	fcWs.tradeSymbols = fc.tradeSymbols
@@ -220,19 +219,6 @@ func (fcWs *FCoinWs) parseDepthData(bids, asks []interface{}) *Depth {
 	}
 
 	return depth
-}
-
-func (fcWs *FCoinWs) parseKlineData(tickmap []interface{}) *Ticker {
-	t := new(Ticker)
-	t.Date = uint64(time.Now().UnixNano() / 1000000)
-	t.Last = ToFloat64(tickmap[0])
-	t.Vol = ToFloat64(tickmap[9])
-	t.Low = ToFloat64(tickmap[8])
-	t.High = ToFloat64(tickmap[7])
-	t.Buy = ToFloat64(tickmap[2])
-	t.Sell = ToFloat64(tickmap[4])
-
-	return t
 }
 
 func (fcWs *FCoinWs) handle(msg []byte) error {

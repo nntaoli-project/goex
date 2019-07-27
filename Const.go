@@ -53,6 +53,8 @@ const (
 	CLOSE_SELL            //平空
 )
 
+type KlinePeriod int
+
 //k线周期
 const (
 	KLINE_PERIOD_1MIN = 1 + iota
