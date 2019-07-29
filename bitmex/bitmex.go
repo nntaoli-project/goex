@@ -30,9 +30,9 @@ func New(config *APIConfig) *bitmex {
 
 func (bm *bitmex) generateSignature(httpMethod, uri, data, nonce string) string {
 	payload := strings.ToUpper(httpMethod) + uri + nonce + data
-	println(payload)
+	//println(payload)
 	sign, _ := GetParamHmacSHA256Sign(bm.ApiSecretKey, payload)
-	println(sign)
+	//println(sign)
 	return sign
 }
 
@@ -51,7 +51,7 @@ func (bm *bitmex) doAuthRequest(m, uri, param string, r interface{}) error {
 	if err != nil {
 		return err
 	} else {
-		println(string(resp))
+		//println(string(resp))
 		return json.Unmarshal(resp, &r)
 	}
 	return nil
@@ -103,6 +103,8 @@ type BitmexOrder struct {
 	ClOrdID     string    `json:"clOrdID"`
 	Price       float64   `json:"price,omitempty"`
 	OrderQty    int       `json:"orderQty"`
+	CumQty      int       `json:"cumQty"`
+	AvgPx       float64   `json:"avgPx"`
 	OrdType     string    `json:"ordType"`
 	Text        string    `json:"text"`
 	TimeInForce string    `json:"timeInForce,omitempty"`
@@ -171,6 +173,7 @@ func (bm *bitmex) FutureCancelOrder(currencyPair CurrencyPair, contractType, ord
 
 func (bm *bitmex) GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error) {
 	var response []struct {
+		CurrentQty        int       `json:"currentQty"`
 		OpeningQty        int       `json:"openingQty"`
 		AvgCostPrice      float64   `json:"avgCostPrice"`
 		AvgEntryPrice     float64   `json:"avgEntryPrice"`
@@ -196,14 +199,14 @@ func (bm *bitmex) GetFuturePosition(currencyPair CurrencyPair, contractType stri
 		pos.ForceLiquPrice = p.LiquidationPrice
 		pos.LeverRate = p.Leverage
 
-		if p.OpeningQty < 0 {
-			pos.SellAmount = float64(-p.OpeningQty)
+		if p.CurrentQty < 0 {
+			pos.SellAmount = float64(-p.CurrentQty)
 			pos.SellAvailable = pos.SellAmount - p.OpenOrderBuyQty
 			pos.SellPriceCost = p.AvgCostPrice
 			pos.SellPriceAvg = p.AvgEntryPrice
 			pos.SellProfitReal = p.UnrealisedPnlPcnt
 		} else {
-			pos.BuyAmount = float64(p.OpeningQty)
+			pos.BuyAmount = float64(p.CurrentQty)
 			pos.BuyPriceCost = p.AvgCostPrice
 			pos.BuyPriceAvg = p.AvgEntryPrice
 			pos.BuyProfitReal = p.UnrealisedPnlPcnt
@@ -399,10 +402,12 @@ func (bm *bitmex) adaptOrder(o BitmexOrder) FutureOrder {
 		status = ORDER_CANCEL
 	}
 	return FutureOrder{
-		OrderID2:  o.OrderID,
-		ClientOid: o.ClOrdID,
-		Amount:    float64(o.OrderQty),
-		Price:     o.Price,
-		Status:    status,
-		OrderTime: o.Timestamp.Unix()}
+		OrderID2:   o.OrderID,
+		ClientOid:  o.ClOrdID,
+		Amount:     float64(o.OrderQty),
+		Price:      o.Price,
+		DealAmount: float64(o.CumQty),
+		AvgPrice:   o.AvgPx,
+		Status:     status,
+		OrderTime:  o.Timestamp.Unix()}
 }

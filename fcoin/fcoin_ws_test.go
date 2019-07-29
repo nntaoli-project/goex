@@ -1,8 +1,8 @@
 package fcoin
 
 import (
-	"fmt"
 	"github.com/nntaoli-project/GoEx"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -25,20 +25,20 @@ var fcws = NewFCoinWs(&http.Client{
 
 func init() {
 	fcws.ProxyUrl("socks5://127.0.0.1:1080")
-	fcws.SetCallbacks(printfTicker, printfDepth, printfTrade, printfKline)
+	fcws.SetCallbacks(printfTicker, printfDepth, printfTrade, nil)
 }
 
 func printfTicker(ticker *goex.Ticker) {
-	fmt.Println(ticker)
+	log.Println("ticker:", ticker)
 }
 func printfDepth(depth *goex.Depth) {
-	fmt.Println(depth)
+	log.Println("depth:", depth)
 }
 func printfTrade(trade *goex.Trade) {
-	fmt.Println(trade)
+	log.Println("trade:", trade)
 }
 func printfKline(kline *goex.Kline, period int) {
-	fmt.Println(kline)
+	log.Println("kline:", kline)
 }
 
 func TestFCoinWs_GetTickerWithWs(t *testing.T) {
@@ -52,7 +52,7 @@ func TestFCoinWs_GetDepthWithWs(t *testing.T) {
 	time.Sleep(time.Second * 10)
 }
 func TestFCoinWs_GetKLineWithWs(t *testing.T) {
-	//return
+	return
 	fcws.SubscribeKline(goex.BTC_USDT, goex.KLINE_PERIOD_1MIN)
 	time.Sleep(time.Second * 120)
 }
@@ -60,4 +60,12 @@ func TestFCoinWs_GetTradesWithWs(t *testing.T) {
 	return
 	fcws.SubscribeTrade(goex.BTC_USDT)
 	time.Sleep(time.Second * 10)
+}
+func TestNewFCoinWs(t *testing.T) {
+	fcws.SubscribeTrade(goex.BTC_USDT)
+	//fcws.SubscribeKline(goex.BTC_USDT, goex.KLINE_PERIOD_1MIN)
+	//fcws.SubscribeDepth(goex.BTC_USDT, 20)
+	fcws.SubscribeTicker(goex.BTC_USDT)
+	time.Sleep(time.Minute * 10)
+
 }
