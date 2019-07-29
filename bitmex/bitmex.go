@@ -103,6 +103,8 @@ type BitmexOrder struct {
 	ClOrdID     string    `json:"clOrdID"`
 	Price       float64   `json:"price,omitempty"`
 	OrderQty    int       `json:"orderQty"`
+	CumQty      int       `json:"cumQty"`
+	AvgPx       float64   `json:"avgPx"`
 	OrdType     string    `json:"ordType"`
 	Text        string    `json:"text"`
 	TimeInForce string    `json:"timeInForce,omitempty"`
@@ -399,10 +401,12 @@ func (bm *bitmex) adaptOrder(o BitmexOrder) FutureOrder {
 		status = ORDER_CANCEL
 	}
 	return FutureOrder{
-		OrderID2:  o.OrderID,
-		ClientOid: o.ClOrdID,
-		Amount:    float64(o.OrderQty),
-		Price:     o.Price,
-		Status:    status,
-		OrderTime: o.Timestamp.Unix()}
+		OrderID2:   o.OrderID,
+		ClientOid:  o.ClOrdID,
+		Amount:     float64(o.OrderQty),
+		Price:      o.Price,
+		DealAmount: float64(o.CumQty),
+		AvgPrice:   o.AvgPx,
+		Status:     status,
+		OrderTime:  o.Timestamp.Unix()}
 }
