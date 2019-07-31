@@ -7,6 +7,7 @@ import (
 	. "github.com/nntaoli-project/GoEx"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -179,6 +180,62 @@ func (bnWs *BinanceWs) SubscribeTrade(pair CurrencyPair) error {
 			}
 			trade.Pair = pair
 			bnWs.tradeCallback(trade)
+			return nil
+		default:
+			return errors.New("unknown message " + msgType)
+		}
+		return nil
+	}
+	bnWs.subscribe(endpoint, handle)
+	return nil
+}
+
+type AggTrade struct {
+	Trade
+	FirstBreakdownTradeID int64 `json:"f"`
+	LastBreakdownTradeID  int64 `json:"l"`
+	TradeTime             int64 `json:"T"`
+}
+
+func (bnWs *BinanceWs) SubscribeAggTrade(pair CurrencyPair, tradeCallback func(*Trade)) error {
+	if tradeCallback == nil {
+		return errors.New("please set trade callback func")
+	}
+	endpoint := fmt.Sprintf("%s/%s@aggTrade", bnWs.baseURL, strings.ToLower(pair.ToSymbol("")))
+
+	handle := func(msg []byte) error {
+		datamap := make(map[string]interface{})
+		err := json.Unmarshal(msg, &datamap)
+		if err != nil {
+			fmt.Println("json unmarshal error for ", string(msg))
+			return err
+		}
+
+		msgType, isOk := datamap["e"].(string)
+		if !isOk {
+			return errors.New("no message type")
+		}
+
+		switch msgType {
+		case "aggTrade":
+			side := BUY
+			if datamap["m"].(bool) == false {
+				side = SELL
+			}
+			aggTrade := &AggTrade{
+				Trade: Trade{
+					Tid:    int64(ToUint64(datamap["a"])),
+					Type:   TradeSide(side),
+					Amount: ToFloat64(datamap["q"]),
+					Price:  ToFloat64(datamap["p"]),
+					Date:   int64(ToUint64(datamap["E"])),
+				},
+				FirstBreakdownTradeID: int64(ToUint64(datamap["f"])),
+				LastBreakdownTradeID:  int64(ToUint64(datamap["l"])),
+				TradeTime:             int64(ToUint64(datamap["T"])),
+			}
+			aggTrade.Pair = pair
+			tradeCallback((*Trade)(unsafe.Pointer(aggTrade)))
 			return nil
 		default:
 			return errors.New("unknown message " + msgType)
