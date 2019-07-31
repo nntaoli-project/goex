@@ -75,12 +75,20 @@ func (fc *FCoin) GetExchangeName() string {
 	return FCOIN
 }
 
-func (fc *FCoin) setTimeOffset() error {
+func (fc *FCoin) GetServerTime() (int64, error) {
 	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+"public/server-time")
+	if err != nil {
+		return 0, err
+	}
+	stime := int64(ToInt(respmap["data"]))
+	return stime, nil
+}
+
+func (fc *FCoin) setTimeOffset() error {
+	stime, err := fc.GetServerTime()
 	if err != nil {
 		return err
 	}
-	stime := int64(ToInt(respmap["data"]))
 	st := time.Unix(stime/1000, 0)
 	lt := time.Now()
 	offset := st.Sub(lt).Seconds()
