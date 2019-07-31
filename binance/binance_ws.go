@@ -146,6 +146,12 @@ func (bnWs *BinanceWs) SubscribeTicker(pair CurrencyPair) error {
 	return nil
 }
 
+type RawTrade struct {
+	Trade
+	BuyerOrderID  int64 `json:"b"`
+	SellerOrderID int64 `json:"a"`
+}
+
 func (bnWs *BinanceWs) SubscribeTrade(pair CurrencyPair) error {
 	if bnWs.tradeCallback == nil {
 		return errors.New("please set trade callback func")
@@ -171,15 +177,19 @@ func (bnWs *BinanceWs) SubscribeTrade(pair CurrencyPair) error {
 			if datamap["m"].(bool) == false {
 				side = SELL
 			}
-			trade := &Trade{
-				Tid:    int64(ToUint64(datamap["t"])),
-				Type:   TradeSide(side),
-				Amount: ToFloat64(datamap["q"]),
-				Price:  ToFloat64(datamap["p"]),
-				Date:   int64(ToUint64(datamap["E"])),
+			trade := &RawTrade{
+				Trade: Trade{
+					Tid:    int64(ToUint64(datamap["t"])),
+					Type:   TradeSide(side),
+					Amount: ToFloat64(datamap["q"]),
+					Price:  ToFloat64(datamap["p"]),
+					Date:   int64(ToUint64(datamap["T"])),
+				},
+				BuyerOrderID:  ToInt64(datamap["b"]),
+				SellerOrderID: ToInt64(datamap["a"]),
 			}
 			trade.Pair = pair
-			bnWs.tradeCallback(trade)
+			bnWs.tradeCallback((*Trade)(unsafe.Pointer(trade)))
 			return nil
 		default:
 			return errors.New("unknown message " + msgType)

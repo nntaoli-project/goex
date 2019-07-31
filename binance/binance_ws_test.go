@@ -23,6 +23,8 @@ func printfDepth(depth *goex.Depth) {
 }
 func printfTrade(trade *goex.Trade) {
 	log.Println("trade:", trade)
+	log.Println("trade:", (*RawTrade)(unsafe.Pointer(trade)))
+
 }
 func printfAggTrade(aggTrade *goex.Trade) {
 	log.Println("trade:", (*AggTrade)(unsafe.Pointer(aggTrade)))
@@ -48,12 +50,12 @@ func TestBinanceWs_GetKLineWithWs(t *testing.T) {
 	time.Sleep(time.Second * 10)
 }
 func TestBinanceWs_GetTradesWithWs(t *testing.T) {
-	return
+	//return
 	bnWs.SubscribeTrade(goex.BTC_USDT)
 	time.Sleep(time.Second * 5)
 }
 func TestBinanceWs_SubscribeAggTrade(t *testing.T) {
-	//return
+	return
 	bnWs.SubscribeAggTrade(goex.BTC_USDT, printfAggTrade)
 	time.Sleep(time.Second * 5)
 }
