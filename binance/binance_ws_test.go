@@ -5,6 +5,7 @@ import (
 	"log"
 	"testing"
 	"time"
+	"unsafe"
 )
 
 var bnWs = NewBinanceWs()
@@ -22,6 +23,11 @@ func printfDepth(depth *goex.Depth) {
 }
 func printfTrade(trade *goex.Trade) {
 	log.Println("trade:", trade)
+	log.Println("trade:", (*RawTrade)(unsafe.Pointer(trade)))
+
+}
+func printfAggTrade(aggTrade *goex.Trade) {
+	log.Println("trade:", (*AggTrade)(unsafe.Pointer(aggTrade)))
 }
 func printfKline(kline *goex.Kline, period int) {
 	log.Println("kline:", kline)
@@ -34,7 +40,7 @@ func TestBinanceWs_SubscribeTicker(t *testing.T) {
 }
 
 func TestBinanceWs_GetDepthWithWs(t *testing.T) {
-	//return
+	return
 	bnWs.SubscribeDepth(goex.BTC_USDT, 5)
 	time.Sleep(time.Second * 10)
 }
@@ -47,4 +53,14 @@ func TestBinanceWs_GetTradesWithWs(t *testing.T) {
 	return
 	bnWs.SubscribeTrade(goex.BTC_USDT)
 	time.Sleep(time.Second * 5)
+}
+func TestBinanceWs_SubscribeAggTrade(t *testing.T) {
+	return
+	bnWs.SubscribeAggTrade(goex.BTC_USDT, printfAggTrade)
+	time.Sleep(time.Second * 5)
+}
+func TestBinanceWs_SubscribeDiffDepth(t *testing.T) {
+	bnWs.SubscribeDiffDepth(goex.BTC_USDT, printfDepth)
+	time.Sleep(time.Second * 10)
+
 }

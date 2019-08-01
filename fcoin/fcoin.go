@@ -35,7 +35,7 @@ type TradeSymbol struct {
 	QuoteCurrency string `json:"quote_currency"`
 	PriceDecimal  int    `json:"price_decimal"`
 	AmountDecimal int    `json:"amount_decimal"`
-	Tradable      bool   `json:"tradable"`
+	Tradeable     bool   `json:"tradable"`
 }
 
 type TradeSymbol2 struct {
@@ -605,8 +605,8 @@ func (fc *FCoin) getTradeSymbols() ([]TradeSymbol, error) {
 		symbol.QuoteCurrency = vv["quote_currency"].(string)
 		symbol.PriceDecimal = int(vv["price_decimal"].(float64))
 		symbol.AmountDecimal = int(vv["amount_decimal"].(float64))
-		symbol.Tradable = vv["tradable"].(bool)
-		if symbol.Tradable {
+		symbol.Tradeable = vv["tradable"].(bool)
+		if symbol.Tradeable {
 			tradeSymbols = append(tradeSymbols, symbol)
 		}
 	}
@@ -645,22 +645,22 @@ func (fc *FCoin) getTradeSymbols2() ([]TradeSymbol2, error) {
 	for _, v := range symbols {
 		vv := v.(map[string]interface{})
 		var symbol TradeSymbol2
-		symbol.Name = vv["symbol"].(string)
-		symbol.BaseCurrency = vv["base_currency"].(string)
-		symbol.QuoteCurrency = vv["quote_currency"].(string)
-		symbol.PriceDecimal = int(vv["price_decimal"].(float64))
-		symbol.AmountDecimal = int(vv["amount_decimal"].(float64))
-		symbol.Tradable = vv["tradable"].(bool)
-		symbol.Category = vv["category"].(string)
-		symbol.LeveragedMultiple = vv["leveraged_multiple"].(int)
-		symbol.MarketOrderEnabled = vv["market_order_enabled"].(bool)
-		symbol.LimitAmountMin = vv["limit_amount_min"].(float64)
-		symbol.LimitAmountMax = vv["limit_amount_max"].(float64)
-		symbol.MainTag = vv["main_tag"].(string)
-		symbol.DailyOpenAt = vv["daily_open_at"].(string)
-		symbol.DailyCloseAt = vv["daily_close_at"].(string)
+		symbol.Name, _ = vv["symbol"].(string)
+		symbol.BaseCurrency, _ = vv["base_currency"].(string)
+		symbol.QuoteCurrency, _ = vv["quote_currency"].(string)
+		symbol.PriceDecimal = ToInt(vv["price_decimal"])
+		symbol.AmountDecimal = ToInt(vv["amount_decimal"])
+		symbol.Tradeable, _ = vv["tradeable"].(bool)
+		symbol.Category, _ = vv["category"].(string)
+		symbol.LeveragedMultiple = ToInt(vv["leveraged_multiple"])
+		symbol.MarketOrderEnabled, _ = vv["market_order_enabled"].(bool)
+		symbol.LimitAmountMin = ToFloat64(vv["limit_amount_min"])
+		symbol.LimitAmountMax = ToFloat64(vv["limit_amount_max"])
+		symbol.MainTag, _ = vv["main_tag"].(string)
+		symbol.DailyOpenAt, _ = vv["daily_open_at"].(string)
+		symbol.DailyCloseAt, _ = vv["daily_close_at"].(string)
 
-		if symbol.Tradable {
+		if symbol.Tradeable {
 			tradeSymbols = append(tradeSymbols, symbol)
 		}
 	}
