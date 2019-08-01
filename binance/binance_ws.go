@@ -3,6 +3,7 @@ package binance
 import (
 	"errors"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/json-iterator/go"
 	. "github.com/nntaoli-project/GoEx"
 	"strings"
@@ -98,6 +99,8 @@ func (bnWs *BinanceWs) subscribe(endpoint string, handle func(msg []byte) error)
 	wsBuilder.ProxyUrl(bnWs.proxyUrl)
 	wsConn := wsBuilder.Build()
 	wsConn.ReceiveMessage()
+	go bnWs.exitHandler(wsConn)
+
 }
 
 func (bnWs *BinanceWs) SubscribeDepth(pair CurrencyPair, size int) error {
@@ -376,4 +379,21 @@ func (bnWs *BinanceWs) SubscribeDiffDepth(pair CurrencyPair, depthCallback func(
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
+}
+
+func (bnWs *BinanceWs) exitHandler(c *WsConn) {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	defer c.Close()
+
+	for {
+		select {
+		case t := <-ticker.C:
+			err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
+			if err != nil {
+				fmt.Println("wsWrite err:", err)
+				return
+			}
+		}
+	}
 }
