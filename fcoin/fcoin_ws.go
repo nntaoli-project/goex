@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 )
 
 const (
@@ -189,8 +190,8 @@ func (fcWs *FCoinWs) connectWs() {
 	})
 }
 
-func (fcWs *FCoinWs) parseTickerData(tickmap []interface{}) *Ticker {
-	t := new(Ticker)
+func (fcWs *FCoinWs) parseTickerData(tickmap []interface{}) *RawTicker {
+	t := new(RawTicker)
 	t.Date = uint64(time.Now().UnixNano() / 1000000)
 	t.Last = ToFloat64(tickmap[0])
 	t.Vol = ToFloat64(tickmap[9])
@@ -198,6 +199,9 @@ func (fcWs *FCoinWs) parseTickerData(tickmap []interface{}) *Ticker {
 	t.High = ToFloat64(tickmap[7])
 	t.Buy = ToFloat64(tickmap[2])
 	t.Sell = ToFloat64(tickmap[4])
+	t.SellAmount = ToFloat64(tickmap[5])
+	t.BuyAmount = ToFloat64(tickmap[3])
+	t.LastTradeVol = ToFloat64(tickmap[1])
 
 	return t
 }
@@ -248,7 +252,7 @@ func (fcWs *FCoinWs) handle(msg []byte) error {
 				panic(err)
 			}
 			tick.Pair = pair
-			fcWs.tickerCallback(tick)
+			fcWs.tickerCallback((*Ticker)(unsafe.Pointer(tick)))
 			return nil
 		case "depth":
 			dep := fcWs.parseDepthData(datamap["bids"].([]interface{}), datamap["asks"].([]interface{}))

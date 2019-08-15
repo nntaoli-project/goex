@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 type FCoinTicker struct {
@@ -57,6 +58,13 @@ type Asset struct {
 	Finances  float64
 	Lock      float64
 	Total     float64
+}
+
+type RawTicker struct {
+	Ticker
+	SellAmount   float64
+	BuyAmount    float64
+	LastTradeVol float64
 }
 
 func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
@@ -118,7 +126,7 @@ func (fc *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 		return nil, API_ERR
 	}
 
-	ticker := new(Ticker)
+	ticker := new(RawTicker)
 	ticker.Pair = currencyPair
 	ticker.Date = uint64(time.Now().UnixNano() / 1000000)
 	ticker.Last = ToFloat64(tickmap[0])
@@ -127,7 +135,10 @@ func (fc *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	ticker.High = ToFloat64(tickmap[7])
 	ticker.Buy = ToFloat64(tickmap[2])
 	ticker.Sell = ToFloat64(tickmap[4])
-	return ticker, nil
+	ticker.SellAmount = ToFloat64(tickmap[5])
+	ticker.BuyAmount = ToFloat64(tickmap[3])
+	ticker.LastTradeVol = ToFloat64(tickmap[1])
+	return (*Ticker)(unsafe.Pointer(ticker)), nil
 }
 
 func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
