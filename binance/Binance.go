@@ -89,7 +89,7 @@ type Binance struct {
 }
 
 func (bn *Binance) buildParamsSigned(postForm *url.Values) error {
-	postForm.Set("recvWindow", "6000000")
+	postForm.Set("recvWindow", "60000")
 	tonce := strconv.FormatInt(time.Now().UnixNano()+bn.timeoffset, 10)[0:13]
 	postForm.Set("timestamp", tonce)
 	payload := postForm.Encode()

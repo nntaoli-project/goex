@@ -405,7 +405,7 @@ func (bo *BigoneV3) GetDepth(size int, currencyPair goex.CurrencyPair) (*goex.De
 
 	for _, bid := range resp.Data.Bids {
 		var amount float64
-		if bid.Amount == "" {
+		if bid.Amount != "" {
 			amount = goex.ToFloat64(bid.Amount)
 		} else {
 			amount = goex.ToFloat64(bid.Quantity)
@@ -417,7 +417,7 @@ func (bo *BigoneV3) GetDepth(size int, currencyPair goex.CurrencyPair) (*goex.De
 
 	for _, ask := range resp.Data.Asks {
 		var amount float64
-		if ask.Amount == "" {
+		if ask.Amount != "" {
 			amount = goex.ToFloat64(ask.Amount)
 		} else {
 			amount = goex.ToFloat64(ask.Quantity)
