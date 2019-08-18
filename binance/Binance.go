@@ -65,6 +65,7 @@ type TradeSymbol struct {
 	IcebergAllowed         bool     `json:"icebergAllowed"`
 	IsMarginTradingAllowed bool     `json:"isMarginTradingAllowed"`
 	IsSpotTradingAllowed   bool     `json:"isSpotTradingAllowed"`
+	OcoAllowed             bool     `json:"ocoAllowed"`
 	OrderTypes             []string `json:"orderTypes"`
 	QuoteAsset             string   `json:"quoteAsset"`
 	QuotePrecision         int      `json:"quotePrecision"`
@@ -146,8 +147,8 @@ func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
-	if size > 100 {
-		size = 100
+	if size > 1000 {
+		size = 1000
 	} else if size < 5 {
 		size = 5
 	}
