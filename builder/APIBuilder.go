@@ -236,11 +236,22 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey})
 	case OKEX_FUTURE:
-		return okcoin.NewOKEx(builder.client, builder.apiKey, builder.secretkey)
+		//return okcoin.NewOKEx(builder.client, builder.apiKey, builder.secretkey)
+		return okex.NewOKEx(&APIConfig{
+			HttpClient:    builder.client,
+			Endpoint:      "https://www.okex.com",
+			ApiKey:        builder.apiKey,
+			ApiSecretKey:  builder.secretkey,
+			ApiPassphrase: builder.apiPassphrase}).OKExFuture
 	case HBDM:
 		return huobi.NewHbdm(&APIConfig{HttpClient: builder.client, ApiKey: builder.apiKey, ApiSecretKey: builder.secretkey})
 	case OKEX_SWAP:
-		return okex.NewOKExSwap(&APIConfig{HttpClient: builder.client, Endpoint: "https://www.okex.com", ApiKey: builder.apiKey, ApiSecretKey: builder.secretkey, ApiPassphrase: builder.apiPassphrase})
+		return okex.NewOKEx(&APIConfig{
+			HttpClient:    builder.client,
+			Endpoint:      "https://www.okex.com",
+			ApiKey:        builder.apiKey,
+			ApiSecretKey:  builder.secretkey,
+			ApiPassphrase: builder.apiPassphrase}).OKExSwap
 	default:
 		println(fmt.Sprintf("%s not support future", exName))
 		return nil
