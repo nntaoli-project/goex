@@ -196,12 +196,12 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	params.Set("symbol", pair.ToSymbol(""))
 	params.Set("side", orderSide)
 	params.Set("type", orderType)
-
+	params.Set("newOrderRespType", "ACK")
 	params.Set("quantity", amount)
-	params.Set("timeInForce", "GTC")
 
 	switch orderType {
 	case "LIMIT":
+		params.Set("timeInForce", "GTC")
 		params.Set("price", price)
 	}
 
@@ -212,7 +212,7 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	if err != nil {
 		return nil, err
 	}
-
+	
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
@@ -240,7 +240,7 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 		AvgPrice:   0,
 		Side:       TradeSide(side),
 		Status:     ORDER_UNFINISH,
-		OrderTime:  int(time.Now().Unix())}, nil
+		OrderTime:  ToInt(respmap["transactTime"])}, nil
 }
 
 func (bn *Binance) GetAccount() (*Account, error) {
