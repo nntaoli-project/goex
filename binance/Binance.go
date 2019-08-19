@@ -212,7 +212,7 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	if err != nil {
 		return nil, err
 	}
-	
+
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
@@ -335,6 +335,7 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	if err != nil {
 		return nil, err
 	}
+
 	status := respmap["status"].(string)
 	side := respmap["side"].(string)
 
@@ -342,6 +343,8 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	ord.Currency = currencyPair
 	ord.OrderID = ToInt(orderId)
 	ord.OrderID2 = orderId
+	ord.Cid, _ = respmap["clientOrderId"].(string)
+	ord.Type = respmap["type"].(string)
 
 	if side == "SELL" {
 		ord.Side = SELL
@@ -368,6 +371,12 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	ord.Price = ToFloat64(respmap["price"].(string))
 	ord.DealAmount = ToFloat64(respmap["executedQty"])
 	ord.AvgPrice = ord.Price // response no avg price ， fill price
+	ord.OrderTime = ToInt(respmap["time"])
+
+	cummulativeQuoteQty := ToFloat64(respmap["cummulativeQuoteQty"])
+	if cummulativeQuoteQty > 0 {
+		ord.AvgPrice = cummulativeQuoteQty / ord.DealAmount
+	}
 
 	return &ord, nil
 }
