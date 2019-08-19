@@ -355,15 +355,23 @@ func (fc *FCoin) toOrder(o map[string]interface{}, pair CurrencyPair) *Order {
 	} else {
 		fees = fee
 	}
+	avgPrice := 0.0
+	dealAmount := ToFloat64(o["filled_amount"])
+	executeValue := ToFloat64(o["executed_value"])
+	if dealAmount != 0.0 {
+		avgPrice = executeValue / dealAmount
+	}
 	return &Order{
 		Currency:   pair,
 		Side:       TradeSide(side),
 		OrderID2:   o["id"].(string),
 		Amount:     ToFloat64(o["amount"]),
 		Price:      ToFloat64(o["price"]),
-		DealAmount: ToFloat64(o["filled_amount"]),
+		DealAmount: dealAmount,
 		Status:     TradeStatus(orderStatus),
+		Type:       o["type"].(string),
 		Fee:        fees,
+		AvgPrice:   avgPrice,
 		OrderTime:  ToInt(o["created_at"])}
 }
 
