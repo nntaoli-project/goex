@@ -55,6 +55,7 @@ var (
 	OKB     = Currency{"OKB", "OKB is a global utility token issued by OK Blockchain Foundation"}
 	HT      = Currency{"HT", "HuoBi Token"}
 	BNB     = Currency{"BNB", "BNB, or Binance Coin, is a cryptocurrency created by Binance."}
+	TRX     = Currency{"TRX", ""}
 
 	//currency pair
 
@@ -103,6 +104,8 @@ var (
 	OKB_USDT = CurrencyPair{OKB, USDT}
 	HT_USDT  = CurrencyPair{HT, USDT}
 	BNB_USDT = CurrencyPair{BNB, USDT}
+	PAX_USDT = CurrencyPair{PAX, USDT}
+	TRX_USDT = CurrencyPair{TRX, USDT}
 
 	XRP_EUR = CurrencyPair{XRP, EUR}
 
@@ -128,6 +131,7 @@ var (
 	OKB_BTC = CurrencyPair{OKB, BTC}
 	HT_BTC  = CurrencyPair{HT, BTC}
 	BNB_BTC = CurrencyPair{BNB, BTC}
+	TRX_BTC = CurrencyPair{TRX, BTC}
 
 	ETC_ETH = CurrencyPair{ETC, ETH}
 	EOS_ETH = CurrencyPair{EOS, ETH}
@@ -201,6 +205,8 @@ func NewCurrency(symbol, desc string) Currency {
 		return HT
 	case "bnb", "BNB":
 		return BNB
+	case "trx", "TRX":
+		return TRX
 	default:
 		return Currency{strings.ToUpper(symbol), desc}
 	}
@@ -261,8 +267,8 @@ func (pair CurrencyPair) AdaptBccToBch() CurrencyPair {
 
 //for to symbol lower , Not practical '==' operation method
 func (pair CurrencyPair) ToLower() CurrencyPair {
-	return CurrencyPair{Currency{strings.ToLower(pair.CurrencyA.Symbol), ""},
-		Currency{strings.ToLower(pair.CurrencyB.Symbol), ""}}
+	return CurrencyPair{Currency{strings.ToLower(pair.CurrencyA.Symbol), pair.CurrencyA.Desc},
+		Currency{strings.ToLower(pair.CurrencyB.Symbol), pair.CurrencyB.Desc}}
 }
 
 func (pair CurrencyPair) Reverse() CurrencyPair {

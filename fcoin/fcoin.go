@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 type FCoinTicker struct {
@@ -35,7 +36,7 @@ type TradeSymbol struct {
 	QuoteCurrency string `json:"quote_currency"`
 	PriceDecimal  int    `json:"price_decimal"`
 	AmountDecimal int    `json:"amount_decimal"`
-	Tradable      bool   `json:"tradable"`
+	Tradeable     bool   `json:"tradable"`
 }
 
 type TradeSymbol2 struct {
@@ -59,6 +60,13 @@ type Asset struct {
 	Total     float64
 }
 
+type RawTicker struct {
+	Ticker
+	SellAmount   float64
+	BuyAmount    float64
+	LastTradeVol float64
+}
+
 func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
 	fc := &FCoin{baseUrl: "https://api.fcoin.com/v2/", accessKey: apikey, secretKey: secretkey, httpClient: client}
 	fc.setTimeOffset()
@@ -75,12 +83,20 @@ func (fc *FCoin) GetExchangeName() string {
 	return FCOIN
 }
 
-func (fc *FCoin) setTimeOffset() error {
+func (fc *FCoin) GetServerTime() (int64, error) {
 	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+"public/server-time")
+	if err != nil {
+		return 0, err
+	}
+	stime := int64(ToInt(respmap["data"]))
+	return stime, nil
+}
+
+func (fc *FCoin) setTimeOffset() error {
+	stime, err := fc.GetServerTime()
 	if err != nil {
 		return err
 	}
-	stime := int64(ToInt(respmap["data"]))
 	st := time.Unix(stime/1000, 0)
 	lt := time.Now()
 	offset := st.Sub(lt).Seconds()
@@ -110,7 +126,7 @@ func (fc *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 		return nil, API_ERR
 	}
 
-	ticker := new(Ticker)
+	ticker := new(RawTicker)
 	ticker.Pair = currencyPair
 	ticker.Date = uint64(time.Now().UnixNano() / 1000000)
 	ticker.Last = ToFloat64(tickmap[0])
@@ -119,7 +135,10 @@ func (fc *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	ticker.High = ToFloat64(tickmap[7])
 	ticker.Buy = ToFloat64(tickmap[2])
 	ticker.Sell = ToFloat64(tickmap[4])
-	return ticker, nil
+	ticker.SellAmount = ToFloat64(tickmap[5])
+	ticker.BuyAmount = ToFloat64(tickmap[3])
+	ticker.LastTradeVol = ToFloat64(tickmap[1])
+	return (*Ticker)(unsafe.Pointer(ticker)), nil
 }
 
 func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
@@ -597,8 +616,8 @@ func (fc *FCoin) getTradeSymbols() ([]TradeSymbol, error) {
 		symbol.QuoteCurrency = vv["quote_currency"].(string)
 		symbol.PriceDecimal = int(vv["price_decimal"].(float64))
 		symbol.AmountDecimal = int(vv["amount_decimal"].(float64))
-		symbol.Tradable = vv["tradable"].(bool)
-		if symbol.Tradable {
+		symbol.Tradeable = vv["tradable"].(bool)
+		if symbol.Tradeable {
 			tradeSymbols = append(tradeSymbols, symbol)
 		}
 	}
@@ -637,22 +656,22 @@ func (fc *FCoin) getTradeSymbols2() ([]TradeSymbol2, error) {
 	for _, v := range symbols {
 		vv := v.(map[string]interface{})
 		var symbol TradeSymbol2
-		symbol.Name = vv["symbol"].(string)
-		symbol.BaseCurrency = vv["base_currency"].(string)
-		symbol.QuoteCurrency = vv["quote_currency"].(string)
-		symbol.PriceDecimal = int(vv["price_decimal"].(float64))
-		symbol.AmountDecimal = int(vv["amount_decimal"].(float64))
-		symbol.Tradable = vv["tradable"].(bool)
-		symbol.Category = vv["category"].(string)
-		symbol.LeveragedMultiple = vv["leveraged_multiple"].(int)
-		symbol.MarketOrderEnabled = vv["market_order_enabled"].(bool)
-		symbol.LimitAmountMin = vv["limit_amount_min"].(float64)
-		symbol.LimitAmountMax = vv["limit_amount_max"].(float64)
-		symbol.MainTag = vv["main_tag"].(string)
-		symbol.DailyOpenAt = vv["daily_open_at"].(string)
-		symbol.DailyCloseAt = vv["daily_close_at"].(string)
+		symbol.Name, _ = vv["symbol"].(string)
+		symbol.BaseCurrency, _ = vv["base_currency"].(string)
+		symbol.QuoteCurrency, _ = vv["quote_currency"].(string)
+		symbol.PriceDecimal = ToInt(vv["price_decimal"])
+		symbol.AmountDecimal = ToInt(vv["amount_decimal"])
+		symbol.Tradeable, _ = vv["tradeable"].(bool)
+		symbol.Category, _ = vv["category"].(string)
+		symbol.LeveragedMultiple = ToInt(vv["leveraged_multiple"])
+		symbol.MarketOrderEnabled, _ = vv["market_order_enabled"].(bool)
+		symbol.LimitAmountMin = ToFloat64(vv["limit_amount_min"])
+		symbol.LimitAmountMax = ToFloat64(vv["limit_amount_max"])
+		symbol.MainTag, _ = vv["main_tag"].(string)
+		symbol.DailyOpenAt, _ = vv["daily_open_at"].(string)
+		symbol.DailyCloseAt, _ = vv["daily_close_at"].(string)
 
-		if symbol.Tradable {
+		if symbol.Tradeable {
 			tradeSymbols = append(tradeSymbols, symbol)
 		}
 	}

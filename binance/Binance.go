@@ -65,6 +65,7 @@ type TradeSymbol struct {
 	IcebergAllowed         bool     `json:"icebergAllowed"`
 	IsMarginTradingAllowed bool     `json:"isMarginTradingAllowed"`
 	IsSpotTradingAllowed   bool     `json:"isSpotTradingAllowed"`
+	OcoAllowed             bool     `json:"ocoAllowed"`
 	OrderTypes             []string `json:"orderTypes"`
 	QuoteAsset             string   `json:"quoteAsset"`
 	QuotePrecision         int      `json:"quotePrecision"`
@@ -89,7 +90,7 @@ type Binance struct {
 }
 
 func (bn *Binance) buildParamsSigned(postForm *url.Values) error {
-	postForm.Set("recvWindow", "6000000")
+	postForm.Set("recvWindow", "60000")
 	tonce := strconv.FormatInt(time.Now().UnixNano()+bn.timeoffset, 10)[0:13]
 	postForm.Set("timestamp", tonce)
 	payload := postForm.Encode()
@@ -146,8 +147,8 @@ func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
-	if size > 100 {
-		size = 100
+	if size > 1000 {
+		size = 1000
 	} else if size < 5 {
 		size = 5
 	}
@@ -195,12 +196,12 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	params.Set("symbol", pair.ToSymbol(""))
 	params.Set("side", orderSide)
 	params.Set("type", orderType)
-
+	params.Set("newOrderRespType", "ACK")
 	params.Set("quantity", amount)
-	params.Set("timeInForce", "GTC")
 
 	switch orderType {
 	case "LIMIT":
+		params.Set("timeInForce", "GTC")
 		params.Set("price", price)
 	}
 
@@ -239,7 +240,7 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 		AvgPrice:   0,
 		Side:       TradeSide(side),
 		Status:     ORDER_UNFINISH,
-		OrderTime:  int(time.Now().Unix())}, nil
+		OrderTime:  ToInt(respmap["transactTime"])}, nil
 }
 
 func (bn *Binance) GetAccount() (*Account, error) {
@@ -334,6 +335,7 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	if err != nil {
 		return nil, err
 	}
+
 	status := respmap["status"].(string)
 	side := respmap["side"].(string)
 
@@ -341,6 +343,8 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	ord.Currency = currencyPair
 	ord.OrderID = ToInt(orderId)
 	ord.OrderID2 = orderId
+	ord.Cid, _ = respmap["clientOrderId"].(string)
+	ord.Type = respmap["type"].(string)
 
 	if side == "SELL" {
 		ord.Side = SELL
@@ -367,6 +371,12 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	ord.Price = ToFloat64(respmap["price"].(string))
 	ord.DealAmount = ToFloat64(respmap["executedQty"])
 	ord.AvgPrice = ord.Price // response no avg price ， fill price
+	ord.OrderTime = ToInt(respmap["time"])
+
+	cummulativeQuoteQty := ToFloat64(respmap["cummulativeQuoteQty"])
+	if cummulativeQuoteQty > 0 {
+		ord.AvgPrice = cummulativeQuoteQty / ord.DealAmount
+	}
 
 	return &ord, nil
 }
