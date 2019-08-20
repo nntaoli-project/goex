@@ -203,6 +203,8 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	case "LIMIT":
 		params.Set("timeInForce", "GTC")
 		params.Set("price", price)
+	case "MARKET":
+		params.Set("newOrderRespType", "FULL")
 	}
 
 	bn.buildParamsSigned(&params)
@@ -230,14 +232,21 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 		side = SELL
 	}
 
+	dealAmount := ToFloat64(respmap["executedQty"])
+	cummulativeQuoteQty := ToFloat64(respmap["cummulativeQuoteQty"])
+	avgPrice := 0.0
+	if cummulativeQuoteQty > 0 && dealAmount > 0 {
+		avgPrice = cummulativeQuoteQty / dealAmount
+	}
+
 	return &Order{
 		Currency:   pair,
 		OrderID:    orderId,
 		OrderID2:   fmt.Sprint(orderId),
 		Price:      ToFloat64(price),
 		Amount:     ToFloat64(amount),
-		DealAmount: 0,
-		AvgPrice:   0,
+		DealAmount: dealAmount,
+		AvgPrice:   avgPrice,
 		Side:       TradeSide(side),
 		Status:     ORDER_UNFINISH,
 		OrderTime:  ToInt(respmap["transactTime"])}, nil
