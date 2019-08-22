@@ -27,6 +27,7 @@ func NewOKEx(config *APIConfig) *OKEx {
 	okex.OKExFuture = &OKExFuture{OKEx: okex, Locker: new(sync.Mutex)}
 	okex.OKExWallet = &OKExWallet{okex}
 	okex.OKExMargin = &OKExMargin{okex}
+	okex.OKExSwap = &OKExSwap{okex, config}
 	return okex
 }
 
@@ -54,7 +55,7 @@ func (ok *OKEx) DoRequest(httpMethod, uri, reqBody string, response interface{})
 		//log.Println(err)
 		return err
 	} else {
-		//	log.Println(string(resp))
+		//	println(string(resp))
 		return json.Unmarshal(resp, &response)
 	}
 }

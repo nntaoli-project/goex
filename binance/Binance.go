@@ -196,13 +196,15 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	params.Set("symbol", pair.ToSymbol(""))
 	params.Set("side", orderSide)
 	params.Set("type", orderType)
-
+	params.Set("newOrderRespType", "ACK")
 	params.Set("quantity", amount)
-	params.Set("timeInForce", "GTC")
 
 	switch orderType {
 	case "LIMIT":
+		params.Set("timeInForce", "GTC")
 		params.Set("price", price)
+	case "MARKET":
+		params.Set("newOrderRespType", "FULL")
 	}
 
 	bn.buildParamsSigned(&params)
@@ -230,17 +232,24 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 		side = SELL
 	}
 
+	dealAmount := ToFloat64(respmap["executedQty"])
+	cummulativeQuoteQty := ToFloat64(respmap["cummulativeQuoteQty"])
+	avgPrice := 0.0
+	if cummulativeQuoteQty > 0 && dealAmount > 0 {
+		avgPrice = cummulativeQuoteQty / dealAmount
+	}
+
 	return &Order{
 		Currency:   pair,
 		OrderID:    orderId,
 		OrderID2:   fmt.Sprint(orderId),
 		Price:      ToFloat64(price),
 		Amount:     ToFloat64(amount),
-		DealAmount: 0,
-		AvgPrice:   0,
+		DealAmount: dealAmount,
+		AvgPrice:   avgPrice,
 		Side:       TradeSide(side),
 		Status:     ORDER_UNFINISH,
-		OrderTime:  int(time.Now().Unix())}, nil
+		OrderTime:  ToInt(respmap["transactTime"])}, nil
 }
 
 func (bn *Binance) GetAccount() (*Account, error) {
@@ -335,6 +344,7 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	if err != nil {
 		return nil, err
 	}
+
 	status := respmap["status"].(string)
 	side := respmap["side"].(string)
 
@@ -342,6 +352,8 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	ord.Currency = currencyPair
 	ord.OrderID = ToInt(orderId)
 	ord.OrderID2 = orderId
+	ord.Cid, _ = respmap["clientOrderId"].(string)
+	ord.Type = respmap["type"].(string)
 
 	if side == "SELL" {
 		ord.Side = SELL
@@ -368,6 +380,12 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	ord.Price = ToFloat64(respmap["price"].(string))
 	ord.DealAmount = ToFloat64(respmap["executedQty"])
 	ord.AvgPrice = ord.Price // response no avg price ， fill price
+	ord.OrderTime = ToInt(respmap["time"])
+
+	cummulativeQuoteQty := ToFloat64(respmap["cummulativeQuoteQty"])
+	if cummulativeQuoteQty > 0 {
+		ord.AvgPrice = cummulativeQuoteQty / ord.DealAmount
+	}
 
 	return &ord, nil
 }
