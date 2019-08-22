@@ -14,6 +14,12 @@ import (
 	"unsafe"
 )
 
+const (
+	SPOT     = "spot"
+	ASSETS   = "assets"
+	EXCHANGE = "exchange"
+)
+
 type FCoinTicker struct {
 	Ticker
 	SellAmount,
@@ -191,6 +197,7 @@ func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	return depth, nil
 }
+
 func (fc *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (interface{}, error) {
 
 	timestamp := time.Now().Unix()*1000 + fc.timeoffset*1000
@@ -233,6 +240,47 @@ func (fc *FCoin) doAuthenticatedRequest(method, uri string, params url.Values) (
 	return respmap["data"], err
 }
 
+func (fc *FCoin) doAuthenticatedRequest2(method, uri string, params url.Values) (map[string]interface{}, error) {
+
+	timestamp := time.Now().Unix()*1000 + fc.timeoffset*1000
+	sign := fc.buildSigned(method, fc.baseUrl+uri, timestamp, params)
+
+	header := map[string]string{
+		"FC-ACCESS-KEY":       fc.accessKey,
+		"FC-ACCESS-SIGNATURE": sign,
+		"FC-ACCESS-TIMESTAMP": fmt.Sprint(timestamp)}
+
+	var (
+		respmap map[string]interface{}
+		err     error
+	)
+
+	switch method {
+	case "GET":
+		respmap, err = HttpGet2(fc.httpClient, fc.baseUrl+uri+"?"+params.Encode(), header)
+		if err != nil {
+			return nil, err
+		}
+
+	case "POST":
+		var parammap = make(map[string]string, 1)
+		for k, v := range params {
+			parammap[k] = v[0]
+		}
+
+		respbody, err1 := HttpPostForm4(fc.httpClient, fc.baseUrl+uri, parammap, header)
+		if err1 != nil {
+			return nil, err1
+		}
+		err = json.Unmarshal(respbody, &respmap)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return respmap, err
+}
+
 func (fc *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, para url.Values) string {
 
 	var (
@@ -269,14 +317,16 @@ func (fc *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 	return s
 }
 
-func (fc *FCoin) placeOrder(orderType, orderSide, amount, price string, pair CurrencyPair) (*Order, error) {
+func (fc *FCoin) placeOrder(orderType, orderSide, amount, price string, pair CurrencyPair, isMargin bool) (*Order, error) {
 	params := url.Values{}
 
 	params.Set("side", orderSide)
 	params.Set("amount", amount)
 	//params.Set("price", price)
 	params.Set("symbol", strings.ToLower(pair.AdaptUsdToUsdt().ToSymbol("")))
-
+	if isMargin {
+		params.Set("account_type", "margin")
+	}
 	switch orderType {
 	case "LIMIT", "limit":
 		params.Set("price", price)
@@ -306,19 +356,19 @@ func (fc *FCoin) placeOrder(orderType, orderSide, amount, price string, pair Cur
 }
 
 func (fc *FCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("limit", "buy", amount, price, currency)
+	return fc.placeOrder("limit", "buy", amount, price, currency, false)
 }
 
 func (fc *FCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("limit", "sell", amount, price, currency)
+	return fc.placeOrder("limit", "sell", amount, price, currency, false)
 }
 
 func (fc *FCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("market", "buy", amount, price, currency)
+	return fc.placeOrder("market", "buy", amount, price, currency, false)
 }
 
 func (fc *FCoin) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("market", "sell", amount, price, currency)
+	return fc.placeOrder("market", "sell", amount, price, currency, false)
 }
 
 func (fc *FCoin) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
@@ -355,15 +405,23 @@ func (fc *FCoin) toOrder(o map[string]interface{}, pair CurrencyPair) *Order {
 	} else {
 		fees = fee
 	}
+	avgPrice := 0.0
+	dealAmount := ToFloat64(o["filled_amount"])
+	executeValue := ToFloat64(o["executed_value"])
+	if dealAmount != 0.0 {
+		avgPrice = executeValue / dealAmount
+	}
 	return &Order{
 		Currency:   pair,
 		Side:       TradeSide(side),
 		OrderID2:   o["id"].(string),
 		Amount:     ToFloat64(o["amount"]),
 		Price:      ToFloat64(o["price"]),
-		DealAmount: ToFloat64(o["filled_amount"]),
+		DealAmount: dealAmount,
 		Status:     TradeStatus(orderStatus),
+		Type:       o["type"].(string),
 		Fee:        fees,
+		AvgPrice:   avgPrice,
 		OrderTime:  ToInt(o["created_at"])}
 }
 
