@@ -126,19 +126,19 @@ func (fm *FCoinMargin) Repayment(parameter RepaymentParameter) (repaymentId stri
 }
 
 func (fm *FCoinMargin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.placeOrder("limit", "buy", amount, price, currency, true)
+	return fm.PlaceOrder(ORDER_TYPE_LIMIT, "buy", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.placeOrder("limit", "sell", amount, price, currency, true)
+	return fm.PlaceOrder(ORDER_TYPE_LIMIT, "sell", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.placeOrder("market", "buy", amount, price, currency, true)
+	return fm.PlaceOrder(ORDER_TYPE_MARKET, "buy", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.placeOrder("market", "sell", amount, price, currency, true)
+	return fm.PlaceOrder(ORDER_TYPE_MARKET, "sell", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {

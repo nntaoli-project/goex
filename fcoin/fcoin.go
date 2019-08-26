@@ -20,12 +20,6 @@ const (
 	EXCHANGE = "exchange"
 )
 
-type FCoinTicker struct {
-	Ticker
-	SellAmount,
-	BuyAmount float64
-}
-
 type FCoin struct {
 	httpClient *http.Client
 	baseUrl,
@@ -317,22 +311,23 @@ func (fc *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 	return s
 }
 
-func (fc *FCoin) placeOrder(orderType, orderSide, amount, price string, pair CurrencyPair, isMargin bool) (*Order, error) {
+// ORDERTYPE:limit, market, fok, ioc
+func (fc *FCoin) PlaceOrder(orderType OrderType, orderSide, amount, price string, pair CurrencyPair, isMargin bool) (*Order, error) {
 	params := url.Values{}
 
 	params.Set("side", orderSide)
 	params.Set("amount", amount)
-	//params.Set("price", price)
 	params.Set("symbol", strings.ToLower(pair.AdaptUsdToUsdt().ToSymbol("")))
+	if ORDER_TYPE_MARKET != orderType {
+		params.Set("price", price)
+	}
+
 	if isMargin {
 		params.Set("account_type", "margin")
 	}
-	switch orderType {
-	case "LIMIT", "limit":
-		params.Set("price", price)
-		params.Set("type", "limit")
-	case "MARKET", "market":
-		params.Set("type", "market")
+	params.Set("type", strings.ToLower(orderType.String()))
+	if ORDER_TYPE_MARKET == orderType {
+		params.Del("price")
 	}
 
 	r, err := fc.doAuthenticatedRequest("POST", "orders", params)
@@ -352,23 +347,25 @@ func (fc *FCoin) placeOrder(orderType, orderSide, amount, price string, pair Cur
 		Price:     ToFloat64(price),
 		Side:      TradeSide(side),
 		Status:    ORDER_UNFINISH,
-		OrderTime: int(time.Now().UnixNano() / 1000000)}, nil
+		OrderTime: int(time.Now().UnixNano() / 1000000),
+		OrderType: int(orderType),
+	}, nil
 }
 
 func (fc *FCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("limit", "buy", amount, price, currency, false)
+	return fc.PlaceOrder(ORDER_TYPE_LIMIT, "buy", amount, price, currency, false)
 }
 
 func (fc *FCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("limit", "sell", amount, price, currency, false)
+	return fc.PlaceOrder(ORDER_TYPE_LIMIT, "sell", amount, price, currency, false)
 }
 
 func (fc *FCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("market", "buy", amount, price, currency, false)
+	return fc.PlaceOrder(ORDER_TYPE_MARKET, "buy", amount, price, currency, false)
 }
 
 func (fc *FCoin) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("market", "sell", amount, price, currency, false)
+	return fc.PlaceOrder(ORDER_TYPE_MARKET, "sell", amount, price, currency, false)
 }
 
 func (fc *FCoin) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
