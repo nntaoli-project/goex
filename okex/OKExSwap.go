@@ -451,6 +451,16 @@ func (ok *OKExSwap) GetExchangeRate() (float64, error) {
 	panic("not support")
 }
 
+func (ok *OKExSwap) GetHistoricalFunding(contractType string, currencyPair CurrencyPair, page int) ([]HistoricalFunding, error) {
+	var resp []HistoricalFunding
+	uri := fmt.Sprintf("/api/swap/v3/instruments/%s-SWAP/historical_funding_rate?from=%d", currencyPair.ToSymbol("-"), page)
+	err := ok.DoRequest("GET", uri, "", &resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (ok *OKExSwap) AdaptTradeStatus(status int) TradeStatus {
 	switch status {
 	case -1:
