@@ -87,6 +87,7 @@ type BaseOrderInfo struct {
 	InstrumentId string  `json:"instrument_id"`
 	Status       int     `json:"status,string"`
 	OrderId      string  `json:"order_id"`
+	ClientOid    string  `json:"client_oid"`
 	Timestamp    string  `json:"timestamp"`
 	Price        float64 `json:"price,string"`
 	PriceAvg     float64 `json:"price_avg,string"`
