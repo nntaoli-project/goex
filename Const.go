@@ -132,6 +132,7 @@ const (
 	BITMEX      = "bitmex.com"
 	CRYPTOPIA   = "cryptopia.co.nz"
 	HBDM        = "hbdm.com"
+	COINBENE    = "coinbene.com"
 )
 
 type OderType int

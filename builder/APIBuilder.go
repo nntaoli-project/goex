@@ -11,6 +11,8 @@ import (
 	"github.com/nntaoli-project/GoEx/bitmex"
 	"github.com/nntaoli-project/GoEx/bitstamp"
 	"github.com/nntaoli-project/GoEx/bittrex"
+	"github.com/nntaoli-project/GoEx/coinbene"
+
 	//"github.com/nntaoli-project/GoEx/coin58"
 	"github.com/nntaoli-project/GoEx/coinex"
 	"github.com/nntaoli-project/GoEx/fcoin"
@@ -252,6 +254,13 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiKey:        builder.apiKey,
 			ApiSecretKey:  builder.secretkey,
 			ApiPassphrase: builder.apiPassphrase}).OKExSwap
+	case COINBENE:
+		return coinbene.NewCoinbeneSwap(APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     "http://openapi-contract.coinbene.com",
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey,
+		})
 	default:
 		println(fmt.Sprintf("%s not support future", exName))
 		return nil
