@@ -71,7 +71,7 @@ func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
 	fc := &FCoin{baseUrl: "https://api.fcoin.com/v2/", accessKey: apikey, secretKey: secretkey, httpClient: client}
 	fc.setTimeOffset()
 	var err error
-	fc.tradeSymbols, err = fc.getTradeSymbols()
+	fc.tradeSymbols, err = fc.GetTradeSymbols()
 	if len(fc.tradeSymbols) == 0 || err != nil {
 		panic("trade symbol is empty, pls check connection...")
 	}
@@ -650,7 +650,7 @@ func (fc *FCoin) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, err
 }
 
 //交易符号
-func (fc *FCoin) getTradeSymbols() ([]TradeSymbol, error) {
+func (fc *FCoin) GetTradeSymbols() ([]TradeSymbol, error) {
 	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+"public/symbols")
 	if err != nil {
 		return nil, err
@@ -679,10 +679,10 @@ func (fc *FCoin) getTradeSymbols() ([]TradeSymbol, error) {
 	return tradeSymbols, nil
 }
 
-func (fc *FCoin) GetTradeSymbols(currencyPair CurrencyPair) (*TradeSymbol, error) {
+func (fc *FCoin) GetTradeSymbol(currencyPair CurrencyPair) (*TradeSymbol, error) {
 	if len(fc.tradeSymbols) == 0 {
 		var err error
-		fc.tradeSymbols, err = fc.getTradeSymbols()
+		fc.tradeSymbols, err = fc.GetTradeSymbols()
 		if err != nil {
 			return nil, err
 		}
@@ -695,7 +695,7 @@ func (fc *FCoin) GetTradeSymbols(currencyPair CurrencyPair) (*TradeSymbol, error
 	return nil, errors.New("symbol not found")
 }
 
-func (fc *FCoin) getTradeSymbols2() ([]TradeSymbol2, error) {
+func (fc *FCoin) GetTradeSymbols2() ([]TradeSymbol2, error) {
 	respmap, err := HttpGet(fc.httpClient, "https://www.fcoin.com/openapi/v2/symbols")
 	if err != nil {
 		return nil, err
@@ -733,10 +733,10 @@ func (fc *FCoin) getTradeSymbols2() ([]TradeSymbol2, error) {
 	return tradeSymbols, nil
 }
 
-func (fc *FCoin) GetTradeSymbols2(currencyPair CurrencyPair) (*TradeSymbol2, error) {
+func (fc *FCoin) GetTradeSymbol2(currencyPair CurrencyPair) (*TradeSymbol2, error) {
 	if len(fc.tradeSymbols2) == 0 {
 		var err error
-		fc.tradeSymbols2, err = fc.getTradeSymbols2()
+		fc.tradeSymbols2, err = fc.GetTradeSymbols2()
 		if err != nil {
 			return nil, err
 		}
