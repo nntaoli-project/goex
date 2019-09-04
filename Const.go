@@ -79,8 +79,8 @@ const (
 type OrderType int
 
 func (ot OrderType) String() string {
-	if ot > 0 && int(ot) <= len(orderTypeSymbol) {
-		return orderTypeSymbol[ot-1]
+	if ot > 0 && int(ot) < len(orderTypeSymbol) {
+		return orderTypeSymbol[ot]
 	}
 	return fmt.Sprintf("UNKNOWN_ORDER_TYPE(%d)", ot)
 }
