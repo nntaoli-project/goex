@@ -185,6 +185,12 @@ type FuturePosition struct {
 	ForceLiquPrice float64 //预估爆仓价
 }
 
+type HistoricalFunding struct {
+	InstrumentId string    `json:"instrument_id"`
+	RealizedRate float64   `json:"realized_rate,string"`
+	FundingTime  time.Time `json:"funding_time"`
+}
+
 //api parameter struct
 
 type BorrowParameter struct {
