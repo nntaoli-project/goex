@@ -173,14 +173,14 @@ func (fm *FCoinMargin) GetOrderHistorys(currency CurrencyPair, currentPage, page
 	params.Set("limit", "100")
 	params.Set("account_type", "margin")
 
-	r, err := fc.doAuthenticatedRequest("GET", "orders", params)
+	r, err := fm.doAuthenticatedRequest("GET", "orders", params)
 	if err != nil {
 		return nil, err
 	}
 	var ords []Order
 
 	for _, ord := range r.([]interface{}) {
-		ords = append(ords, *fc.toOrder(ord.(map[string]interface{}), currency))
+		ords = append(ords, *fm.toOrder(ord.(map[string]interface{}), currency))
 	}
 
 	return ords, nil
