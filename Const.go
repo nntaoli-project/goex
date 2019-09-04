@@ -85,14 +85,14 @@ func (ot OrderType) String() string {
 	return fmt.Sprintf("UNKNOWN_ORDER_TYPE(%d)", ot)
 }
 
-var orderTypeSymbol = [...]string{"ORDINARY", "LIMIT", "MARKET", "FAK", "IOC", "POST_ONLY"}
+var orderTypeSymbol = [...]string{"ORDINARY", "POST_ONLY", "FOK", "FAK", "IOC", "LIMIT", "MARKET"}
 
 const (
 	ORDER_TYPE_ORDINARY = 0 + iota
 	ORDER_TYPE_POST_ONLY
 	ORDER_TYPE_FOK
 	ORDER_TYPE_FAK
-	ORDER_TYPE_IOC = ORDER_TYPE_FAK + iota
+	ORDER_TYPE_IOC /* = ORDER_TYPE_FAK + iota*/
 	ORDER_TYPE_LIMIT
 	ORDER_TYPE_MARKET
 )
