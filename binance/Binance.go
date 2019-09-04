@@ -435,7 +435,6 @@ func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since in
 	params.Set("limit", fmt.Sprintf("%d", size))
 
 	klineUrl := API_V1 + KLINE_URI + "?" + params.Encode()
-	fmt.Println(klineUrl)
 	klines, err := HttpGet3(bn.httpClient, klineUrl, nil)
 	if err != nil {
 		return nil, err

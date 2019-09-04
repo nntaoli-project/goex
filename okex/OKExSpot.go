@@ -138,11 +138,11 @@ func (ok *OKExSpot) PlaceOrder(ty string, ord *Order) (*Order, error) {
 	case "market":
 		param.Type = "market"
 	case "post_only":
-		param.OrderType = POST_ONLY
+		param.OrderType = ORDER_TYPE_POST_ONLY
 	case "fok":
-		param.OrderType = FOK
+		param.OrderType = ORDER_TYPE_FOK
 	case "ioc":
-		param.OrderType = IOC
+		param.OrderType = ORDER_TYPE_IOC
 	}
 
 	jsonStr, _, _ := ok.OKEx.BuildRequestBody(param)

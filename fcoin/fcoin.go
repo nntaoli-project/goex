@@ -20,12 +20,6 @@ const (
 	EXCHANGE = "exchange"
 )
 
-type FCoinTicker struct {
-	Ticker
-	SellAmount,
-	BuyAmount float64
-}
-
 type FCoin struct {
 	httpClient *http.Client
 	baseUrl,
@@ -77,7 +71,7 @@ func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
 	fc := &FCoin{baseUrl: "https://api.fcoin.com/v2/", accessKey: apikey, secretKey: secretkey, httpClient: client}
 	fc.setTimeOffset()
 	var err error
-	fc.tradeSymbols, err = fc.getTradeSymbols()
+	fc.tradeSymbols, err = fc.GetTradeSymbols()
 	if len(fc.tradeSymbols) == 0 || err != nil {
 		panic("trade symbol is empty, pls check connection...")
 	}
@@ -317,22 +311,23 @@ func (fc *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 	return s
 }
 
-func (fc *FCoin) placeOrder(orderType, orderSide, amount, price string, pair CurrencyPair, isMargin bool) (*Order, error) {
+// ORDERTYPE:limit, market, fok, ioc
+func (fc *FCoin) PlaceOrder(orderType OrderType, orderSide, amount, price string, pair CurrencyPair, isMargin bool) (*Order, error) {
 	params := url.Values{}
 
 	params.Set("side", orderSide)
 	params.Set("amount", amount)
-	//params.Set("price", price)
 	params.Set("symbol", strings.ToLower(pair.AdaptUsdToUsdt().ToSymbol("")))
+	if ORDER_TYPE_MARKET != orderType {
+		params.Set("price", price)
+	}
+
 	if isMargin {
 		params.Set("account_type", "margin")
 	}
-	switch orderType {
-	case "LIMIT", "limit":
-		params.Set("price", price)
-		params.Set("type", "limit")
-	case "MARKET", "market":
-		params.Set("type", "market")
+	params.Set("type", strings.ToLower(orderType.String()))
+	if ORDER_TYPE_MARKET == orderType {
+		params.Del("price")
 	}
 
 	r, err := fc.doAuthenticatedRequest("POST", "orders", params)
@@ -352,23 +347,25 @@ func (fc *FCoin) placeOrder(orderType, orderSide, amount, price string, pair Cur
 		Price:     ToFloat64(price),
 		Side:      TradeSide(side),
 		Status:    ORDER_UNFINISH,
-		OrderTime: int(time.Now().UnixNano() / 1000000)}, nil
+		OrderTime: int(time.Now().UnixNano() / 1000000),
+		OrderType: int(orderType),
+	}, nil
 }
 
 func (fc *FCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("limit", "buy", amount, price, currency, false)
+	return fc.PlaceOrder(ORDER_TYPE_LIMIT, "buy", amount, price, currency, false)
 }
 
 func (fc *FCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("limit", "sell", amount, price, currency, false)
+	return fc.PlaceOrder(ORDER_TYPE_LIMIT, "sell", amount, price, currency, false)
 }
 
 func (fc *FCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("market", "buy", amount, price, currency, false)
+	return fc.PlaceOrder(ORDER_TYPE_MARKET, "buy", amount, price, currency, false)
 }
 
 func (fc *FCoin) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.placeOrder("market", "sell", amount, price, currency, false)
+	return fc.PlaceOrder(ORDER_TYPE_MARKET, "sell", amount, price, currency, false)
 }
 
 func (fc *FCoin) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
@@ -553,6 +550,31 @@ func (fc *FCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize i
 
 }
 
+func (fc *FCoin) GetOrderHistorys2(currency CurrencyPair, currentPage, pageSize int, states ...string) ([]Order, error) {
+	sts := ""
+	for i := 0; i < len(states); i++ {
+		sts += states[i] + ","
+	}
+	sts = sts[:len(sts)-2]
+
+	params := url.Values{}
+	params.Set("symbol", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
+	params.Set("states", sts)
+	params.Set("limit", fmt.Sprint(pageSize))
+
+	r, err := fc.doAuthenticatedRequest("GET", "orders", params)
+	if err != nil {
+		return nil, err
+	}
+	var ords []Order
+
+	for _, ord := range r.([]interface{}) {
+		ords = append(ords, *fc.toOrder(ord.(map[string]interface{}), currency))
+	}
+
+	return ords, nil
+
+}
 func (fc *FCoin) GetAccount() (*Account, error) {
 	r, err := fc.doAuthenticatedRequest("GET", "accounts/balance", url.Values{})
 	if err != nil {
@@ -653,7 +675,7 @@ func (fc *FCoin) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, err
 }
 
 //交易符号
-func (fc *FCoin) getTradeSymbols() ([]TradeSymbol, error) {
+func (fc *FCoin) GetTradeSymbols() ([]TradeSymbol, error) {
 	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+"public/symbols")
 	if err != nil {
 		return nil, err
@@ -682,10 +704,10 @@ func (fc *FCoin) getTradeSymbols() ([]TradeSymbol, error) {
 	return tradeSymbols, nil
 }
 
-func (fc *FCoin) GetTradeSymbols(currencyPair CurrencyPair) (*TradeSymbol, error) {
+func (fc *FCoin) GetTradeSymbol(currencyPair CurrencyPair) (*TradeSymbol, error) {
 	if len(fc.tradeSymbols) == 0 {
 		var err error
-		fc.tradeSymbols, err = fc.getTradeSymbols()
+		fc.tradeSymbols, err = fc.GetTradeSymbols()
 		if err != nil {
 			return nil, err
 		}
@@ -698,7 +720,7 @@ func (fc *FCoin) GetTradeSymbols(currencyPair CurrencyPair) (*TradeSymbol, error
 	return nil, errors.New("symbol not found")
 }
 
-func (fc *FCoin) getTradeSymbols2() ([]TradeSymbol2, error) {
+func (fc *FCoin) GetTradeSymbols2() ([]TradeSymbol2, error) {
 	respmap, err := HttpGet(fc.httpClient, "https://www.fcoin.com/openapi/v2/symbols")
 	if err != nil {
 		return nil, err
@@ -736,10 +758,10 @@ func (fc *FCoin) getTradeSymbols2() ([]TradeSymbol2, error) {
 	return tradeSymbols, nil
 }
 
-func (fc *FCoin) GetTradeSymbols2(currencyPair CurrencyPair) (*TradeSymbol2, error) {
+func (fc *FCoin) GetTradeSymbol2(currencyPair CurrencyPair) (*TradeSymbol2, error) {
 	if len(fc.tradeSymbols2) == 0 {
 		var err error
-		fc.tradeSymbols2, err = fc.getTradeSymbols2()
+		fc.tradeSymbols2, err = fc.GetTradeSymbols2()
 		if err != nil {
 			return nil, err
 		}

@@ -126,19 +126,19 @@ func (fm *FCoinMargin) Repayment(parameter RepaymentParameter) (repaymentId stri
 }
 
 func (fm *FCoinMargin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.placeOrder("limit", "buy", amount, price, currency, true)
+	return fm.PlaceOrder(ORDER_TYPE_LIMIT, "buy", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.placeOrder("limit", "sell", amount, price, currency, true)
+	return fm.PlaceOrder(ORDER_TYPE_LIMIT, "sell", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.placeOrder("market", "buy", amount, price, currency, true)
+	return fm.PlaceOrder(ORDER_TYPE_MARKET, "buy", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.placeOrder("market", "sell", amount, price, currency, true)
+	return fm.PlaceOrder(ORDER_TYPE_MARKET, "sell", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
@@ -162,6 +162,29 @@ func (fm *FCoinMargin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error)
 	}
 
 	return ords, nil
+}
+
+func (fm *FCoinMargin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+	params := url.Values{}
+	params.Set("symbol", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
+	params.Set("states", "partial_canceled,filled")
+	//params.Set("before", "1")
+	//params.Set("after", "0")
+	params.Set("limit", "100")
+	params.Set("account_type", "margin")
+
+	r, err := fm.doAuthenticatedRequest("GET", "orders", params)
+	if err != nil {
+		return nil, err
+	}
+	var ords []Order
+
+	for _, ord := range r.([]interface{}) {
+		ords = append(ords, *fm.toOrder(ord.(map[string]interface{}), currency))
+	}
+
+	return ords, nil
+
 }
 
 func (fm *FCoinMargin) GetOneLoan(borrowId string) (*MarginOrder, error) {
