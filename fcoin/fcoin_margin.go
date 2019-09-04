@@ -164,6 +164,29 @@ func (fm *FCoinMargin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error)
 	return ords, nil
 }
 
+func (fm *FCoinMargin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+	params := url.Values{}
+	params.Set("symbol", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
+	params.Set("states", "partial_canceled,filled")
+	//params.Set("before", "1")
+	//params.Set("after", "0")
+	params.Set("limit", "100")
+	params.Set("account_type", "margin")
+
+	r, err := fc.doAuthenticatedRequest("GET", "orders", params)
+	if err != nil {
+		return nil, err
+	}
+	var ords []Order
+
+	for _, ord := range r.([]interface{}) {
+		ords = append(ords, *fc.toOrder(ord.(map[string]interface{}), currency))
+	}
+
+	return ords, nil
+
+}
+
 func (fm *FCoinMargin) GetOneLoan(borrowId string) (*MarginOrder, error) {
 	params := url.Values{}
 	params.Set("leveraged_loan_id", borrowId)

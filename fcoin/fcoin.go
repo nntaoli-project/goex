@@ -550,6 +550,31 @@ func (fc *FCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize i
 
 }
 
+func (fc *FCoin) GetOrderHistorys2(currency CurrencyPair, currentPage, pageSize int, states ...string) ([]Order, error) {
+	sts := ""
+	for i := 0; i < len(states); i++ {
+		sts += states[i] + ","
+	}
+	sts = sts[:len(sts)-2]
+
+	params := url.Values{}
+	params.Set("symbol", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
+	params.Set("states", sts)
+	params.Set("limit", fmt.Sprint(pageSize))
+
+	r, err := fc.doAuthenticatedRequest("GET", "orders", params)
+	if err != nil {
+		return nil, err
+	}
+	var ords []Order
+
+	for _, ord := range r.([]interface{}) {
+		ords = append(ords, *fc.toOrder(ord.(map[string]interface{}), currency))
+	}
+
+	return ords, nil
+
+}
 func (fc *FCoin) GetAccount() (*Account, error) {
 	r, err := fc.doAuthenticatedRequest("GET", "accounts/balance", url.Values{})
 	if err != nil {
