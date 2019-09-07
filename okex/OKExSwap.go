@@ -5,7 +5,6 @@ import (
 	"github.com/google/uuid"
 	. "github.com/nntaoli-project/GoEx"
 	"github.com/pkg/errors"
-	"log"
 	"strings"
 	"time"
 )
@@ -73,7 +72,7 @@ const (
 	GET_POSITION          = "/api/swap/v3/%s/position"
 	GET_DEPTH             = "/api/swap/v3/instruments/%s/depth?size=%d"
 	GET_TICKER            = "/api/swap/v3/instruments/%s/ticker"
-	GET_UNFINISHED_ORDERS = "/api/swap/v3/orders/%s?status=%d&from=%d&limit=%d"
+	GET_UNFINISHED_ORDERS = "/api/swap/v3/orders/%s?status=%d&limit=%d"
 )
 
 type BaseResponse struct {
@@ -97,6 +96,7 @@ func (ok *OKExSwap) GetExchangeName() string {
 
 func (ok *OKExSwap) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
 	var resp BaseTickerInfo
+	contractType = ok.adaptContractType(currencyPair)
 	err := ok.DoRequest("GET", fmt.Sprintf(GET_TICKER, contractType), "", &resp)
 	if err != nil {
 		return nil, err
@@ -114,6 +114,7 @@ func (ok *OKExSwap) GetFutureTicker(currencyPair CurrencyPair, contractType stri
 
 func (ok *OKExSwap) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
 	var resp SwapInstrumentDepth
+	contractType = ok.adaptContractType(currencyPair)
 
 	err := ok.DoRequest("GET", fmt.Sprintf(GET_DEPTH, contractType, size), "", &resp)
 	if err != nil {
@@ -210,7 +211,7 @@ func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, pr
 
 	reqBody, _, _ := ok.OKEx.BuildRequestBody(PlaceOrderInfo{
 		BasePlaceOrderInfo{ClientOid: strings.Replace(uuid.New().String(), "-", "", 32), Price: price, MatchPrice: "0", Type: fmt.Sprint(openType), Size: amount},
-		contractType,
+		ok.adaptContractType(currencyPair),
 	})
 
 	var resp struct {
@@ -244,7 +245,7 @@ func (ok *OKExSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, o
 
 	//req, _, _ := BuildRequestBody(cancelParam)
 
-	err := ok.DoRequest("POST", fmt.Sprintf(CANCEL_ORDER, contractType, orderId), "", &resp)
+	err := ok.DoRequest("POST", fmt.Sprintf(CANCEL_ORDER, ok.adaptContractType(currencyPair), orderId), "", &resp)
 	if err != nil {
 		return false, err
 	}
@@ -255,6 +256,7 @@ func (ok *OKExSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, o
 func (ok *OKExSwap) parseOrder(ord BaseOrderInfo) FutureOrder {
 	oTime, _ := time.Parse(time.RFC3339, ord.Timestamp)
 	return FutureOrder{
+		ClientOid:  ord.ClientOid,
 		OrderID2:   ord.OrderId,
 		Amount:     ord.Size,
 		Price:      ord.Price,
@@ -268,11 +270,10 @@ func (ok *OKExSwap) parseOrder(ord BaseOrderInfo) FutureOrder {
 
 func (ok *OKExSwap) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
 	var (
-		resp  SwapOrdersInfo
-		resp2 SwapOrdersInfo
+		resp SwapOrdersInfo
 	)
-
-	err := ok.DoRequest("GET", fmt.Sprintf(GET_UNFINISHED_ORDERS, contractType, ORDER_UNFINISH, 1, 100), "", &resp)
+	contractType = ok.adaptContractType(currencyPair)
+	err := ok.DoRequest("GET", fmt.Sprintf(GET_UNFINISHED_ORDERS, contractType, 6, 100), "", &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -283,18 +284,6 @@ func (ok *OKExSwap) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractT
 
 	var orders []FutureOrder
 	for _, info := range resp.OrderInfo {
-		ord := ok.parseOrder(info)
-		ord.Currency = currencyPair
-		ord.ContractName = contractType
-		orders = append(orders, ord)
-	}
-
-	err = ok.DoRequest("GET", fmt.Sprintf(GET_UNFINISHED_ORDERS, contractType, ORDER_PART_FINISH, 1, 100), "", &resp2)
-	if err != nil {
-		log.Println(err)
-	}
-
-	for _, info := range resp2.OrderInfo {
 		ord := ok.parseOrder(info)
 		ord.Currency = currencyPair
 		ord.ContractName = contractType
@@ -326,6 +315,8 @@ func (ok *OKExSwap) GetFutureOrder(orderId string, currencyPair CurrencyPair, co
 		BaseOrderInfo
 	}
 
+	contractType = ok.adaptContractType(currencyPair)
+
 	getOrderParam.OrderId = orderId
 	getOrderParam.InstrumentId = contractType
 
@@ -343,6 +334,7 @@ func (ok *OKExSwap) GetFutureOrder(orderId string, currencyPair CurrencyPair, co
 	oTime, err := time.Parse(time.RFC3339, resp.Timestamp)
 
 	return &FutureOrder{
+		ClientOid:    resp.ClientOid,
 		Currency:     currencyPair,
 		ContractName: contractType,
 		OrderID2:     resp.OrderId,
@@ -359,6 +351,7 @@ func (ok *OKExSwap) GetFutureOrder(orderId string, currencyPair CurrencyPair, co
 
 func (ok *OKExSwap) GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error) {
 	var resp SwapPosition
+	contractType = ok.adaptContractType(currencyPair)
 
 	err := ok.DoRequest("GET", fmt.Sprintf(GET_POSITION, contractType), "", &resp)
 	if err != nil {
@@ -451,6 +444,16 @@ func (ok *OKExSwap) GetExchangeRate() (float64, error) {
 	panic("not support")
 }
 
+func (ok *OKExSwap) GetHistoricalFunding(contractType string, currencyPair CurrencyPair, page int) ([]HistoricalFunding, error) {
+	var resp []HistoricalFunding
+	uri := fmt.Sprintf("/api/swap/v3/instruments/%s/historical_funding_rate?from=%d", ok.adaptContractType(currencyPair), page)
+	err := ok.DoRequest("GET", uri, "", &resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (ok *OKExSwap) AdaptTradeStatus(status int) TradeStatus {
 	switch status {
 	case -1:
@@ -464,4 +467,8 @@ func (ok *OKExSwap) AdaptTradeStatus(status int) TradeStatus {
 	default:
 		return ORDER_UNFINISH
 	}
+}
+
+func (ok *OKExSwap) adaptContractType(currencyPair CurrencyPair) string {
+	return fmt.Sprintf("%s-SWAP", currencyPair.ToSymbol("-"))
 }

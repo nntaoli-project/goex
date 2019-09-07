@@ -25,13 +25,19 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
 | bithumb.com | Y | Y | * |
 | gate.io | Y | N | 1 |
 | btcbox.co.jp | Y | N | * |
-| bittrex.com | Y | N | 1.1 |
-| btcchina.com | Y | Y | 1 |
 | coinbig.com | Y | Y | * |
+|coinbene.com|Y|Y|*|
 
 ### 安装GoEx库  
 
 ``` go get github.com/nntaoli-project/GoEx ```
+
+>建议go mod 管理依赖
+``` 
+require (
+          github.com/nntaoli-project/GoEx v1.0.4
+)
+```
 
 ### 例子
 
@@ -106,7 +112,7 @@ func main() {
 ### 注意事项
 
 1. 推荐使用GoLand开发。
-2. 推荐关闭自动格式化功能。
+2. 推荐关闭自动格式化功能,代码请使用go fmt 格式化.
 3. 不建议对现已存在的文件进行重新格式化，这样会导致commit特别糟糕。
 4. 请用OrderID2这个字段代替OrderID
 5. 请不要使用deprecated关键字标注的方法和字段，后面版本可能随时删除的

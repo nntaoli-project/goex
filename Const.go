@@ -79,21 +79,22 @@ const (
 type OrderType int
 
 func (ot OrderType) String() string {
-	if ot > 0 && int(ot) <= len(orderTypeSymbol) {
-		return orderTypeSymbol[ot-1]
+	if ot > 0 && int(ot) < len(orderTypeSymbol) {
+		return orderTypeSymbol[ot]
 	}
 	return fmt.Sprintf("UNKNOWN_ORDER_TYPE(%d)", ot)
 }
 
-var orderTypeSymbol = [...]string{"LIMIT", "MARKET", "FAK", "IOC", "POST_ONLY"}
+var orderTypeSymbol = [...]string{"ORDINARY", "POST_ONLY", "FOK", "FAK", "IOC", "LIMIT", "MARKET"}
 
 const (
-	ORDER_TYPE_LIMIT = 1 + iota
-	ORDER_TYPE_MARKET
+	ORDER_TYPE_ORDINARY = 0 + iota
+	ORDER_TYPE_POST_ONLY
 	ORDER_TYPE_FOK
 	ORDER_TYPE_FAK
-	ORDER_TYPE_POST_ONLY
-	ORDER_TYPE_IOC = ORDER_TYPE_FAK
+	ORDER_TYPE_IOC /* = ORDER_TYPE_FAK + iota*/
+	ORDER_TYPE_LIMIT
+	ORDER_TYPE_MARKET
 )
 
 var (
@@ -132,28 +133,5 @@ const (
 	BITMEX      = "bitmex.com"
 	CRYPTOPIA   = "cryptopia.co.nz"
 	HBDM        = "hbdm.com"
+	COINBENE    = "coinbene.com"
 )
-
-type OderType int
-
-const (
-	ORDINARY  = 0 // normal order
-	POST_ONLY = 1 // only maker
-	FOK       = 2 // fill or kill
-	IOC       = 3 // Immediate or Cancel
-)
-
-func (ot OderType) String() string {
-	switch ot {
-	case ORDINARY:
-		return "ORDINARY"
-	case POST_ONLY:
-		return "POST_ONLY"
-	case FOK:
-		return "FOK"
-	case IOC:
-		return "IOC"
-	default:
-		return "UNKNOWN"
-	}
-}

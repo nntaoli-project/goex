@@ -41,7 +41,7 @@ func TestOKExSpot_BatchPlaceOrders(t *testing.T) {
 			Price:     0.32,
 			Side:      goex.BUY,
 			Type:      "limit",
-			OrderType: goex.ORDINARY,
+			OrderType: goex.ORDER_TYPE_ORDINARY,
 		},
 		{
 			Cid:       okex.UUID(),
@@ -49,7 +49,7 @@ func TestOKExSpot_BatchPlaceOrders(t *testing.T) {
 			Amount:    1,
 			Price:     5.2,
 			Side:      goex.BUY,
-			OrderType: goex.ORDINARY,
+			OrderType: goex.ORDER_TYPE_ORDINARY,
 		},
 		goex.Order{
 			Cid:       okex.UUID(),
@@ -58,7 +58,7 @@ func TestOKExSpot_BatchPlaceOrders(t *testing.T) {
 			Price:     0.33,
 			Side:      goex.BUY,
 			Type:      "limit",
-			OrderType: goex.ORDINARY,
+			OrderType: goex.ORDER_TYPE_ORDINARY,
 		}}))
 }
 
@@ -116,7 +116,7 @@ func TestOKExFuture_PlaceFutureOrder2(t *testing.T) {
 		Currency:     goex.EOS_USD,
 		ContractName: goex.QUARTER_CONTRACT,
 		OType:        goex.OPEN_BUY,
-		OrderType:    goex.ORDINARY,
+		OrderType:    goex.ORDER_TYPE_ORDINARY,
 		Price:        5.9,
 		Amount:       10,
 		LeverRate:    10}))
@@ -218,7 +218,7 @@ func TestOKExMargin_PlaceOrder(t *testing.T) {
 		Amount:    0.2,
 		Price:     6,
 		Type:      "limit",
-		OrderType: goex.ORDINARY,
+		OrderType: goex.ORDER_TYPE_ORDINARY,
 		Side:      goex.SELL,
 	}))
 }
