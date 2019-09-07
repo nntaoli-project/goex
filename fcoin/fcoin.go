@@ -534,7 +534,7 @@ func (fc *FCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize i
 	params.Set("states", "partial_canceled,filled")
 	//params.Set("before", "1")
 	//params.Set("after", "0")
-	params.Set("limit", "100")
+	params.Set("limit", fmt.Sprint(pageSize))
 
 	r, err := fc.doAuthenticatedRequest("GET", "orders", params)
 	if err != nil {
@@ -555,8 +555,7 @@ func (fc *FCoin) GetOrderHistorys2(currency CurrencyPair, currentPage, pageSize 
 	for i := 0; i < len(states); i++ {
 		sts += states[i] + ","
 	}
-	sts = sts[:len(sts)-2]
-
+	sts = sts[:len(sts)-1]
 	params := url.Values{}
 	params.Set("symbol", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
 	params.Set("states", sts)
@@ -633,7 +632,6 @@ func (fc *FCoin) AssetTransfer(currency Currency, amount, from, to string) (bool
 }
 
 func (fc *FCoin) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-
 	uri := fmt.Sprintf("market/candles/%s/%s?limit=%d", _INERNAL_KLINE_PERIOD_CONVERTER[period], strings.ToLower(currency.ToSymbol("")), size)
 
 	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+uri)

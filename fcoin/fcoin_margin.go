@@ -87,15 +87,16 @@ func (fm *FCoinMargin) GetMarginAccount(currency CurrencyPair) (*MarginAccount, 
 func (fm *FCoinMargin) Borrow(parameter BorrowParameter) (*MarginOrder, error) {
 	params := url.Values{}
 	params.Set("account_type", strings.ToLower(parameter.CurrencyPair.AdaptUsdToUsdt().ToSymbol("")))
-	params.Set("currency", parameter.Currency.String())
+	params.Set("currency", strings.ToLower(parameter.Currency.String()))
 	params.Set("amount", FloatToString(parameter.Amount, 8))
 	params.Set("loan_type", "normal")
 
-	response, err := fm.doAuthenticatedRequest2("POST", "broker/leveraged/loans", params)
+	r, err := fm.doAuthenticatedRequest("POST", "broker/leveraged/loans", params)
 	if err != nil {
 		return nil, err
 	}
-
+	//fmt.Println(r, err)
+	response := r.(map[string]interface{})
 	return &MarginOrder{
 		Currency:             NewCurrency(response["currency"].(string), ""),
 		Amount:               ToFloat64(response["amount"]),
@@ -117,11 +118,12 @@ func (fm *FCoinMargin) Repayment(parameter RepaymentParameter) (repaymentId stri
 	params := url.Values{}
 	params.Set("amount", FloatToString(parameter.Amount, 8))
 
-	response, err := fm.doAuthenticatedRequest2("POST", "broker/leveraged/repayments/"+parameter.BorrowId, params)
+	response, err := fm.doAuthenticatedRequest("POST", "broker/leveraged/repayments/"+parameter.BorrowId, params)
 	if err != nil {
 		return "", err
 	}
-	repaymentId = response["repay_bill_id"].(string)
+	//fmt.Println("Repayment", response)
+	repaymentId = response.(string)
 	return
 }
 
@@ -162,6 +164,40 @@ func (fm *FCoinMargin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error)
 	}
 
 	return ords, nil
+}
+
+func (fm *FCoinMargin) GetUnfinishLoans(currency CurrencyPair) ([]*MarginOrder, error) {
+	params := url.Values{}
+	params.Set("account_type", currency.ToSymbol(""))
+	params.Set("skip_finish", "true")
+	response, err := fm.doAuthenticatedRequest("GET", "broker/leveraged/loans/", params)
+	if err != nil {
+		return nil, err
+	}
+
+	var loanOrders []*MarginOrder
+	data := response.(map[string]interface{})
+	ctt := data["content"].([]interface{})
+	for _, c := range ctt {
+		content := c.(map[string]interface{})
+		order := &MarginOrder{
+			Currency:             NewCurrency(content["currency"].(string), ""),
+			Amount:               ToFloat64(content["amount"]),
+			BorrowTime:           ToInt64(content["created_at"]),
+			RepaymentTime:        ToInt64(content["finished_at"]),
+			LoanFeeStartTime:     ToInt64(content["interest_start_at"]),
+			LastRepayTime:        ToInt64(content["last_repayment_at"]),
+			NextLoanFeeStartTime: ToInt64(content["next_interest_at"]),
+			LendingFee:           ToFloat64(content["interest"]),
+			LoanRate:             ToFloat64(content["interest_rate"]),
+			UnPaidAmount:         ToFloat64(content["unpaid_amount"]),
+			UnPaidLendingFee:     ToFloat64(content["unpaid_interest"]),
+			LoanBillId:           content["loan_bill_id"].(string),
+			State:                content["state"].(string),
+		}
+		loanOrders = append(loanOrders, order)
+	}
+	return loanOrders, nil
 }
 
 func (fm *FCoinMargin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
