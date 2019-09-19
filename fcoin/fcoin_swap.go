@@ -2,8 +2,10 @@ package fcoin
 
 import (
 	"fmt"
+	//"github.com/google/uuid"
 	. "github.com/nntaoli-project/GoEx"
 	"github.com/pkg/errors"
+	//"strings
 	"net/url"
 )
 
@@ -11,13 +13,12 @@ const (
 
 	/*Rest Endpoint*/
 	Endpoint              = "https://api.testnet.fmex.com"
-	// GET_ACCOUNTS          = "/api/swap/v3/accounts"
+	GET_ACCOUNTS          = "/v3/contracts/accounts"
 	PLACE_ORDER           = "/v3/contracts/orders"
 	CANCEL_ORDER          = "/v3/contracts/orders/%s/cancel"
-	// GET_ORDER             = "/api/swap/v3/orders/%s/%s"
-	// GET_POSITION          = "/api/swap/v3/%s/position"
+	GET_POSITION          = "/v3/contracts/positions"
 	GET_DEPTH             = "/v2/market/depth/L20/%s"
-	// GET_TICKER            = "/api/swap/v3/instruments/%s/ticker"
+	GET_TICKER            = "/v2/market/ticker/%s"
 	GET_UNFINISHED_ORDERS = "/v3/contracts/orders/open"
 )
 
@@ -38,14 +39,29 @@ func (fm *FMexSwap) GetExchangeName() string {
 }
 
 func (fm *FMexSwap) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
-	panic("not support")
+	uri := fmt.Sprintf(GET_TICKER,fm.adaptContractType(currencyPair))
+	respmap, err := HttpGet(fm.httpClient, fm.baseUrl+uri)
+	if err != nil {
+		return nil, err
+	}
+	if respmap["status"].(float64) != 0 {
+		return nil, errors.New(respmap["msg"].(string))
+	}
+	ticker := respmap["data"].(map[string]interface{})["ticker"].([]interface{})
+	return &Ticker{Pair:currencyPair,
+		       Last:ticker[0].(float64),
+	       	       Buy:ticker[2].(float64),
+	       	       Sell:ticker[4].(float64),
+	       	       High:ticker[7].(float64),
+	       	       Low:ticker[8].(float64),
+	       	       Vol:ticker[9].(float64)},nil
 }
 
 func (fm *FMexSwap) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
 	var uri string
 
 	uri = fmt.Sprintf(GET_DEPTH, fm.adaptContractType(currencyPair))
-	fmt.Println("get depth uri:",fm.baseUrl+uri)
+	//fmt.Println("get depth uri:",fm.baseUrl+uri)
 	respmap, err := HttpGet(fm.httpClient, fm.baseUrl+uri)
 	if err != nil {
 		return nil, err
@@ -91,7 +107,12 @@ func (fm *FMexSwap) GetFutureDepth(currencyPair CurrencyPair, contractType strin
 }
 
 func (fm *FMexSwap) GetFutureUserinfo() (*FutureAccount, error) {
-	panic("not support")
+	r, err := fm.doAuthenticatedRequest("GET", GET_ACCOUNTS, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("get userinfo:",r)
+	return nil,nil
 }
 
 
@@ -100,8 +121,12 @@ func (fm *FMexSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, pr
 	params := url.Values{}
 
 	params.Set("symbol", fm.adaptContractType(currencyPair))
-	params.Set("type", "limit")
-	if openType == BUY{
+	if matchPrice == 1{
+		params.Set("type", "market")
+	}else{
+		params.Set("type", "limit")
+	}
+	if openType == OPEN_BUY || openType == CLOSE_SELL{
 		params.Set("direction", "long")
 	}else{
 		params.Set("direction", "short")
@@ -156,21 +181,49 @@ func (fm *FMexSwap) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractT
 }
 
 /**
- *获取订单信息
  */
 func (fm *FMexSwap) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
 	panic("not support")
 }
 
 /**
- *获取单个订单信息
  */
 func (fm *FMexSwap) GetFutureOrder(orderId string, currencyPair CurrencyPair, contractType string) (*FutureOrder, error) {
 	panic("not support")
 }
 
 func (fm *FMexSwap) GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error) {
-	panic("not support")
+	r, err := fm.doAuthenticatedRequest("GET", GET_POSITION, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+	data := r.(map[string]interface{})
+	var positions []FuturePosition
+	for _,info := range data["results"].([]interface{}) {
+		cont := info.(map[string]interface{})
+		//fmt.Println("position info:",cont["direction"])
+		p := FuturePosition{CreateDate:int64(cont["updated_at"].(float64)),
+				    LeverRate:int(cont["leverage"].(float64)),
+				    Symbol:currencyPair,
+				    ContractId:int64(cont["user_id"].(float64)),
+				    ForceLiquPrice:cont["liquidation_price"].(float64)}
+		if cont["direction"] == "long"{
+			p.BuyAmount     = cont["quantity"].(float64)
+			p.BuyPriceAvg   = cont["entry_price"].(float64)
+			p.BuyPriceCost  = cont["margin"].(float64)
+			p.BuyProfitReal = cont["realized_pnl"].(float64)
+		}else{
+			p.SellAmount     = cont["quantity"].(float64)
+			p.SellPriceAvg   = cont["entry_price"].(float64)
+			p.SellPriceCost  = cont["margin"].(float64)
+			p.SellProfitReal = cont["realized_pnl"].(float64)
+		}
+
+		positions = append(positions,p)
+
+	}
+
+	return positions,nil
 }
 
 /**
