@@ -907,10 +907,10 @@ func (okv3 *OKExV3) GetFinishedFutureOrders(currencyPair CurrencyPair, contractT
 }
 
 var OKexOrderTypeMap = map[int]int{
-	ORDER_TYPE_LIMIT:     0,
-	ORDER_TYPE_POST_ONLY: 1,
-	ORDER_TYPE_FOK:       2,
-	ORDER_TYPE_FAK:       3,
+	ORDER_FEATURE_LIMIT:     0,
+	ORDER_FEATURE_POST_ONLY: 1,
+	ORDER_FEATURE_FOK:       2,
+	ORDER_FEATURE_FAK:       3,
 }
 
 func (okv3 *OKExV3) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, orderType, openType, matchPrice, leverRate int) (string, error) {
