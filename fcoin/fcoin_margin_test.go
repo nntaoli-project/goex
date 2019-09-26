@@ -8,7 +8,7 @@ import (
 var fm = &FCoinMargin{ft}
 
 func TestFCoinMargin_Borrow(t *testing.T) {
-	//return
+	return
 	t.Log(fm.Borrow(goex.BorrowParameter{
 		CurrencyPair: goex.BTC_USDT,
 		Currency:     goex.USDT,
@@ -17,7 +17,7 @@ func TestFCoinMargin_Borrow(t *testing.T) {
 }
 
 func TestFCoinMargin_Repayment(t *testing.T) {
-	//return
+	return
 	t.Log(fm.Repayment(goex.RepaymentParameter{
 		BorrowParameter: goex.BorrowParameter{
 			CurrencyPair: goex.BTC_USDT,
@@ -29,11 +29,15 @@ func TestFCoinMargin_Repayment(t *testing.T) {
 }
 
 func TestFCoinMargin_AssetTransferIn(t *testing.T) {
-	//return
+	return
 	t.Log(fm.AssetTransferIn(goex.USDT, "80", ASSETS, goex.BTC_USDT))
 }
 
 func TestFCoinMargin_GetMarginAccount(t *testing.T) {
 	//return
-	t.Log(fm.GetMarginAccount(goex.BTC_USDT))
+	t.Log(fm.GetMarginAccount(goex.EOS_USDT))
+}
+
+func TestFCoinMargin_GetAccount(t *testing.T) {
+	t.Log(fm.GetAccount())
 }
