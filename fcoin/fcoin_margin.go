@@ -2,6 +2,7 @@ package fcoin
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -288,7 +289,34 @@ func (fm *FCoinMargin) GetOrderHistorys(currency CurrencyPair, currentPage, page
 	}
 
 	return ords, nil
+}
 
+/*
+states:submitted,partial_filled,partial_canceled,filled,canceled
+*/
+func (fm *FCoinMargin) GetOrderHistorys2(currency CurrencyPair, currentPage, pageSize int, states ...string) ([]Order, error) {
+	sts := ""
+	for i := 0; i < len(states); i++ {
+		sts += states[i] + ","
+	}
+	sts = sts[:len(sts)-1]
+	params := url.Values{}
+	params.Set("symbol", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
+	params.Set("states", sts)
+	params.Set("limit", fmt.Sprint(pageSize))
+	params.Set("account_type", "margin")
+
+	r, err := fm.doAuthenticatedRequest("GET", "orders", params)
+	if err != nil {
+		return nil, err
+	}
+	var ords []Order
+
+	for _, ord := range r.([]interface{}) {
+		ords = append(ords, *fm.toOrder(ord.(map[string]interface{}), currency))
+	}
+
+	return ords, nil
 }
 
 func (fm *FCoinMargin) GetOneLoan(borrowId string) (*MarginOrder, error) {

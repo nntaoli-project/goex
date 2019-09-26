@@ -41,3 +41,7 @@ func TestFCoinMargin_GetMarginAccount(t *testing.T) {
 func TestFCoinMargin_GetAccount(t *testing.T) {
 	t.Log(fm.GetAccount())
 }
+func TestFCoinMargin_GetOrderHistorys2(t *testing.T) {
+	t.Log(fm.GetOrderHistorys2(goex.EOS_USDT, 1, 100,
+		"submitted,partial_filled,partial_canceled,filled,canceled"))
+}
