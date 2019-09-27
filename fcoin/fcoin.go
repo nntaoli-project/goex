@@ -572,8 +572,8 @@ func (fc *FCoin) GetOrderHistorys2(currency CurrencyPair, currentPage, pageSize 
 	}
 
 	return ords, nil
-
 }
+
 func (fc *FCoin) GetAccount() (*Account, error) {
 	r, err := fc.doAuthenticatedRequest("GET", "accounts/balance", url.Values{})
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 type TradeSide int
 
 const (
-	BUY = 1 + iota
+	BUY TradeSide = 1 + iota
 	SELL
 	BUY_MARKET
 	SELL_MARKET
@@ -106,32 +106,33 @@ var (
 
 //exchanges const
 const (
-	OKCOIN_CN   = "okcoin.cn"
-	OKCOIN_COM  = "okcoin.com"
-	OKEX        = "okex.com"
-	OKEX_V3     = "okex.com_v3"
-	OKEX_FUTURE = "okex.com_future"
-	OKEX_SWAP   = "okex.com_swap"
-	HUOBI       = "huobi.com"
-	HUOBI_PRO   = "huobi.pro"
-	BITSTAMP    = "bitstamp.net"
-	KRAKEN      = "kraken.com"
-	ZB          = "zb.com"
-	BITFINEX    = "bitfinex.com"
-	BINANCE     = "binance.com"
-	POLONIEX    = "poloniex.com"
-	COINEX      = "coinex.com"
-	BITHUMB     = "bithumb.com"
-	GATEIO      = "gate.io"
-	BITTREX     = "bittrex.com"
-	GDAX        = "gdax.com"
-	WEX_NZ      = "wex.nz"
-	BIGONE      = "big.one"
-	COIN58      = "58coin.com"
-	FCOIN       = "fcoin.com"
-	HITBTC      = "hitbtc.com"
-	BITMEX      = "bitmex.com"
-	CRYPTOPIA   = "cryptopia.co.nz"
-	HBDM        = "hbdm.com"
-	COINBENE    = "coinbene.com"
+	OKCOIN_CN    = "okcoin.cn"
+	OKCOIN_COM   = "okcoin.com"
+	OKEX         = "okex.com"
+	OKEX_V3      = "okex.com_v3"
+	OKEX_FUTURE  = "okex.com_future"
+	OKEX_SWAP    = "okex.com_swap"
+	HUOBI        = "huobi.com"
+	HUOBI_PRO    = "huobi.pro"
+	BITSTAMP     = "bitstamp.net"
+	KRAKEN       = "kraken.com"
+	ZB           = "zb.com"
+	BITFINEX     = "bitfinex.com"
+	BINANCE      = "binance.com"
+	POLONIEX     = "poloniex.com"
+	COINEX       = "coinex.com"
+	BITHUMB      = "bithumb.com"
+	GATEIO       = "gate.io"
+	BITTREX      = "bittrex.com"
+	GDAX         = "gdax.com"
+	WEX_NZ       = "wex.nz"
+	BIGONE       = "big.one"
+	COIN58       = "58coin.com"
+	FCOIN        = "fcoin.com"
+	FCOIN_MARGIN = "fcoin.com_margin"
+	HITBTC       = "hitbtc.com"
+	BITMEX       = "bitmex.com"
+	CRYPTOPIA    = "cryptopia.co.nz"
+	HBDM         = "hbdm.com"
+	COINBENE     = "coinbene.com"
 )
