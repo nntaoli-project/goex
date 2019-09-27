@@ -63,6 +63,10 @@ func TestBinance_GetKlineRecords(t *testing.T) {
 	}
 }
 
+func TestBinance_GetTrades(t *testing.T) {
+	t.Log(ba.GetTrades(goex.BTC_USDT , 0))
+}
+
 func TestBinance_GetTradeSymbols(t *testing.T) {
 	t.Log(ba.GetTradeSymbols(goex.BTC_USDT))
 }

@@ -471,8 +471,40 @@ func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since in
 }
 
 //非个人，整个交易所的交易记录
+//注意：since is fromId
 func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	panic("not implements")
+	param := url.Values{}
+	param.Set("symbol", bn.adaptCurrencyPair(currencyPair).ToSymbol(""))
+	param.Set("limit", "500")
+	if since > 0 {
+		param.Set("fromId", strconv.Itoa(int(since)))
+	}
+	apiUrl := API_V1 + "historicalTrades?" + param.Encode()
+	log.Println(apiUrl)
+	resp, err := HttpGet3(bn.httpClient, apiUrl, map[string]string{
+		"X-MBX-APIKEY": bn.accessKey})
+	if err != nil {
+		return nil, err
+	}
+
+	var trades []Trade
+	for _, v := range resp {
+		m := v.(map[string]interface{})
+		ty := SELL
+		if m["isBuyerMaker"].(bool) {
+			ty = BUY
+		}
+		trades = append(trades, Trade{
+			Tid:    ToInt64(m["id"]),
+			Type:   ty,
+			Amount: ToFloat64(m["qty"]),
+			Price:  ToFloat64(m["price"]),
+			Date:   ToInt64(m["time"]),
+			Pair:   currencyPair,
+		})
+	}
+
+	return trades, nil
 }
 
 func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {

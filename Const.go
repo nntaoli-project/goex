@@ -7,7 +7,7 @@ import (
 type TradeSide int
 
 const (
-	BUY = 1 + iota
+	BUY TradeSide = 1 + iota
 	SELL
 	BUY_MARKET
 	SELL_MARKET
