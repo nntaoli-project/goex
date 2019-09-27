@@ -55,8 +55,12 @@ func TestBinance_GetUnfinishOrders(t *testing.T) {
 	t.Log(orders, err)
 }
 func TestBinance_GetKlineRecords(t *testing.T) {
-	return
-	t.Log(ba.GetKlineRecords(goex.ETH_BTC, goex.KLINE_PERIOD_1MIN, 100, int(time.Now().Add(-2*time.Hour).UnixNano())))
+	before := time.Now().Add(-time.Hour).Unix() * 1000
+	kline, _ := ba.GetKlineRecords(goex.ETH_BTC, goex.KLINE_PERIOD_5MIN, 100, int(before))
+	for _, k := range kline {
+		tt := time.Unix(k.Timestamp, 0)
+		t.Log(tt, k.Open, k.Close, k.High, k.Low, k.Vol)
+	}
 }
 
 func TestBinance_GetTradeSymbols(t *testing.T) {

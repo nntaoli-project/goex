@@ -33,6 +33,7 @@ var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
 	KLINE_PERIOD_15MIN:  "15m",
 	KLINE_PERIOD_30MIN:  "30m",
 	KLINE_PERIOD_60MIN:  "1h",
+	KLINE_PERIOD_1H:     "1h",
 	KLINE_PERIOD_2H:     "2h",
 	KLINE_PERIOD_4H:     "4h",
 	KLINE_PERIOD_6H:     "6h",
@@ -430,8 +431,10 @@ func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since in
 	params := url.Values{}
 	params.Set("symbol", currency2.ToSymbol(""))
 	params.Set("interval", _INERNAL_KLINE_PERIOD_CONVERTER[period])
-	params.Set("startTime", strconv.Itoa(since/1000000))
-	params.Set("endTime", strconv.Itoa(int(time.Now().UnixNano()/1000000)))
+	if since > 0 {
+		params.Set("startTime", strconv.Itoa(since))
+	}
+	//params.Set("endTime", strconv.Itoa(int(time.Now().UnixNano()/1000000)))
 	params.Set("limit", fmt.Sprintf("%d", size))
 
 	klineUrl := API_V1 + KLINE_URI + "?" + params.Encode()
