@@ -33,6 +33,7 @@ var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
 	KLINE_PERIOD_15MIN:  "15m",
 	KLINE_PERIOD_30MIN:  "30m",
 	KLINE_PERIOD_60MIN:  "1h",
+	KLINE_PERIOD_1H:     "1h",
 	KLINE_PERIOD_2H:     "2h",
 	KLINE_PERIOD_4H:     "4h",
 	KLINE_PERIOD_6H:     "6h",
@@ -430,8 +431,10 @@ func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since in
 	params := url.Values{}
 	params.Set("symbol", currency2.ToSymbol(""))
 	params.Set("interval", _INERNAL_KLINE_PERIOD_CONVERTER[period])
-	params.Set("startTime", strconv.Itoa(since/1000000))
-	params.Set("endTime", strconv.Itoa(int(time.Now().UnixNano()/1000000)))
+	if since > 0 {
+		params.Set("startTime", strconv.Itoa(since))
+	}
+	//params.Set("endTime", strconv.Itoa(int(time.Now().UnixNano()/1000000)))
 	params.Set("limit", fmt.Sprintf("%d", size))
 
 	klineUrl := API_V1 + KLINE_URI + "?" + params.Encode()
@@ -468,8 +471,40 @@ func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since in
 }
 
 //非个人，整个交易所的交易记录
+//注意：since is fromId
 func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	panic("not implements")
+	param := url.Values{}
+	param.Set("symbol", bn.adaptCurrencyPair(currencyPair).ToSymbol(""))
+	param.Set("limit", "500")
+	if since > 0 {
+		param.Set("fromId", strconv.Itoa(int(since)))
+	}
+	apiUrl := API_V1 + "historicalTrades?" + param.Encode()
+	log.Println(apiUrl)
+	resp, err := HttpGet3(bn.httpClient, apiUrl, map[string]string{
+		"X-MBX-APIKEY": bn.accessKey})
+	if err != nil {
+		return nil, err
+	}
+
+	var trades []Trade
+	for _, v := range resp {
+		m := v.(map[string]interface{})
+		ty := SELL
+		if m["isBuyerMaker"].(bool) {
+			ty = BUY
+		}
+		trades = append(trades, Trade{
+			Tid:    ToInt64(m["id"]),
+			Type:   ty,
+			Amount: ToFloat64(m["qty"]),
+			Price:  ToFloat64(m["price"]),
+			Date:   ToInt64(m["time"]),
+			Pair:   currencyPair,
+		})
+	}
+
+	return trades, nil
 }
 
 func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
