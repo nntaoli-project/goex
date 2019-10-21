@@ -221,18 +221,20 @@ func (fm *FMexSwap) GetFutureUserinfo() (*FutureAccount, error) {
 	}
 	acc := new(FutureAccount)
 	acc.FutureSubAccounts = make(map[Currency]FutureSubAccount)
-	fmt.Println("get userinfo:", r)
 
-	//balances := r.([]interface{})
-	//for _, v := range balances {
-	//	vv := v.(map[string]interface{})
-	//	currency := NewCurrency(vv["currency"].(string), "")
-	//	acc.FutureSubAccounts[currency] = SubAccount{
-	//		Currency:     currency,
-	//		Amount:       ToFloat64(vv["available"]),
-	//		ForzenAmount: ToFloat64(vv["frozen"]),
-	//	}
-	//}
+	balances := r.(map[string]interface{})
+	for k, v := range balances {
+		vv := v.([]interface{})
+		currency := NewCurrency(k, "")
+		acc.FutureSubAccounts[currency] = FutureSubAccount{
+			Currency:      currency,
+			AccountRights: ToFloat64(vv[0]),
+			KeepDeposit:   ToFloat64(vv[2]),
+			ProfitReal:    0,
+			ProfitUnreal:  0,
+			RiskRate:      0,
+		}
+	}
 	return acc, nil
 
 }
@@ -508,7 +510,7 @@ func (fm *FMexSwap) GetKlineRecords(contract_type string, currency CurrencyPair,
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(respmap)
+
 	if respmap["status"].(float64) != 0 {
 		return nil, errors.New(respmap["msg"].(string))
 	}
