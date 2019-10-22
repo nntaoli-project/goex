@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var fm = NewFMex(&http.Client{
+var fm = NewFMex(&goex.APIConfig{HttpClient: &http.Client{
 	Transport: &http.Transport{
 		Proxy: func(req *http.Request) (*url.URL, error) {
 			return url.Parse("socks5://127.0.0.1:1080")
@@ -20,7 +20,7 @@ var fm = NewFMex(&http.Client{
 		}).Dial,
 	},
 	Timeout: 10 * time.Second,
-}, "dd2d899cdb694322a10954070580030b", "64f05065a6684d5182f7a382c3d23069")
+}, ApiKey: "dd2d899cdb694322a10954070580030b", ApiSecretKey: "64f05065a6684d5182f7a382c3d23069"})
 
 func init() {
 	fm.SetBaseUri("https://api.testnet.fmex.com")
