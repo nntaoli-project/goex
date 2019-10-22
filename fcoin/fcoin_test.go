@@ -35,7 +35,6 @@ func TestFCoin_GetDepth(t *testing.T) {
 }
 
 func TestFCoin_GetAccount(t *testing.T) {
-	return
 	acc, _ := ft.GetAccount()
 	t.Log(acc)
 }
@@ -95,12 +94,4 @@ func TestFCoin_MarketSell(t *testing.T) {
 	cancelled, err = ft.CancelOrder("ICpzuGFpNc69bY59cgyo3DsjIui4J3GJjIXAEeDYATP3-DFzQEOCqu1dWkFgU8yDfSDJ-WIsn9FIQXVAzrwDzA==", goex.BTC_USD)
 	t.Log(cancelled, err)
 
-}
-
-func TestFCoin_GetTradeSymbols(t *testing.T) {
-
-}
-
-func TestFCoin_GetTradeSymbols2(t *testing.T) {
-	t.Log(ft.GetTradeSymbols2(goex.BTC_USDT))
 }

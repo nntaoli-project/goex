@@ -282,7 +282,7 @@ func (bnWs *BinanceWs) parseDepthData(bids, asks [][]interface{}) *Depth {
 
 func (bnWs *BinanceWs) parseKlineData(k map[string]interface{}) *Kline {
 	kline := &Kline{
-		Timestamp: int64(ToInt(k["t"])),
+		Timestamp: int64(ToInt(k["t"])) / 1000,
 		Open:      ToFloat64(k["o"]),
 		Close:     ToFloat64(k["c"]),
 		High:      ToFloat64(k["h"]),
