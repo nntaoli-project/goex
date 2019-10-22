@@ -3,6 +3,7 @@ package bithumb
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"sort"
 	"strconv"
 	"time"
-	"errors"
 )
 
 type Bithumb struct {
