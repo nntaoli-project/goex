@@ -46,7 +46,8 @@ type WsBuilder struct {
 }
 
 func NewWsBuilder() *WsBuilder {
-	return &WsBuilder{&WsConfig{}}
+	return &WsBuilder{&WsConfig{
+		ReqHeaders: make(map[string][]string, 1)}}
 }
 
 func (b *WsBuilder) WsUrl(wsUrl string) *WsBuilder {
