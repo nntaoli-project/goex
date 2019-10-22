@@ -115,7 +115,9 @@ func (ws *WsConn) NewWs() *WsConn {
 	ws.Lock()
 	defer ws.Unlock()
 
-	ws.connect()
+	if err := ws.connect(); err != nil {
+		panic(err)
+	}
 
 	ws.mu = make(chan struct{}, 1)
 	ws.closeHeartbeat = make(chan struct{}, 1)
@@ -130,7 +132,7 @@ func (ws *WsConn) NewWs() *WsConn {
 	return ws
 }
 
-func (ws *WsConn) connect() {
+func (ws *WsConn) connect() error {
 	dialer := websocket.DefaultDialer
 
 	if ws.ProxyUrl != "" {
@@ -145,7 +147,11 @@ func (ws *WsConn) connect() {
 
 	wsConn, resp, err := dialer.Dial(ws.WsUrl, http.Header(ws.ReqHeaders))
 	if err != nil {
-		panic(err)
+		if ws.IsDump && resp != nil {
+			dumpData, _ := httputil.DumpResponse(resp, true)
+			log.Println(string(dumpData))
+		}
+		return err
 	}
 
 	ws.Conn = wsConn
@@ -156,6 +162,8 @@ func (ws *WsConn) connect() {
 	}
 
 	ws.UpdateActiveTime()
+
+	return nil
 }
 
 func (ws *WsConn) SendJsonMessage(v interface{}) error {
@@ -181,7 +189,10 @@ func (ws *WsConn) ReConnect() {
 	log.Println("close ws  error :", ws.Close())
 	time.Sleep(time.Second)
 
-	ws.connect()
+	if err := ws.connect(); err != nil {
+		log.Println(ws.WsUrl, "ws connect error ", err)
+		return
+	}
 
 	//re subscribe
 	for _, sub := range ws.subs {
@@ -216,25 +227,26 @@ func (ws *WsConn) ReConnectTimer() {
 }
 
 func (ws *WsConn) checkStatusTimer() {
+	var checkStatusTimer *time.Ticker
 	if ws.HeartbeatIntervalTime == 0 {
-		return
+		checkStatusTimer = time.NewTicker(10 * time.Second)
+	} else {
+		checkStatusTimer = time.NewTicker(ws.HeartbeatIntervalTime)
 	}
-
-	timer := time.NewTimer(ws.HeartbeatIntervalTime)
 
 	go func() {
 		ws.clearChannel(ws.closeCheck)
 
 		for {
 			select {
-			case <-timer.C:
+			case <-checkStatusTimer.C:
 				now := time.Now()
 				if now.Sub(ws.activeTime) >= 2*ws.HeartbeatIntervalTime {
 					log.Println("active time [ ", ws.activeTime, " ] has expired , begin reconnect ws.")
 					ws.ReConnect()
 				}
-				timer.Reset(ws.HeartbeatIntervalTime)
 			case <-ws.closeCheck:
+				checkStatusTimer.Stop()
 				log.Println("check status timer exiting")
 				return
 			}
@@ -286,6 +298,12 @@ func (ws *WsConn) Subscribe(subEvent interface{}) error {
 
 func (ws *WsConn) ReceiveMessage() {
 	ws.clearChannel(ws.closeRecv)
+	//exit
+	ws.SetCloseHandler(func(code int, text string) error {
+		log.Println("websocket exiting ,code=", code, ",text=", text)
+		ws.CloseWs()
+		return nil
+	})
 
 	go func() {
 		for {
