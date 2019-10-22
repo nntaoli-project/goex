@@ -12,6 +12,7 @@ import (
 	"github.com/nntaoli-project/GoEx/bitstamp"
 	"github.com/nntaoli-project/GoEx/bittrex"
 	"github.com/nntaoli-project/GoEx/coinbene"
+	"github.com/nntaoli-project/GoEx/fmex"
 
 	//"github.com/nntaoli-project/GoEx/coin58"
 	"github.com/nntaoli-project/GoEx/coinex"
@@ -260,6 +261,13 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 		return coinbene.NewCoinbeneSwap(APIConfig{
 			HttpClient:   builder.client,
 			Endpoint:     "http://openapi-contract.coinbene.com",
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey,
+		})
+	case FMEX:
+		return fmex.NewFMex(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     "https://api.fmex.com",
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
 		})
