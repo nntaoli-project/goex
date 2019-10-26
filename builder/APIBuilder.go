@@ -265,7 +265,7 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiSecretKey: builder.secretkey,
 		})
 	case FMEX:
-		return fmex.NewFMex(&APIConfig{
+		return fmex.NewFMexSwap(&APIConfig{
 			HttpClient:   builder.client,
 			Endpoint:     "https://api.fmex.com",
 			ApiKey:       builder.apiKey,

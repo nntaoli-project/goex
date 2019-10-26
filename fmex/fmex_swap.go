@@ -73,7 +73,14 @@ type RawTicker struct {
 	LastTradeVol float64
 }
 
-func NewFMex(config *APIConfig) *FMexSwap {
+type OrderFilter struct {
+	Range    string
+	Symbol   string
+	OffsetId string
+	Limit    string
+}
+
+func NewFMexSwap(config *APIConfig) *FMexSwap {
 	fm := &FMexSwap{baseUrl: config.Endpoint, accessKey: config.ApiKey, secretKey: config.ApiSecretKey, httpClient: config.HttpClient}
 	fm.setTimeOffset()
 	return fm
@@ -84,7 +91,7 @@ func (fm *FMexSwap) SetBaseUri(uri string) {
 }
 
 func (fm *FMexSwap) GetExchangeName() string {
-	return "fmex.com"
+	return FMEX
 }
 
 /**
@@ -198,7 +205,37 @@ func (fm *FMexSwap) GetFutureDepth(currency CurrencyPair, contractType string, s
 }
 
 func (fm *FMexSwap) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	panic("not supported.")
+	var uri = "/v2/market/trades/" + fm.adaptContractType(currencyPair)
+	respmap, err := HttpGet(fm.httpClient, fm.baseUrl+uri)
+	if err != nil {
+		return nil, err
+	}
+
+	if respmap["status"].(float64) != 0 {
+		return nil, errors.New(respmap["msg"].(string))
+	}
+
+	datamap := respmap["data"].([]interface{})
+
+	trades := make([]Trade, 0)
+	for _, v := range datamap {
+		vv := v.(map[string]interface{})
+		side := BUY
+		if vv["side"] == "sell" {
+			side = SELL
+		}
+		trades = append(trades, Trade{
+			Tid:    ToInt64(vv["id"]),
+			Type:   side,
+			Amount: ToFloat64(vv["amount"]),
+			Price:  ToFloat64(vv["price"]),
+			Date:   ToInt64(vv["ts"]),
+			Pair:   currencyPair,
+		})
+	}
+
+	return trades, nil
+
 }
 
 /**
@@ -404,32 +441,34 @@ func (fm *FMexSwap) GetFuturePosition(currencyPair CurrencyPair, contractType st
 	if err != nil {
 		return nil, err
 	}
+
 	data := r.(map[string]interface{})
+	result := data["results"].([]interface{})
 	var positions []FuturePosition
-	for _, info := range data["results"].([]interface{}) {
+	for _, info := range result {
 		cont := info.(map[string]interface{})
-		//fmt.Println("position info:",cont["direction"])
-		p := FuturePosition{CreateDate: int64(cont["updated_at"].(float64)),
-			LeverRate:      int(cont["leverage"].(float64)),
-			Symbol:         currencyPair,
-			ContractId:     int64(cont["user_id"].(float64)),
-			ForceLiquPrice: cont["liquidation_price"].(float64)}
-		if cont["direction"] == "long" {
-			p.BuyAmount = cont["quantity"].(float64)
-			p.BuyPriceAvg = cont["entry_price"].(float64)
-			p.BuyPriceCost = cont["margin"].(float64)
-			p.BuyProfitReal = cont["realized_pnl"].(float64)
-		} else {
-			p.SellAmount = cont["quantity"].(float64)
-			p.SellPriceAvg = cont["entry_price"].(float64)
-			p.SellPriceCost = cont["margin"].(float64)
-			p.SellProfitReal = cont["realized_pnl"].(float64)
+		if !cont["closed"].(bool) {
+			p := FuturePosition{
+				CreateDate:     int64(cont["updated_at"].(float64)),
+				LeverRate:      int(cont["leverage"].(float64)),
+				Symbol:         currencyPair,
+				ContractId:     int64(cont["user_id"].(float64)),
+				ForceLiquPrice: cont["liquidation_price"].(float64),
+			}
+			if cont["direction"] == "long" {
+				p.BuyAmount = cont["quantity"].(float64)
+				p.BuyPriceAvg = cont["entry_price"].(float64)
+				p.BuyPriceCost = cont["margin"].(float64)
+				p.BuyProfitReal = cont["realized_pnl"].(float64)
+			} else {
+				p.SellAmount = cont["quantity"].(float64)
+				p.SellPriceAvg = cont["entry_price"].(float64)
+				p.SellPriceCost = cont["margin"].(float64)
+				p.SellProfitReal = cont["realized_pnl"].(float64)
+			}
+			positions = append(positions, p)
 		}
-
-		positions = append(positions, p)
-
 	}
-
 	return positions, nil
 }
 
@@ -437,24 +476,94 @@ func (fm *FMexSwap) GetFuturePosition(currencyPair CurrencyPair, contractType st
  *获取订单信息
  */
 func (fm *FMexSwap) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
-	panic("not supported.")
+	if len(orderIds) == 0 {
+		return nil, errors.New("orderIds is empty")
+	}
+	orders := make([]FutureOrder, 0)
+	for _, orderId := range orderIds {
+		ord, err := fm.GetFutureOrder(orderId, currencyPair, contractType)
+		if err != nil {
+			return orders, err
+		}
+		orders = append(orders, *ord)
+	}
+	return orders, nil
+}
 
+func (fm *FMexSwap) GetFutureOrderHistory(filter *OrderFilter, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
+	param := url.Values{}
+	if filter != nil {
+		if filter.Range != "" {
+			param.Set("range", filter.Range)
+		}
+		if filter.Symbol != "" {
+			param.Set("symbol", filter.Symbol)
+		}
+		if filter.OffsetId != "" {
+			param.Set("offsetId", filter.OffsetId)
+		}
+		if filter.Limit != "" {
+			param.Set("limit", filter.Limit)
+		}
+	}
+	r, err := fm.doAuthenticatedRequest("GET", "/v3/contracts/orders/closed", param)
+	if err != nil {
+		return nil, err
+	}
+	data := r.(map[string]interface{})
+	result := data["results"].([]interface{})
+	var orders []FutureOrder
+	for _, info := range result {
+		ord := fm.parseOrder(info)
+		ord.Currency = currencyPair
+		ord.ContractName = contractType
+		orders = append(orders, ord)
+	}
+	return orders, nil
 }
 
 /**
  *获取单个订单信息
  */
 func (fm *FMexSwap) GetFutureOrder(orderId string, currencyPair CurrencyPair, contractType string) (*FutureOrder, error) {
-	panic("not supported.")
+	r, err := fm.doAuthenticatedRequest("GET", "/v3/contracts/orders/"+orderId, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+	data := r.(map[string]interface{})
+	order := fm.parseOrder(data)
+	order.Currency = currencyPair
+	order.ContractName = contractType
 
+	return &order, nil
+}
+
+func (fm *FMexSwap) parseOrderStatus(sts string) TradeStatus {
+	orderStatus := ORDER_UNFINISH
+	switch sts {
+	case "PARTIAL_FILLED", "partial_filled":
+		orderStatus = ORDER_PART_FINISH
+	case "FULLY_FILLED", "fully_filled":
+		orderStatus = ORDER_FINISH
+	//case "STOP_CANCELLED":
+	//	orderStatus = ORDER_CANCEL_ING
+	case "FULLY_CANCELLED", "PARTIAL_CANCELLED", "STOP_CANCELLED", "fully_cancelled", "partial_cancelled", "stop_cancelled":
+		orderStatus = ORDER_CANCEL
+	}
+	return orderStatus
 }
 
 func (fm *FMexSwap) parseOrder(ord interface{}) FutureOrder {
 	order := ord.(map[string]interface{})
 	return FutureOrder{
-		OrderID2:  fmt.Sprintf("%d", int64(order["id"].(float64))),
-		Amount:    order["quantity"].(float64),
-		OrderTime: int64(order["created_at"].(float64))}
+		OrderID2:   fmt.Sprintf("%d", ToInt64(order["id"])),
+		Amount:     ToFloat64(order["quantity"]),
+		DealAmount: ToFloat64(order["quantity"]) - ToFloat64(order["unfilled_quantity"]),
+		Price:      ToFloat64(order["price"]),
+		Fee:        ToFloat64(order["fee"]),
+		OrderTime:  ToInt64(order["created_at"]),
+		Status:     fm.parseOrderStatus(order["status"].(string)),
+	}
 }
 
 /**
@@ -475,7 +584,6 @@ func (fm *FMexSwap) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractT
 	}
 
 	return orders, nil
-
 }
 
 /**
@@ -574,7 +682,11 @@ func (fm *FMexSwap) doAuthenticatedRequest(method, uri string, params url.Values
 
 	switch method {
 	case "GET":
-		respmap, err = HttpGet2(fm.httpClient, fm.baseUrl+uri+"?"+params.Encode(), header)
+		if len(params) != 0 {
+			respmap, err = HttpGet2(fm.httpClient, fm.baseUrl+uri+"?"+params.Encode(), header)
+		} else {
+			respmap, err = HttpGet2(fm.httpClient, fm.baseUrl+uri, header)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -616,7 +728,11 @@ func (fm *FMexSwap) doAuthenticatedRequest2(method, uri string, params url.Value
 
 	switch method {
 	case "GET":
-		respmap, err = HttpGet2(fm.httpClient, fm.baseUrl+uri+"?"+params.Encode(), header)
+		if len(params) != 0 {
+			respmap, err = HttpGet2(fm.httpClient, fm.baseUrl+uri+"?"+params.Encode(), header)
+		} else {
+			respmap, err = HttpGet2(fm.httpClient, fm.baseUrl+uri, header)
+		}
 		if err != nil {
 			return nil, err
 		}
