@@ -108,7 +108,7 @@ func (fm *FMexSwap) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64,
  */
 func (fm *FMexSwap) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
 	respmap, err := HttpGet(fm.httpClient, fm.baseUrl+fmt.Sprintf("/v2/market/ticker/%s",
-		fm.adaptContractType(currencyPair)))
+		adaptContractType(currencyPair)))
 
 	if err != nil {
 		return nil, err
@@ -155,9 +155,9 @@ func (fm *FMexSwap) GetFutureTicker(currencyPair CurrencyPair, contractType stri
 func (fm *FMexSwap) GetFutureDepth(currency CurrencyPair, contractType string, size int) (*Depth, error) {
 	var uri string
 	if size <= 20 {
-		uri = fmt.Sprintf("/v2/market/depth/L20/%s", fm.adaptContractType(currency))
+		uri = fmt.Sprintf("/v2/market/depth/L20/%s", adaptContractType(currency))
 	} else {
-		uri = fmt.Sprintf("/v2/market/depth/L150/%s", fm.adaptContractType(currency))
+		uri = fmt.Sprintf("/v2/market/depth/L150/%s", adaptContractType(currency))
 	}
 	respmap, err := HttpGet(fm.httpClient, fm.baseUrl+uri)
 	if err != nil {
@@ -205,7 +205,7 @@ func (fm *FMexSwap) GetFutureDepth(currency CurrencyPair, contractType string, s
 }
 
 func (fm *FMexSwap) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	var uri = "/v2/market/trades/" + fm.adaptContractType(currencyPair)
+	var uri = "/v2/market/trades/" + adaptContractType(currencyPair)
 	respmap, err := HttpGet(fm.httpClient, fm.baseUrl+uri)
 	if err != nil {
 		return nil, err
@@ -303,7 +303,7 @@ func (fm *FMexSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, pr
 	params := url.Values{}
 
 	params.Set("source", "GoEx")
-	params.Set("symbol", fm.adaptContractType(currencyPair))
+	params.Set("symbol", adaptContractType(currencyPair))
 
 	switch openType {
 	case OPEN_BUY, CLOSE_SELL:
@@ -374,9 +374,9 @@ func (fm *FMexSwap) PlaceFutureOrder2(ord *OrderParam) (string, error) {
 	params := url.Values{}
 
 	params.Set("source", "GoEx")
-	params.Set("symbol", fm.adaptContractType(ord.Currency))
+	params.Set("symbol", adaptContractType(ord.Currency))
 
-	switch ord.Type {
+	switch ord.Direction {
 	case OPEN_BUY, CLOSE_SELL:
 		params.Set("direction", "LONG")
 	case OPEN_SELL, CLOSE_BUY:
@@ -611,7 +611,7 @@ func (fm *FMexSwap) GetDeliveryTime() (int, int, int, int) {
  * 获取K线数据
  */
 func (fm *FMexSwap) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
-	uri := fmt.Sprintf("/v2/market/candles/%s/%s?limit=%d", _INERNAL_KLINE_PERIOD_CONVERTER[period], fm.adaptContractType(currency), size)
+	uri := fmt.Sprintf("/v2/market/candles/%s/%s?limit=%d", _INERNAL_KLINE_PERIOD_CONVERTER[period], adaptContractType(currency), size)
 
 	respmap, err := HttpGet(fm.httpClient, fm.baseUrl+uri)
 	if err != nil {
@@ -792,7 +792,7 @@ func (fm *FMexSwap) buildSigned(httpmethod string, apiurl string, timestamp int6
 	return s
 }
 
-func (fm *FMexSwap) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
+func adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
 	if pair.CurrencyA.Eq(BCH) || pair.CurrencyA.Eq(BCC) {
 		return NewCurrencyPair(NewCurrency("BCHABC", ""), pair.CurrencyB).AdaptUsdToUsdt()
 	}
@@ -804,6 +804,6 @@ func (fm *FMexSwap) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
 	return pair.AdaptUsdtToUsd()
 }
 
-func (fm *FMexSwap) adaptContractType(currencyPair CurrencyPair) string {
-	return fmt.Sprintf("%s_P", fm.adaptCurrencyPair(currencyPair).ToSymbol(""))
+func adaptContractType(currencyPair CurrencyPair) string {
+	return strings.ToLower(adaptCurrencyPair(currencyPair).ToSymbol("")) + "_p"
 }
