@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"testing"
 	"time"
-	"log"
 )
 
 var httpProxyClient = &http.Client{
@@ -122,38 +121,12 @@ func TestHuobiPro_GetOneOrder(t *testing.T) {
 }
 
 func TestHuobiPro_GetOrderHistorys(t *testing.T) {
-	return
 	ords, err := hbpro.GetOrderHistorys(goex.NewCurrencyPair2("HT_USDT"), 1, 3)
 	t.Log(err)
 	t.Log(ords)
 }
 
-func TestHuobiPro_GetDepthWithWs(t *testing.T) {
-	return
-	hbpro.GetDepthWithWs(goex.BTC_USDT, func(dep *goex.Depth) {
-		log.Println("%+v", *dep)
-	})
-	time.Sleep(time.Minute)
-}
-
-func TestHuobiPro_GetTickerWithWs(t *testing.T) {
-	return
-	hbpro.GetTickerWithWs(goex.BTC_USDT, func(ticker *goex.Ticker) {
-		log.Println("%+v", *ticker)
-	})
-	time.Sleep(time.Minute)
-}
-
-func TestHuobiPro_GetKLineWithWs(t *testing.T) {
-	return
-	hbpro.GetKLineWithWs(goex.BTC_USDT, goex.KLINE_PERIOD_60MIN, func(kline *goex.Kline) {
-		log.Println("%+v", *kline)
-	})
-	time.Sleep(time.Minute)
-}
-
 func TestHuobiPro_GetCurrenciesList(t *testing.T) {
-	return
 	hbpro.GetCurrenciesList()
 }
 
