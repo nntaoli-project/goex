@@ -243,14 +243,26 @@ func (fm *FMexSwap) GetTrades(contract_type string, currencyPair CurrencyPair, s
  * @param currencyPair   btc_usd:比特币    ltc_usd :莱特币
  */
 func (fm *FMexSwap) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
-	panic("not supported.")
+	var uri = "/v2/market/indexes"
+	respmap, err := HttpGet(fm.httpClient, fm.baseUrl+uri)
+	if err != nil {
+		return 0.0, err
+	}
+
+	if respmap["status"].(float64) != 0 {
+		return 0.0, errors.New(respmap["msg"].(string))
+	}
+	pair := "." + adaptCurrencyPair(currencyPair).ToLower().ToSymbol("") + "_spot"
+	datamap := respmap["data"].(map[string]interface{})
+	spot := datamap[pair].([]interface{})
+	return ToFloat64(spot[1]), nil
+
 }
 
 /**
  *全仓账户
  */
 func (fm *FMexSwap) GetFutureUserinfo() (*FutureAccount, error) {
-
 	r, err := fm.doAuthenticatedRequest("GET", "/v3/contracts/accounts", url.Values{})
 	if err != nil {
 		return nil, err
@@ -410,7 +422,6 @@ func (fm *FMexSwap) PlaceFutureOrder2(ord *OrderParam) (string, error) {
 	data := r.(map[string]interface{})
 
 	return fmt.Sprintf("%d", int64(data["id"].(float64))), nil
-
 }
 
 /**
@@ -427,7 +438,6 @@ func (fm *FMexSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, o
 		return false, err
 	}
 	return true, nil
-
 }
 
 /**

@@ -61,3 +61,7 @@ func TestFMexSwap_GetFutureOrder(t *testing.T) {
 func TestFMexSwap_GetTrades(t *testing.T) {
 	t.Log(fm.GetTrades("", goex.BTC_USDT, 1))
 }
+
+func TestFMexSwap_GetFutureIndex(t *testing.T) {
+	t.Log(fm.GetFutureIndex(goex.BTC_USDT))
+}
