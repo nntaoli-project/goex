@@ -199,9 +199,10 @@ func (fm *FMexSwap) GetFutureDepth(currency CurrencyPair, contractType string, s
 			break
 		}
 	}
-
+	if depth.AskList.Len() < size || depth.BidList.Len() < size {
+		return depth, errors.New("depth size not enough")
+	}
 	return depth, nil
-
 }
 
 func (fm *FMexSwap) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
@@ -419,7 +420,10 @@ func (fm *FMexSwap) PlaceFutureOrder2(ord *OrderParam) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	data := r.(map[string]interface{})
+	data, isOk := r.(map[string]interface{})
+	if !isOk {
+		return "", errors.New(fmt.Sprintf("PlaceFutureOrder2 UNKNOW:%v", r))
+	}
 
 	return fmt.Sprintf("%d", int64(data["id"].(float64))), nil
 }
