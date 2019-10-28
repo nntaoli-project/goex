@@ -46,14 +46,17 @@ func TestFMexWs_GetTickerWithWs(t *testing.T) {
 	time.Sleep(time.Second * 10)
 }
 func TestFMexWs_GetDepthWithWs(t *testing.T) {
+	return
 	fmws.SubscribeDepth(goex.BTC_USDT, 20)
 	time.Sleep(time.Second * 3)
 }
 func TestFMexWs_GetKLineWithWs(t *testing.T) {
+	return
 	fmws.SubscribeKline(goex.BTC_USDT, goex.KLINE_PERIOD_1MIN)
 	time.Sleep(time.Second * 120)
 }
 func TestFMexWs_GetTradesWithWs(t *testing.T) {
+	return
 	fmws.SubscribeTrade(goex.BTC_USDT)
 	time.Sleep(time.Second * 120)
 }
