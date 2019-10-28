@@ -1,2 +1,2 @@
-language: python
+language: golang
 script: true
