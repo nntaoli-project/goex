@@ -4,20 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"strings"
+	"sync"
+	"time"
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
 	. "github.com/nntaoli-project/GoEx"
-	"net/http"
-	"sync"
-	"time"
-	//	"math/rand"
-	//	"net/http"
-	//	"strings"
-	//	"sync"
-	//	"time"
-	//	"unsafe"
 )
 
 const (
@@ -45,7 +39,6 @@ type FMexWs struct {
 	clientId      string
 	subcribeTypes []string
 	timeoffset    int64
-	tradeSymbols  []TradeSymbol
 }
 
 var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
@@ -129,7 +122,7 @@ func (fmWs *FMexWs) SubscribeDepth(pair CurrencyPair, size int) error {
 	if fmWs.depthCallback == nil {
 		return errors.New("please set depth callback func")
 	}
-	arg := fmt.Sprintf(FMexWSOrderBook, size, strings.ToLower(pair.ToSymbol("")))
+	arg := fmt.Sprintf(FMexWSOrderBook, size, adaptContractType(pair))
 	args := make([]interface{}, 0)
 	args = append(args, arg)
 
@@ -143,7 +136,7 @@ func (fmWs *FMexWs) SubscribeTicker(pair CurrencyPair) error {
 	if fmWs.tickerCallback == nil {
 		return errors.New("please set ticker callback func")
 	}
-	arg := fmt.Sprintf(FMexWSTicker, strings.ToLower(pair.ToSymbol("")))
+	arg := fmt.Sprintf(FMexWSTicker, adaptContractType(pair))
 	args := make([]interface{}, 0)
 	args = append(args, arg)
 
@@ -157,7 +150,7 @@ func (fmWs *FMexWs) SubscribeTrade(pair CurrencyPair) error {
 	if fmWs.tradeCallback == nil {
 		return errors.New("please set trade callback func")
 	}
-	arg := fmt.Sprintf(FMexWSTrades, strings.ToLower(pair.ToSymbol("")))
+	arg := fmt.Sprintf(FMexWSTrades, adaptContractType(pair))
 	args := make([]interface{}, 0)
 	args = append(args, arg)
 
@@ -250,7 +243,7 @@ func (fmWs *FMexWs) handle(msg []byte) error {
 			fmWs.timeoffset = int64(offset)
 		case "ticker":
 			tick := fmWs.parseTickerData(datamap["ticker"].([]interface{}))
-			pair, err := fmWs.getPairFromType(resp[1])
+			pair, err := getPairFromType(resp[1])
 			if err != nil {
 				panic(err)
 			}
@@ -261,7 +254,7 @@ func (fmWs *FMexWs) handle(msg []byte) error {
 			dep := fmWs.parseDepthData(datamap["bids"].([]interface{}), datamap["asks"].([]interface{}))
 			stime := int64(ToInt(datamap["ts"]))
 			dep.UTime = time.Unix(stime/1000, 0)
-			pair, err := fmWs.getPairFromType(resp[2])
+			pair, err := getPairFromType(resp[2])
 			if err != nil {
 				panic(err)
 			}
@@ -279,7 +272,7 @@ func (fmWs *FMexWs) handle(msg []byte) error {
 				Low:       ToFloat64(datamap["low"]),
 				Vol:       ToFloat64(datamap["quote_vol"]),
 			}
-			pair, err := fmWs.getPairFromType(resp[2])
+			pair, err := getPairFromType(resp[2])
 			if err != nil {
 				panic(err)
 			}
@@ -298,7 +291,7 @@ func (fmWs *FMexWs) handle(msg []byte) error {
 				Price:  ToFloat64(datamap["price"]),
 				Date:   int64(ToUint64(datamap["ts"])),
 			}
-			pair, err := fmWs.getPairFromType(resp[1])
+			pair, err := getPairFromType(resp[1])
 			if err != nil {
 				panic(err)
 			}
@@ -313,11 +306,10 @@ func (fmWs *FMexWs) handle(msg []byte) error {
 	return nil
 }
 
-func (fmWs *FMexWs) getPairFromType(pair string) (CurrencyPair, error) {
-	for _, v := range fmWs.tradeSymbols {
-		if v.Name == pair {
-			return NewCurrencyPair2(v.BaseCurrency + "_" + v.QuoteCurrency), nil
-		}
+func getPairFromType(pair string) (CurrencyPair, error) {
+	s := strings.Split(pair, "usd_")
+	if len(s) == 2 {
+		return NewCurrencyPair2(s[0] + "_" + "USD"), nil
 	}
-	return NewCurrencyPair2("" + "_" + ""), errors.New("pair not support :" + pair)
+	return CurrencyPair{}, errors.New("pair not support :" + pair)
 }
