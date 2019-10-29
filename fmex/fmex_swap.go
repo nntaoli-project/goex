@@ -179,7 +179,7 @@ func (fm *FMexSwap) GetFutureDepth(currency CurrencyPair, contractType string, s
 
 	depth := new(Depth)
 	depth.Pair = currency
-
+	depth.UTime = time.Unix(0, ToInt64(datamap["ts"])*1000000)
 	n := 0
 	for i := 0; i < len(bids); {
 		depth.BidList = append(depth.BidList, DepthRecord{ToFloat64(bids[i]), ToFloat64(bids[i+1])})

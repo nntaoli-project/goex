@@ -168,6 +168,7 @@ func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	depth := new(Depth)
 	depth.Pair = currency
+	depth.UTime = time.Unix(0, ToInt64(datamap["ts"])*1000000)
 
 	n := 0
 	for i := 0; i < len(bids); {
