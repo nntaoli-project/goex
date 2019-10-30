@@ -295,7 +295,57 @@ func (ws *WsConn) Subscribe(subEvent interface{}) error {
 	ws.subs = append(ws.subs, subEvent)
 	return nil
 }
+func (ws *WsConn) messageHandler() {
+	defer func() {
+		if r := recover(); r != nil {
+			err, ok := r.(error)
+			if !ok {
+				err = fmt.Errorf("%v", r)
+			}
+			log.Printf("websocket ReceiveMessage err:%v, recover it\n", err)
+			ws.messageHandler()
+		}
+	}()
+	for {
 
+		if len(ws.closeRecv) > 0 {
+			<-ws.closeRecv
+			log.Println("close websocket , exiting receive message goroutine.")
+			return
+		}
+
+		t, msg, err := ws.ReadMessage()
+		if err != nil {
+			ws.ErrorHandleFunc(err)
+			time.Sleep(time.Second)
+			continue
+		}
+
+		switch t {
+		case websocket.TextMessage:
+			ws.ProtoHandleFunc(msg)
+		case websocket.BinaryMessage:
+			if ws.UnCompressFunc == nil {
+				ws.ProtoHandleFunc(msg)
+			} else {
+				msg2, err := ws.UnCompressFunc(msg)
+				if err != nil {
+					ws.ErrorHandleFunc(fmt.Errorf("%s,%s", "un compress error", err.Error()))
+				} else {
+					err := ws.ProtoHandleFunc(msg2)
+					if err != nil {
+						ws.ErrorHandleFunc(err)
+					}
+				}
+			}
+		case websocket.CloseMessage:
+			ws.CloseWs()
+			return
+		default:
+			log.Println("error websocket message type , content is :\n", string(msg))
+		}
+	}
+}
 func (ws *WsConn) ReceiveMessage() {
 	ws.clearChannel(ws.closeRecv)
 	//exit
@@ -305,47 +355,7 @@ func (ws *WsConn) ReceiveMessage() {
 		return nil
 	})
 
-	go func() {
-		for {
-
-			if len(ws.closeRecv) > 0 {
-				<-ws.closeRecv
-				log.Println("close websocket , exiting receive message goroutine.")
-				return
-			}
-
-			t, msg, err := ws.ReadMessage()
-			if err != nil {
-				ws.ErrorHandleFunc(err)
-				time.Sleep(time.Second)
-				continue
-			}
-
-			switch t {
-			case websocket.TextMessage:
-				ws.ProtoHandleFunc(msg)
-			case websocket.BinaryMessage:
-				if ws.UnCompressFunc == nil {
-					ws.ProtoHandleFunc(msg)
-				} else {
-					msg2, err := ws.UnCompressFunc(msg)
-					if err != nil {
-						ws.ErrorHandleFunc(fmt.Errorf("%s,%s", "un compress error", err.Error()))
-					} else {
-						err := ws.ProtoHandleFunc(msg2)
-						if err != nil {
-							ws.ErrorHandleFunc(err)
-						}
-					}
-				}
-			case websocket.CloseMessage:
-				ws.CloseWs()
-				return
-			default:
-				log.Println("error websocket message type , content is :\n", string(msg))
-			}
-		}
-	}()
+	go ws.messageHandler()
 }
 
 func (ws *WsConn) UpdateActiveTime() {
