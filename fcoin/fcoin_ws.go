@@ -84,11 +84,12 @@ func NewFCoinWs(client *http.Client) *FCoinWs {
 
 		}, 25*time.Second).
 		ReconnectIntervalTime(24 * time.Hour).
+		TargetName(FCOIN).
 		ProtoHandleFunc(fcWs.handle)
 	fc := NewFCoin(client, "", "")
 	fcWs.tradeSymbols = fc.tradeSymbols
 	if len(fcWs.tradeSymbols) == 0 {
-		panic("trade symbol is empty, pls check connection...")
+		panic("[fcoin] trade symbol is empty, pls check connection...")
 	}
 	return fcWs
 }
@@ -230,7 +231,7 @@ func (fcWs *FCoinWs) handle(msg []byte) error {
 	datamap := make(map[string]interface{})
 	err := json.Unmarshal(msg, &datamap)
 	if err != nil {
-		fmt.Println("json unmarshal error for ", string(msg))
+		fmt.Println("[fcoin]json unmarshal error for ", string(msg))
 		return err
 	}
 

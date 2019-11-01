@@ -95,6 +95,7 @@ func (bnWs *BinanceWs) subscribe(endpoint string, handle func(msg []byte) error)
 	wsBuilder := NewWsBuilder().
 		WsUrl(endpoint).
 		ReconnectIntervalTime(4 * time.Hour).
+		TargetName(BINANCE).
 		ProtoHandleFunc(handle)
 	wsBuilder.ProxyUrl(bnWs.proxyUrl)
 	wsConn := wsBuilder.Build()
@@ -120,7 +121,7 @@ func (bnWs *BinanceWs) SubscribeDepth(pair CurrencyPair, size int) error {
 
 		err := json.Unmarshal(msg, &rawDepth)
 		if err != nil {
-			fmt.Println("json unmarshal error for ", string(msg))
+			fmt.Println("[binance]json unmarshal error for ", string(msg))
 			return err
 		}
 		depth := bnWs.parseDepthData(rawDepth.Bids, rawDepth.Asks)
@@ -143,7 +144,7 @@ func (bnWs *BinanceWs) SubscribeTicker(pair CurrencyPair) error {
 		datamap := make(map[string]interface{})
 		err := json.Unmarshal(msg, &datamap)
 		if err != nil {
-			fmt.Println("json unmarshal error for ", string(msg))
+			fmt.Println("[binance]json unmarshal error for ", string(msg))
 			return err
 		}
 
@@ -177,7 +178,7 @@ func (bnWs *BinanceWs) SubscribeTrade(pair CurrencyPair) error {
 		datamap := make(map[string]interface{})
 		err := json.Unmarshal(msg, &datamap)
 		if err != nil {
-			fmt.Println("json unmarshal error for ", string(msg))
+			fmt.Println("[binance]json unmarshal error for ", string(msg))
 			return err
 		}
 
@@ -229,7 +230,7 @@ func (bnWs *BinanceWs) SubscribeKline(pair CurrencyPair, period int) error {
 		datamap := make(map[string]interface{})
 		err := json.Unmarshal(msg, &datamap)
 		if err != nil {
-			fmt.Println("json unmarshal error for ", string(msg))
+			fmt.Println("[binance]json unmarshal error for ", string(msg))
 			return err
 		}
 
@@ -302,7 +303,7 @@ func (bnWs *BinanceWs) SubscribeAggTrade(pair CurrencyPair, tradeCallback func(*
 		datamap := make(map[string]interface{})
 		err := json.Unmarshal(msg, &datamap)
 		if err != nil {
-			fmt.Println("json unmarshal error for ", string(msg))
+			fmt.Println("[binance]json unmarshal error for ", string(msg))
 			return err
 		}
 
@@ -359,7 +360,7 @@ func (bnWs *BinanceWs) SubscribeDiffDepth(pair CurrencyPair, depthCallback func(
 
 		err := json.Unmarshal(msg, &rawDepth)
 		if err != nil {
-			fmt.Println("json unmarshal error for ", string(msg))
+			fmt.Println("[binance]json unmarshal error for ", string(msg))
 			return err
 		}
 		diffDepth := new(DiffDepth)
@@ -390,7 +391,7 @@ func (bnWs *BinanceWs) exitHandler(c *WsConn) {
 		case t := <-ticker.C:
 			err := c.WriteMessage(websocket.PingMessage, []byte(t.String()))
 			if err != nil {
-				fmt.Println("wsWrite err:", err)
+				fmt.Println("[binance]wsWrite err:", err)
 				return
 			}
 		}

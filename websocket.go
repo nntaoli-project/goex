@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"sync"
 	"time"
 )
@@ -23,6 +24,8 @@ type WsConfig struct {
 	UnCompressFunc        func([]byte) ([]byte, error) //解压函数
 	ErrorHandleFunc       func(err error)
 	IsDump                bool
+	TargetName            string
+	logger                *log.Logger
 }
 
 type WsConn struct {
@@ -101,10 +104,21 @@ func (b *WsBuilder) ErrorHandleFunc(f func(err error)) *WsBuilder {
 	return b
 }
 
+func (b *WsBuilder) TargetName(exName string) *WsBuilder {
+	b.wsConfig.TargetName = exName
+
+	return b
+}
+
 func (b *WsBuilder) Build() *WsConn {
+	if b.wsConfig.TargetName != "" {
+		b.wsConfig.logger = log.New(os.Stderr, "["+b.wsConfig.TargetName+"]", log.LstdFlags)
+	} else {
+		b.wsConfig.logger = log.New(os.Stderr, "", log.LstdFlags)
+	}
 	if b.wsConfig.ErrorHandleFunc == nil {
 		b.wsConfig.ErrorHandleFunc = func(err error) {
-			log.Println(err)
+			b.wsConfig.logger.Println(err)
 		}
 	}
 	wsConn := &WsConn{WsConfig: *b.wsConfig}
@@ -138,10 +152,10 @@ func (ws *WsConn) connect() error {
 	if ws.ProxyUrl != "" {
 		proxy, err := url.Parse(ws.ProxyUrl)
 		if err == nil {
-			log.Println("proxy url :", proxy)
+			ws.logger.Println("proxy url :", proxy)
 			dialer.Proxy = http.ProxyURL(proxy)
 		} else {
-			log.Println("proxy url error ? ", err)
+			ws.logger.Println("proxy url error ? ", err)
 		}
 	}
 
@@ -149,7 +163,7 @@ func (ws *WsConn) connect() error {
 	if err != nil {
 		if ws.IsDump && resp != nil {
 			dumpData, _ := httputil.DumpResponse(resp, true)
-			log.Println(string(dumpData))
+			ws.logger.Println(string(dumpData))
 		}
 		return err
 	}
@@ -158,7 +172,7 @@ func (ws *WsConn) connect() error {
 
 	if ws.IsDump {
 		dumpData, _ := httputil.DumpResponse(resp, true)
-		log.Println(string(dumpData))
+		ws.logger.Println(string(dumpData))
 	}
 
 	ws.UpdateActiveTime()
@@ -186,17 +200,17 @@ func (ws *WsConn) ReConnect() {
 	ws.Lock()
 	defer ws.Unlock()
 
-	log.Println("close ws  error :", ws.Close())
+	ws.logger.Println("close ws  error :", ws.Close())
 	time.Sleep(time.Second)
 
 	if err := ws.connect(); err != nil {
-		log.Println(ws.WsUrl, "ws connect error ", err)
+		ws.logger.Println(ws.WsUrl, "ws connect error ", err)
 		return
 	}
 
 	//re subscribe
 	for _, sub := range ws.subs {
-		log.Println("subscribe:", sub)
+		ws.logger.Println("subscribe:", sub)
 		ws.SendJsonMessage(sub)
 	}
 }
@@ -214,12 +228,12 @@ func (ws *WsConn) ReConnectTimer() {
 		for {
 			select {
 			case <-timer.C:
-				log.Println("reconnect websocket")
+				ws.logger.Println("reconnect websocket")
 				ws.ReConnect()
 				timer.Reset(ws.ReconnectIntervalTime)
 			case <-ws.closeReconnect:
 				timer.Stop()
-				log.Println("close websocket connect ,  exiting reconnect timer goroutine.")
+				ws.logger.Println("close websocket connect ,  exiting reconnect timer goroutine.")
 				return
 			}
 		}
@@ -242,12 +256,12 @@ func (ws *WsConn) checkStatusTimer() {
 			case <-checkStatusTimer.C:
 				now := time.Now()
 				if now.Sub(ws.activeTime) >= 2*ws.HeartbeatIntervalTime {
-					log.Println("active time [ ", ws.activeTime, " ] has expired , begin reconnect ws.")
+					ws.logger.Println("active time [ ", ws.activeTime, " ] has expired , begin reconnect ws.")
 					ws.ReConnect()
 				}
 			case <-ws.closeCheck:
 				checkStatusTimer.Stop()
-				log.Println("check status timer exiting")
+				ws.logger.Println("check status timer exiting")
 				return
 			}
 		}
@@ -255,7 +269,7 @@ func (ws *WsConn) checkStatusTimer() {
 }
 
 func (ws *WsConn) HeartbeatTimer() {
-	log.Println("heartbeat interval time = ", ws.HeartbeatIntervalTime)
+	ws.logger.Println("heartbeat interval time = ", ws.HeartbeatIntervalTime)
 	if ws.HeartbeatIntervalTime == 0 || (ws.HeartbeatFunc == nil && ws.HeartbeatData == nil) {
 		return
 	}
@@ -274,12 +288,12 @@ func (ws *WsConn) HeartbeatTimer() {
 					err = ws.SendTextMessage(ws.HeartbeatData)
 				}
 				if err != nil {
-					log.Println("heartbeat error , ", err)
+					ws.logger.Println("heartbeat error , ", err)
 					time.Sleep(time.Second)
 				}
 			case <-ws.closeHeartbeat:
 				timer.Stop()
-				log.Println("close websocket connect , exiting heartbeat goroutine.")
+				ws.logger.Println("close websocket connect , exiting heartbeat goroutine.")
 				return
 			}
 		}
@@ -287,7 +301,7 @@ func (ws *WsConn) HeartbeatTimer() {
 }
 
 func (ws *WsConn) Subscribe(subEvent interface{}) error {
-	log.Println("Subscribe:", subEvent)
+	ws.logger.Println("Subscribe:", subEvent)
 	err := ws.SendJsonMessage(subEvent)
 	if err != nil {
 		return err
@@ -302,7 +316,7 @@ func (ws *WsConn) messageHandler() {
 			if !ok {
 				err = fmt.Errorf("%v", r)
 			}
-			log.Printf("websocket ReceiveMessage err:%v, recover it\n", err)
+			ws.logger.Printf("websocket ReceiveMessage err:%v, recover it\n", err)
 			ws.messageHandler()
 		}
 	}()
@@ -310,7 +324,7 @@ func (ws *WsConn) messageHandler() {
 
 		if len(ws.closeRecv) > 0 {
 			<-ws.closeRecv
-			log.Println("close websocket , exiting receive message goroutine.")
+			ws.logger.Println("close websocket , exiting receive message goroutine.")
 			return
 		}
 
@@ -342,7 +356,7 @@ func (ws *WsConn) messageHandler() {
 			ws.CloseWs()
 			return
 		default:
-			log.Println("error websocket message type , content is :\n", string(msg))
+			ws.logger.Println("error websocket message type , content is :\n", string(msg))
 		}
 	}
 }
@@ -350,7 +364,7 @@ func (ws *WsConn) ReceiveMessage() {
 	ws.clearChannel(ws.closeRecv)
 	//exit
 	ws.SetCloseHandler(func(code int, text string) error {
-		log.Println("websocket exiting ,code=", code, ",text=", text)
+		ws.logger.Println("websocket exiting ,code=", code, ",text=", text)
 		ws.CloseWs()
 		return nil
 	})
@@ -378,7 +392,7 @@ func (ws *WsConn) CloseWs() {
 
 	err := ws.Close()
 	if err != nil {
-		log.Println("close websocket error , ", err)
+		ws.logger.Println("close websocket error , ", err)
 	}
 }
 
