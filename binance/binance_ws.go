@@ -94,6 +94,7 @@ func (bnWs *BinanceWs) SetCallbacks(
 func (bnWs *BinanceWs) subscribe(endpoint string, handle func(msg []byte) error) {
 	wsBuilder := NewWsBuilder().
 		WsUrl(endpoint).
+		Heartbeat(nil, 180*time.Second).
 		ReconnectIntervalTime(4 * time.Hour).
 		TargetName(BINANCE).
 		ProtoHandleFunc(handle)
