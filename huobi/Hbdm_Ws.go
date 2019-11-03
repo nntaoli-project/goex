@@ -71,7 +71,7 @@ func NewHbdmWs() *HbdmWs {
 	hbdmWs.WsBuilder = hbdmWs.WsBuilder.
 		WsUrl("wss://api.hbdm.com/ws").
 		//Heartbeat([]byte("{\"event\": \"ping\"} "), 30*time.Second).
-		//Heartbeat(func() []byte { return []byte("{\"op\":\"ping\"}") }(), 5*time.Second).
+		Heartbeat(nil, 5*time.Second).
 		ErrorHandleFunc(func(err error) {
 			log.Println("ws internal error:", err)
 		}).
@@ -208,7 +208,7 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 }
 
 func (hbdmWs *HbdmWs) parseTicker(r DetailResponse) FutureTicker {
-	return FutureTicker{Ticker: &Ticker{High: r.High, Low: r.Low, Vol: r.Amount},}
+	return FutureTicker{Ticker: &Ticker{High: r.High, Low: r.Low, Vol: r.Amount}}
 }
 
 func (hbdmWs *HbdmWs) parseDepth(r DepthResponse) Depth {
