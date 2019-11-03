@@ -34,7 +34,7 @@ type WsConn struct {
 	WsConfig
 
 	activeTime  time.Time
-	activeTimeL sync.Mutex
+	activeTimeL sync.RWMutex
 
 	mu             chan struct{} // lock write data
 	closeHeartbeat chan struct{}
@@ -255,7 +255,7 @@ func (ws *WsConn) checkStatusTimer() {
 			select {
 			case <-checkStatusTimer.C:
 				now := time.Now()
-				if now.Sub(ws.activeTime) >= 2*ws.HeartbeatIntervalTime {
+				if now.Sub(ws.getActiveTime()) >= 2*ws.HeartbeatIntervalTime {
 					ws.logger.Println("active time [ ", ws.activeTime, " ] has expired , begin reconnect ws.")
 					ws.ReConnect()
 				}
@@ -338,6 +338,8 @@ func (ws *WsConn) messageHandler() {
 		switch t {
 		case websocket.TextMessage:
 			ws.ProtoHandleFunc(msg)
+		case websocket.PongMessage:
+			ws.UpdateActiveTime()
 		case websocket.BinaryMessage:
 			if ws.UnCompressFunc == nil {
 				ws.ProtoHandleFunc(msg)
@@ -377,6 +379,12 @@ func (ws *WsConn) UpdateActiveTime() {
 	defer ws.activeTimeL.Unlock()
 
 	ws.activeTime = time.Now()
+}
+func (ws *WsConn) getActiveTime() time.Time {
+	ws.activeTimeL.RLock()
+	defer ws.activeTimeL.RUnlock()
+
+	return ws.activeTime
 }
 
 func (ws *WsConn) CloseWs() {
