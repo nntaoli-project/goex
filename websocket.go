@@ -338,7 +338,7 @@ func (ws *WsConn) messageHandler() {
 		switch t {
 		case websocket.TextMessage:
 			ws.ProtoHandleFunc(msg)
-		case websocket.PongMessage:
+		case websocket.PongMessage, websocket.PingMessage:
 			ws.UpdateActiveTime()
 		case websocket.BinaryMessage:
 			if ws.UnCompressFunc == nil {
