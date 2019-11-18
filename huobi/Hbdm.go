@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"net/url"
 	"sort"
 	"strings"
@@ -226,7 +225,7 @@ func (dm *Hbdm) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType 
 	if err != nil {
 		return nil, err
 	}
-	log.Println(data)
+	//log.Println(data)
 
 	var ords []FutureOrder
 	for _, ord := range data.Orders {
@@ -274,7 +273,7 @@ func (dm *Hbdm) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, co
 	if err != nil {
 		return nil, err
 	}
-	log.Println(data)
+//	log.Println(data)
 
 	var ords []FutureOrder
 	for _, ord := range data {

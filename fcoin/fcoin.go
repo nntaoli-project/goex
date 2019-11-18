@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -116,7 +115,7 @@ func (fc *FCoin) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	if respmap["status"].(float64) != 0 {
 		return nil, errors.New(respmap["msg"].(string))
 	}
-	log.Println(respmap)
+
 	tick, ok := respmap["data"].(map[string]interface{})
 	if !ok {
 		return nil, API_ERR

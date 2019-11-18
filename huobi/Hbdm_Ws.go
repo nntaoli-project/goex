@@ -114,7 +114,7 @@ func (hbdmWs *HbdmWs) SubscribeTrade(pair CurrencyPair, contract string) error {
 }
 
 func (hbdmWs *HbdmWs) subscribe(sub map[string]interface{}) error {
-	log.Println(sub)
+//	log.Println(sub)
 	hbdmWs.connectWs()
 	return hbdmWs.wsConn.Subscribe(sub)
 }
@@ -254,7 +254,7 @@ func (hbdmWs *HbdmWs) parseTrade(r TradeResponse) []Trade {
 }
 
 func (hbdmWs *HbdmWs) adaptContractSymbol(contract string) string {
-	log.Println(contract)
+	//log.Println(contract)
 	switch contract {
 	case QUARTER_CONTRACT:
 		return "CQ"
