@@ -57,8 +57,8 @@ func NewOKExSpotWs() *OKExSpotWs {
 
 	okWs.WsBuilder = NewWsBuilder().
 		WsUrl("wss://real.okex.com:10440/ws/v1").
-		Heartbeat([]byte("{\"event\": \"ping\"} "), 30*time.Second).
-		ReconnectIntervalTime(24 * time.Hour).
+		AutoReconnect().
+		Heartbeat(func() []byte { return []byte("{\"event\": \"ping\"} ") }, 30*time.Second).
 		UnCompressFunc(FlateUnCompress).
 		ProtoHandleFunc(okWs.handle)
 
@@ -124,13 +124,11 @@ func (okWs *OKExSpotWs) SubscribeKline(pair CurrencyPair, period int) error {
 func (okWs *OKExSpotWs) connectWs() {
 	okWs.Do(func() {
 		okWs.wsConn = okWs.WsBuilder.Build()
-		okWs.wsConn.ReceiveMessage()
 	})
 }
 
 func (okWs *OKExSpotWs) handle(msg []byte) error {
 	if string(msg) == "{\"event\":\"pong\"}" {
-		okWs.wsConn.UpdateActiveTime()
 		return nil
 	}
 

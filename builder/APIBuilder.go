@@ -240,6 +240,13 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			HttpClient:   builder.client,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey})
+	case BITMEX_TEST:
+		return bitmex.New(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     "https://testnet.bitmex.com",
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey,
+		})
 	case OKEX_FUTURE:
 		//return okcoin.NewOKEx(builder.client, builder.apiKey, builder.secretkey)
 		return okex.NewOKEx(&APIConfig{

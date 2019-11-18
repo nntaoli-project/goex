@@ -148,6 +148,7 @@ const (
 	FMEX         = "fmex.com"
 	HITBTC       = "hitbtc.com"
 	BITMEX       = "bitmex.com"
+	BITMEX_TEST  = "testnet.bitmex.com"
 	CRYPTOPIA    = "cryptopia.co.nz"
 	HBDM         = "hbdm.com"
 	COINBENE     = "coinbene.com"

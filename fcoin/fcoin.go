@@ -148,6 +148,7 @@ func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	} else {
 		uri = fmt.Sprintf("market/depth/L150/%s", strings.ToLower(currency.ToSymbol("")))
 	}
+
 	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+uri)
 	if err != nil {
 		return nil, err
@@ -166,7 +167,9 @@ func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		return nil, errors.New("depth error")
 	}
 
+	ts := ToInt64(datamap["ts"])
 	depth := new(Depth)
+	depth.UTime = time.Unix(0, ts*1000000)
 	depth.Pair = currency
 
 	n := 0

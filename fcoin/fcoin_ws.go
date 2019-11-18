@@ -73,17 +73,18 @@ func NewFCoinWs(client *http.Client) *FCoinWs {
 	fcWs.clientId = getRandomString(8)
 	fcWs.WsBuilder = NewWsBuilder().
 		WsUrl("wss://api.fcoin.com/v2/ws").
-		Heartbeat2(func() interface{} {
+		AutoReconnect().
+		Heartbeat(func() []byte {
 			ts := time.Now().Unix()*1000 + fcWs.timeoffset*1000
 			args := make([]interface{}, 0)
 			args = append(args, ts)
-			return map[string]interface{}{
+			heartbeatData := map[string]interface{}{
 				"cmd":  "ping",
 				"id":   fcWs.clientId,
 				"args": args}
-
+			data , _ := json.Marshal(heartbeatData)
+			return data
 		}, 25*time.Second).
-		ReconnectIntervalTime(24 * time.Hour).
 		ProtoHandleFunc(fcWs.handle)
 	fc := NewFCoin(client, "", "")
 	fcWs.tradeSymbols = fc.tradeSymbols
@@ -186,7 +187,6 @@ func (fcWs *FCoinWs) SubscribeKline(pair CurrencyPair, period int) error {
 func (fcWs *FCoinWs) connectWs() {
 	fcWs.Do(func() {
 		fcWs.wsConn = fcWs.WsBuilder.Build()
-		fcWs.wsConn.ReceiveMessage()
 	})
 }
 
@@ -239,7 +239,6 @@ func (fcWs *FCoinWs) handle(msg []byte) error {
 		resp := strings.Split(msgType, ".")
 		switch resp[0] {
 		case "hello", "ping":
-			fcWs.wsConn.UpdateActiveTime()
 			stime := int64(ToInt(datamap["ts"]))
 			st := time.Unix(0, stime*1000*1000)
 			lt := time.Now()
