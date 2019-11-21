@@ -18,6 +18,8 @@ const (
 	SPOT     = "spot"
 	ASSETS   = "assets"
 	EXCHANGE = "exchange"
+
+	baseUrl = "https://api.fmex.com"
 )
 
 type FMexTicker struct {
@@ -81,6 +83,9 @@ type OrderFilter struct {
 }
 
 func NewFMexSwap(config *APIConfig) *FMexSwap {
+	if config.Endpoint == "" {
+		config.Endpoint = baseUrl
+	}
 	fm := &FMexSwap{baseUrl: config.Endpoint, accessKey: config.ApiKey, secretKey: config.ApiSecretKey, httpClient: config.HttpClient}
 	fm.setTimeOffset()
 	return fm
@@ -177,9 +182,11 @@ func (fm *FMexSwap) GetFutureDepth(currency CurrencyPair, contractType string, s
 		return nil, errors.New("depth error")
 	}
 
+	ts := ToInt64(datamap["ts"])
 	depth := new(Depth)
 	depth.Pair = currency
-	depth.UTime = time.Unix(0, ToInt64(datamap["ts"])*1000000)
+	depth.UTime = time.Unix(0, ts*1000000)
+
 	n := 0
 	for i := 0; i < len(bids); {
 		depth.BidList = append(depth.BidList, DepthRecord{ToFloat64(bids[i]), ToFloat64(bids[i+1])})

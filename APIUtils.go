@@ -78,7 +78,7 @@ func CancelAllUnfinishedOrders(api API, currencyPair CurrencyPair) int {
 	for {
 		ret := RE(2, 200*time.Millisecond, api.GetUnfinishOrders, currencyPair)
 
-		if err, isok := ret.(error); !isok {
+		if err, isok := ret.(error); isok {
 			log.Println("[api error]", err)
 			break
 		}
@@ -120,7 +120,7 @@ func CancelAllUnfinishedFutureOrders(api FutureRestAPI, contractType string, cur
 
 	for {
 		ret := RE(10, 200*time.Millisecond, api.GetUnfinishFutureOrders, currencyPair, contractType)
-		if err, isok := ret.(error); !isok {
+		if err, isok := ret.(error); isok {
 			log.Println("[api error]", err)
 			break
 		}

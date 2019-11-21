@@ -210,7 +210,7 @@ type PlaceOrdersInfo struct {
 func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
 
 	reqBody, _, _ := ok.OKEx.BuildRequestBody(PlaceOrderInfo{
-		BasePlaceOrderInfo{ClientOid: strings.Replace(uuid.New().String(), "-", "", 32), Price: price, MatchPrice: "0", Type: fmt.Sprint(openType), Size: amount},
+		BasePlaceOrderInfo{ClientOid: strings.Replace(uuid.New().String(), "-", "", 32), Price: price, MatchPrice: fmt.Sprint(matchPrice), Type: fmt.Sprint(openType), Size: amount},
 		ok.adaptContractType(currencyPair),
 	})
 

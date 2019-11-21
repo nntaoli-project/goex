@@ -480,7 +480,7 @@ func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, e
 		param.Set("fromId", strconv.Itoa(int(since)))
 	}
 	apiUrl := API_V1 + "historicalTrades?" + param.Encode()
-	log.Println(apiUrl)
+	//log.Println(apiUrl)
 	resp, err := HttpGet3(bn.httpClient, apiUrl, map[string]string{
 		"X-MBX-APIKEY": bn.accessKey})
 	if err != nil {

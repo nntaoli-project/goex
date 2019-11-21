@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"net/url"
 	"sort"
 	"strings"
@@ -47,11 +46,14 @@ type BaseResponse struct {
 	Data    json.RawMessage `json:"data"`
 }
 
-var (
-	apiUrl = "https://api.hbdm.com"
+const (
+	defaultBaseUrl = "https://api.hbdm.com"
 )
 
 func NewHbdm(conf *APIConfig) *Hbdm {
+	if conf.Endpoint == "" {
+		conf.Endpoint = defaultBaseUrl
+	}
 	return &Hbdm{conf}
 }
 
@@ -226,7 +228,7 @@ func (dm *Hbdm) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType 
 	if err != nil {
 		return nil, err
 	}
-	log.Println(data)
+	//log.Println(data)
 
 	var ords []FutureOrder
 	for _, ord := range data.Orders {
@@ -274,7 +276,7 @@ func (dm *Hbdm) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, co
 	if err != nil {
 		return nil, err
 	}
-	log.Println(data)
+	//	log.Println(data)
 
 	var ords []FutureOrder
 	for _, ord := range data {
@@ -310,7 +312,7 @@ func (dm *Hbdm) GetContractValue(currencyPair CurrencyPair) (float64, error) {
 }
 
 func (dm *Hbdm) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, error) {
-	ret, err := HttpGet(dm.config.HttpClient, apiUrl+"/api/v1//contract_delivery_price?symbol="+currencyPair.CurrencyA.Symbol)
+	ret, err := HttpGet(dm.config.HttpClient, dm.config.Endpoint+"/api/v1//contract_delivery_price?symbol="+currencyPair.CurrencyA.Symbol)
 	if err != nil {
 		return -1, err
 	}
@@ -324,7 +326,7 @@ func (dm *Hbdm) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, err
 
 func (dm *Hbdm) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
 	symbol := dm.adaptSymbol(currencyPair, contractType)
-	ret, err := HttpGet(dm.config.HttpClient, apiUrl+"/market/detail/merged?symbol="+symbol)
+	ret, err := HttpGet(dm.config.HttpClient, dm.config.Endpoint+"/market/detail/merged?symbol="+symbol)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +350,7 @@ func (dm *Hbdm) GetFutureTicker(currencyPair CurrencyPair, contractType string) 
 
 func (dm *Hbdm) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
 	symbol := dm.adaptSymbol(currencyPair, contractType)
-	url := apiUrl + "/market/depth?type=step0&symbol=" + symbol
+	url := dm.config.Endpoint + "/market/depth?type=step0&symbol=" + symbol
 	ret, err := HttpGet(dm.config.HttpClient, url)
 	if err != nil {
 		return nil, err
@@ -386,7 +388,7 @@ func (dm *Hbdm) GetFutureDepth(currencyPair CurrencyPair, contractType string, s
 }
 
 func (dm *Hbdm) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
-	ret, err := HttpGet(dm.config.HttpClient, apiUrl+"/api/v1/contract_index?symbol="+currencyPair.CurrencyA.Symbol)
+	ret, err := HttpGet(dm.config.HttpClient, dm.config.Endpoint+"/api/v1/contract_index?symbol="+currencyPair.CurrencyA.Symbol)
 	if err != nil {
 		return -1, err
 	}
@@ -403,7 +405,7 @@ func (dm *Hbdm) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
 func (dm *Hbdm) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
 	symbol := dm.adaptSymbol(currency, contract_type)
 	periodS := dm.adaptKLinePeriod(period)
-	url := fmt.Sprintf("%s/market/history/kline?symbol=%s&period=%s&size=%d", apiUrl, symbol, periodS, size)
+	url := fmt.Sprintf("%s/market/history/kline?symbol=%s&period=%s&size=%d", dm.config.Endpoint, symbol, periodS, size)
 
 	var ret struct {
 		BaseResponse
@@ -570,7 +572,7 @@ func (dm *Hbdm) doRequest(path string, params *url.Values, data interface{}) err
 
 	var ret BaseResponse
 
-	resp, err := HttpPostForm3(dm.config.HttpClient, apiUrl+path+"?"+params.Encode(), string(jsonD),
+	resp, err := HttpPostForm3(dm.config.HttpClient, dm.config.Endpoint+path+"?"+params.Encode(), string(jsonD),
 		map[string]string{"Content-Type": "application/json", "Accept-Language": "zh-cn"})
 
 	if err != nil {

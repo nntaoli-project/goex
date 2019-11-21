@@ -3,7 +3,6 @@ package binance
 import (
 	"errors"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"github.com/json-iterator/go"
 	. "github.com/nntaoli-project/GoEx"
 	"strings"
@@ -94,13 +93,13 @@ func (bnWs *BinanceWs) SetCallbacks(
 func (bnWs *BinanceWs) subscribe(endpoint string, handle func(msg []byte) error) {
 	wsBuilder := NewWsBuilder().
 		WsUrl(endpoint).
+		AutoReconnect().
 		Heartbeat(nil, 180*time.Second).
-		ReconnectIntervalTime(4 * time.Hour).
+		AutoReconnect().
 		TargetName(BINANCE).
 		ProtoHandleFunc(handle)
 	wsBuilder.ProxyUrl(bnWs.proxyUrl)
 	wsConn := wsBuilder.Build()
-	wsConn.ReceiveMessage()
 	go bnWs.exitHandler(wsConn)
 }
 
@@ -385,16 +384,16 @@ func (bnWs *BinanceWs) SubscribeDiffDepth(pair CurrencyPair, depthCallback func(
 func (bnWs *BinanceWs) exitHandler(c *WsConn) {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
-	defer c.Close()
+	defer c.CloseWs()
 
 	for {
 		select {
 		case t := <-ticker.C:
-			err := c.WriteMessage(websocket.PingMessage, []byte(t.String()))
-			if err != nil {
-				fmt.Println("[binance]wsWrite err:", err)
-				return
-			}
+			c.SendPingMessage([]byte(t.String()))
+			//if err != nil {
+			//	fmt.Println("wsWrite err:", err)
+			//	return
+			//}
 		}
 	}
 }
