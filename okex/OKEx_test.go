@@ -10,7 +10,7 @@ import (
 
 //
 var config2 = &goex.APIConfig{
-	Endpoint: "https://www.okex.com",
+	Endpoint: "https://www.okex.me",
 	//HttpClient: &http.Client{
 	//	Transport: &http.Transport{
 	//		Proxy: func(req *http.Request) (*url.URL, error) {

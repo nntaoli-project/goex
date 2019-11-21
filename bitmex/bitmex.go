@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var (
+const (
 	baseUrl = "https://www.bitmex.com"
 )
 

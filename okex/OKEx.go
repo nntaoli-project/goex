@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const baseUrl = "https://www.okex.com"
+
 type OKEx struct {
 	config     *APIConfig
 	OKExSpot   *OKExSpot
@@ -22,6 +24,9 @@ type OKEx struct {
 }
 
 func NewOKEx(config *APIConfig) *OKEx {
+	if config.Endpoint == "" {
+		config.Endpoint = baseUrl
+	}
 	okex := &OKEx{config: config}
 	okex.OKExSpot = &OKExSpot{okex}
 	okex.OKExFuture = &OKExFuture{OKEx: okex, Locker: new(sync.Mutex)}
