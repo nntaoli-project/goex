@@ -25,6 +25,7 @@ type WsConfig struct {
 	IsDump                bool
 	readDeadLineTime      time.Duration
 	TargetName            string
+	logger                *Logger
 }
 
 type WsConn struct {
@@ -95,7 +96,6 @@ func (b *WsBuilder) ErrorHandleFunc(f func(err error)) *WsBuilder {
 
 func (b *WsBuilder) TargetName(exName string) *WsBuilder {
 	b.wsConfig.TargetName = exName
-
 	return b
 }
 
@@ -107,7 +107,10 @@ func (b *WsBuilder) Build() *WsConn {
 func (ws *WsConn) NewWs() *WsConn {
 	ws.Lock()
 	defer ws.Unlock()
-
+	ws.logger = NewLogger()
+	if ws.TargetName != "" {
+		ws.logger.SetPrefix("[" + ws.TargetName + "]")
+	}
 	if ws.HeartbeatIntervalTime == 0 {
 		ws.readDeadLineTime = time.Minute
 	} else {
@@ -115,7 +118,7 @@ func (ws *WsConn) NewWs() *WsConn {
 	}
 
 	if err := ws.connect(); err != nil {
-		Log.Panic(err)
+		ws.logger.Panic(err)
 	}
 
 	ws.close = make(chan bool, 1)
@@ -135,19 +138,19 @@ func (ws *WsConn) connect() error {
 	if ws.ProxyUrl != "" {
 		proxy, err := url.Parse(ws.ProxyUrl)
 		if err == nil {
-			Log.Infof("[ws][%s] proxy url:%s", ws.WsUrl, proxy)
+			ws.logger.Infof("[ws][%s] proxy url:%s", ws.WsUrl, proxy)
 			dialer.Proxy = http.ProxyURL(proxy)
 		} else {
-			Log.Errorf("[ws][%s]parse proxy url [%s] err %s  ", ws.WsUrl, ws.ProxyUrl, err.Error())
+			ws.logger.Errorf("[ws][%s]parse proxy url [%s] err %s  ", ws.WsUrl, ws.ProxyUrl, err.Error())
 		}
 	}
 
 	wsConn, resp, err := dialer.Dial(ws.WsUrl, http.Header(ws.ReqHeaders))
 	if err != nil {
-		Log.Errorf("[ws][s] %s", ws.WsUrl, err.Error())
+		ws.logger.Errorf("[ws][s] %s", ws.WsUrl, err.Error())
 		if ws.IsDump && resp != nil {
 			dumpData, _ := httputil.DumpResponse(resp, true)
-			Log.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))
+			ws.logger.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))
 		}
 		return err
 	}
@@ -160,7 +163,7 @@ func (ws *WsConn) connect() error {
 
 	if ws.IsDump {
 		dumpData, _ := httputil.DumpResponse(resp, true)
-		Log.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))
+		ws.logger.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))
 	}
 
 	return nil
@@ -173,14 +176,14 @@ func (ws *WsConn) reconnect() {
 		time.Sleep(time.Duration(retry*10) * time.Second)
 		err = ws.connect()
 		if err != nil {
-			Log.Errorf("[ws] [%s] websocket reconnect fail , %s", ws.WsUrl, err.Error())
+			ws.logger.Errorf("[ws] [%s] websocket reconnect fail , %s", ws.WsUrl, err.Error())
 		} else {
 			break
 		}
 	}
 
 	if err != nil {
-		Log.Errorf("[ws] [%s] retry reconnect fail , begin exiting. ", ws.WsUrl)
+		ws.logger.Errorf("[ws] [%s] retry reconnect fail , begin exiting. ", ws.WsUrl)
 		ws.CloseWs()
 		if ws.ErrorHandleFunc != nil {
 			ws.ErrorHandleFunc(errors.New("retry reconnect fail"))
@@ -211,7 +214,7 @@ func (ws *WsConn) writeRequest() {
 	for {
 		select {
 		case <-ws.close:
-			Log.Infof("[ws][%s] close websocket , exiting write message goroutine.", ws.WsUrl)
+			ws.logger.Infof("[ws][%s] close websocket , exiting write message goroutine.", ws.WsUrl)
 			return
 		case d := <-ws.writeBufferChan:
 			err = ws.c.WriteMessage(websocket.TextMessage, d)
@@ -221,14 +224,14 @@ func (ws *WsConn) writeRequest() {
 			err = ws.c.WriteMessage(websocket.CloseMessage, d)
 		case <-heartTimer.C:
 			if ws.HeartbeatIntervalTime > 0 {
-				//Log.Debug("send heartbeat data")
+				//ws.logger.Debug("send heartbeat data")
 				err = ws.c.WriteMessage(websocket.TextMessage, ws.HeartbeatData())
 				heartTimer.Reset(ws.HeartbeatIntervalTime)
 			}
 		}
 
 		if err != nil {
-			Log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
+			ws.logger.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
 			time.Sleep(time.Second)
 		}
 	}
@@ -237,7 +240,7 @@ func (ws *WsConn) writeRequest() {
 func (ws *WsConn) Subscribe(subEvent interface{}) error {
 	data, err := json.Marshal(subEvent)
 	if err != nil {
-		Log.Errorf("[ws][%s] json encode error , %s", ws.WsUrl, err)
+		ws.logger.Errorf("[ws][%s] json encode error , %s", ws.WsUrl, err)
 		return err
 	}
 	ws.writeBufferChan <- data
@@ -269,7 +272,7 @@ func (ws *WsConn) SendJsonMessage(m interface{}) error {
 func (ws *WsConn) receiveMessage() {
 	//exit
 	ws.c.SetCloseHandler(func(code int, text string) error {
-		Log.Infof("[ws][%s] websocket exiting [code=%d , text=%s]", ws.WsUrl, code, text)
+		ws.logger.Infof("[ws][%s] websocket exiting [code=%d , text=%s]", ws.WsUrl, code, text)
 		ws.CloseWs()
 		return nil
 	})
@@ -286,17 +289,17 @@ func (ws *WsConn) receiveMessage() {
 
 	for {
 		if len(ws.close) > 0 {
-			Log.Infof("[ws][%s] close websocket , exiting receive message goroutine.", ws.WsUrl)
+			ws.logger.Infof("[ws][%s] close websocket , exiting receive message goroutine.", ws.WsUrl)
 			return
 		}
 
 		t, msg, err := ws.c.ReadMessage()
 
 		if err != nil {
-			Log.Error("[ws]", err)
+			ws.logger.Error("[ws]", err)
 			if ws.IsAutoReconnect {
 				//	if _, ok := err.(*websocket.CloseError); ok {
-				Log.Infof("[ws][%s] Unexpected Closed , Begin Retry Connect.", ws.WsUrl)
+				ws.logger.Infof("[ws][%s] Unexpected Closed , Begin Retry Connect.", ws.WsUrl)
 				ws.reconnect()
 				//	}
 				continue
@@ -320,7 +323,7 @@ func (ws *WsConn) receiveMessage() {
 			} else {
 				msg2, err := ws.UnCompressFunc(msg)
 				if err != nil {
-					Log.Errorf("[ws][%s] uncompress error %s", ws.WsUrl, err.Error())
+					ws.logger.Errorf("[ws][%s] uncompress error %s", ws.WsUrl, err.Error())
 				} else {
 					ws.ProtoHandleFunc(msg2)
 				}
@@ -329,7 +332,7 @@ func (ws *WsConn) receiveMessage() {
 			ws.CloseWs()
 			return
 		default:
-			Log.Errorf("[ws][%s] error websocket message type , content is :\n %s \n", ws.WsUrl, string(msg))
+			ws.logger.Errorf("[ws][%s] error websocket message type , content is :\n %s \n", ws.WsUrl, string(msg))
 		}
 	}
 }
@@ -339,7 +342,7 @@ func (ws *WsConn) CloseWs() {
 	close(ws.close)
 	err := ws.c.Close()
 	if err != nil {
-		Log.Error("[ws]", ws.WsUrl, "close websocket error ,", err)
+		ws.logger.Error("[ws]", ws.WsUrl, "close websocket error ,", err)
 	}
 }
 
