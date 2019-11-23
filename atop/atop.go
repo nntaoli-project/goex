@@ -24,6 +24,7 @@ GetExchangeName() string
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	. "github.com/nntaoli-project/GoEx"
 	"log"
 	"net/http"
@@ -47,13 +48,13 @@ const (
 	GetKLine = "/data/api/v1/getKLine"
 
 	//Aggregate market
-	GetTicker = "/data/api/v1/getTicker"
+	GetTicker = "/data/api/v1/getTicker?market=%s"
 
 	//The latest Ticker for all markets
 	GetTickers = "/data/api/v1/getTickers"
 
 	//Market depth data
-	GetDepth = "/data/api/v1/getDepth"
+	GetDepth = "/data/api/v1/getDepth?market=%s"
 
 	//Recent market record
 	GetTrades = "/data/api/v1/getTrades"
@@ -131,62 +132,40 @@ func (at *Atop) GetExchangeName() string {
 }
 
 func (at *Atop) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	currencyPair := at.adaptCurrencyPair(currency)
-	params := url.Values{}
-	params.Set("market", strings.ToLower(currencyPair.CurrencyA.String()))
-	path := ApiBaseUrl + GetTicker
-	resp, err := HttpGet(at.httpClient, path)
-	//log.Println("resp:", string(resp), "err:", err)
+	market := strings.ToLower(currency.String())
+	tickerUrl := ApiBaseUrl + fmt.Sprintf(GetTicker, market)
+	resp, err := HttpGet(at.httpClient, tickerUrl)
 	if err != nil {
 		return nil, err
 	}
-
+	respMap := resp
 	var ticker Ticker
 	ticker.Pair = currency
 	ticker.Date = uint64(time.Now().Unix())
-	ticker.Last = ToFloat64(resp["price"])
-	ticker.Buy = ToFloat64(resp["bid"])
-	ticker.Sell = ToFloat64(resp["ask"])
-	ticker.Low = ToFloat64(resp["low"])
-	ticker.High = ToFloat64(resp["high"])
-	ticker.Vol = ToFloat64(resp["coinVol"])
+	ticker.Last = ToFloat64(respMap["price"])
+	ticker.Buy = ToFloat64(respMap["bid"])
+	ticker.Sell = ToFloat64(respMap["ask"])
+	ticker.Low = ToFloat64(respMap["low"])
+	ticker.High = ToFloat64(respMap["high"])
+	ticker.Vol = ToFloat64(respMap["coinVol"])
 	return &ticker, nil
 }
 
-func (at *Atop) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
-
-	currency2 := at.adaptCurrencyPair(currencyPair)
-	params := url.Values{}
-	params.Set("market", strings.ToLower(currency2.ToSymbol("2")))
-	path := ApiBaseUrl + GetDepth
-	resp, err := HttpPostForm(at.httpClient, path, params)
-	//log.Println("resp:", string(resp), "err:", err)
+func (at *Atop) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
+	market := strings.ToLower(currency.String())
+	depthUrl := ApiBaseUrl + fmt.Sprintf(GetDepth, market)
+	fmt.Println("depthUrl",depthUrl)
+	resp, err := HttpGet(at.httpClient, depthUrl)
 	if err != nil {
 		return nil, err
 	}
+	respMap := resp
 
-	respmap := make(map[string]interface{})
-	err = json.Unmarshal(resp, &respmap)
-	if err != nil {
-		log.Println(string(resp))
-		return nil, err
-	}
-	code := respmap["code"].(float64)
-	msg := respmap["msg"].(string)
-	log.Println("code=", code, "msg:", msg)
-	if code != 0 {
-		return nil, errors.New(respmap["msg"].(string))
-	}
-	data := respmap["data"].(map[string]interface{})
-	log.Println("1", data)
+	bids := respMap["bids"].([]interface{})
+	asks := respMap["asks"].([]interface{})
 
-	bids := data["bids"].([]interface{})
-	asks := data["asks"].([]interface{})
-
-	//log.Println("len bids", len(bids))
-	//log.Println("len asks", len(asks))
 	depth := new(Depth)
-	depth.Pair = currencyPair
+	depth.Pair = currency
 	for _, bid := range bids {
 		_bid := bid.([]interface{})
 		amount := ToFloat64(_bid[1])
