@@ -189,10 +189,50 @@ func (ok *OKExFuture) GetFutureIndex(currencyPair CurrencyPair) (float64, error)
 }
 
 type CrossedAccountInfo struct {
-	MarginMode string  `json:"margin_mode"`
-	Equity     float64 `json:"equity,string"`
+	MarginMode       string  `json:"margin_mode"`
+	Equity           float64 `json:"equity,string"`
+	RealizedPnl      float64 `json:"realized_pnl,string"`
+	UnrealizedPnl    float64 `json:"unrealized_pnl,string"`
+	MarginFrozen     float64 `json:"margin_frozen,string"`
+	MarginRatio      float64 `json:"margin_ratio,string"`
+	MaintMarginRatio float64 `json:"maint_margin_ratio,string"`
 }
 
+func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount, error) {
+	if len(currencyPair) == 0 {
+		return ok.GetFutureUserinfo()
+	}
+
+	pair := currencyPair[0]
+	urlPath := "/api/futures/v3/accounts/" + pair.ToLower().ToSymbol("-")
+	var response CrossedAccountInfo
+
+	err := ok.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	acc := new(FutureAccount)
+	acc.FutureSubAccounts = make(map[Currency]FutureSubAccount, 1)
+	if response.MarginMode == "crossed" {
+		acc.FutureSubAccounts[pair.CurrencyA] = FutureSubAccount{
+			Currency:      pair.CurrencyA,
+			AccountRights: response.Equity,
+			ProfitReal:    response.RealizedPnl,
+			ProfitUnreal:  response.UnrealizedPnl,
+			KeepDeposit:   response.MarginFrozen,
+			RiskRate:      response.MarginRatio,
+		}
+	} else {
+		//todo 逐仓模式
+		return nil, errors.New("GoEx unsupported  fixed margin mode")
+	}
+
+	return acc, nil
+}
+
+//deprecated
+//基本上已经报废，OK限制10s一次，但是基本上都会返回error：{"code":30014,"message":"Too Many Requests"}
 func (ok *OKExFuture) GetFutureUserinfo() (*FutureAccount, error) {
 	urlPath := "/api/futures/v3/accounts"
 	var response struct {
