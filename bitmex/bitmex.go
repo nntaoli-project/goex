@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	. "github.com/nntaoli-project/GoEx/internal/logger"
 	"net/url"
 	"strings"
 	"time"
@@ -26,6 +27,10 @@ func New(config *APIConfig) *bitmex {
 	if bm.Endpoint == "" {
 		bm.Endpoint = baseUrl
 	}
+	if strings.HasSuffix(bm.Endpoint, "/") {
+		bm.Endpoint = bm.Endpoint[0 : len(bm.Endpoint)-1]
+	}
+	Log.Debug("endpoint=", bm.Endpoint)
 	return bm
 }
 

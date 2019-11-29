@@ -270,7 +270,7 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
 		})
-	case OKEX_FUTURE:
+	case OKEX_FUTURE, OKEX_V3:
 		//return okcoin.NewOKEx(builder.client, builder.apiKey, builder.secretkey)
 		return okex.NewOKEx(&APIConfig{
 			HttpClient: builder.client,
