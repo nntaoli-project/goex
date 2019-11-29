@@ -252,7 +252,7 @@ func (fmWs *FMexWs) handle(msg []byte) error {
 		case "depth":
 			dep := fmWs.parseDepthData(datamap["bids"].([]interface{}), datamap["asks"].([]interface{}))
 			stime := int64(ToInt(datamap["ts"]))
-			dep.UTime = time.Unix(stime/1000, 0)
+			dep.UTime = time.Unix(0, stime*1000000)
 			pair, err := getPairFromType(resp[2])
 			if err != nil {
 				panic(err)
