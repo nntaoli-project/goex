@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/GoEx/internal/logger"
 	"net/http"
 	"net/url"
 	"strings"
@@ -68,7 +69,23 @@ type RawTicker struct {
 }
 
 func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
-	fc := &FCoin{baseUrl: "https://api.fcoin.com/v2/", accessKey: apikey, secretKey: secretkey, httpClient: client}
+	return NewWithConfig(&APIConfig{
+		HttpClient:   client,
+		Endpoint:     "https://api.fcoin.com/v2/",
+		ApiKey:       apikey,
+		ApiSecretKey: secretkey,
+	})
+}
+
+func NewWithConfig(c *APIConfig) *FCoin {
+	if c.Endpoint == "" {
+		c.Endpoint = "https://api.fcoin.com/v2/"
+	}
+	if !strings.HasSuffix(c.Endpoint, "/") {
+		c.Endpoint = c.Endpoint + "/"
+	}
+	Log.Debug("endpoint=", c.Endpoint)
+	fc := &FCoin{baseUrl: c.Endpoint, accessKey: c.ApiKey, secretKey: c.ApiSecretKey, httpClient: c.HttpClient}
 	fc.setTimeOffset()
 	var err error
 	fc.tradeSymbols, err = fc.GetTradeSymbols()
