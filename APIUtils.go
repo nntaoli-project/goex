@@ -115,7 +115,7 @@ func CancelAllUnfinishedFutureOrders(api FutureRestAPI, contractType string, cur
 		logger.Log.Error("api instance is nil ??? , please new a api instance")
 		return 0
 	}
-
+	
 	c := 0
 
 	for {
@@ -135,7 +135,7 @@ func CancelAllUnfinishedFutureOrders(api FutureRestAPI, contractType string, cur
 		}
 
 		for _, ord := range orders {
-			_, err := api.FutureCancelOrder(currencyPair, contractType, fmt.Sprintf("%d", ord.OrderID2))
+			_, err := api.FutureCancelOrder(currencyPair, contractType, fmt.Sprintf("%s", ord.OrderID2))
 			if err != nil {
 				logger.Log.Error(err)
 			} else {
