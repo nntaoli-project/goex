@@ -217,8 +217,12 @@ func NewCurrencyPair(currencyA Currency, currencyB Currency) CurrencyPair {
 }
 
 func NewCurrencyPair2(currencyPairSymbol string) CurrencyPair {
-	currencys := strings.Split(currencyPairSymbol, "_")
-	if len(currencys) == 2 {
+	return NewCurrencyPair3(currencyPairSymbol,"_")
+}
+
+func NewCurrencyPair3(currencyPairSymbol string, sep string) CurrencyPair {
+	currencys := strings.Split(currencyPairSymbol, sep)
+	if len(currencys) >= 2 {
 		return CurrencyPair{NewCurrency(currencys[0], ""),
 			NewCurrency(currencys[1], "")}
 	}
