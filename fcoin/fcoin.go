@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/GoEx/internal/logger"
 	"net/http"
 	"net/url"
 	"strings"
@@ -68,7 +69,23 @@ type RawTicker struct {
 }
 
 func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
-	fc := &FCoin{baseUrl: "https://api.fcoin.com/v2/", accessKey: apikey, secretKey: secretkey, httpClient: client}
+	return NewWithConfig(&APIConfig{
+		HttpClient:   client,
+		Endpoint:     "https://api.fcoin.com/v2/",
+		ApiKey:       apikey,
+		ApiSecretKey: secretkey,
+	})
+}
+
+func NewWithConfig(c *APIConfig) *FCoin {
+	if c.Endpoint == "" {
+		c.Endpoint = "https://api.fcoin.com/v2/"
+	}
+	if !strings.HasSuffix(c.Endpoint, "/") {
+		c.Endpoint = c.Endpoint + "/"
+	}
+	Log.Debug("endpoint=", c.Endpoint)
+	fc := &FCoin{baseUrl: c.Endpoint, accessKey: c.ApiKey, secretKey: c.ApiSecretKey, httpClient: c.HttpClient}
 	fc.setTimeOffset()
 	var err error
 	fc.tradeSymbols, err = fc.GetTradeSymbols()
@@ -148,6 +165,7 @@ func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	} else {
 		uri = fmt.Sprintf("market/depth/L150/%s", strings.ToLower(currency.ToSymbol("")))
 	}
+
 	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+uri)
 	if err != nil {
 		return nil, err
@@ -166,7 +184,9 @@ func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		return nil, errors.New("depth error")
 	}
 
+	ts := ToInt64(datamap["ts"])
 	depth := new(Depth)
+	depth.UTime = time.Unix(0, ts*1000000)
 	depth.Pair = currency
 
 	n := 0

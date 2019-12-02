@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
+	. "github.com/nntaoli-project/GoEx/internal/logger"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -57,9 +57,33 @@ type HuoBiProSymbol struct {
 	Symbol          string
 }
 
+func NewHuobiWithConfig(config *APIConfig) *HuoBiPro {
+	hbpro := new(HuoBiPro)
+	if config.Endpoint == "" {
+		hbpro.baseUrl = "https://api.huobi.pro"
+	}
+	hbpro.httpClient = config.HttpClient
+	hbpro.accessKey = config.ApiKey
+	hbpro.secretKey = config.ApiSecretKey
+
+	if config.ApiKey != "" && config.ApiSecretKey != "" {
+		accinfo, err := hbpro.GetAccountInfo(HB_SPOT_ACCOUNT)
+		if err != nil {
+			hbpro.accountId = ""
+			//panic(err)
+		} else {
+			hbpro.accountId = accinfo.Id
+			//log.Println("account state :", accinfo.State)
+			Log.Info("accountId=", accinfo.Id, ",state=", accinfo.State, ",type=", accinfo.Type)
+		}
+	}
+
+	return hbpro
+}
+
 func NewHuoBiPro(client *http.Client, apikey, secretkey, accountId string) *HuoBiPro {
 	hbpro := new(HuoBiPro)
-	hbpro.baseUrl = "https://api.huobi.br.com"
+	hbpro.baseUrl = "https://api.huobi.pro"
 	hbpro.httpClient = client
 	hbpro.accessKey = apikey
 	hbpro.secretKey = secretkey
@@ -78,7 +102,7 @@ func NewHuoBiProSpot(client *http.Client, apikey, secretkey string) *HuoBiPro {
 		//panic(err)
 	} else {
 		hb.accountId = accinfo.Id
-		log.Println("account state :", accinfo.State)
+		Log.Info("account state :", accinfo.State)
 	}
 	return hb
 }
@@ -93,7 +117,7 @@ func NewHuoBiProPoint(client *http.Client, apikey, secretkey string) *HuoBiPro {
 		panic(err)
 	}
 	hb.accountId = accinfo.Id
-	log.Println("account state :", accinfo.State)
+	Log.Info("account state :" + accinfo.State)
 	return hb
 }
 
@@ -108,7 +132,7 @@ func (hbpro *HuoBiPro) GetAccountInfo(acc string) (AccountInfo, error) {
 	if err != nil {
 		return AccountInfo{}, err
 	}
-	//log.Println(respmap)
+
 	if respmap["status"].(string) != "ok" {
 		return AccountInfo{}, errors.New(respmap["err-code"].(string))
 	}
@@ -335,7 +359,7 @@ func (hbpro *HuoBiPro) GetOneOrder(orderId string, currency CurrencyPair) (*Orde
 	datamap := respmap["data"].(map[string]interface{})
 	order := hbpro.parseOrder(datamap)
 	order.Currency = currency
-	//log.Println(respmap)
+
 	return &order, nil
 }
 
@@ -467,6 +491,8 @@ func (hbpro *HuoBiPro) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 
 func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	url := hbpro.baseUrl + "/market/depth?symbol=%s&type=step0"
+	Log.Debug(url)
+
 	pair := currency.AdaptUsdToUsdt()
 	respmap, err := HttpGet(hbpro.httpClient, fmt.Sprintf(url, strings.ToLower(pair.ToSymbol(""))))
 	if err != nil {

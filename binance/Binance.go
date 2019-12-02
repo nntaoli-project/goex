@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	API_BASE_URL = "https://api.binance.com/"
-	API_V1       = API_BASE_URL + "api/v1/"
-	API_V3       = API_BASE_URL + "api/v3/"
+	//API_BASE_URL = "https://api.binance.com/"
+	//API_V1       = API_BASE_URL + "api/v1/"
+	//API_V3       = API_BASE_URL + "api/v3/"
 
 	TICKER_URI             = "ticker/24hr?symbol=%s"
 	TICKERS_URI            = "ticker/allBookTickers"
@@ -23,7 +23,7 @@ const (
 	ORDER_URI              = "order?"
 	UNFINISHED_ORDERS_INFO = "openOrders?"
 	KLINE_URI              = "klines"
-	SERVER_TIME_URL        = "api/v1/time"
+	SERVER_TIME_URL        = "time"
 )
 
 var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
@@ -83,8 +83,11 @@ type ExchangeInfo struct {
 }
 
 type Binance struct {
-	accessKey,
-	secretKey string
+	accessKey    string
+	secretKey    string
+	baseUrl      string
+	apiV1        string
+	apiV3        string
 	httpClient   *http.Client
 	timeoffset   int64 //nanosecond
 	tradeSymbols []TradeSymbol
@@ -101,7 +104,25 @@ func (bn *Binance) buildParamsSigned(postForm *url.Values) error {
 }
 
 func New(client *http.Client, api_key, secret_key string) *Binance {
-	bn := &Binance{accessKey: api_key, secretKey: secret_key, httpClient: client}
+	return NewWithConfig(&APIConfig{
+		HttpClient:   client,
+		Endpoint:     "https://api.binance.com",
+		ApiKey:       api_key,
+		ApiSecretKey: secret_key})
+}
+
+func NewWithConfig(config *APIConfig) *Binance {
+	if config.Endpoint == "" {
+		config.Endpoint = "https://api.binance.com"
+	}
+
+	bn := &Binance{
+		baseUrl:    config.Endpoint,
+		apiV1:      config.Endpoint + "/api/v1/",
+		apiV3:      config.Endpoint + "/api/v3/",
+		accessKey:  config.ApiKey,
+		secretKey:  config.ApiSecretKey,
+		httpClient: config.HttpClient}
 	bn.setTimeOffset()
 	return bn
 }
@@ -111,7 +132,7 @@ func (bn *Binance) GetExchangeName() string {
 }
 
 func (bn *Binance) setTimeOffset() error {
-	respmap, err := HttpGet(bn.httpClient, API_BASE_URL+SERVER_TIME_URL)
+	respmap, err := HttpGet(bn.httpClient, bn.apiV1+SERVER_TIME_URL)
 	if err != nil {
 		return err
 	}
@@ -126,7 +147,7 @@ func (bn *Binance) setTimeOffset() error {
 
 func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	currency2 := bn.adaptCurrencyPair(currency)
-	tickerUri := API_V1 + fmt.Sprintf(TICKER_URI, currency2.ToSymbol(""))
+	tickerUri := bn.apiV1 + fmt.Sprintf(TICKER_URI, currency2.ToSymbol(""))
 	tickerMap, err := HttpGet(bn.httpClient, tickerUri)
 
 	if err != nil {
@@ -155,7 +176,7 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 	}
 	currencyPair2 := bn.adaptCurrencyPair(currencyPair)
 
-	apiUrl := fmt.Sprintf(API_V1+DEPTH_URI, currencyPair2.ToSymbol(""), size)
+	apiUrl := fmt.Sprintf(bn.apiV1+DEPTH_URI, currencyPair2.ToSymbol(""), size)
 	resp, err := HttpGet(bn.httpClient, apiUrl)
 	if err != nil {
 		log.Println("GetDepth error:", err)
@@ -192,7 +213,7 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 
 func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType, orderSide string) (*Order, error) {
 	pair = bn.adaptCurrencyPair(pair)
-	path := API_V3 + ORDER_URI
+	path := bn.apiV3 + ORDER_URI
 	params := url.Values{}
 	params.Set("symbol", pair.ToSymbol(""))
 	params.Set("side", orderSide)
@@ -256,7 +277,7 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 func (bn *Binance) GetAccount() (*Account, error) {
 	params := url.Values{}
 	bn.buildParamsSigned(&params)
-	path := API_V3 + ACCOUNT_URI + params.Encode()
+	path := bn.apiV3 + ACCOUNT_URI + params.Encode()
 	respmap, err := HttpGet2(bn.httpClient, path, map[string]string{"X-MBX-APIKEY": bn.accessKey})
 	if err != nil {
 		log.Println(err)
@@ -301,7 +322,7 @@ func (bn *Binance) MarketSell(amount, price string, currencyPair CurrencyPair) (
 
 func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool, error) {
 	currencyPair = bn.adaptCurrencyPair(currencyPair)
-	path := API_V3 + ORDER_URI
+	path := bn.apiV3 + ORDER_URI
 	params := url.Values{}
 	params.Set("symbol", currencyPair.ToSymbol(""))
 	params.Set("orderId", orderId)
@@ -339,7 +360,7 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	params.Set("orderId", orderId)
 
 	bn.buildParamsSigned(&params)
-	path := API_V3 + ORDER_URI + params.Encode()
+	path := bn.apiV3 + ORDER_URI + params.Encode()
 
 	respmap, err := HttpGet2(bn.httpClient, path, map[string]string{"X-MBX-APIKEY": bn.accessKey})
 	if err != nil {
@@ -397,7 +418,7 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	params.Set("symbol", currencyPair.ToSymbol(""))
 
 	bn.buildParamsSigned(&params)
-	path := API_V3 + UNFINISHED_ORDERS_INFO + params.Encode()
+	path := bn.apiV3 + UNFINISHED_ORDERS_INFO + params.Encode()
 
 	respmap, err := HttpGet3(bn.httpClient, path, map[string]string{"X-MBX-APIKEY": bn.accessKey})
 	if err != nil {
@@ -437,7 +458,7 @@ func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since in
 	//params.Set("endTime", strconv.Itoa(int(time.Now().UnixNano()/1000000)))
 	params.Set("limit", fmt.Sprintf("%d", size))
 
-	klineUrl := API_V1 + KLINE_URI + "?" + params.Encode()
+	klineUrl := bn.apiV1 + KLINE_URI + "?" + params.Encode()
 	klines, err := HttpGet3(bn.httpClient, klineUrl, nil)
 	if err != nil {
 		return nil, err
@@ -479,8 +500,8 @@ func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, e
 	if since > 0 {
 		param.Set("fromId", strconv.Itoa(int(since)))
 	}
-	apiUrl := API_V1 + "historicalTrades?" + param.Encode()
-	log.Println(apiUrl)
+	apiUrl := bn.apiV1 + "historicalTrades?" + param.Encode()
+	//log.Println(apiUrl)
 	resp, err := HttpGet3(bn.httpClient, apiUrl, map[string]string{
 		"X-MBX-APIKEY": bn.accessKey})
 	if err != nil {
@@ -524,7 +545,7 @@ func (ba *Binance) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
 }
 
 func (bn *Binance) getTradeSymbols() ([]TradeSymbol, error) {
-	resp, err := HttpGet5(bn.httpClient, API_V1+"exchangeInfo", nil)
+	resp, err := HttpGet5(bn.httpClient, bn.apiV1+"exchangeInfo", nil)
 	if err != nil {
 		return nil, err
 	}
