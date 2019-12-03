@@ -95,7 +95,16 @@ func (ok *OKExSwap) GetExchangeName() string {
 }
 
 func (ok *OKExSwap) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
-	var resp BaseTickerInfo
+	var resp struct {
+		InstrumentId string  `json:"instrument_id"`
+		Last         float64 `json:"last,string"`
+		High24h      float64 `json:"high_24h,string"`
+		Low24h       float64 `json:"low_24h,string"`
+		BestBid      float64 `json:"best_bid,string"`
+		BestAsk      float64 `json:"best_ask,string"`
+		Volume24h    float64 `json:"volume_24h,string"`
+		Timestamp    string  `json:"timestamp"`
+	}
 	contractType = ok.adaptContractType(currencyPair)
 	err := ok.DoRequest("GET", fmt.Sprintf(GET_TICKER, contractType), "", &resp)
 	if err != nil {
@@ -109,6 +118,8 @@ func (ok *OKExSwap) GetFutureTicker(currencyPair CurrencyPair, contractType stri
 		Low:  resp.Low24h,
 		High: resp.High24h,
 		Vol:  resp.Volume24h,
+		Buy:  resp.BestBid,
+		Sell: resp.BestAsk,
 		Date: uint64(date.UnixNano() / int64(time.Millisecond))}, nil
 }
 
