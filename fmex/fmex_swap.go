@@ -18,6 +18,8 @@ const (
 	SPOT     = "spot"
 	ASSETS   = "assets"
 	EXCHANGE = "exchange"
+
+	baseUrl = "https://api.fmex.com"
 )
 
 type FMexTicker struct {
@@ -81,6 +83,9 @@ type OrderFilter struct {
 }
 
 func NewFMexSwap(config *APIConfig) *FMexSwap {
+	if config.Endpoint == "" {
+		config.Endpoint = baseUrl
+	}
 	fm := &FMexSwap{baseUrl: config.Endpoint, accessKey: config.ApiKey, secretKey: config.ApiSecretKey, httpClient: config.HttpClient}
 	fm.setTimeOffset()
 	return fm

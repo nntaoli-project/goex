@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	. "github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/internal/logger"
 	"strings"
 	"sync"
 	"time"
 )
+
+const baseUrl = "https://www.okex.com"
 
 type OKEx struct {
 	config     *APIConfig
@@ -22,6 +25,9 @@ type OKEx struct {
 }
 
 func NewOKEx(config *APIConfig) *OKEx {
+	if config.Endpoint == "" {
+		config.Endpoint = baseUrl
+	}
 	okex := &OKEx{config: config}
 	okex.OKExSpot = &OKExSpot{okex}
 	okex.OKExFuture = &OKExFuture{OKEx: okex, Locker: new(sync.Mutex)}
@@ -42,7 +48,8 @@ func (ok *OKEx) UUID() string {
 func (ok *OKEx) DoRequest(httpMethod, uri, reqBody string, response interface{}) error {
 	url := ok.config.Endpoint + uri
 	sign, timestamp := ok.doParamSign(httpMethod, uri, reqBody)
-	//log.Println(sign, timestamp)
+	logger.Log.Debug("sign=", sign)
+	logger.Log.Debug("timestamp=", timestamp)
 	resp, err := NewHttpRequest(ok.config.HttpClient, httpMethod, url, reqBody, map[string]string{
 		CONTENT_TYPE: APPLICATION_JSON_UTF8,
 		ACCEPT:       APPLICATION_JSON,
@@ -55,7 +62,7 @@ func (ok *OKEx) DoRequest(httpMethod, uri, reqBody string, response interface{})
 		//log.Println(err)
 		return err
 	} else {
-		//	println(string(resp))
+		logger.Log.Debug(string(resp))
 		return json.Unmarshal(resp, &response)
 	}
 }

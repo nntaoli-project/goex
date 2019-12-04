@@ -142,6 +142,44 @@ func (ok *OKExFuture) GetFutureTicker(currencyPair CurrencyPair, contractType st
 		Date: uint64(date.UnixNano() / int64(time.Millisecond))}, nil
 }
 
+func (ok *OKExFuture) GetFutureAllTicker() (*[]FutureTicker, error) {
+	var urlPath = "/api/futures/v3/instruments/ticker"
+
+	var response []struct {
+		InstrumentId string  `json:"instrument_id"`
+		Last         float64 `json:"last,string"`
+		High24h      float64 `json:"high_24h,string"`
+		Low24h       float64 `json:"low_24h,string"`
+		BestBid      float64 `json:"best_bid,string"`
+		BestAsk      float64 `json:"best_ask,string"`
+		Volume24h    float64 `json:"volume_24h,string"`
+		Timestamp    string  `json:"timestamp"`
+	}
+
+	err := ok.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var tickers []FutureTicker
+	for _,t :=range response{
+		date, _ := time.Parse(time.RFC3339, t.Timestamp)
+		tickers=append(tickers, FutureTicker{
+			ContractType:t.InstrumentId,
+			Ticker:&Ticker{
+			Pair: NewCurrencyPair3(t.InstrumentId,"-"),
+			Sell: t.BestAsk,
+			Buy:  t.BestBid,
+			Low:  t.Low24h,
+			High: t.High24h,
+			Last: t.Last,
+			Vol:  t.Volume24h,
+			Date: uint64(date.UnixNano() / int64(time.Millisecond))}})
+	}
+
+	return &tickers, nil
+}
+
 func (ok *OKExFuture) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
 	urlPath := fmt.Sprintf("/api/futures/v3/instruments/%s/book?size=%d", ok.getFutureContractId(currencyPair, contractType), size)
 	var response struct {
@@ -189,10 +227,50 @@ func (ok *OKExFuture) GetFutureIndex(currencyPair CurrencyPair) (float64, error)
 }
 
 type CrossedAccountInfo struct {
-	MarginMode string  `json:"margin_mode"`
-	Equity     float64 `json:"equity,string"`
+	MarginMode       string  `json:"margin_mode"`
+	Equity           float64 `json:"equity,string"`
+	RealizedPnl      float64 `json:"realized_pnl,string"`
+	UnrealizedPnl    float64 `json:"unrealized_pnl,string"`
+	MarginFrozen     float64 `json:"margin_frozen,string"`
+	MarginRatio      float64 `json:"margin_ratio,string"`
+	MaintMarginRatio float64 `json:"maint_margin_ratio,string"`
 }
 
+func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount, error) {
+	if len(currencyPair) == 0 {
+		return ok.GetFutureUserinfo()
+	}
+
+	pair := currencyPair[0]
+	urlPath := "/api/futures/v3/accounts/" + pair.ToLower().ToSymbol("-")
+	var response CrossedAccountInfo
+
+	err := ok.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	acc := new(FutureAccount)
+	acc.FutureSubAccounts = make(map[Currency]FutureSubAccount, 1)
+	if response.MarginMode == "crossed" {
+		acc.FutureSubAccounts[pair.CurrencyA] = FutureSubAccount{
+			Currency:      pair.CurrencyA,
+			AccountRights: response.Equity,
+			ProfitReal:    response.RealizedPnl,
+			ProfitUnreal:  response.UnrealizedPnl,
+			KeepDeposit:   response.MarginFrozen,
+			RiskRate:      response.MarginRatio,
+		}
+	} else {
+		//todo 逐仓模式
+		return nil, errors.New("GoEx unsupported  fixed margin mode")
+	}
+
+	return acc, nil
+}
+
+//deprecated
+//基本上已经报废，OK限制10s一次，但是基本上都会返回error：{"code":30014,"message":"Too Many Requests"}
 func (ok *OKExFuture) GetFutureUserinfo() (*FutureAccount, error) {
 	urlPath := "/api/futures/v3/accounts"
 	var response struct {

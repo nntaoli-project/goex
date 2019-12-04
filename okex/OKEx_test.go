@@ -2,15 +2,20 @@ package okex
 
 import (
 	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 	"time"
 )
 
+func init() {
+	logger.Log.SetLevel(logger.DEBUG)
+}
+
 //
 var config2 = &goex.APIConfig{
-	Endpoint: "https://www.okex.com",
+	Endpoint: "https://www.okex.me",
 	//HttpClient: &http.Client{
 	//	Transport: &http.Transport{
 	//		Proxy: func(req *http.Request) (*url.URL, error) {

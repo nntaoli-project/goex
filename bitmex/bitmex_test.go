@@ -2,30 +2,39 @@ package bitmex
 
 import (
 	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/internal/logger"
 	"github.com/stretchr/testify/assert"
+	"net"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 )
 
 var httpProxyClient = &http.Client{
-	//Transport: &http.Transport{
-	//	Proxy: func(req *http.Request) (*url.URL, error) {
-	//		return &url.URL{
-	//			Scheme: "socks5",
-	//			Host:   "127.0.0.1:1080"}, nil
-	//	},
-	//	Dial: (&net.Dialer{
-	//		Timeout: 10 * time.Second,
-	//	}).Dial,
-	//},
+	Transport: &http.Transport{
+		Proxy: func(req *http.Request) (*url.URL, error) {
+			return &url.URL{
+				Scheme: "socks5",
+				Host:   "127.0.0.1:1080"}, nil
+		},
+		Dial: (&net.Dialer{
+			Timeout: 10 * time.Second,
+		}).Dial,
+	},
 	Timeout: 10 * time.Second,
 }
-var mex = New(&goex.APIConfig{
-	Endpoint:     "https://testnet.bitmex.com",
-	HttpClient:   httpProxyClient,
-	ApiKey:       "",
-	ApiSecretKey: ""})
+
+func init() {
+	logger.Log.SetLevel(logger.DEBUG)
+	mex = New(&goex.APIConfig{
+		Endpoint:     "https://testnet.bitmex.com/",
+		HttpClient:   httpProxyClient,
+		ApiKey:       "",
+		ApiSecretKey: ""})
+}
+
+var mex *bitmex
 
 func TestBitmex_GetFutureDepth(t *testing.T) {
 	dep, err := mex.GetFutureDepth(goex.BTC_USD, "Z19", 5)
@@ -42,11 +51,11 @@ func TestBitmex_GetFutureTicker(t *testing.T) {
 }
 
 func TestBitmex_GetIndicativeFundingRate(t *testing.T) {
-	rate, time, err := mex.GetIndicativeFundingRate("XBTUSD")
-	if assert.Nil(t, err) {
-		t.Log(rate)
-		t.Log(time.Local())
-	}
+	//rate, time, err := mex.GetIndicativeFundingRate("XBTUSD")
+	//if assert.Nil(t, err) {
+	//	t.Log(rate)
+	//	t.Log(time.Local())
+	//}
 }
 
 func TestBitmex_GetFutureUserinfo(t *testing.T) {
