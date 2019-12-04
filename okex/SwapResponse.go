@@ -168,7 +168,8 @@ type BaseTickerInfo struct {
 	High24h      float64 `json:"high_24h,string"`
 	Volume24h    float64 `json:"volume_24h,string"`
 	Low24h       float64 `json:"low_24h,string"`
-}
+	BestBid      float64 `json:"best_bid,string"`
+	BestAsk      float64 `json:"best_ask,string"`}
 
 type SwapTickerList []BaseTickerInfo
 
