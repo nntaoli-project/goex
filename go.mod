@@ -11,4 +11,5 @@ require (
 	github.com/nubo/jwt v0.0.0-20150918093313-da5b79c3bbaf
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.4.0
+	github.com/valyala/fasthttp v1.6.0
 )
