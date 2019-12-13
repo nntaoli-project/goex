@@ -573,12 +573,16 @@ func (ok *OKExFuture) GetUnfinishFutureOrders(currencyPair CurrencyPair, contrac
 func (ok *OKExFuture) GetFee() (float64, error) { panic("") }
 
 func (ok *OKExFuture) GetContractValue(currencyPair CurrencyPair) (float64, error) {
-	for _, info := range ok.allContractInfo.contractInfos {
-		if info.UnderlyingIndex == currencyPair.CurrencyA.Symbol && info.QuoteCurrency == currencyPair.CurrencyB.Symbol {
-			return ToFloat64(info.ContractVal), nil
-		}
+	//for _, info := range ok.allContractInfo.contractInfos {
+	//	if info.UnderlyingIndex == currencyPair.CurrencyA.Symbol && info.QuoteCurrency == currencyPair.CurrencyB.Symbol {
+	//		return ToFloat64(info.ContractVal), nil
+	//	}
+	//}
+	if currencyPair.CurrencyA.Eq(BTC) {
+		return 100 , nil
 	}
-	return 0, nil
+
+	return 10, nil
 }
 
 func (ok *OKExFuture) GetDeliveryTime() (int, int, int, int) {

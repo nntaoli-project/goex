@@ -72,7 +72,7 @@ const (
 	GET_POSITION          = "/api/swap/v3/%s/position"
 	GET_DEPTH             = "/api/swap/v3/instruments/%s/depth?size=%d"
 	GET_TICKER            = "/api/swap/v3/instruments/%s/ticker"
-	GET_ALL_TICKER            = "/api/swap/v3/instruments/ticker"
+	GET_ALL_TICKER        = "/api/swap/v3/instruments/ticker"
 	GET_UNFINISHED_ORDERS = "/api/swap/v3/orders/%s?status=%d&limit=%d"
 )
 
@@ -132,12 +132,12 @@ func (ok *OKExSwap) GetFutureAllTicker() (*[]FutureTicker, error) {
 	}
 
 	var tickers []FutureTicker
-	for _,t :=range resp{
+	for _, t := range resp {
 		date, _ := time.Parse(time.RFC3339, t.Timestamp)
-		tickers=append(tickers, FutureTicker{
-			ContractType:t.InstrumentId,
-			Ticker:&Ticker{
-				Pair: NewCurrencyPair3(t.InstrumentId,"-"),
+		tickers = append(tickers, FutureTicker{
+			ContractType: t.InstrumentId,
+			Ticker: &Ticker{
+				Pair: NewCurrencyPair3(t.InstrumentId, "-"),
 				Sell: t.BestAsk,
 				Buy:  t.BestBid,
 				Low:  t.Low24h,
@@ -444,14 +444,10 @@ func (ok *OKExSwap) GetFuturePosition(currencyPair CurrencyPair, contractType st
  * LTC/ETH/ETC/BCH: 10美元一张合约
  */
 func (ok *OKExSwap) GetContractValue(currencyPair CurrencyPair) (float64, error) {
-	switch currencyPair {
-	case BTC_USD:
+	if currencyPair.CurrencyA.Eq(BTC) {
 		return 100, nil
-	case LTC_USD, ETH_USD, ETC_USD, BCH_USD:
-		return 10, nil
 	}
-
-	return -1, errors.New("error")
+	return 10, nil
 }
 
 func (ok *OKExSwap) GetFee() (float64, error) {
