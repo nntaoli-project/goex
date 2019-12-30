@@ -3,7 +3,7 @@ package goex
 import (
 	"errors"
 	"fmt"
-	"log"
+	"github.com/nntaoli-project/GoEx/internal/logger"
 	"reflect"
 	"time"
 )
@@ -35,7 +35,7 @@ func RE(retry int, delay time.Duration, method interface{}, params ...interface{
 _CALL:
 
 	if retryC > 0 {
-		log.Println("sleep ", delay, " after re call")
+		logger.Log.Info("sleep ", delay, " after re call")
 		time.Sleep(delay)
 	}
 
@@ -47,13 +47,13 @@ _CALL:
 				continue
 			}
 
-			log.Println("[api error]", vl)
+			logger.Log.Error("[api error]", vl)
 			retryC++
 			if retryC <= retry-1 {
-				log.Printf("Invoke Method[%s] Error , Begin Retry Call [%d] ...", invokeM.String(), retryC)
+				logger.Log.Info("Invoke Method[%s] Error , Begin Retry Call [%d] ...", invokeM.String(), retryC)
 				goto _CALL
 			} else {
-				log.Println("Invoke Method Fail ???" + invokeM.String())
+				logger.Log.Error("Invoke Method Fail ???" + invokeM.String())
 				return vl.Interface()
 			}
 		} else {
@@ -69,7 +69,7 @@ _CALL:
  */
 func CancelAllUnfinishedOrders(api API, currencyPair CurrencyPair) int {
 	if api == nil {
-		log.Println("api instance is nil ??? , please new a api instance")
+		logger.Log.Error("api instance is nil ??? , please new a api instance")
 		return -1
 	}
 
@@ -79,7 +79,7 @@ func CancelAllUnfinishedOrders(api API, currencyPair CurrencyPair) int {
 		ret := RE(2, 200*time.Millisecond, api.GetUnfinishOrders, currencyPair)
 
 		if err, isok := ret.(error); isok {
-			log.Println("[api error]", err)
+			logger.Log.Error("[api error]", err)
 			break
 		}
 
@@ -95,7 +95,7 @@ func CancelAllUnfinishedOrders(api API, currencyPair CurrencyPair) int {
 		for _, ord := range orders {
 			_, err := api.CancelOrder(ord.OrderID2, currencyPair)
 			if err != nil {
-				log.Println(err)
+				logger.Log.Error(err)
 			} else {
 				c++
 			}
@@ -112,16 +112,16 @@ func CancelAllUnfinishedOrders(api API, currencyPair CurrencyPair) int {
  */
 func CancelAllUnfinishedFutureOrders(api FutureRestAPI, contractType string, currencyPair CurrencyPair) int {
 	if api == nil {
-		log.Println("api instance is nil ??? , please new a api instance")
+		logger.Log.Error("api instance is nil ??? , please new a api instance")
 		return 0
 	}
-
+	
 	c := 0
 
 	for {
 		ret := RE(10, 200*time.Millisecond, api.GetUnfinishFutureOrders, currencyPair, contractType)
-		if err, isok := ret.(error); isok {
-			log.Println("[api error]", err)
+		if err, isOk := ret.(error); isOk {
+			logger.Log.Error("[api error]", err)
 			break
 		}
 
@@ -129,19 +129,19 @@ func CancelAllUnfinishedFutureOrders(api FutureRestAPI, contractType string, cur
 			break
 		}
 
-		orders, isok := ret.([]Order)
-		if !isok || len(orders) == 0 {
+		orders, isOk := ret.([]FutureOrder)
+		if !isOk || len(orders) == 0 {
 			break
 		}
 
 		for _, ord := range orders {
-			_, err := api.FutureCancelOrder(currencyPair, contractType, fmt.Sprintf("%d", ord.OrderID))
+			_, err := api.FutureCancelOrder(currencyPair, contractType, fmt.Sprintf("%s", ord.OrderID2))
 			if err != nil {
-				log.Println(err)
+				logger.Log.Error(err)
 			} else {
 				c++
 			}
-			time.Sleep(100 * time.Millisecond) //控制频率
+			time.Sleep(120 * time.Millisecond) //控制频率
 		}
 	}
 

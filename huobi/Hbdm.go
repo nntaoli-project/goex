@@ -301,13 +301,11 @@ func (dm *Hbdm) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, co
 }
 
 func (dm *Hbdm) GetContractValue(currencyPair CurrencyPair) (float64, error) {
-	switch currencyPair {
-	case BTC_USD:
+	switch currencyPair.CurrencyA {
+	case BTC:
 		return 100, nil
-	case LTC_USD, ETH_USD, EOS_USD:
-		return 10, nil
 	default:
-		return 0, errors.New("error")
+		return 10, nil
 	}
 }
 

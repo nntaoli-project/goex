@@ -4,17 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/GoEx/internal/logger"
 	"net/url"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/GoEx"
 )
 
 const (
 	baseUrl = "https://www.bitmex.com"
 )
-
-//bitmex register link  https://www.bitmex.com/register/0fcQP7
 
 type bitmex struct {
 	*APIConfig
@@ -25,6 +25,10 @@ func New(config *APIConfig) *bitmex {
 	if bm.Endpoint == "" {
 		bm.Endpoint = baseUrl
 	}
+	if strings.HasSuffix(bm.Endpoint, "/") {
+		bm.Endpoint = bm.Endpoint[0 : len(bm.Endpoint)-1]
+	}
+	Log.Debug("endpoint=", bm.Endpoint)
 	return bm
 }
 
@@ -369,11 +373,86 @@ func (bm *bitmex) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, e
 }
 
 func (bm *bitmex) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
-	panic("no support")
+	urlPath := "/api/v1/trade/bucketed?binSize=%s&partial=false&symbol=%s&count=%d&startTime=%s&reverse=true"
+	contractId := bm.adaptCurrencyPairToSymbol(currency, contract_type)
+	sinceTime := time.Unix(int64(since), 0).UTC()
+
+	if since/int(time.Second) != 1 {
+		sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
+	}
+
+	var granularity string
+	switch period {
+	case KLINE_PERIOD_1MIN:
+		granularity = "1m"
+	case KLINE_PERIOD_5MIN:
+		granularity = "5m"
+	case KLINE_PERIOD_1H, KLINE_PERIOD_60MIN:
+		granularity = "1h"
+	case KLINE_PERIOD_1DAY:
+		granularity = "1d"
+	default:
+		granularity = "5m"
+	}
+
+	uri := fmt.Sprintf(urlPath, granularity, contractId, size, sinceTime.Format(time.RFC3339))
+	response, err := HttpGet3(bm.HttpClient, bm.Endpoint+uri, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var klines []FutureKline
+	for _, record := range response {
+		r := record.(map[string]interface{})
+		t, _ := time.Parse(time.RFC3339, fmt.Sprint(r["timestamp"]))
+		klines = append(klines, FutureKline{
+			Kline: &Kline{
+				Timestamp: t.Unix(),
+				Pair:      currency,
+				Open:      ToFloat64(r["open"]),
+				High:      ToFloat64(r["high"]),
+				Low:       ToFloat64(r["low"]),
+				Close:     ToFloat64(r["close"]),
+				Vol:       ToFloat64(r["volume"])}})
+	}
+
+	return klines, nil
 }
 
-func (bm *bitmex) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	panic("no support")
+func (bm *bitmex) GetTrades(contract_type string, currency CurrencyPair, since int64) ([]Trade, error) {
+	var urlPath = "/api/v1/trade?symbol=%s&startTime=%s&reverse=true"
+	contractId := bm.adaptCurrencyPairToSymbol(currency, contract_type)
+	sinceTime := time.Unix(int64(since), 0).UTC()
+
+	if since/int64(time.Second) != 1 {
+		sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
+	}
+
+	uri := fmt.Sprintf(urlPath, contractId, sinceTime.Format(time.RFC3339))
+	response, err := HttpGet3(bm.HttpClient, bm.Endpoint+uri, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	trades := make([]Trade, 0)
+	for _, v := range response {
+		vv := v.(map[string]interface{})
+		side := BUY
+		if vv["side"] == "Sell" {
+			side = SELL
+		}
+		timestamp, _ := time.Parse(time.RFC3339, fmt.Sprintf("%v", vv["timestamp"]))
+		trades = append(trades, Trade{
+			Tid:    ToInt64(vv["trdMatchID"]),
+			Type:   side,
+			Amount: ToFloat64(vv["size"]),
+			Price:  ToFloat64(vv["price"]),
+			Date:   timestamp.Unix(),
+			Pair:   currency,
+		})
+	}
+
+	return trades, nil
 }
 
 func (bm *bitmex) adaptCurrencyPairToSymbol(pair CurrencyPair, contract string) string {

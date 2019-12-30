@@ -2,6 +2,7 @@ package huobi
 
 import (
 	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"net"
 	"net/http"
@@ -32,15 +33,17 @@ var (
 //
 var hbpro = NewHuoBiProSpot(httpProxyClient, apikey, secretkey)
 
+func init()  {
+	logger.Log.SetLevel(logger.DEBUG)
+}
+
 func TestHuobiPro_GetTicker(t *testing.T) {
-	return
 	ticker, err := hbpro.GetTicker(goex.XRP_BTC)
 	assert.Nil(t, err)
 	t.Log(ticker)
 }
 
 func TestHuobiPro_GetDepth(t *testing.T) {
-	return
 	dep, err := hbpro.GetDepth(2, goex.LTC_USDT)
 	assert.Nil(t, err)
 	t.Log(dep.AskList)

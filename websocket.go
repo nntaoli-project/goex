@@ -137,7 +137,7 @@ func (ws *WsConn) connect() error {
 
 	wsConn, resp, err := dialer.Dial(ws.WsUrl, http.Header(ws.ReqHeaders))
 	if err != nil {
-		Log.Errorf("[ws][s] %s", ws.WsUrl, err.Error())
+		Log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
 		if ws.IsDump && resp != nil {
 			dumpData, _ := httputil.DumpResponse(resp, true)
 			Log.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))

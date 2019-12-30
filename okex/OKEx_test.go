@@ -2,11 +2,16 @@ package okex
 
 import (
 	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 	"time"
 )
+
+func init() {
+	logger.Log.SetLevel(logger.DEBUG)
+}
 
 //
 var config2 = &goex.APIConfig{

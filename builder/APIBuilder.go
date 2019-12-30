@@ -41,6 +41,7 @@ type APIBuilder struct {
 	clientId         string
 	apiPassphrase    string
 	futuresEndPoint  string
+	endPoint         string
 }
 
 type HttpClientConfig struct {
@@ -180,6 +181,11 @@ func (builder *APIBuilder) FuturesEndpoint(endpoint string) (_builder *APIBuilde
 	return builder
 }
 
+func (builder *APIBuilder) Endpoint(endpoint string) (_builer *APIBuilder) {
+	builder.endPoint = endpoint
+	return builder
+}
+
 func (builder *APIBuilder) Build(exName string) (api API) {
 	var _api API
 	switch exName {
@@ -192,7 +198,12 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 	case BITSTAMP:
 		_api = bitstamp.NewBitstamp(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
 	case HUOBI_PRO:
-		_api = huobi.NewHuoBiProSpot(builder.client, builder.apiKey, builder.secretkey)
+		//_api = huobi.NewHuoBiProSpot(builder.client, builder.apiKey, builder.secretkey)
+		_api = huobi.NewHuobiWithConfig(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     builder.endPoint,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey})
 	case OKEX:
 		_api = okcoin.NewOKExSpot(builder.client, builder.apiKey, builder.secretkey)
 	case OKEX_V3:
@@ -201,14 +212,19 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 			ApiKey:        builder.apiKey,
 			ApiSecretKey:  builder.secretkey,
 			ApiPassphrase: builder.apiPassphrase,
-			Endpoint:      "https://www.okex.com",
+			Endpoint:      builder.endPoint,
 		})
 	case BITFINEX:
 		_api = bitfinex.New(builder.client, builder.apiKey, builder.secretkey)
 	case KRAKEN:
 		_api = kraken.New(builder.client, builder.apiKey, builder.secretkey)
 	case BINANCE:
-		_api = binance.New(builder.client, builder.apiKey, builder.secretkey)
+		//_api = binance.New(builder.client, builder.apiKey, builder.secretkey)
+		_api = binance.NewWithConfig(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     builder.endPoint,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey})
 	case BITTREX:
 		_api = bittrex.New(builder.client, builder.apiKey, builder.secretkey)
 	case BITHUMB:
@@ -222,7 +238,12 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 	case COINEX:
 		_api = coinex.New(builder.client, builder.apiKey, builder.secretkey)
 	case FCOIN:
-		_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey)
+		//	_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey)
+		_api = fcoin.NewWithConfig(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     builder.endPoint,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey})
 	case FCOIN_MARGIN:
 		_api = fcoin.NewFcoinMargin(builder.client, builder.apiKey, builder.secretkey)
 	//case COIN58:
@@ -254,7 +275,7 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
 		})
-	case OKEX_FUTURE:
+	case OKEX_FUTURE, OKEX_V3:
 		//return okcoin.NewOKEx(builder.client, builder.apiKey, builder.secretkey)
 		return okex.NewOKEx(&APIConfig{
 			HttpClient: builder.client,
