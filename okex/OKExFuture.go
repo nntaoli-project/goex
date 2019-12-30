@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	. "github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/internal/logger"
 	"sort"
 	"strings"
 	"sync"
@@ -85,9 +86,9 @@ func (ok *OKExFuture) getFutureContractId(pair CurrencyPair, contractAlias strin
 
 	now := time.Now()
 	hour := now.Hour()
-	mintue := now.Minute()
+	minute := now.Minute()
 
-	if ok.allContractInfo.uTime.IsZero() || (hour == 16 && mintue <= 11) {
+	if ok.allContractInfo.uTime.IsZero() || (hour == 16 && minute <= 11) {
 		ok.Lock()
 		defer ok.Unlock()
 
@@ -96,13 +97,19 @@ func (ok *OKExFuture) getFutureContractId(pair CurrencyPair, contractAlias strin
 			ok.allContractInfo.uTime = time.Now()
 			ok.allContractInfo.contractInfos = contractInfo
 		} else {
-			panic(err)
+			time.Sleep(120 * time.Millisecond) //retry
+			contractInfo, err = ok.GetFutureContractInfo()
+			if err != nil {
+				logger.Warnf(fmt.Sprintf("Get Futures Contract Alias Error [%s] ???", err.Error()))
+			}
 		}
 	}
 
 	contractId := ""
 	for _, itm := range ok.allContractInfo.contractInfos {
-		if itm.Alias == contractAlias && itm.UnderlyingIndex == pair.CurrencyA.Symbol && itm.QuoteCurrency == pair.CurrencyB.Symbol {
+		if itm.Alias == contractAlias &&
+			itm.UnderlyingIndex == pair.CurrencyA.Symbol &&
+			itm.QuoteCurrency == pair.CurrencyB.Symbol {
 			contractId = itm.InstrumentID
 			break
 		}
@@ -162,19 +169,19 @@ func (ok *OKExFuture) GetFutureAllTicker() (*[]FutureTicker, error) {
 	}
 
 	var tickers []FutureTicker
-	for _,t :=range response{
+	for _, t := range response {
 		date, _ := time.Parse(time.RFC3339, t.Timestamp)
-		tickers=append(tickers, FutureTicker{
-			ContractType:t.InstrumentId,
-			Ticker:&Ticker{
-			Pair: NewCurrencyPair3(t.InstrumentId,"-"),
-			Sell: t.BestAsk,
-			Buy:  t.BestBid,
-			Low:  t.Low24h,
-			High: t.High24h,
-			Last: t.Last,
-			Vol:  t.Volume24h,
-			Date: uint64(date.UnixNano() / int64(time.Millisecond))}})
+		tickers = append(tickers, FutureTicker{
+			ContractType: t.InstrumentId,
+			Ticker: &Ticker{
+				Pair: NewCurrencyPair3(t.InstrumentId, "-"),
+				Sell: t.BestAsk,
+				Buy:  t.BestBid,
+				Low:  t.Low24h,
+				High: t.High24h,
+				Last: t.Last,
+				Vol:  t.Volume24h,
+				Date: uint64(date.UnixNano() / int64(time.Millisecond))}})
 	}
 
 	return &tickers, nil
@@ -573,12 +580,16 @@ func (ok *OKExFuture) GetUnfinishFutureOrders(currencyPair CurrencyPair, contrac
 func (ok *OKExFuture) GetFee() (float64, error) { panic("") }
 
 func (ok *OKExFuture) GetContractValue(currencyPair CurrencyPair) (float64, error) {
-	for _, info := range ok.allContractInfo.contractInfos {
-		if info.UnderlyingIndex == currencyPair.CurrencyA.Symbol && info.QuoteCurrency == currencyPair.CurrencyB.Symbol {
-			return ToFloat64(info.ContractVal), nil
-		}
+	//for _, info := range ok.allContractInfo.contractInfos {
+	//	if info.UnderlyingIndex == currencyPair.CurrencyA.Symbol && info.QuoteCurrency == currencyPair.CurrencyB.Symbol {
+	//		return ToFloat64(info.ContractVal), nil
+	//	}
+	//}
+	if currencyPair.CurrencyA.Eq(BTC) {
+		return 100, nil
 	}
-	return 0, nil
+
+	return 10, nil
 }
 
 func (ok *OKExFuture) GetDeliveryTime() (int, int, int, int) {

@@ -16,8 +16,6 @@ const (
 	baseUrl = "https://www.bitmex.com"
 )
 
-//bitmex register link  https://www.bitmex.com/register/0fcQP7
-
 type bitmex struct {
 	*APIConfig
 }
