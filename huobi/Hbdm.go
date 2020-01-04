@@ -500,16 +500,16 @@ func (dm *Hbdm) adaptKLinePeriod(period int) string {
 	}
 }
 
-func (dm *Hbdm) adaptOpenType(openType int) (string, string) {
+func (dm *Hbdm) adaptOpenType(openType int) (direction string, offset string) {
 	switch openType {
 	case OPEN_BUY:
 		return "buy", "open"
 	case OPEN_SELL:
 		return "sell", "open"
 	case CLOSE_SELL:
-		return "sell", "close"
-	case CLOSE_BUY:
 		return "buy", "close"
+	case CLOSE_BUY:
+		return "sell", "close"
 	default:
 		return "", ""
 	}
