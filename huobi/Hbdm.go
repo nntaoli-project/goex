@@ -170,11 +170,16 @@ func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 
 	params.Add("contract_type", contractType)
 	params.Add("symbol", currencyPair.CurrencyA.Symbol)
-	params.Add("price", price)
 	params.Add("volume", amount)
 	params.Add("lever_rate", fmt.Sprint(leverRate))
-	params.Add("order_price_type", "limit")
 	params.Add("contract_code", "")
+
+	if matchPrice == 1 {
+		params.Set("order_price_type" , "opponent") //对手价下单
+	}else{
+		params.Set("order_price_type", "limit")
+		params.Add("price", price)
+	}
 
 	direction, offset := dm.adaptOpenType(openType)
 	params.Add("offset", offset)
