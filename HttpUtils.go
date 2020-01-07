@@ -54,7 +54,7 @@ func NewHttpRequestWithFasthttp(client *http.Client, reqMethod, reqUrl, postData
 		return nil, err
 	}
 	if resp.StatusCode() != 200 {
-		return nil, errors.New(fmt.Sprintf("HttpStatusCode:%d ,Desc:%s", resp.StatusCode, string(resp.Body())))
+		return nil, errors.New(fmt.Sprintf("HttpStatusCode:%d ,Desc:%s", resp.StatusCode(), string(resp.Body())))
 	}
 
 	return resp.Body(), nil
