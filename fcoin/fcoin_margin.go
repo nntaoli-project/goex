@@ -115,12 +115,9 @@ func (fm *FCoinMargin) GetMarginAccount(currency CurrencyPair) (*MarginAccount, 
 	if !isOk || ok != "ok" {
 		return nil, errors.New("response status error")
 	}
-	//fmt.Println(r)
 	acc := MarginAccount{}
 	acc.Sub = make(map[Currency]MarginSubAccount, 2)
-	//	"open": true,                                    #是否已经开通该类型杠杆账户. true:已开通;false:未开通
-	//	"leveraged_account_type": "btcusdt",             #杠杆账户类型
-	//	"state": "open"                                  #账户状态. close 已关闭;open 已开通-未发生借贷;normal 已借贷-风险率正常;blow_up 已爆仓;overrun 已穿仓", allowableValues = "close,open,normal,blow_up,overrun")
+
 	response, isOk := r["data"].(map[string]interface{})
 	if !isOk {
 		return nil, errors.New("response data error")
@@ -136,7 +133,7 @@ func (fm *FCoinMargin) GetMarginAccount(currency CurrencyPair) (*MarginAccount, 
 		Frozen:      ToFloat64(response["frozen_base_currency_amount"]),
 		Available:   ToFloat64(response["available_base_currency_amount"]),
 		CanWithdraw: ToFloat64(response["available_base_currency_loan_amount"]),
-		//Loan:        ToFloat64(response["borrowed"]),
+		Loan:        ToFloat64(response["base_currency_unpaid_amount"]),
 		//LendingFee:  ToFloat64(response["lending_fee"]),
 	}
 
@@ -146,7 +143,7 @@ func (fm *FCoinMargin) GetMarginAccount(currency CurrencyPair) (*MarginAccount, 
 		Frozen:      ToFloat64(response["frozen_quote_currency_amount"]),
 		Available:   ToFloat64(response["available_quote_currency_amount"]),
 		CanWithdraw: ToFloat64(response["available_quote_currency_loan_amount"]),
-		//Loan:        ToFloat64(response["borrowed"]),
+		Loan:        ToFloat64(response["quote_currency_unpaid_amount"]),
 		//LendingFee:  ToFloat64(response["lending_fee"]),
 	}
 
