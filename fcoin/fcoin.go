@@ -90,7 +90,7 @@ func NewWithConfig(c *APIConfig) *FCoin {
 	var err error
 	fc.tradeSymbols, err = fc.GetTradeSymbols()
 	if len(fc.tradeSymbols) == 0 || err != nil {
-		panic("trade symbol is empty, pls check connection...")
+		panic("[fcoin] trade symbol is empty, pls check connection...")
 	}
 
 	return fc

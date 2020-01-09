@@ -13,7 +13,7 @@ var ft = NewFCoin(&http.Client{
 	Transport: &http.Transport{
 		Proxy: func(req *http.Request) (*url.URL, error) {
 			return url.Parse("socks5://127.0.0.1:1080")
-			return nil, nil
+			//return nil, nil
 		},
 		Dial: (&net.Dialer{
 			Timeout: 10 * time.Second,
