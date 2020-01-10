@@ -507,6 +507,8 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 
 	dep := hbpro.parseDepthData(tick)
 	dep.Pair = currency
+	mills := ToUint64(tick["ts"])
+	dep.UTime = time.Unix(int64(mills/1000), int64(mills%1000)*int64(time.Millisecond))
 
 	return dep, nil
 }
