@@ -1,7 +1,7 @@
 package goex
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"errors"
 	"github.com/gorilla/websocket"
 	. "github.com/nntaoli-project/GoEx/internal/logger"

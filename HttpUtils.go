@@ -2,9 +2,10 @@ package goex
 
 //http request 工具函数
 import (
-	"encoding/json"
+	//"encoding/json"
 	"errors"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/nntaoli-project/GoEx/internal/logger"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpproxy"
@@ -17,7 +18,10 @@ import (
 	"time"
 )
 
-var fastHttpClient fasthttp.Client
+var (
+	fastHttpClient fasthttp.Client
+	json           = jsoniter.ConfigCompatibleWithStandardLibrary
+)
 
 func init() {
 	fastHttpClient.MaxConnsPerHost = 2
