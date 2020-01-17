@@ -21,6 +21,8 @@ var fastHttpClient fasthttp.Client
 
 func init() {
 	fastHttpClient.MaxConnsPerHost = 2
+	fastHttpClient.ReadTimeout = 10 * time.Second
+	fastHttpClient.WriteTimeout = 10 * time.Second
 }
 
 func NewHttpRequestWithFasthttp(client *http.Client, reqMethod, reqUrl, postData string, headers map[string]string) ([]byte, error) {
