@@ -127,6 +127,14 @@ func main() {
 6. 交流QQ群：574829125
 -----------------
 
+donate
+-----------------
+BTC:13cBHLk6B7t3Uj7caJbCwv1UaiuiA6Qx8z
+
+LTC:LVxM7y1K2dnpuNBU42ei3dKzPySf4VAm1H
+ 
+ETH:0x98573ddb33cdddce480c3bc1f9279ccd88ca1e93
+
 ### 欢迎为作者付一碗面钱
 
 <img src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG" width="250" alt="一碗面钱">&nbsp;&nbsp;&nbsp;<img src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/IMG_1177.jpg" width="250" alt="一碗面钱">
