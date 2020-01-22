@@ -13,6 +13,7 @@ import (
 	"github.com/nntaoli-project/GoEx/bittrex"
 	"github.com/nntaoli-project/GoEx/coinbene"
 	"github.com/nntaoli-project/GoEx/fmex"
+	"github.com/nntaoli-project/GoEx/kucoin"
 
 	//"github.com/nntaoli-project/GoEx/coin58"
 	"github.com/nntaoli-project/GoEx/coinex"
@@ -189,6 +190,8 @@ func (builder *APIBuilder) Endpoint(endpoint string) (_builer *APIBuilder) {
 func (builder *APIBuilder) Build(exName string) (api API) {
 	var _api API
 	switch exName {
+	case KUCOIN:
+		_api = kucoin.New(builder.apiKey, builder.secretkey, builder.apiPassphrase)
 	//case OKCOIN_CN:
 	//	_api = okcoin.New(builder.client, builder.apiKey, builder.secretkey)
 	case POLONIEX:
