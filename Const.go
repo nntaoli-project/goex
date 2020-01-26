@@ -121,6 +121,7 @@ var (
 
 //exchanges const
 const (
+	KUCOIN       = "kucoin.com"
 	OKCOIN_CN    = "okcoin.cn"
 	OKCOIN_COM   = "okcoin.com"
 	OKEX         = "okex.com"
