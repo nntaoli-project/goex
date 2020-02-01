@@ -22,12 +22,6 @@ const (
 	baseUrl = "https://api.fmex.com"
 )
 
-type FMexTicker struct {
-	Ticker
-	SellAmount,
-	BuyAmount float64
-}
-
 type FMexSwap struct {
 	httpClient *http.Client
 	baseUrl,
@@ -426,7 +420,10 @@ func (fm *FMexSwap) PlaceFutureOrder2(ord *OrderParam) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	data := r.(map[string]interface{})
+	data, isOk := r.(map[string]interface{})
+	if !isOk {
+		return "", errors.New(fmt.Sprintf("PlaceFutureOrder2 UNKNOW:%v", r))
+	}
 
 	return fmt.Sprintf("%d", int64(data["id"].(float64))), nil
 }
