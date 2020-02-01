@@ -82,14 +82,14 @@ func NewFCoinWs(client *http.Client) *FCoinWs {
 				"cmd":  "ping",
 				"id":   fcWs.clientId,
 				"args": args}
-			data , _ := json.Marshal(heartbeatData)
+			data, _ := json.Marshal(heartbeatData)
 			return data
 		}, 25*time.Second).
 		ProtoHandleFunc(fcWs.handle)
 	fc := NewFCoin(client, "", "")
 	fcWs.tradeSymbols = fc.tradeSymbols
 	if len(fcWs.tradeSymbols) == 0 {
-		panic("trade symbol is empty, pls check connection...")
+		panic("[fcoin] trade symbol is empty, pls check connection...")
 	}
 	return fcWs
 }
@@ -256,7 +256,7 @@ func (fcWs *FCoinWs) handle(msg []byte) error {
 		case "depth":
 			dep := fcWs.parseDepthData(datamap["bids"].([]interface{}), datamap["asks"].([]interface{}))
 			stime := int64(ToInt(datamap["ts"]))
-			dep.UTime = time.Unix(stime/1000, 0)
+			dep.UTime = time.Unix(0, stime*1000*1000)
 			pair, err := fcWs.getPairFromType(resp[2])
 			if err != nil {
 				panic(err)
