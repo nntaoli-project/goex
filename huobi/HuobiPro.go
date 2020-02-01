@@ -490,7 +490,9 @@ func (hbpro *HuoBiPro) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 }
 
 func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	n := 0
+	url := hbpro.baseUrl + "/market/depth?symbol=%s&type=step0&depth=%d"
+	n := 5
+	pair := currency.AdaptUsdToUsdt()
 	if size <= 5 {
 		n = 5
 	} else if size <= 10 {
@@ -498,10 +500,8 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 	} else if size <= 20 {
 		n = 20
 	} else {
-		n = 20
+		url = hbpro.baseUrl + "/market/depth?symbol=%s&type=step0&d=%d"
 	}
-	url := hbpro.baseUrl + "/market/depth?symbol=%s&type=step0&depth=%d"
-	pair := currency.AdaptUsdToUsdt()
 	respmap, err := HttpGet(hbpro.httpClient, fmt.Sprintf(url, strings.ToLower(pair.ToSymbol("")), n))
 	if err != nil {
 		return nil, err
