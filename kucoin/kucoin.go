@@ -3,7 +3,7 @@ package kucoin
 import (
 	"github.com/Kucoin/kucoin-go-sdk"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -70,7 +70,7 @@ func (kc *KuCoin) GetExchangeName() string {
 func (kc *KuCoin) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	resp, err := kc.service.TickerLevel1(currency.ToSymbol("-"))
 	if err != nil {
-		log.Println("KuCoin GetTicker error:", err)
+		log.Error("KuCoin GetTicker error:", err)
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ func (kc *KuCoin) GetTicker(currency CurrencyPair) (*Ticker, error) {
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin GetTicker error:", err)
+		log.Error("KuCoin GetTicker error:", err)
 		return nil, err
 	}
 
@@ -103,7 +103,7 @@ func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order,
 	}
 	resp, err := kc.service.CreateOrder(params)
 	if err != nil {
-		log.Println("KuCoin LimitBuy error:", err)
+		log.Error("KuCoin LimitBuy error:", err)
 		return nil, err
 	}
 
@@ -111,7 +111,7 @@ func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order,
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin LimitBuy error:", err)
+		log.Error("KuCoin LimitBuy error:", err)
 		return nil, err
 	}
 
@@ -133,7 +133,7 @@ func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order
 	}
 	resp, err := kc.service.CreateOrder(params)
 	if err != nil {
-		log.Println("KuCoin LimitSell error:", err)
+		log.Error("KuCoin LimitSell error:", err)
 		return nil, err
 	}
 
@@ -141,7 +141,7 @@ func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin LimitSell error:", err)
+		log.Error("KuCoin LimitSell error:", err)
 		return nil, err
 	}
 
@@ -163,7 +163,7 @@ func (kc *KuCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order
 	}
 	resp, err := kc.service.CreateOrder(params)
 	if err != nil {
-		log.Println("KuCoin MarketBuy error:", err)
+		log.Error("KuCoin MarketBuy error:", err)
 		return nil, err
 	}
 
@@ -171,7 +171,7 @@ func (kc *KuCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin MarketBuy error:", err)
+		log.Error("KuCoin MarketBuy error:", err)
 		return nil, err
 	}
 
@@ -193,7 +193,7 @@ func (kc *KuCoin) MarketSell(amount, price string, currency CurrencyPair) (*Orde
 	}
 	resp, err := kc.service.CreateOrder(params)
 	if err != nil {
-		log.Println("KuCoin MarketSell error:", err)
+		log.Error("KuCoin MarketSell error:", err)
 		return nil, err
 	}
 
@@ -201,7 +201,7 @@ func (kc *KuCoin) MarketSell(amount, price string, currency CurrencyPair) (*Orde
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin MarketSell error:", err)
+		log.Error("KuCoin MarketSell error:", err)
 		return nil, err
 	}
 
@@ -221,14 +221,14 @@ func (kc *KuCoin) CancelOrder(orderId string, currency CurrencyPair) (bool, erro
 	}
 
 	if err != nil {
-		log.Println("KuCoin CancelOrder error:", err)
+		log.Error("KuCoin CancelOrder error:", err)
 		return false, err
 	}
 
 	var model kucoin.CancelOrderResultModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin CancelOrder error:", err)
+		log.Error("KuCoin CancelOrder error:", err)
 		return false, err
 	}
 	return true, nil
@@ -237,7 +237,7 @@ func (kc *KuCoin) CancelOrder(orderId string, currency CurrencyPair) (bool, erro
 func (kc *KuCoin) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
 	resp, err := kc.service.Order(orderId)
 	if err != nil {
-		log.Println("KuCoin GetOneOrder error:", err)
+		log.Error("KuCoin GetOneOrder error:", err)
 		return nil, err
 	}
 
@@ -245,7 +245,7 @@ func (kc *KuCoin) GetOneOrder(orderId string, currency CurrencyPair) (*Order, er
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin GetOneOrder error:", err)
+		log.Error("KuCoin GetOneOrder error:", err)
 		return nil, err
 	}
 
@@ -298,7 +298,7 @@ func (kc *KuCoin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	}
 	resp, err := kc.service.Orders(params, nil)
 	if err != nil {
-		log.Println("KuCoin GetUnfinishOrders error:", err)
+		log.Error("KuCoin GetUnfinishOrders error:", err)
 		return nil, err
 	}
 
@@ -306,7 +306,7 @@ func (kc *KuCoin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin GetUnfinishOrders error:", err)
+		log.Error("KuCoin GetUnfinishOrders error:", err)
 		return nil, err
 	}
 	var orders []Order
@@ -324,7 +324,7 @@ func (kc *KuCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize 
 	}
 	resp, err := kc.service.Orders(params, &pagination)
 	if err != nil {
-		log.Println("KuCoin GetOrderHistorys error:", err)
+		log.Error("KuCoin GetOrderHistorys error:", err)
 		return nil, err
 	}
 
@@ -332,7 +332,7 @@ func (kc *KuCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize 
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin GetOrderHistorys error:", err)
+		log.Error("KuCoin GetOrderHistorys error:", err)
 		return nil, err
 	}
 	var orders []Order
@@ -351,7 +351,7 @@ func (kc *KuCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	}
 	resp, err := kc.service.AggregatedPartOrderBook(currency.ToSymbol("-"), int64(dep))
 	if err != nil {
-		log.Println("KuCoin GetDepth error:", err)
+		log.Error("KuCoin GetDepth error:", err)
 		return nil, err
 	}
 
@@ -359,7 +359,7 @@ func (kc *KuCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin GetDepth error:", err)
+		log.Error("KuCoin GetDepth error:", err)
 		return nil, err
 	}
 	var depth Depth
@@ -389,7 +389,7 @@ func (kc *KuCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 func (kc *KuCoin) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	resp, err := kc.service.KLines(currency.ToSymbol("-"), inernalKlinePeriodConverter[period], int64(since), time.Now().UnixNano()/int64(time.Millisecond))
 	if err != nil {
-		log.Println("KuCoin GetKlineRecords error:", err)
+		log.Error("KuCoin GetKlineRecords error:", err)
 		return nil, err
 	}
 
@@ -397,7 +397,7 @@ func (kc *KuCoin) GetKlineRecords(currency CurrencyPair, period, size, since int
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin GetKlineRecords error:", err)
+		log.Error("KuCoin GetKlineRecords error:", err)
 		return nil, err
 	}
 	var kLines []Kline
@@ -421,7 +421,7 @@ func (kc *KuCoin) GetKlineRecords(currency CurrencyPair, period, size, since int
 func (kc *KuCoin) GetTrades(currency CurrencyPair, since int64) ([]Trade, error) {
 	resp, err := kc.service.TradeHistories(currency.ToSymbol("-"))
 	if err != nil {
-		log.Println("KuCoin GetTrades error:", err)
+		log.Error("KuCoin GetTrades error:", err)
 		return nil, err
 	}
 
@@ -429,7 +429,7 @@ func (kc *KuCoin) GetTrades(currency CurrencyPair, since int64) ([]Trade, error)
 
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin GetTrades error:", err)
+		log.Error("KuCoin GetTrades error:", err)
 		return nil, err
 	}
 
@@ -459,14 +459,14 @@ func (kc *KuCoin) GetTrades(currency CurrencyPair, since int64) ([]Trade, error)
 func (kc *KuCoin) Accounts(currency, typo string) (kucoin.AccountsModel, error) {
 	resp, err := kc.service.Accounts(currency, typo)
 	if err != nil {
-		log.Println("KuCoin Accounts error:", err)
+		log.Error("KuCoin Accounts error:", err)
 		return nil, err
 	}
 
 	var model kucoin.AccountsModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin Accounts error:", err)
+		log.Error("KuCoin Accounts error:", err)
 		return nil, err
 	}
 
@@ -477,14 +477,14 @@ func (kc *KuCoin) Accounts(currency, typo string) (kucoin.AccountsModel, error) 
 func (kc *KuCoin) Account(accountId string) (*kucoin.AccountModel, error) {
 	resp, err := kc.service.Account(accountId)
 	if err != nil {
-		log.Println("KuCoin Accounts error:", err)
+		log.Error("KuCoin Accounts error:", err)
 		return nil, err
 	}
 
 	var model *kucoin.AccountModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin Accounts error:", err)
+		log.Error("KuCoin Accounts error:", err)
 		return nil, err
 	}
 
@@ -495,14 +495,14 @@ func (kc *KuCoin) Account(accountId string) (*kucoin.AccountModel, error) {
 func (kc *KuCoin) SubAccountUsers() (kucoin.SubAccountUsersModel, error) {
 	resp, err := kc.service.SubAccountUsers()
 	if err != nil {
-		log.Println("KuCoin SubAccountUsers error:", err)
+		log.Error("KuCoin SubAccountUsers error:", err)
 		return nil, err
 	}
 
 	var model kucoin.SubAccountUsersModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin SubAccountUsers error:", err)
+		log.Error("KuCoin SubAccountUsers error:", err)
 		return nil, err
 	}
 
@@ -513,14 +513,14 @@ func (kc *KuCoin) SubAccountUsers() (kucoin.SubAccountUsersModel, error) {
 func (kc *KuCoin) SubAccounts() (kucoin.SubAccountsModel, error) {
 	resp, err := kc.service.SubAccounts()
 	if err != nil {
-		log.Println("KuCoin SubAccounts error:", err)
+		log.Error("KuCoin SubAccounts error:", err)
 		return nil, err
 	}
 
 	var model kucoin.SubAccountsModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin SubAccounts error:", err)
+		log.Error("KuCoin SubAccounts error:", err)
 		return nil, err
 	}
 
@@ -531,14 +531,14 @@ func (kc *KuCoin) SubAccounts() (kucoin.SubAccountsModel, error) {
 func (kc *KuCoin) SubAccount(subUserId string) (*kucoin.SubAccountModel, error) {
 	resp, err := kc.service.SubAccount(subUserId)
 	if err != nil {
-		log.Println("KuCoin SubAccount error:", err)
+		log.Error("KuCoin SubAccount error:", err)
 		return nil, err
 	}
 
 	var model *kucoin.SubAccountModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin SubAccount error:", err)
+		log.Error("KuCoin SubAccount error:", err)
 		return nil, err
 	}
 
@@ -550,14 +550,14 @@ func (kc *KuCoin) SubAccount(subUserId string) (*kucoin.SubAccountModel, error) 
 func (kc *KuCoin) CreateAccount(typo, currency string) (*kucoin.AccountModel, error) {
 	resp, err := kc.service.CreateAccount(typo, currency)
 	if err != nil {
-		log.Println("KuCoin CreateAccount error:", err)
+		log.Error("KuCoin CreateAccount error:", err)
 		return nil, err
 	}
 
 	var model *kucoin.AccountModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin CreateAccount error:", err)
+		log.Error("KuCoin CreateAccount error:", err)
 		return nil, err
 	}
 
@@ -569,14 +569,14 @@ func (kc *KuCoin) CreateAccount(typo, currency string) (*kucoin.AccountModel, er
 func (kc *KuCoin) InnerTransfer(currency, from, to, amount string) (string, error) {
 	resp, err := kc.service.InnerTransferV2(UUID(), currency, from, to, amount)
 	if err != nil {
-		log.Println("KuCoin InnerTransfer error:", err)
+		log.Error("KuCoin InnerTransfer error:", err)
 		return "", err
 	}
 
 	var model *kucoin.InnerTransferResultModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin InnerTransfer error:", err)
+		log.Error("KuCoin InnerTransfer error:", err)
 		return "", err
 	}
 
@@ -596,14 +596,14 @@ func (kc *KuCoin) SubTransfer(currency, amount, direction, subUserId, accountTyp
 	}
 	resp, err := kc.service.SubTransfer(params)
 	if err != nil {
-		log.Println("KuCoin SubTransfer error:", err)
+		log.Error("KuCoin SubTransfer error:", err)
 		return "", err
 	}
 
 	var model *kucoin.InnerTransferResultModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin SubTransfer error:", err)
+		log.Error("KuCoin SubTransfer error:", err)
 		return "", err
 	}
 
@@ -616,14 +616,14 @@ func (kc *KuCoin) SubTransfer(currency, amount, direction, subUserId, accountTyp
 func (kc *KuCoin) CreateDepositAddress(currency, chain string) (*kucoin.DepositAddressModel, error) {
 	resp, err := kc.service.CreateDepositAddress(currency, chain)
 	if err != nil {
-		log.Println("KuCoin CreateDepositAddress error:", err)
+		log.Error("KuCoin CreateDepositAddress error:", err)
 		return nil, err
 	}
 
 	var model *kucoin.DepositAddressModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin CreateDepositAddress error:", err)
+		log.Error("KuCoin CreateDepositAddress error:", err)
 		return nil, err
 	}
 
@@ -635,14 +635,14 @@ func (kc *KuCoin) CreateDepositAddress(currency, chain string) (*kucoin.DepositA
 func (kc *KuCoin) DepositAddresses(currency, chain string) (*kucoin.DepositAddressModel, error) {
 	resp, err := kc.service.DepositAddresses(currency, chain)
 	if err != nil {
-		log.Println("KuCoin DepositAddresses error:", err)
+		log.Error("KuCoin DepositAddresses error:", err)
 		return nil, err
 	}
 
 	var model *kucoin.DepositAddressModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin DepositAddresses error:", err)
+		log.Error("KuCoin DepositAddresses error:", err)
 		return nil, err
 	}
 
@@ -659,14 +659,14 @@ func (kc *KuCoin) Deposits(currency, startAt, endAt, status string) (*kucoin.Dep
 	}
 	resp, err := kc.service.Deposits(params, nil)
 	if err != nil {
-		log.Println("KuCoin Deposits error:", err)
+		log.Error("KuCoin Deposits error:", err)
 		return nil, err
 	}
 
 	var model *kucoin.DepositsModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin Deposits error:", err)
+		log.Error("KuCoin Deposits error:", err)
 		return nil, err
 	}
 
@@ -685,14 +685,14 @@ func (kc *KuCoin) Withdrawals(currency, startAt, endAt, status string) (*kucoin.
 	}
 	resp, err := kc.service.Withdrawals(params, nil)
 	if err != nil {
-		log.Println("KuCoin Withdrawals error:", err)
+		log.Error("KuCoin Withdrawals error:", err)
 		return nil, err
 	}
 
 	var model *kucoin.WithdrawalsModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin Withdrawals error:", err)
+		log.Error("KuCoin Withdrawals error:", err)
 		return nil, err
 	}
 
@@ -708,14 +708,14 @@ func (kc *KuCoin) ApplyWithdrawal(currency, address, amount, memo, isInner, rema
 		"isInner": isInner,
 	})
 	if err != nil {
-		log.Println("KuCoin ApplyWithdrawal error:", err)
+		log.Error("KuCoin ApplyWithdrawal error:", err)
 		return "", err
 	}
 
 	var model *kucoin.ApplyWithdrawalResultModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin ApplyWithdrawal error:", err)
+		log.Error("KuCoin ApplyWithdrawal error:", err)
 		return "", err
 	}
 
@@ -726,14 +726,14 @@ func (kc *KuCoin) ApplyWithdrawal(currency, address, amount, memo, isInner, rema
 func (kc *KuCoin) WithdrawalQuotas(currency, chain string) (*kucoin.WithdrawalQuotasModel, error) {
 	resp, err := kc.service.WithdrawalQuotas(currency, chain)
 	if err != nil {
-		log.Println("KuCoin WithdrawalQuotas error:", err)
+		log.Error("KuCoin WithdrawalQuotas error:", err)
 		return nil, err
 	}
 
 	var model *kucoin.WithdrawalQuotasModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin WithdrawalQuotas error:", err)
+		log.Error("KuCoin WithdrawalQuotas error:", err)
 		return nil, err
 	}
 
@@ -744,14 +744,14 @@ func (kc *KuCoin) WithdrawalQuotas(currency, chain string) (*kucoin.WithdrawalQu
 func (kc *KuCoin) CancelWithdrawal(withdrawalId string) (*kucoin.CancelWithdrawalResultModel, error) {
 	resp, err := kc.service.CancelWithdrawal(withdrawalId)
 	if err != nil {
-		log.Println("KuCoin CancelWithdrawal error:", err)
+		log.Error("KuCoin CancelWithdrawal error:", err)
 		return nil, err
 	}
 
 	var model *kucoin.CancelWithdrawalResultModel
 	err = resp.ReadData(&model)
 	if err != nil {
-		log.Println("KuCoin CancelWithdrawal error:", err)
+		log.Error("KuCoin CancelWithdrawal error:", err)
 		return nil, err
 	}
 
