@@ -233,6 +233,7 @@ func (kc *KuCoin) CancelOrder(orderId string, currency CurrencyPair) (bool, erro
 	}
 	return true, nil
 }
+
 func (kc *KuCoin) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
 	resp, err := kc.service.Order(orderId)
 	if err != nil {
@@ -289,6 +290,7 @@ func (kc *KuCoin) GetOneOrder(orderId string, currency CurrencyPair) (*Order, er
 
 	return &order, nil
 }
+
 func (kc *KuCoin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params := map[string]string{
 		"status": "active",
@@ -310,6 +312,7 @@ func (kc *KuCoin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	var orders []Order
 	return orders, nil
 }
+
 func (kc *KuCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
 	params := map[string]string{
 		"status": "done",
@@ -335,10 +338,12 @@ func (kc *KuCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize 
 	var orders []Order
 	return orders, nil
 }
+
 func (kc *KuCoin) GetAccount() (*Account, error) {
 	var account Account
 	return &account, nil
 }
+
 func (kc *KuCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	dep := 20
 	if size > 20 {
@@ -380,6 +385,7 @@ func (kc *KuCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	return &depth, nil
 }
+
 func (kc *KuCoin) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	resp, err := kc.service.KLines(currency.ToSymbol("-"), inernalKlinePeriodConverter[period], int64(since), time.Now().UnixNano()/int64(time.Millisecond))
 	if err != nil {
@@ -411,6 +417,7 @@ func (kc *KuCoin) GetKlineRecords(currency CurrencyPair, period, size, since int
 
 	return kLines, nil
 }
+
 func (kc *KuCoin) GetTrades(currency CurrencyPair, since int64) ([]Trade, error) {
 	resp, err := kc.service.TradeHistories(currency.ToSymbol("-"))
 	if err != nil {
@@ -444,4 +451,309 @@ func (kc *KuCoin) GetTrades(currency CurrencyPair, since int64) ([]Trade, error)
 	}
 
 	return trades, nil
+}
+
+// Account
+
+// Accounts returns a list of accounts.
+func (kc *KuCoin) Accounts(currency, typo string) (kucoin.AccountsModel, error) {
+	resp, err := kc.service.Accounts(currency, typo)
+	if err != nil {
+		log.Println("KuCoin Accounts error:", err)
+		return nil, err
+	}
+
+	var model kucoin.AccountsModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin Accounts error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// Account returns an account when you know the accountId.
+func (kc *KuCoin) Account(accountId string) (*kucoin.AccountModel, error) {
+	resp, err := kc.service.Account(accountId)
+	if err != nil {
+		log.Println("KuCoin Accounts error:", err)
+		return nil, err
+	}
+
+	var model *kucoin.AccountModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin Accounts error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// SubAccountUsers returns a list of sub-account user.
+func (kc *KuCoin) SubAccountUsers() (kucoin.SubAccountUsersModel, error) {
+	resp, err := kc.service.SubAccountUsers()
+	if err != nil {
+		log.Println("KuCoin SubAccountUsers error:", err)
+		return nil, err
+	}
+
+	var model kucoin.SubAccountUsersModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin SubAccountUsers error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// SubAccounts returns the aggregated balance of all sub-accounts of the current user.
+func (kc *KuCoin) SubAccounts() (kucoin.SubAccountsModel, error) {
+	resp, err := kc.service.SubAccounts()
+	if err != nil {
+		log.Println("KuCoin SubAccounts error:", err)
+		return nil, err
+	}
+
+	var model kucoin.SubAccountsModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin SubAccounts error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// SubAccount returns the detail of a sub-account.
+func (kc *KuCoin) SubAccount(subUserId string) (*kucoin.SubAccountModel, error) {
+	resp, err := kc.service.SubAccount(subUserId)
+	if err != nil {
+		log.Println("KuCoin SubAccount error:", err)
+		return nil, err
+	}
+
+	var model *kucoin.SubAccountModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin SubAccount error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// CreateAccount creates an account according to type(main|trade) and currency
+// Parameter #1 typo is type of account.
+func (kc *KuCoin) CreateAccount(typo, currency string) (*kucoin.AccountModel, error) {
+	resp, err := kc.service.CreateAccount(typo, currency)
+	if err != nil {
+		log.Println("KuCoin CreateAccount error:", err)
+		return nil, err
+	}
+
+	var model *kucoin.AccountModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin CreateAccount error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// The inner transfer interface is used for transferring assets between the accounts of a user and is free of charges.
+// For example, a user could transfer assets from their main account to their trading account on the platform.
+func (kc *KuCoin) InnerTransfer(currency, from, to, amount string) (string, error) {
+	resp, err := kc.service.InnerTransferV2(UUID(), currency, from, to, amount)
+	if err != nil {
+		log.Println("KuCoin InnerTransfer error:", err)
+		return "", err
+	}
+
+	var model *kucoin.InnerTransferResultModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin InnerTransfer error:", err)
+		return "", err
+	}
+
+	return model.OrderId, nil
+}
+
+// SubTransfer transfers between master account and sub-account.
+func (kc *KuCoin) SubTransfer(currency, amount, direction, subUserId, accountType, subAccountType string) (string, error) {
+	params := map[string]string{
+		"clientOid":      UUID(),
+		"currency":       currency,
+		"amount":         amount,
+		"direction":      direction,      // IN or OUT
+		"subUserId":      subUserId,      // the user ID of a sub-account
+		"accountType":    accountType,    // The account type of the master user: MAIN
+		"subAccountType": subAccountType, //The account type of the sub user: MAIN, TRADE or MARGIN
+	}
+	resp, err := kc.service.SubTransfer(params)
+	if err != nil {
+		log.Println("KuCoin SubTransfer error:", err)
+		return "", err
+	}
+
+	var model *kucoin.InnerTransferResultModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin SubTransfer error:", err)
+		return "", err
+	}
+
+	return model.OrderId, nil
+}
+
+// Deposits
+
+// CreateDepositAddress creates a deposit address.
+func (kc *KuCoin) CreateDepositAddress(currency, chain string) (*kucoin.DepositAddressModel, error) {
+	resp, err := kc.service.CreateDepositAddress(currency, chain)
+	if err != nil {
+		log.Println("KuCoin CreateDepositAddress error:", err)
+		return nil, err
+	}
+
+	var model *kucoin.DepositAddressModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin CreateDepositAddress error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// DepositAddresses returns the deposit address of currency for deposit.
+// If return data is empty, you may need create a deposit address first.
+func (kc *KuCoin) DepositAddresses(currency, chain string) (*kucoin.DepositAddressModel, error) {
+	resp, err := kc.service.DepositAddresses(currency, chain)
+	if err != nil {
+		log.Println("KuCoin DepositAddresses error:", err)
+		return nil, err
+	}
+
+	var model *kucoin.DepositAddressModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin DepositAddresses error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// Deposits returns a list of deposit.
+func (kc *KuCoin) Deposits(currency, startAt, endAt, status string) (*kucoin.DepositsModel, error) {
+	params := map[string]string{
+		"currency": currency,
+		"startAt":  startAt,
+		"endAt":    endAt,
+		"status":   status,
+	}
+	resp, err := kc.service.Deposits(params, nil)
+	if err != nil {
+		log.Println("KuCoin Deposits error:", err)
+		return nil, err
+	}
+
+	var model *kucoin.DepositsModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin Deposits error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// Withdrawals
+
+// Deposits returns a list of deposit.
+func (kc *KuCoin) Withdrawals(currency, startAt, endAt, status string) (*kucoin.WithdrawalsModel, error) {
+	params := map[string]string{
+		"currency": currency,
+		"startAt":  startAt,
+		"endAt":    endAt,
+		"status":   status,
+	}
+	resp, err := kc.service.Withdrawals(params, nil)
+	if err != nil {
+		log.Println("KuCoin Withdrawals error:", err)
+		return nil, err
+	}
+
+	var model *kucoin.WithdrawalsModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin Withdrawals error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// ApplyWithdrawal applies a withdrawal.
+func (kc *KuCoin) ApplyWithdrawal(currency, address, amount, memo, isInner, remark, chain string) (string, error) {
+	resp, err := kc.service.ApplyWithdrawal(currency, address, amount, map[string]string{
+		"memo":    memo,
+		"remark":  remark,
+		"chain":   chain,
+		"isInner": isInner,
+	})
+	if err != nil {
+		log.Println("KuCoin ApplyWithdrawal error:", err)
+		return "", err
+	}
+
+	var model *kucoin.ApplyWithdrawalResultModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin ApplyWithdrawal error:", err)
+		return "", err
+	}
+
+	return model.WithdrawalId, nil
+}
+
+// WithdrawalQuotas returns the quotas of withdrawal.
+func (kc *KuCoin) WithdrawalQuotas(currency, chain string) (*kucoin.WithdrawalQuotasModel, error) {
+	resp, err := kc.service.WithdrawalQuotas(currency, chain)
+	if err != nil {
+		log.Println("KuCoin WithdrawalQuotas error:", err)
+		return nil, err
+	}
+
+	var model *kucoin.WithdrawalQuotasModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin WithdrawalQuotas error:", err)
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// CancelWithdrawal cancels a withdrawal by withdrawalId.
+func (kc *KuCoin) CancelWithdrawal(withdrawalId string) (*kucoin.CancelWithdrawalResultModel, error) {
+	resp, err := kc.service.CancelWithdrawal(withdrawalId)
+	if err != nil {
+		log.Println("KuCoin CancelWithdrawal error:", err)
+		return nil, err
+	}
+
+	var model *kucoin.CancelWithdrawalResultModel
+	err = resp.ReadData(&model)
+	if err != nil {
+		log.Println("KuCoin CancelWithdrawal error:", err)
+		return nil, err
+	}
+
+	return model, nil
 }
