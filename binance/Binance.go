@@ -132,7 +132,7 @@ func (bn *Binance) GetExchangeName() string {
 }
 
 func (bn *Binance) setTimeOffset() error {
-	respmap, err := HttpGet(bn.httpClient, bn.apiV1+SERVER_TIME_URL)
+	respmap, err := HttpGet(bn.httpClient, bn.apiV3+SERVER_TIME_URL)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (bn *Binance) setTimeOffset() error {
 
 func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	currency2 := bn.adaptCurrencyPair(currency)
-	tickerUri := bn.apiV1 + fmt.Sprintf(TICKER_URI, currency2.ToSymbol(""))
+	tickerUri := bn.apiV3 + fmt.Sprintf(TICKER_URI, currency2.ToSymbol(""))
 	tickerMap, err := HttpGet(bn.httpClient, tickerUri)
 
 	if err != nil {
@@ -176,7 +176,7 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 	}
 	currencyPair2 := bn.adaptCurrencyPair(currencyPair)
 
-	apiUrl := fmt.Sprintf(bn.apiV1+DEPTH_URI, currencyPair2.ToSymbol(""), size)
+	apiUrl := fmt.Sprintf(bn.apiV3+DEPTH_URI, currencyPair2.ToSymbol(""), size)
 	resp, err := HttpGet(bn.httpClient, apiUrl)
 	if err != nil {
 		log.Println("GetDepth error:", err)
@@ -458,7 +458,7 @@ func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since in
 	//params.Set("endTime", strconv.Itoa(int(time.Now().UnixNano()/1000000)))
 	params.Set("limit", fmt.Sprintf("%d", size))
 
-	klineUrl := bn.apiV1 + KLINE_URI + "?" + params.Encode()
+	klineUrl := bn.apiV3 + KLINE_URI + "?" + params.Encode()
 	klines, err := HttpGet3(bn.httpClient, klineUrl, nil)
 	if err != nil {
 		return nil, err
@@ -500,8 +500,7 @@ func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, e
 	if since > 0 {
 		param.Set("fromId", strconv.Itoa(int(since)))
 	}
-	apiUrl := bn.apiV1 + "historicalTrades?" + param.Encode()
-	//log.Println(apiUrl)
+	apiUrl := bn.apiV3 + "historicalTrades?" + param.Encode()
 	resp, err := HttpGet3(bn.httpClient, apiUrl, map[string]string{
 		"X-MBX-APIKEY": bn.accessKey})
 	if err != nil {
@@ -545,7 +544,7 @@ func (ba *Binance) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
 }
 
 func (bn *Binance) getTradeSymbols() ([]TradeSymbol, error) {
-	resp, err := HttpGet5(bn.httpClient, bn.apiV1+"exchangeInfo", nil)
+	resp, err := HttpGet5(bn.httpClient, bn.apiV3+"exchangeInfo", nil)
 	if err != nil {
 		return nil, err
 	}
