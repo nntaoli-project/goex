@@ -170,11 +170,16 @@ func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 
 	params.Add("contract_type", contractType)
 	params.Add("symbol", currencyPair.CurrencyA.Symbol)
-	params.Add("price", price)
 	params.Add("volume", amount)
 	params.Add("lever_rate", fmt.Sprint(leverRate))
-	params.Add("order_price_type", "limit")
 	params.Add("contract_code", "")
+
+	if matchPrice == 1 {
+		params.Set("order_price_type" , "opponent") //对手价下单
+	}else{
+		params.Set("order_price_type", "limit")
+		params.Add("price", price)
+	}
 
 	direction, offset := dm.adaptOpenType(openType)
 	params.Add("offset", offset)
@@ -500,16 +505,16 @@ func (dm *Hbdm) adaptKLinePeriod(period int) string {
 	}
 }
 
-func (dm *Hbdm) adaptOpenType(openType int) (string, string) {
+func (dm *Hbdm) adaptOpenType(openType int) (direction string, offset string) {
 	switch openType {
 	case OPEN_BUY:
 		return "buy", "open"
 	case OPEN_SELL:
 		return "sell", "open"
 	case CLOSE_SELL:
-		return "sell", "close"
-	case CLOSE_BUY:
 		return "buy", "close"
+	case CLOSE_BUY:
+		return "sell", "close"
 	default:
 		return "", ""
 	}

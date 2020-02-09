@@ -490,11 +490,19 @@ func (hbpro *HuoBiPro) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 }
 
 func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	url := hbpro.baseUrl + "/market/depth?symbol=%s&type=step0"
-	Log.Debug(url)
-
+	url := hbpro.baseUrl + "/market/depth?symbol=%s&type=step0&depth=%d"
+	n := 5
 	pair := currency.AdaptUsdToUsdt()
-	respmap, err := HttpGet(hbpro.httpClient, fmt.Sprintf(url, strings.ToLower(pair.ToSymbol(""))))
+	if size <= 5 {
+		n = 5
+	} else if size <= 10 {
+		n = 10
+	} else if size <= 20 {
+		n = 20
+	} else {
+		url = hbpro.baseUrl + "/market/depth?symbol=%s&type=step0&d=%d"
+	}
+	respmap, err := HttpGet(hbpro.httpClient, fmt.Sprintf(url, strings.ToLower(pair.ToSymbol("")), n))
 	if err != nil {
 		return nil, err
 	}
@@ -505,8 +513,10 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 
 	tick, _ := respmap["tick"].(map[string]interface{})
 
-	dep := hbpro.parseDepthData(tick)
+	dep := hbpro.parseDepthData(tick, size)
 	dep.Pair = currency
+	mills := ToUint64(tick["ts"])
+	dep.UTime = time.Unix(int64(mills/1000), int64(mills%1000)*int64(time.Millisecond))
 
 	return dep, nil
 }
@@ -637,25 +647,35 @@ func (hbpro *HuoBiPro) toJson(params url.Values) string {
 	return string(jsonData)
 }
 
-func (hbpro *HuoBiPro) parseDepthData(tick map[string]interface{}) *Depth {
+func (hbpro *HuoBiPro) parseDepthData(tick map[string]interface{}, size int) *Depth {
 	bids, _ := tick["bids"].([]interface{})
 	asks, _ := tick["asks"].([]interface{})
 
 	depth := new(Depth)
+	n := 0
 	for _, r := range asks {
 		var dr DepthRecord
 		rr := r.([]interface{})
 		dr.Price = ToFloat64(rr[0])
 		dr.Amount = ToFloat64(rr[1])
 		depth.AskList = append(depth.AskList, dr)
+		n++
+		if n == size {
+			break
+		}
 	}
 
+	n = 0
 	for _, r := range bids {
 		var dr DepthRecord
 		rr := r.([]interface{})
 		dr.Price = ToFloat64(rr[0])
 		dr.Amount = ToFloat64(rr[1])
 		depth.BidList = append(depth.BidList, dr)
+		n++
+		if n == size {
+			break
+		}
 	}
 
 	sort.Sort(sort.Reverse(depth.AskList))

@@ -3,6 +3,7 @@ package goex
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gorilla/websocket"
 	. "github.com/nntaoli-project/GoEx/internal/logger"
 	"net/http"
@@ -108,7 +109,7 @@ func (ws *WsConn) NewWs() *WsConn {
 	}
 
 	if err := ws.connect(); err != nil {
-		Log.Panic(err)
+		Log.Panic(fmt.Errorf("[%s] %s", ws.WsUrl, err.Error()))
 	}
 
 	ws.close = make(chan bool, 1)
@@ -286,7 +287,7 @@ func (ws *WsConn) receiveMessage() {
 		t, msg, err := ws.c.ReadMessage()
 
 		if err != nil {
-			Log.Error("[ws]", err)
+			Log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
 			if ws.IsAutoReconnect {
 				//	if _, ok := err.(*websocket.CloseError); ok {
 				Log.Infof("[ws][%s] Unexpected Closed , Begin Retry Connect.", ws.WsUrl)
@@ -332,7 +333,7 @@ func (ws *WsConn) CloseWs() {
 	close(ws.close)
 	err := ws.c.Close()
 	if err != nil {
-		Log.Error("[ws]", ws.WsUrl, "close websocket error ,", err)
+		Log.Error("[ws][", ws.WsUrl, "]close websocket error ,", err)
 	}
 }
 

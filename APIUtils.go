@@ -50,7 +50,7 @@ _CALL:
 			logger.Log.Error("[api error]", vl)
 			retryC++
 			if retryC <= retry-1 {
-				logger.Log.Info("Invoke Method[%s] Error , Begin Retry Call [%d] ...", invokeM.String(), retryC)
+				logger.Log.Infof("Invoke Method[%s] Error , Begin Retry Call [%d] ...", invokeM.String(), retryC)
 				goto _CALL
 			} else {
 				logger.Log.Error("Invoke Method Fail ???" + invokeM.String())

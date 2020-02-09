@@ -72,7 +72,7 @@ func NewFMexWs(client *http.Client) *FMexWs {
 	fmWs := &FMexWs{}
 	fmWs.clientId = getRandomString(8)
 	fmWs.WsBuilder = NewWsBuilder().
-		WsUrl("wss://api.testnet.fmex.com/v2/ws").
+		WsUrl("wss://api.fmex.com/v2/ws").
 		AutoReconnect().
 		Heartbeat(func() []byte {
 			ts := time.Now().Unix()*1000 + fmWs.timeoffset*1000
@@ -252,7 +252,7 @@ func (fmWs *FMexWs) handle(msg []byte) error {
 		case "depth":
 			dep := fmWs.parseDepthData(datamap["bids"].([]interface{}), datamap["asks"].([]interface{}))
 			stime := int64(ToInt(datamap["ts"]))
-			dep.UTime = time.Unix(stime/1000, 0)
+			dep.UTime = time.Unix(0, stime*1000000)
 			pair, err := getPairFromType(resp[2])
 			if err != nil {
 				panic(err)
