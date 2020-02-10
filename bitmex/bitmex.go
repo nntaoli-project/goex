@@ -52,6 +52,7 @@ func (bm *bitmex) doAuthRequest(m, uri, param string, r interface{}) error {
 		"api-expires":   fmt.Sprint(nonce),
 		"api-key":       bm.ApiKey,
 		"api-signature": sign})
+	Log.Debug("response:", string(resp))
 	if err != nil {
 		return err
 	} else {
@@ -176,20 +177,25 @@ func (bm *bitmex) FutureCancelOrder(currencyPair CurrencyPair, contractType, ord
 }
 
 func (bm *bitmex) GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error) {
-	var response []struct {
-		CurrentQty        int       `json:"currentQty"`
-		OpeningQty        int       `json:"openingQty"`
-		AvgCostPrice      float64   `json:"avgCostPrice"`
-		AvgEntryPrice     float64   `json:"avgEntryPrice"`
-		UnrealisedPnl     float64   `json:"unrealisedPnl"`
-		UnrealisedPnlPcnt float64   `json:"unrealisedPnlPcnt"`
-		OpenOrderBuyQty   float64   `json:"openOrderBuyQty"`
-		OpenOrderSellQty  float64   `json:"OpenOrderSellQty"`
-		OpeningTimestamp  time.Time `json:"openingTimestamp"`
-		LiquidationPrice  float64   `json:"liquidationPrice"`
-		Leverage          int       `json:"leverage"`
-	}
-	er := bm.doAuthRequest("GET", "/api/v1/position", "", &response)
+	var (
+		response []struct {
+			Symbol            string    `json:"symbol"`
+			CurrentQty        int       `json:"currentQty"`
+			OpeningQty        int       `json:"openingQty"`
+			AvgCostPrice      float64   `json:"avgCostPrice"`
+			AvgEntryPrice     float64   `json:"avgEntryPrice"`
+			UnrealisedPnl     float64   `json:"unrealisedPnl"`
+			UnrealisedPnlPcnt float64   `json:"unrealisedPnlPcnt"`
+			OpenOrderBuyQty   float64   `json:"openOrderBuyQty"`
+			OpenOrderSellQty  float64   `json:"OpenOrderSellQty"`
+			OpeningTimestamp  time.Time `json:"openingTimestamp"`
+			LiquidationPrice  float64   `json:"liquidationPrice"`
+			Leverage          int       `json:"leverage"`
+		}
+		param = url.Values{}
+	)
+	param.Set("filter", fmt.Sprintf(`{"symbol":"%s"}`, bm.adaptCurrencyPairToSymbol(currencyPair, contractType)))
+	er := bm.doAuthRequest("GET", "/api/v1/position?"+param.Encode(), "", &response)
 	if er != nil {
 		return nil, er
 	}
