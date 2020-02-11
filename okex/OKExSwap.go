@@ -504,5 +504,5 @@ func (ok *OKExSwap) AdaptTradeStatus(status int) TradeStatus {
 }
 
 func (ok *OKExSwap) adaptContractType(currencyPair CurrencyPair) string {
-	return fmt.Sprintf("%s-SWAP", currencyPair.ToSymbol("-"))
+	return fmt.Sprintf("%s-SWAP", currencyPair.AdaptUsdtToUsd().ToSymbol("-"))
 }
