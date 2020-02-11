@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -20,7 +19,7 @@ const (
 	TICKERS_URI            = "ticker/allBookTickers"
 	DEPTH_URI              = "depth?symbol=%s&limit=%d"
 	ACCOUNT_URI            = "account?"
-	ORDER_URI              = "order?"
+	ORDER_URI              = "order"
 	UNFINISHED_ORDERS_INFO = "openOrders?"
 	KLINE_URI              = "klines"
 	SERVER_TIME_URL        = "time"
@@ -89,13 +88,13 @@ type Binance struct {
 	apiV1        string
 	apiV3        string
 	httpClient   *http.Client
-	timeoffset   int64 //nanosecond
+	timeOffset   int64 //nanosecond
 	tradeSymbols []TradeSymbol
 }
 
 func (bn *Binance) buildParamsSigned(postForm *url.Values) error {
 	postForm.Set("recvWindow", "60000")
-	tonce := strconv.FormatInt(time.Now().UnixNano()+bn.timeoffset, 10)[0:13]
+	tonce := strconv.FormatInt(time.Now().UnixNano()+bn.timeOffset, 10)[0:13]
 	postForm.Set("timestamp", tonce)
 	payload := postForm.Encode()
 	sign, _ := GetParamHmacSHA256Sign(bn.secretKey, payload)
@@ -141,7 +140,7 @@ func (bn *Binance) setTimeOffset() error {
 	st := time.Unix(stime/1000, 1000000*(stime%1000))
 	lt := time.Now()
 	offset := st.Sub(lt).Nanoseconds()
-	bn.timeoffset = int64(offset)
+	bn.timeOffset = int64(offset)
 	return nil
 }
 
@@ -151,7 +150,6 @@ func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	tickerMap, err := HttpGet(bn.httpClient, tickerUri)
 
 	if err != nil {
-		log.Println("GetTicker error:", err)
 		return nil, err
 	}
 
@@ -169,17 +167,26 @@ func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
-	if size > 1000 {
-		size = 1000
-	} else if size < 5 {
+	if size <= 5 {
 		size = 5
+	} else if size <= 10 {
+		size = 10
+	} else if size <= 20 {
+		size = 20
+	} else if size <= 50 {
+		size = 50
+	} else if size <= 100 {
+		size = 100
+	} else if size <= 500 {
+		size = 500
+	} else {
+		size = 1000
 	}
 	currencyPair2 := bn.adaptCurrencyPair(currencyPair)
 
 	apiUrl := fmt.Sprintf(bn.apiV3+DEPTH_URI, currencyPair2.ToSymbol(""), size)
 	resp, err := HttpGet(bn.httpClient, apiUrl)
 	if err != nil {
-		log.Println("GetDepth error:", err)
 		return nil, err
 	}
 
@@ -192,20 +199,31 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 
 	depth := new(Depth)
 	depth.Pair = currencyPair
+	depth.UTime = time.Now()
+	n := 0
 	for _, bid := range bids {
 		_bid := bid.([]interface{})
 		amount := ToFloat64(_bid[1])
 		price := ToFloat64(_bid[0])
 		dr := DepthRecord{Amount: amount, Price: price}
 		depth.BidList = append(depth.BidList, dr)
+		n++
+		if n == size {
+			break
+		}
 	}
 
+	n = 0
 	for _, ask := range asks {
 		_ask := ask.([]interface{})
 		amount := ToFloat64(_ask[1])
 		price := ToFloat64(_ask[0])
 		dr := DepthRecord{Amount: amount, Price: price}
 		depth.AskList = append(depth.AskList, dr)
+		n++
+		if n == size {
+			break
+		}
 	}
 
 	return depth, nil
@@ -240,7 +258,6 @@ func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		log.Println(string(resp))
 		return nil, err
 	}
 
@@ -280,7 +297,6 @@ func (bn *Binance) GetAccount() (*Account, error) {
 	path := bn.apiV3 + ACCOUNT_URI + params.Encode()
 	respmap, err := HttpGet2(bn.httpClient, path, map[string]string{"X-MBX-APIKEY": bn.accessKey})
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	if _, isok := respmap["code"]; isok == true {
@@ -338,7 +354,6 @@ func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool,
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		log.Println(string(resp))
 		return false, err
 	}
 
@@ -360,7 +375,7 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	params.Set("orderId", orderId)
 
 	bn.buildParamsSigned(&params)
-	path := bn.apiV3 + ORDER_URI + params.Encode()
+	path := bn.apiV3 + ORDER_URI + "?" + params.Encode()
 
 	respmap, err := HttpGet2(bn.httpClient, path, map[string]string{"X-MBX-APIKEY": bn.accessKey})
 	if err != nil {
@@ -468,22 +483,13 @@ func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since in
 	for _, _record := range klines {
 		r := Kline{Pair: currency}
 		record := _record.([]interface{})
-		for i, e := range record {
-			switch i {
-			case 0:
-				r.Timestamp = int64(e.(float64)) / 1000 //to unix timestramp
-			case 1:
-				r.Open = ToFloat64(e)
-			case 2:
-				r.High = ToFloat64(e)
-			case 3:
-				r.Low = ToFloat64(e)
-			case 4:
-				r.Close = ToFloat64(e)
-			case 5:
-				r.Vol = ToFloat64(e)
-			}
-		}
+		r.Timestamp = int64(record[0].(float64)) / 1000 //to unix timestramp
+		r.Open = ToFloat64(record[1])
+		r.High = ToFloat64(record[2])
+		r.Low = ToFloat64(record[3])
+		r.Close = ToFloat64(record[4])
+		r.Vol = ToFloat64(record[5])
+
 		klineRecords = append(klineRecords, r)
 	}
 
@@ -531,7 +537,7 @@ func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize
 	panic("not implements")
 }
 
-func (ba *Binance) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
+func (bn *Binance) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
 	if pair.CurrencyA.Eq(BCH) || pair.CurrencyA.Eq(BCC) {
 		return NewCurrencyPair(NewCurrency("BCHABC", ""), pair.CurrencyB).AdaptUsdToUsdt()
 	}

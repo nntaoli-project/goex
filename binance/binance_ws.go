@@ -6,6 +6,7 @@ import (
 	"github.com/json-iterator/go"
 	. "github.com/nntaoli-project/GoEx"
 	"strings"
+	"sync"
 	"time"
 	"unsafe"
 )
@@ -13,6 +14,7 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type BinanceWs struct {
+	sync.Once
 	baseURL         string
 	combinedBaseURL string
 	proxyUrl        string
@@ -159,7 +161,6 @@ func (bnWs *BinanceWs) SubscribeTicker(pair CurrencyPair) error {
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -207,7 +208,6 @@ func (bnWs *BinanceWs) SubscribeTrade(pair CurrencyPair) error {
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -247,7 +247,6 @@ func (bnWs *BinanceWs) SubscribeKline(pair CurrencyPair, period int) error {
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -333,7 +332,6 @@ func (bnWs *BinanceWs) SubscribeAggTrade(pair CurrencyPair, tradeCallback func(*
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -379,18 +377,17 @@ func (bnWs *BinanceWs) SubscribeDiffDepth(pair CurrencyPair, depthCallback func(
 }
 
 func (bnWs *BinanceWs) exitHandler(c *WsConn) {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	defer c.CloseWs()
+	bnWs.Do(func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		defer c.CloseWs()
 
-	for {
-		select {
-		case t := <-ticker.C:
-			c.SendPingMessage([]byte(t.String()))
-			//if err != nil {
-			//	fmt.Println("wsWrite err:", err)
-			//	return
-			//}
+		for {
+			select {
+			case t := <-ticker.C:
+				c.SendPingMessage([]byte(t.String()))
+			}
 		}
-	}
+	})
+
 }

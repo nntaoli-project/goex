@@ -135,6 +135,7 @@ const (
 	ZB           = "zb.com"
 	BITFINEX     = "bitfinex.com"
 	BINANCE      = "binance.com"
+	BINANCE_SWAP = "binance.com_swap"
 	POLONIEX     = "poloniex.com"
 	COINEX       = "coinex.com"
 	BITHUMB      = "bithumb.com"
