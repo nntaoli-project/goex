@@ -88,6 +88,9 @@ const (
 	//Gets an outstanding order
 	GetOpenOrders = "/trade/api/v1/getOpenOrders"
 
+	//Get orders history
+	GetHistorys = "/trade/api/v1/getHistorys"
+
 	//Gets multiple order information
 	GetBatchOrders = "/trade/api/v1/getBatchOrders"
 
@@ -402,13 +405,16 @@ func (at *Atop) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, 
 	}
 
 	switch status {
+	case 0:
+		ord.Status = ORDER_UNFINISH
 	case 1:
-		ord.Status = ORDER_FINISH
-	case 2:
 		ord.Status = ORDER_PART_FINISH
+	case 2:
+		ord.Status = ORDER_FINISH
 	case 3:
-
 		ord.Status = ORDER_CANCEL
+		//case 4:
+		//	ord.Status = new(TradeStatus)//settle
 		//case "PENDING_CANCEL":
 		//	ord.Status = ORDER_CANCEL_ING
 		//case "REJECTED":
@@ -539,7 +545,50 @@ func (at *Atop) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, erro
 }
 
 func (at *Atop) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
-	panic("not support")
+	//panic("not support")
+	pair := at.adaptCurrencyPair(currency)
+	path := ApiBaseUrl + GetHistorys
+	params := url.Values{}
+	params.Set("market", pair.ToLower().String())
+	//params.Set("type", "1")
+	//params.Set("status", "0")
+	params.Set("page", fmt.Sprint(currentPage))
+	params.Set("pageSize", fmt.Sprint(pageSize))
+
+	at.buildPostForm(&params)
+	resp, err := HttpPostForm(at.httpClient, path, params)
+	if err != nil {
+		return nil, err
+	}
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
+	if err != nil {
+		log.Println(string(resp))
+		return nil, err
+	}
+
+	code := respMap["code"].(float64)
+	if code != 200 {
+		return nil, errors.New(respMap["info"].(string))
+	}
+	data := respMap["data"].(map[string]interface{})
+	records := data["record"].([]interface{})
+	orders := make([]Order, 0)
+	for _, ord := range records {
+		ordData := ord.(map[string]interface{})
+		orderId := strconv.FormatFloat(ordData["id"].(float64), 'f', 0, 64)
+		orders = append(orders, Order{
+			OrderID:   0,
+			OrderID2:  orderId,
+			Currency:  currency,
+			Price:     ToFloat64(ordData["price"]),
+			Amount:    ToFloat64(ordData["number"]),
+			Side:      TradeSide(ToInt(ordData["type"])),
+			Status:    TradeStatus(ToInt(ordData["status"])),
+			OrderTime: ToInt(ordData["time"])})
+	}
+	return orders, nil
+
 }
 
 // hao
