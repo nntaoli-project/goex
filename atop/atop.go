@@ -141,7 +141,7 @@ func (at *Atop) buildPostForm(postForm *url.Values) error {
 	nonce := strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
 	postForm.Set("nonce", nonce)
 	payload := postForm.Encode()
-	fmt.Println("payload", payload)
+	//fmt.Println("payload", payload)
 	sign, _ := GetParamHmacSHA256Sign(at.secretKey, payload)
 	postForm.Set("signature", sign)
 	return nil
@@ -180,7 +180,6 @@ func (at *Atop) GetTicker(currency CurrencyPair) (*Ticker, error) {
 func (at *Atop) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	market := strings.ToLower(currency.String())
 	depthUrl := ApiBaseUrl + fmt.Sprintf(GetDepth, market)
-	fmt.Println("depthUrl", depthUrl)
 	resp, err := HttpGet(at.httpClient, depthUrl)
 	if err != nil {
 		return nil, err
@@ -276,9 +275,8 @@ func (at *Atop) plateOrder(amount, price string, currencyPair CurrencyPair, orde
 func (at *Atop) GetAccount() (*Account, error) {
 	params := url.Values{}
 	at.buildPostForm(&params)
-	fmt.Println("params", params)
 	path := ApiBaseUrl + GetBalance
-	fmt.Println("GetBalance", path)
+	//fmt.Println("GetBalance", path)
 	resp, err := HttpPostForm(at.httpClient, path, params)
 	if err != nil {
 		return nil, err
@@ -294,7 +292,6 @@ func (at *Atop) GetAccount() (*Account, error) {
 	atc.SubAccounts = make(map[Currency]SubAccount)
 	for k, v := range data {
 		cur := NewCurrency(k, "")
-		fmt.Println("cur", cur)
 		vv := v.(map[string]interface{})
 		sub := SubAccount{}
 		sub.Currency = cur
@@ -372,7 +369,6 @@ func (at *Atop) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, 
 	at.buildPostForm(&params)
 	resp, err := HttpPostForm(at.httpClient, path, params)
 
-	//log.Println("resp:", string(resp), "err:", err)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +380,7 @@ func (at *Atop) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, 
 		return nil, err
 	}
 	code := respMap["code"].(float64)
-	fmt.Println("ddd", respMap)
+
 	if code != 200 {
 		return nil, errors.New(respMap["info"].(string))
 	}
@@ -411,15 +407,13 @@ func (at *Atop) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, 
 	case 2:
 		ord.Status = ORDER_PART_FINISH
 	case 3:
-		fmt.Println("sstatus", status)
+
 		ord.Status = ORDER_CANCEL
 		//case "PENDING_CANCEL":
 		//	ord.Status = ORDER_CANCEL_ING
 		//case "REJECTED":
 		//	ord.Status = ORDER_REJECT
 	}
-	fmt.Println("status", status)
-
 	ord.Amount = ToFloat64(data["number"])
 	ord.Price = ToFloat64(data["price"])
 	ord.DealAmount = ord.Amount - ToFloat64(data["completeNumber"]) //？
@@ -486,14 +480,12 @@ func (at *Atop) GetKlineRecords(currency CurrencyPair, period, size, since int) 
 		return nil, err
 	}
 	var klineRecords []Kline
-	fmt.Println("kline", kLines)
 	for _, _record := range kLines["datas"].([]interface{}) {
 		r := Kline{Pair: currency}
 		record := _record.([]interface{})
 		for i, e := range record {
 			switch i {
 			case 0:
-				fmt.Println("i", e)
 				r.Timestamp = int64(e.(float64)) //to unix timestramp
 			case 1:
 				r.Open = ToFloat64(e)
