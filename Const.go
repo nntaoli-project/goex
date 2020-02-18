@@ -154,4 +154,5 @@ const (
 	CRYPTOPIA    = "cryptopia.co.nz"
 	HBDM         = "hbdm.com"
 	COINBENE     = "coinbene.com"
+	ATOP         = "a.top"
 )

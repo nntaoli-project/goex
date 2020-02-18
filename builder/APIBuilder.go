@@ -1,6 +1,7 @@
 package builder
 
 import (
+
 	"context"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
@@ -15,6 +16,7 @@ import (
 	"github.com/nntaoli-project/GoEx/fmex"
 	"github.com/nntaoli-project/GoEx/kucoin"
 
+	 "github.com/nntaoli-project/GoEx/atop"
 	//"github.com/nntaoli-project/GoEx/coin58"
 	"github.com/nntaoli-project/GoEx/coinex"
 	"github.com/nntaoli-project/GoEx/fcoin"
@@ -255,6 +257,8 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = bigone.New(builder.client, builder.apiKey, builder.secretkey)
 	case HITBTC:
 		_api = hitbtc.New(builder.client, builder.apiKey, builder.secretkey)
+	case ATOP:
+		_api = atop.New(builder.client, builder.apiKey, builder.secretkey)
 	default:
 		println("exchange name error [" + exName + "].")
 
@@ -316,6 +320,10 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
 		})
+
+
+
+
 	default:
 		println(fmt.Sprintf("%s not support future", exName))
 		return nil
