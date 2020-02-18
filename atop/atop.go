@@ -15,7 +15,7 @@ GetAccount() (*Account, error)
 GetTicker(currency CurrencyPair) (*Ticker, error)
 GetDepth(size int, currency CurrencyPair) (*Depth, error)
 GetKlineRecords(currency CurrencyPair, period , size, since int) ([]Kline, error)
-//非个人，整个交易所的交易记录
+//Non-individual, transaction record of the entire exchange
 GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error)
 
 GetExchangeName() string
@@ -26,10 +26,12 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
+
 	"log"
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -37,7 +39,8 @@ import (
 const (
 	//test  https://testapi.a.top
 	//product   https://api.a.top
-	ApiBaseUrl = "https://api.a.top"
+	ApiBaseUrl = "https://testapi.a.top"
+	//ApiBaseUrl = "https://api.a.top"
 
 	////market data
 
@@ -65,7 +68,7 @@ const (
 	GetServerTime = "/trade/api/v1/getServerTime"
 
 	//Get atcount balance
-	GetBalance = "trade/api/v1/getBalance"
+	GetBalance = "/trade/api/v1/getBalance"
 
 	//Plate the order
 	PlateOrder = "/trade/api/v1/order"
@@ -104,8 +107,27 @@ const (
 	GetWithdrawConfig = "/trade/api/v1/getWithdrawConfig"
 
 	//withdraw
-	Withdrawal = "trade/api/v1/withdraw"
+	Withdrawal = "/trade/api/v1/withdraw"
 )
+
+var KlinePeriodConverter = map[int]string{
+	KLINE_PERIOD_1MIN:   "1min",
+	KLINE_PERIOD_3MIN:   "3min",
+	KLINE_PERIOD_5MIN:   "5min",
+	KLINE_PERIOD_15MIN:  "15min",
+	KLINE_PERIOD_30MIN:  "30min",
+	KLINE_PERIOD_60MIN:  "1hour",
+	KLINE_PERIOD_1H:     "1hour",
+	KLINE_PERIOD_2H:     "2hour",
+	KLINE_PERIOD_4H:     "4hour",
+	KLINE_PERIOD_6H:     "6hour",
+	KLINE_PERIOD_8H:     "8hour",
+	KLINE_PERIOD_12H:    "12hour",
+	KLINE_PERIOD_1DAY:   "1day",
+	KLINE_PERIOD_3DAY:   "3day",
+	KLINE_PERIOD_1WEEK:  "7day",
+	KLINE_PERIOD_1MONTH: "30day",
+}
 
 type Atop struct {
 	accessKey,
@@ -113,13 +135,15 @@ type Atop struct {
 	httpClient *http.Client
 }
 
-func (at *Atop) buildParamsSigned(postForm *url.Values) error {
-	//postForm.Set("api_key", at.atcessKey)
-	//postForm.Set("secret_key", at.secretKey)
-	payload := postForm.Encode() + "&secret_key=" + at.secretKey
-	//log.Println("payload:", payload, "postForm:", postForm.Encode())
-	sign, _ := GetParamMD5Sign(at.secretKey, payload)
-	postForm.Set("sign", sign)
+//hao
+func (at *Atop) buildPostForm(postForm *url.Values) error {
+	postForm.Set("accesskey", at.accessKey)
+	nonce := strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
+	postForm.Set("nonce", nonce)
+	payload := postForm.Encode()
+	fmt.Println("payload", payload)
+	sign, _ := GetParamHmacSHA256Sign(at.secretKey, payload)
+	postForm.Set("signature", sign)
 	return nil
 }
 
@@ -131,6 +155,7 @@ func (at *Atop) GetExchangeName() string {
 	return "atop.com"
 }
 
+//hao
 func (at *Atop) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	market := strings.ToLower(currency.String())
 	tickerUrl := ApiBaseUrl + fmt.Sprintf(GetTicker, market)
@@ -151,10 +176,11 @@ func (at *Atop) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	return &ticker, nil
 }
 
+//hao
 func (at *Atop) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	market := strings.ToLower(currency.String())
 	depthUrl := ApiBaseUrl + fmt.Sprintf(GetDepth, market)
-	fmt.Println("depthUrl",depthUrl)
+	fmt.Println("depthUrl", depthUrl)
 	resp, err := HttpGet(at.httpClient, depthUrl)
 	if err != nil {
 		return nil, err
@@ -185,38 +211,49 @@ func (at *Atop) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return depth, nil
 }
 
-func (at *Atop) plateOrder(amount, price string, pair CurrencyPair, orderType, orderSide string) (*Order, error) {
-	pair = at.adaptCurrencyPair(pair)
+//hao
+func (at *Atop) plateOrder(amount, price string, currencyPair CurrencyPair, orderType, orderSide string) (*Order, error) {
+	pair := at.adaptCurrencyPair(currencyPair)
 	path := ApiBaseUrl + PlateOrder
 	params := url.Values{}
-	params.Set("api_key", at.accessKey)
-	params.Set("symbol", strings.ToLower(pair.ToSymbol("2")))
-	params.Set("type", orderSide)
-
+	params.Set("market", pair.ToLower().String()) //btc_usdt eth_usdt
+	if orderSide == "buy" {
+		params.Set("type", strconv.Itoa(1))
+	} else {
+		params.Set("type", strconv.Itoa(0))
+	}
+	//params.Set("type", orderSide)//Transaction Type  1、buy 0、sell
 	params.Set("price", price)
 	params.Set("number", amount)
-
-	at.buildParamsSigned(&params)
-
+	if orderType == "market" {
+		params.Set("entrustType", strconv.Itoa(1))
+	} else {
+		params.Set("entrustType", strconv.Itoa(0))
+	}
+	//params.Set("entrustType", orderType)//Delegate type  0、limit，1、market
+	at.buildPostForm(&params)
 	resp, err := HttpPostForm(at.httpClient, path, params)
 	//log.Println("resp:", string(resp), "err:", err)
 	if err != nil {
 		return nil, err
 	}
 
-	respmap := make(map[string]interface{})
-	err = json.Unmarshal(resp, &respmap)
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
 	if err != nil {
 		log.Println(string(resp))
 		return nil, err
 	}
-	code := respmap["code"].(float64)
-	if code != 0 {
-		return nil, errors.New(respmap["msg"].(string))
-	}
-	data := respmap["data"].(map[string]interface{})
 
-	orderId := data["order_id"].(string)
+	code := respMap["code"].(float64)
+	if code != 200 {
+		return nil, errors.New(respMap["info"].(string))
+	}
+
+	//return &Order{}, nil
+	data := respMap["data"].(map[string]interface{})
+
+	orderId := data["id"].(float64)
 	side := BUY
 	if orderSide == "sale" {
 		side = SELL
@@ -225,7 +262,7 @@ func (at *Atop) plateOrder(amount, price string, pair CurrencyPair, orderType, o
 	return &Order{
 		Currency: pair,
 		//OrderID:
-		OrderID2:   orderId,
+		OrderID2:   strconv.FormatFloat(orderId, 'f', 0, 64),
 		Price:      ToFloat64(price),
 		Amount:     ToFloat64(amount),
 		DealAmount: 0,
@@ -235,73 +272,57 @@ func (at *Atop) plateOrder(amount, price string, pair CurrencyPair, orderType, o
 		OrderTime:  int(time.Now().Unix())}, nil
 }
 
+//hao
 func (at *Atop) GetAccount() (*Account, error) {
 	params := url.Values{}
-
-	params.Set("api_key", at.accessKey)
-	at.buildParamsSigned(&params)
-	//log.Println("params=", params)
+	at.buildPostForm(&params)
+	fmt.Println("params", params)
 	path := ApiBaseUrl + GetBalance
+	fmt.Println("GetBalance", path)
 	resp, err := HttpPostForm(at.httpClient, path, params)
-	//log.Println("resp:", string(resp), "err:", err)
 	if err != nil {
 		return nil, err
 	}
-
-	respmap := make(map[string]interface{})
-	err = json.Unmarshal(resp, &respmap)
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
 	if err != nil {
-		log.Println(string(resp))
 		return nil, err
 	}
-	code := respmap["code"].(float64)
-	//msg := respmap["msg"].(string)
-	//log.Println("code=", code, "msg:", msg)
-	if code != 0 {
-		return nil, errors.New(respmap["msg"].(string))
-	}
-	data := respmap["data"].(map[string]interface{})
-
+	data := respMap["data"].(map[string]interface{})
 	atc := Account{}
 	atc.Exchange = at.GetExchangeName()
-	//map[Currency]Subatcount
 	atc.SubAccounts = make(map[Currency]SubAccount)
-
 	for k, v := range data {
-		s := strings.Split(k, "_")
-		if len(s) == 2 {
-			cur := NewCurrency(s[0], "")
-			if s[1] == "over" {
-				sub := SubAccount{}
-				sub = atc.SubAccounts[cur]
-				sub.Amount = ToFloat64(v)
-				atc.SubAccounts[cur] = sub
-			} else if s[1] == "lock" {
-				sub := SubAccount{}
-				sub = atc.SubAccounts[cur]
-				sub.ForzenAmount = ToFloat64(v)
-				atc.SubAccounts[cur] = sub
-			}
-		}
+		cur := NewCurrency(k, "")
+		fmt.Println("cur", cur)
+		vv := v.(map[string]interface{})
+		sub := SubAccount{}
+		sub.Currency = cur
+		sub.Amount = ToFloat64(vv["available"]) + ToFloat64(vv["freeze"])
+		sub.ForzenAmount = ToFloat64(vv["freeze"])
+		atc.SubAccounts[cur] = sub
 	}
-	log.Println(atc)
 	return &atc, nil
 }
 
+//hao
 func (at *Atop) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
-	return at.plateOrder(amount, price, currencyPair, "LIMIT", "buy")
+	return at.plateOrder(amount, price, currencyPair, "limit", "buy")
 }
 
+//hao
 func (at *Atop) LimitSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
-	return at.plateOrder(amount, price, currencyPair, "LIMIT", "sale")
+	return at.plateOrder(amount, price, currencyPair, "limit", "sale")
 }
 
+//hao
 func (at *Atop) MarketBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
-	return at.plateOrder(amount, price, currencyPair, "MARKET", "buy")
+	return at.plateOrder(amount, price, currencyPair, "market", "buy")
 }
 
+//hao
 func (at *Atop) MarketSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
-	return at.plateOrder(amount, price, currencyPair, "MARKET", "sale")
+	return at.plateOrder(amount, price, currencyPair, "market", "sale")
 }
 
 func (at *Atop) CancelOrder(orderId string, currencyPair CurrencyPair) (bool, error) {
@@ -309,27 +330,26 @@ func (at *Atop) CancelOrder(orderId string, currencyPair CurrencyPair) (bool, er
 	path := ApiBaseUrl + CancelOrder
 	params := url.Values{}
 	params.Set("api_key", at.accessKey)
-	params.Set("symbol", strings.ToLower(currencyPair.ToSymbol("2")))
-	params.Set("order_id", orderId)
+	params.Set("market", currencyPair.ToLower().String())
+	params.Set("id", orderId)
 
-	at.buildParamsSigned(&params)
+	at.buildPostForm(&params)
 
 	resp, err := HttpPostForm(at.httpClient, path, params)
 
-	//log.Println("resp:", string(resp), "err:", err)
 	if err != nil {
 		return false, err
 	}
 
-	respmap := make(map[string]interface{})
-	err = json.Unmarshal(resp, &respmap)
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
 	if err != nil {
 		log.Println(string(resp))
 		return false, err
 	}
-	code := respmap["code"].(int)
-	if code != 0 {
-		return false, errors.New(respmap["msg"].(string))
+	code := respMap["code"].(float64)
+	if code != 200 {
+		return false, errors.New(respMap["info"].(string))
 	}
 
 	//orderIdCanceled := ToInt(respmap["orderId"])
@@ -340,16 +360,16 @@ func (at *Atop) CancelOrder(orderId string, currencyPair CurrencyPair) (bool, er
 	return true, nil
 }
 
+//hao？
 func (at *Atop) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, error) {
 	currencyPair = at.adaptCurrencyPair(currencyPair)
 	path := ApiBaseUrl + GetOrder
+	log.Println(path)
 	params := url.Values{}
 	params.Set("api_key", at.accessKey)
-	params.Set("symbol", strings.ToLower(currencyPair.ToSymbol("2")))
-	params.Set("trust_id", orderId)
-
-	at.buildParamsSigned(&params)
-
+	params.Set("market", currencyPair.ToLower().String())
+	params.Set("id", orderId)
+	at.buildPostForm(&params)
 	resp, err := HttpPostForm(at.httpClient, path, params)
 
 	//log.Println("resp:", string(resp), "err:", err)
@@ -357,20 +377,21 @@ func (at *Atop) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, 
 		return nil, err
 	}
 
-	respmap := make(map[string]interface{})
-	err = json.Unmarshal(resp, &respmap)
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
 	if err != nil {
 		log.Println(string(resp))
 		return nil, err
 	}
-	code := respmap["code"].(float64)
-	if code != 0 {
-		return nil, errors.New(respmap["msg"].(string))
+	code := respMap["code"].(float64)
+	fmt.Println("ddd", respMap)
+	if code != 200 {
+		return nil, errors.New(respMap["info"].(string))
 	}
 
-	data := respmap["data"].(map[string]interface{})
+	data := respMap["data"].(map[string]interface{})
 
-	status := data["status"]
+	status := data["status"].(float64)
 	side := data["flag"]
 
 	ord := Order{}
@@ -385,93 +406,182 @@ func (at *Atop) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, 
 	}
 
 	switch status {
-	case "1": ///////////////////////////////////////////////////////////////////////////////////#################TODO
+	case 1:
 		ord.Status = ORDER_FINISH
-	case "2":
+	case 2:
 		ord.Status = ORDER_PART_FINISH
-	case "3":
+	case 3:
+		fmt.Println("sstatus", status)
 		ord.Status = ORDER_CANCEL
-	case "PENDING_CANCEL":
-		ord.Status = ORDER_CANCEL_ING
-	case "REJECTED":
-		ord.Status = ORDER_REJECT
+		//case "PENDING_CANCEL":
+		//	ord.Status = ORDER_CANCEL_ING
+		//case "REJECTED":
+		//	ord.Status = ORDER_REJECT
 	}
+	fmt.Println("status", status)
 
 	ord.Amount = ToFloat64(data["number"])
 	ord.Price = ToFloat64(data["price"])
-	ord.DealAmount = ord.Amount - ToFloat64(data["numberover"])
-	ord.AvgPrice = ToFloat64(data["avg_price"]) // response no avg price ， fill price
+	ord.DealAmount = ord.Amount - ToFloat64(data["completeNumber"]) //？
+	ord.AvgPrice = ToFloat64(data["avg_price"])                     // response no avg price ， fill price
 
 	return &ord, nil
 }
 
+//hao
 func (at *Atop) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error) {
-	currencyPair = at.adaptCurrencyPair(currencyPair)
+	pair := at.adaptCurrencyPair(currencyPair)
 	path := ApiBaseUrl + GetOpenOrders
 	params := url.Values{}
-	params.Set("api_key", at.accessKey)
-	params.Set("symbol", strings.ToLower(currencyPair.ToSymbol("2")))
-	params.Set("type", "open")
-
-	at.buildParamsSigned(&params)
+	params.Set("market", pair.ToLower().String())
+	params.Set("page", "1")
+	params.Set("pageSize", "10000")
+	at.buildPostForm(&params)
 
 	resp, err := HttpPostForm(at.httpClient, path, params)
-
-	//log.Println("resp:", string(resp), "err:", err)
 	if err != nil {
 		return nil, err
 	}
-
-	respmap := make(map[string]interface{})
-	err = json.Unmarshal(resp, &respmap)
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
 	if err != nil {
 		log.Println(string(resp))
 		return nil, err
 	}
-	code := respmap["code"].(float64)
-	//msg := respmap["msg"].(string)
-	//log.Println("code=", code, "msg:", msg)
-	if code != 0 {
-		return nil, errors.New(respmap["msg"].(string))
-	}
-	data, isok := respmap["data"].([]map[string]interface{})
 
+	code := respMap["code"].(float64)
+	if code != 200 {
+		return nil, errors.New(respMap["info"].(string))
+	}
+	data := respMap["data"].([]interface{})
 	orders := make([]Order, 0)
-	if isok != true {
-		return orders, nil
-	}
 	for _, ord := range data {
-		//ord := v.(map[string]interfate{})
-
-		//side := ord["side"].(string)
-		//orderSide := SELL
-		//if side == "BUY" {
-		//	orderSide = BUY
-		//}
-
+		ordData := ord.(map[string]interface{})
+		orderId := strconv.FormatFloat(ordData["id"].(float64), 'f', 0, 64)
 		orders = append(orders, Order{
-			OrderID:  ToInt(ord["id"]),
-			OrderID2: ord["id"].(string),
-			Currency: currencyPair,
-			Price:    ToFloat64(ord["price"]),
-			Amount:   ToFloat64(ord["number"]),
-			//Side:      TradeSide(orderSide),
-			//Status:    ORDER_UNFINISH,
-			OrderTime: ToInt(ord["created"])})
+			OrderID:   0,
+			OrderID2:  orderId,
+			Currency:  currencyPair,
+			Price:     ToFloat64(ordData["price"]),
+			Amount:    ToFloat64(ordData["number"]),
+			Side:      TradeSide(ToInt(ordData["type"])),
+			Status:    TradeStatus(ToInt(ordData["status"])),
+			OrderTime: ToInt(ordData["time"])})
 	}
 	return orders, nil
 }
 
+//hao
 func (at *Atop) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	panic("not support")
+	pair := at.adaptCurrencyPair(currency)
+	params := url.Values{}
+	params.Set("market", pair.ToLower().String())
+	//params.Set("type", "1min") //1min,5min,15min,30min,1hour,6hour,1day,7day,30day
+	params.Set("type", KlinePeriodConverter[period]) //1min,5min,15min,30min,1hour,6hour,1day,7day,30day
+	params.Set("since", fmt.Sprintf("%d", size))     //The first time is 0, followed by the value of the response since
+
+	klineUrl := ApiBaseUrl + GetKLine + "?" + params.Encode()
+	kLines, err := HttpGet(at.httpClient, klineUrl)
+	if err != nil {
+		return nil, err
+	}
+	var klineRecords []Kline
+	fmt.Println("kline", kLines)
+	for _, _record := range kLines["datas"].([]interface{}) {
+		r := Kline{Pair: currency}
+		record := _record.([]interface{})
+		for i, e := range record {
+			switch i {
+			case 0:
+				fmt.Println("i", e)
+				r.Timestamp = int64(e.(float64)) //to unix timestramp
+			case 1:
+				r.Open = ToFloat64(e)
+			case 2:
+				r.High = ToFloat64(e)
+			case 3:
+				r.Low = ToFloat64(e)
+			case 4:
+				r.Close = ToFloat64(e)
+			case 5:
+				r.Vol = ToFloat64(e)
+			}
+		}
+		klineRecords = append(klineRecords, r)
+	}
+
+	return klineRecords, nil
 }
 
-//非个人，整个交易所的交易记录
+// hao Non-individual, transaction record of the entire exchange
 func (at *Atop) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	panic("not support")
+	pair := at.adaptCurrencyPair(currencyPair)
+	params := url.Values{}
+	params.Set("market", pair.ToLower().String())
+
+	apiUrl := ApiBaseUrl + GetTrades + "?" + params.Encode()
+
+	resp, err := HttpGet(at.httpClient, apiUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	var trades []Trade
+	for _, v := range resp {
+		m := v.(map[string]interface{})
+		ty := SELL
+		if m["isBuyerMaker"].(bool) {
+			ty = BUY
+		}
+		trades = append(trades, Trade{
+			Tid:    ToInt64(m["id"]),
+			Type:   ty,
+			Amount: ToFloat64(m["qty"]),
+			Price:  ToFloat64(m["price"]),
+			Date:   ToInt64(m["time"]),
+			Pair:   currencyPair,
+		})
+	}
+
+	return trades, nil
 }
 
 func (at *Atop) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+	panic("not support")
+}
+
+// hao
+func (at *Atop) Withdraw(amount, memo string, currency Currency, fees, receiveAddr, safePwd string) (string, error) {
+	params := url.Values{}
+	coin := strings.ToLower(currency.Symbol)
+	path := ApiBaseUrl + Withdrawal
+	params.Set("coin", coin)
+	params.Set("address", receiveAddr)
+	params.Set("amount", amount)
+	params.Set("receiveAddr", receiveAddr)
+	params.Set("safePwd", safePwd)
+	//params.Set("memo", memo)
+	at.buildPostForm(&params)
+
+	resp, err := HttpPostForm(at.httpClient, path, params)
+
+	if err != nil {
+		return "", err
+	}
+
+	respMap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respMap)
+	if err != nil {
+		return "", err
+	}
+
+	if respMap["code"].(float64) == 200 {
+		return respMap["id"].(string), nil
+	}
+	return "", errors.New(string(resp))
+}
+
+func (at *Atop) CancelWithdraw(id string, currency Currency, safePwd string) (bool, error) {
 	panic("not support")
 }
 func (at *Atop) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
