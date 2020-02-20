@@ -285,61 +285,64 @@ func (ws *WsConn) receiveMessage() {
 	})
 
 	ws.c.SetPongHandler(func(pong string) error {
+		Log.Debugf("[%s] [pong] %s", ws.WsUrl, pong)
 		ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
 		return nil
 	})
 
 	ws.c.SetPingHandler(func(ping string) error {
+		Log.Debugf("[%s] [ping] %s", ws.WsUrl, ping)
 		ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
 		return nil
 	})
 
 	for {
-		if len(ws.close) > 0 {
+		select {
+		case <-ws.close:
 			Log.Infof("[ws][%s] close websocket , exiting receive message goroutine.", ws.WsUrl)
 			return
-		}
-
-		t, msg, err := ws.c.ReadMessage()
-
-		if err != nil {
-			Log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
-			if ws.IsAutoReconnect {
-				//	if _, ok := err.(*websocket.CloseError); ok {
-				Log.Infof("[ws][%s] Unexpected Closed , Begin Retry Connect.", ws.WsUrl)
-				ws.reconnect()
-				//	}
-				continue
-			}
-
-			if ws.ErrorHandleFunc != nil {
-				ws.ErrorHandleFunc(err)
-			}
-
-			return
-		}
-
-		ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
-
-		switch t {
-		case websocket.TextMessage:
-			ws.ProtoHandleFunc(msg)
-		case websocket.BinaryMessage:
-			if ws.UnCompressFunc == nil {
-				ws.ProtoHandleFunc(msg)
-			} else {
-				msg2, err := ws.UnCompressFunc(msg)
-				if err != nil {
-					Log.Errorf("[ws][%s] uncompress error %s", ws.WsUrl, err.Error())
-				} else {
-					ws.ProtoHandleFunc(msg2)
-				}
-			}
-		case websocket.CloseMessage:
-			ws.CloseWs()
-			return
 		default:
-			Log.Errorf("[ws][%s] error websocket message type , content is :\n %s \n", ws.WsUrl, string(msg))
+			t, msg, err := ws.c.ReadMessage()
+
+			if err != nil {
+				Log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
+				if ws.IsAutoReconnect {
+					//	if _, ok := err.(*websocket.CloseError); ok {
+					Log.Infof("[ws][%s] Unexpected Closed , Begin Retry Connect.", ws.WsUrl)
+					ws.reconnect()
+					//	}
+					continue
+				}
+
+				if ws.ErrorHandleFunc != nil {
+					ws.ErrorHandleFunc(err)
+				}
+
+				return
+			}
+
+			ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
+
+			switch t {
+			case websocket.TextMessage:
+				ws.ProtoHandleFunc(msg)
+			case websocket.BinaryMessage:
+				if ws.UnCompressFunc == nil {
+					ws.ProtoHandleFunc(msg)
+				} else {
+					msg2, err := ws.UnCompressFunc(msg)
+					if err != nil {
+						Log.Errorf("[ws][%s] uncompress error %s", ws.WsUrl, err.Error())
+					} else {
+						ws.ProtoHandleFunc(msg2)
+					}
+				}
+			case websocket.CloseMessage:
+				ws.CloseWs()
+				return
+			default:
+				Log.Errorf("[ws][%s] error websocket message type , content is :\n %s \n", ws.WsUrl, string(msg))
+			}
 		}
 	}
 }
