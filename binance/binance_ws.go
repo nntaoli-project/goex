@@ -97,6 +97,7 @@ func (bnWs *BinanceWs) subscribe(endpoint string, handle func(msg []byte) error)
 		AutoReconnect().
 		ProtoHandleFunc(handle).
 		ProxyUrl(bnWs.proxyUrl).
+		ReconnectInterval(time.Millisecond * 5).
 		Build()
 	bnWs.wsConns = append(bnWs.wsConns, wsConn)
 	go bnWs.exitHandler(wsConn)

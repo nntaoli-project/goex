@@ -25,6 +25,7 @@ type WsConfig struct {
 	ErrorHandleFunc       func(err error)
 	IsDump                bool
 	readDeadLineTime      time.Duration
+	reconnectInterval     time.Duration
 }
 
 type WsConn struct {
@@ -45,7 +46,9 @@ type WsBuilder struct {
 
 func NewWsBuilder() *WsBuilder {
 	return &WsBuilder{&WsConfig{
-		ReqHeaders: make(map[string][]string, 1)}}
+		ReqHeaders:        make(map[string][]string, 1),
+		reconnectInterval: time.Second * 10,
+	}}
 }
 
 func (b *WsBuilder) WsUrl(wsUrl string) *WsBuilder {
@@ -76,6 +79,11 @@ func (b *WsBuilder) Dump() *WsBuilder {
 func (b *WsBuilder) Heartbeat(heartbeat func() []byte, t time.Duration) *WsBuilder {
 	b.wsConfig.HeartbeatIntervalTime = t
 	b.wsConfig.HeartbeatData = heartbeat
+	return b
+}
+
+func (b *WsBuilder) ReconnectInterval(t time.Duration) *WsBuilder {
+	b.wsConfig.reconnectInterval = t
 	return b
 }
 
@@ -166,13 +174,13 @@ func (ws *WsConn) reconnect() {
 	ws.c.Close() //主动关闭一次
 	var err error
 	for retry := 1; retry <= 100; retry++ {
-		time.Sleep(time.Duration(retry*10) * time.Second)
 		err = ws.connect()
 		if err != nil {
 			Log.Errorf("[ws] [%s] websocket reconnect fail , %s", ws.WsUrl, err.Error())
 		} else {
 			break
 		}
+		time.Sleep(ws.WsConfig.reconnectInterval * time.Duration(retry))
 	}
 
 	if err != nil {
