@@ -44,7 +44,7 @@ func (bs *BinanceSwap) GetExchangeName() string {
 }
 
 func (bs *BinanceSwap) Ping() bool {
-	_, err := HttpGet(bs.httpClient, bs.baseUrl+"/fapi/v1/ping")
+	_, err := HttpGet(bs.httpClient, bs.apiV1+"ping")
 	if err != nil {
 		return false
 	}

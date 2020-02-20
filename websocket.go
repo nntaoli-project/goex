@@ -33,6 +33,7 @@ type WsConn struct {
 	WsConfig
 	writeBufferChan        chan []byte
 	pingMessageBufferChan  chan []byte
+	pongMessageBufferChan  chan []byte
 	closeMessageBufferChan chan []byte
 	subs                   []interface{}
 	close                  chan bool
@@ -114,6 +115,7 @@ func (ws *WsConn) NewWs() *WsConn {
 
 	ws.close = make(chan bool, 1)
 	ws.pingMessageBufferChan = make(chan []byte, 10)
+	ws.pongMessageBufferChan = make(chan []byte, 10)
 	ws.closeMessageBufferChan = make(chan []byte, 10)
 	ws.writeBufferChan = make(chan []byte, 10)
 
@@ -245,6 +247,10 @@ func (ws *WsConn) SendMessage(msg []byte) {
 
 func (ws *WsConn) SendPingMessage(msg []byte) {
 	ws.pingMessageBufferChan <- msg
+}
+
+func (ws *WsConn) SendPongMessage(msg []byte) {
+	ws.pongMessageBufferChan <- msg
 }
 
 func (ws *WsConn) SendCloseMessage(msg []byte) {

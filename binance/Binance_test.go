@@ -80,7 +80,7 @@ func TestBinance_GetTrades(t *testing.T) {
 }
 
 func TestBinance_GetTradeSymbols(t *testing.T) {
-	t.Log(ba.GetTradeSymbols(goex.BTC_USDT))
+	t.Log(ba.GetTradeSymbol(goex.BTC_USDT))
 }
 
 func TestBinance_SetTimeOffset(t *testing.T) {
