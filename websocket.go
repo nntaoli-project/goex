@@ -221,6 +221,8 @@ func (ws *WsConn) writeRequest() {
 			err = ws.c.WriteMessage(websocket.TextMessage, d)
 		case d := <-ws.pingMessageBufferChan:
 			err = ws.c.WriteMessage(websocket.PingMessage, d)
+		case d := <-ws.pongMessageBufferChan:
+			err = ws.c.WriteMessage(websocket.PongMessage, d)
 		case d := <-ws.closeMessageBufferChan:
 			err = ws.c.WriteMessage(websocket.CloseMessage, d)
 		case <-heartTimer.C:
