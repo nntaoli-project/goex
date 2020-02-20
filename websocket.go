@@ -25,6 +25,7 @@ type WsConfig struct {
 	ErrorHandleFunc       func(err error)
 	IsDump                bool
 	readDeadLineTime      time.Duration
+	reconnectInterval     time.Duration
 }
 
 type WsConn struct {
@@ -33,6 +34,7 @@ type WsConn struct {
 	WsConfig
 	writeBufferChan        chan []byte
 	pingMessageBufferChan  chan []byte
+	pongMessageBufferChan  chan []byte
 	closeMessageBufferChan chan []byte
 	subs                   []interface{}
 	close                  chan bool
@@ -44,7 +46,9 @@ type WsBuilder struct {
 
 func NewWsBuilder() *WsBuilder {
 	return &WsBuilder{&WsConfig{
-		ReqHeaders: make(map[string][]string, 1)}}
+		ReqHeaders:        make(map[string][]string, 1),
+		reconnectInterval: time.Second * 10,
+	}}
 }
 
 func (b *WsBuilder) WsUrl(wsUrl string) *WsBuilder {
@@ -75,6 +79,11 @@ func (b *WsBuilder) Dump() *WsBuilder {
 func (b *WsBuilder) Heartbeat(heartbeat func() []byte, t time.Duration) *WsBuilder {
 	b.wsConfig.HeartbeatIntervalTime = t
 	b.wsConfig.HeartbeatData = heartbeat
+	return b
+}
+
+func (b *WsBuilder) ReconnectInterval(t time.Duration) *WsBuilder {
+	b.wsConfig.reconnectInterval = t
 	return b
 }
 
@@ -114,6 +123,7 @@ func (ws *WsConn) NewWs() *WsConn {
 
 	ws.close = make(chan bool, 1)
 	ws.pingMessageBufferChan = make(chan []byte, 10)
+	ws.pongMessageBufferChan = make(chan []byte, 10)
 	ws.closeMessageBufferChan = make(chan []byte, 10)
 	ws.writeBufferChan = make(chan []byte, 10)
 
@@ -164,13 +174,13 @@ func (ws *WsConn) reconnect() {
 	ws.c.Close() //主动关闭一次
 	var err error
 	for retry := 1; retry <= 100; retry++ {
-		time.Sleep(time.Duration(retry*10) * time.Second)
 		err = ws.connect()
 		if err != nil {
 			Log.Errorf("[ws] [%s] websocket reconnect fail , %s", ws.WsUrl, err.Error())
 		} else {
 			break
 		}
+		time.Sleep(ws.WsConfig.reconnectInterval * time.Duration(retry))
 	}
 
 	if err != nil {
@@ -211,6 +221,8 @@ func (ws *WsConn) writeRequest() {
 			err = ws.c.WriteMessage(websocket.TextMessage, d)
 		case d := <-ws.pingMessageBufferChan:
 			err = ws.c.WriteMessage(websocket.PingMessage, d)
+		case d := <-ws.pongMessageBufferChan:
+			err = ws.c.WriteMessage(websocket.PongMessage, d)
 		case d := <-ws.closeMessageBufferChan:
 			err = ws.c.WriteMessage(websocket.CloseMessage, d)
 		case <-heartTimer.C:
@@ -245,6 +257,10 @@ func (ws *WsConn) SendMessage(msg []byte) {
 
 func (ws *WsConn) SendPingMessage(msg []byte) {
 	ws.pingMessageBufferChan <- msg
+}
+
+func (ws *WsConn) SendPongMessage(msg []byte) {
+	ws.pongMessageBufferChan <- msg
 }
 
 func (ws *WsConn) SendCloseMessage(msg []byte) {

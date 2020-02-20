@@ -63,7 +63,7 @@ func NewHttpRequestWithFasthttp(client *http.Client, reqMethod, reqUrl, postData
 }
 
 func NewHttpRequest(client *http.Client, reqType string, reqUrl string, postData string, requstHeaders map[string]string) ([]byte, error) {
-	logger.Log.Debug("request url: ", reqUrl)
+	logger.Log.Debugf("[%s] request url: %s", reqType, reqUrl)
 	lib := os.Getenv("HTTP_LIB")
 	if lib == "fasthttp" {
 		return NewHttpRequestWithFasthttp(client, reqType, reqUrl, postData, requstHeaders)
@@ -215,4 +215,12 @@ func HttpDeleteForm(client *http.Client, reqUrl string, postData url.Values, hea
 	}
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
 	return NewHttpRequest(client, "DELETE", reqUrl, postData.Encode(), headers)
+}
+
+func HttpPut(client *http.Client, reqUrl string, postData url.Values, headers map[string]string) ([]byte, error) {
+	if headers == nil {
+		headers = map[string]string{}
+	}
+	headers["Content-Type"] = "application/x-www-form-urlencoded"
+	return NewHttpRequest(client, "PUT", reqUrl, postData.Encode(), headers)
 }

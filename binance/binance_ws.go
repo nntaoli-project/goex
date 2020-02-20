@@ -6,7 +6,6 @@ import (
 	"github.com/json-iterator/go"
 	. "github.com/nntaoli-project/GoEx"
 	"strings"
-	"sync"
 	"time"
 	"unsafe"
 )
@@ -14,7 +13,6 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type BinanceWs struct {
-	sync.Once
 	baseURL         string
 	combinedBaseURL string
 	proxyUrl        string
@@ -22,6 +20,7 @@ type BinanceWs struct {
 	depthCallback   func(*Depth)
 	tradeCallback   func(*Trade)
 	klineCallback   func(*Kline, int)
+	wsConns         []*WsConn
 }
 
 type AggTrade struct {
@@ -93,13 +92,21 @@ func (bnWs *BinanceWs) SetCallbacks(
 }
 
 func (bnWs *BinanceWs) subscribe(endpoint string, handle func(msg []byte) error) {
-	wsBuilder := NewWsBuilder().
+	wsConn := NewWsBuilder().
 		WsUrl(endpoint).
 		AutoReconnect().
-		ProtoHandleFunc(handle)
-	wsBuilder.ProxyUrl(bnWs.proxyUrl)
-	wsConn := wsBuilder.Build()
+		ProtoHandleFunc(handle).
+		ProxyUrl(bnWs.proxyUrl).
+		ReconnectInterval(time.Millisecond * 5).
+		Build()
+	bnWs.wsConns = append(bnWs.wsConns, wsConn)
 	go bnWs.exitHandler(wsConn)
+}
+
+func (bnWs *BinanceWs) Close() {
+	for _, con := range bnWs.wsConns {
+		con.CloseWs()
+	}
 }
 
 func (bnWs *BinanceWs) SubscribeDepth(pair CurrencyPair, size int) error {
@@ -377,17 +384,16 @@ func (bnWs *BinanceWs) SubscribeDiffDepth(pair CurrencyPair, depthCallback func(
 }
 
 func (bnWs *BinanceWs) exitHandler(c *WsConn) {
-	bnWs.Do(func() {
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		defer c.CloseWs()
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	defer c.CloseWs()
 
-		for {
-			select {
-			case t := <-ticker.C:
-				c.SendPingMessage([]byte(t.String()))
-			}
+	for {
+		select {
+		case t := <-ticker.C:
+			//c.SendPingMessage([]byte(t.String()))
+			c.SendPongMessage([]byte(t.String()))
 		}
-	})
+	}
 
 }
