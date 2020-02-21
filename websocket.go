@@ -166,6 +166,7 @@ func (ws *WsConn) connect() error {
 		dumpData, _ := httputil.DumpResponse(resp, true)
 		Log.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))
 	}
+	Log.Infof("[ws][%s] connected", ws.WsUrl)
 
 	return nil
 }
@@ -285,13 +286,13 @@ func (ws *WsConn) receiveMessage() {
 	})
 
 	ws.c.SetPongHandler(func(pong string) error {
-		Log.Debugf("[%s] [pong] %s", ws.WsUrl, pong)
+		Log.Debugf("[%s] received [pong] %s", ws.WsUrl, pong)
 		ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
 		return nil
 	})
 
 	ws.c.SetPingHandler(func(ping string) error {
-		Log.Debugf("[%s] [ping] %s", ws.WsUrl, ping)
+		Log.Debugf("[%s] received [ping] %s", ws.WsUrl, ping)
 		ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
 		return nil
 	})
