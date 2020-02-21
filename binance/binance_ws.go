@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/json-iterator/go"
 	. "github.com/nntaoli-project/GoEx"
+	"strconv"
 	"strings"
 	"time"
 	"unsafe"
@@ -384,16 +385,18 @@ func (bnWs *BinanceWs) SubscribeDiffDepth(pair CurrencyPair, depthCallback func(
 }
 
 func (bnWs *BinanceWs) exitHandler(c *WsConn) {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	pingTicker := time.NewTicker(10 * time.Minute)
+	pongTicker := time.NewTicker(time.Second)
+	defer pingTicker.Stop()
+	defer pongTicker.Stop()
 	defer c.CloseWs()
 
 	for {
 		select {
-		case t := <-ticker.C:
-			//c.SendPingMessage([]byte(t.String()))
-			c.SendPongMessage([]byte(t.String()))
+		case t := <-pingTicker.C:
+			c.SendPingMessage([]byte(strconv.Itoa(int(t.UnixNano() / int64(time.Millisecond)))))
+		case t := <-pongTicker.C:
+			c.SendPongMessage([]byte(strconv.Itoa(int(t.UnixNano() / int64(time.Millisecond)))))
 		}
 	}
-
 }
