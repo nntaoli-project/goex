@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/GoEx/internal/logger"
 	"net/http"
 	"net/url"
 	"strings"
@@ -68,12 +69,28 @@ type RawTicker struct {
 }
 
 func NewFCoin(client *http.Client, apikey, secretkey string) *FCoin {
-	fc := &FCoin{baseUrl: "https://api.fcoin.com/v2/", accessKey: apikey, secretKey: secretkey, httpClient: client}
+	return NewWithConfig(&APIConfig{
+		HttpClient:   client,
+		Endpoint:     "https://api.fcoin.com/v2/",
+		ApiKey:       apikey,
+		ApiSecretKey: secretkey,
+	})
+}
+
+func NewWithConfig(c *APIConfig) *FCoin {
+	if c.Endpoint == "" {
+		c.Endpoint = "https://api.fcoin.com/v2/"
+	}
+	if !strings.HasSuffix(c.Endpoint, "/") {
+		c.Endpoint = c.Endpoint + "/"
+	}
+	Log.Debug("endpoint=", c.Endpoint)
+	fc := &FCoin{baseUrl: c.Endpoint, accessKey: c.ApiKey, secretKey: c.ApiSecretKey, httpClient: c.HttpClient}
 	fc.setTimeOffset()
 	var err error
 	fc.tradeSymbols, err = fc.GetTradeSymbols()
 	if len(fc.tradeSymbols) == 0 || err != nil {
-		panic("trade symbol is empty, pls check connection...")
+		panic("[fcoin] trade symbol is empty, pls check connection...")
 	}
 
 	return fc
@@ -148,6 +165,7 @@ func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	} else {
 		uri = fmt.Sprintf("market/depth/L150/%s", strings.ToLower(currency.ToSymbol("")))
 	}
+
 	respmap, err := HttpGet(fc.httpClient, fc.baseUrl+uri)
 	if err != nil {
 		return nil, err
@@ -166,7 +184,9 @@ func (fc *FCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 		return nil, errors.New("depth error")
 	}
 
+	ts := ToInt64(datamap["ts"])
 	depth := new(Depth)
+	depth.UTime = time.Unix(0, ts*1000000)
 	depth.Pair = currency
 
 	n := 0
@@ -311,24 +331,23 @@ func (fc *FCoin) buildSigned(httpmethod string, apiurl string, timestamp int64, 
 	return s
 }
 
-// ORDERTYPE:limit, market, fok, ioc
-func (fc *FCoin) PlaceOrder(orderType OrderType, orderSide, amount, price string, pair CurrencyPair, isMargin bool) (*Order, error) {
+// orderType:limit, market, fok, ioc
+
+func (fc *FCoin) PlaceOrder(orderType, orderSide, amount, price string, pair CurrencyPair, isMargin bool) (*Order, error) {
 	params := url.Values{}
 
 	params.Set("side", orderSide)
 	params.Set("amount", amount)
 	params.Set("symbol", strings.ToLower(pair.AdaptUsdToUsdt().ToSymbol("")))
-	if ORDER_TYPE_MARKET != orderType {
+	if "market" != orderType {
 		params.Set("price", price)
 	}
 
 	if isMargin {
 		params.Set("account_type", "margin")
 	}
-	params.Set("type", strings.ToLower(orderType.String()))
-	if ORDER_TYPE_MARKET == orderType {
-		params.Del("price")
-	}
+	params.Set("type", strings.ToLower(orderType))
+	params.Set("exchange", "main")
 
 	r, err := fc.doAuthenticatedRequest("POST", "orders", params)
 	if err != nil {
@@ -348,24 +367,40 @@ func (fc *FCoin) PlaceOrder(orderType OrderType, orderSide, amount, price string
 		Side:      TradeSide(side),
 		Status:    ORDER_UNFINISH,
 		OrderTime: int(time.Now().UnixNano() / 1000000),
-		OrderType: int(orderType),
+		//OrderType: int(orderType),
 	}, nil
 }
 
+func (fc *FCoin) IocBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	return fc.PlaceOrder("ioc", "buy", amount, price, currency, false)
+}
+
+func (fc *FCoin) IocSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return fc.PlaceOrder("ioc", "sell", amount, price, currency, false)
+}
+
+func (fc *FCoin) FokBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	return fc.PlaceOrder("fok", "buy", amount, price, currency, false)
+}
+
+func (fc *FCoin) FokSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return fc.PlaceOrder("fok", "sell", amount, price, currency, false)
+}
+
 func (fc *FCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.PlaceOrder(ORDER_TYPE_LIMIT, "buy", amount, price, currency, false)
+	return fc.PlaceOrder("limit", "buy", amount, price, currency, false)
 }
 
 func (fc *FCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.PlaceOrder(ORDER_TYPE_LIMIT, "sell", amount, price, currency, false)
+	return fc.PlaceOrder("limit", "sell", amount, price, currency, false)
 }
 
 func (fc *FCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.PlaceOrder(ORDER_TYPE_MARKET, "buy", amount, price, currency, false)
+	return fc.PlaceOrder("market", "buy", amount, price, currency, false)
 }
 
 func (fc *FCoin) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fc.PlaceOrder(ORDER_TYPE_MARKET, "sell", amount, price, currency, false)
+	return fc.PlaceOrder("market", "sell", amount, price, currency, false)
 }
 
 func (fc *FCoin) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
@@ -572,8 +607,8 @@ func (fc *FCoin) GetOrderHistorys2(currency CurrencyPair, currentPage, pageSize 
 	}
 
 	return ords, nil
-
 }
+
 func (fc *FCoin) GetAccount() (*Account, error) {
 	r, err := fc.doAuthenticatedRequest("GET", "accounts/balance", url.Values{})
 	if err != nil {

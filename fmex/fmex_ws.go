@@ -1,31 +1,32 @@
-package fcoin
+package fmex
 
 import (
 	"errors"
 	"fmt"
-	"github.com/json-iterator/go"
-	. "github.com/nntaoli-project/GoEx"
 	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 	"unsafe"
+
+	jsoniter "github.com/json-iterator/go"
+	. "github.com/nntaoli-project/GoEx"
 )
 
 const (
-	FCoinWSTicker        = "ticker.%s"
-	FCoinWSOrderBook     = "depth.L%d.%s"
-	FCoinWSOrderBookL20  = "depth.L20.%s"
-	FCoinWSOrderBookL150 = "depth.L150.%s"
-	FCoinWSOrderBookFull = "depth.full.%s"
-	FCoinWSTrades        = "trade.%s"
-	FCoinWSKLines        = "candle.%s.%s"
+	FMexWSTicker        = "ticker.%s"
+	FMexWSOrderBook     = "depth.L%d.%s"
+	FMexWSOrderBookL20  = "depth.L20.%s"
+	FMexWSOrderBookL150 = "depth.L150.%s"
+	FMexWSOrderBookFull = "depth.full.%s"
+	FMexWSTrades        = "trade.%s"
+	FMexWSKLines        = "candle.%s.%s"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-type FCoinWs struct {
+type FMexWs struct {
 	*WsBuilder
 	sync.Once
 	wsConn *WsConn
@@ -38,7 +39,6 @@ type FCoinWs struct {
 	clientId      string
 	subcribeTypes []string
 	timeoffset    int64
-	tradeSymbols  []TradeSymbol
 }
 
 var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
@@ -68,30 +68,26 @@ var _INERNAL_KLINE_PERIOD_REVERTER = map[string]int{
 	"MN":  KLINE_PERIOD_1MONTH,
 }
 
-func NewFCoinWs(client *http.Client) *FCoinWs {
-	fcWs := &FCoinWs{}
-	fcWs.clientId = getRandomString(8)
-	fcWs.WsBuilder = NewWsBuilder().
-		WsUrl("wss://api.fcoin.com/v2/ws").
+func NewFMexWs(client *http.Client) *FMexWs {
+	fmWs := &FMexWs{}
+	fmWs.clientId = getRandomString(8)
+	fmWs.WsBuilder = NewWsBuilder().
+		WsUrl("wss://api.fmex.com/v2/ws").
 		AutoReconnect().
 		Heartbeat(func() []byte {
-			ts := time.Now().Unix()*1000 + fcWs.timeoffset*1000
+			ts := time.Now().Unix()*1000 + fmWs.timeoffset*1000
 			args := make([]interface{}, 0)
 			args = append(args, ts)
 			heartbeatData := map[string]interface{}{
 				"cmd":  "ping",
-				"id":   fcWs.clientId,
+				"id":   fmWs.clientId,
 				"args": args}
 			data, _ := json.Marshal(heartbeatData)
 			return data
 		}, 25*time.Second).
-		ProtoHandleFunc(fcWs.handle)
-	fc := NewFCoin(client, "", "")
-	fcWs.tradeSymbols = fc.tradeSymbols
-	if len(fcWs.tradeSymbols) == 0 {
-		panic("[fcoin] trade symbol is empty, pls check connection...")
-	}
-	return fcWs
+		ProtoHandleFunc(fmWs.handle)
+
+	return fmWs
 }
 
 //生成随机字符串
@@ -106,67 +102,67 @@ func getRandomString(length int) string {
 	return string(result)
 }
 
-func (fcWs *FCoinWs) SetCallbacks(
+func (fmWs *FMexWs) SetCallbacks(
 	tickerCallback func(*Ticker),
 	depthCallback func(*Depth),
 	tradeCallback func(*Trade),
 	klineCallback func(*Kline, int),
 ) {
-	fcWs.tickerCallback = tickerCallback
-	fcWs.depthCallback = depthCallback
-	fcWs.tradeCallback = tradeCallback
-	fcWs.klineCallback = klineCallback
+	fmWs.tickerCallback = tickerCallback
+	fmWs.depthCallback = depthCallback
+	fmWs.tradeCallback = tradeCallback
+	fmWs.klineCallback = klineCallback
 }
 
-func (fcWs *FCoinWs) subscribe(sub map[string]interface{}) error {
-	fcWs.connectWs()
-	return fcWs.wsConn.Subscribe(sub)
+func (fmWs *FMexWs) subscribe(sub map[string]interface{}) error {
+	fmWs.connectWs()
+	return fmWs.wsConn.Subscribe(sub)
 }
 
-func (fcWs *FCoinWs) SubscribeDepth(pair CurrencyPair, size int) error {
-	if fcWs.depthCallback == nil {
+func (fmWs *FMexWs) SubscribeDepth(pair CurrencyPair, size int) error {
+	if fmWs.depthCallback == nil {
 		return errors.New("please set depth callback func")
 	}
-	arg := fmt.Sprintf(FCoinWSOrderBook, size, strings.ToLower(pair.ToSymbol("")))
+	arg := fmt.Sprintf(FMexWSOrderBook, size, adaptContractType(pair))
 	args := make([]interface{}, 0)
 	args = append(args, arg)
 
-	return fcWs.subscribe(map[string]interface{}{
-		"id":   fcWs.clientId,
+	return fmWs.subscribe(map[string]interface{}{
+		"id":   fmWs.clientId,
 		"cmd":  "sub",
 		"args": args})
 }
 
-func (fcWs *FCoinWs) SubscribeTicker(pair CurrencyPair) error {
-	if fcWs.tickerCallback == nil {
+func (fmWs *FMexWs) SubscribeTicker(pair CurrencyPair) error {
+	if fmWs.tickerCallback == nil {
 		return errors.New("please set ticker callback func")
 	}
-	arg := fmt.Sprintf(FCoinWSTicker, strings.ToLower(pair.ToSymbol("")))
+	arg := fmt.Sprintf(FMexWSTicker, adaptContractType(pair))
 	args := make([]interface{}, 0)
 	args = append(args, arg)
 
-	return fcWs.subscribe(map[string]interface{}{
-		"id":   fcWs.clientId,
+	return fmWs.subscribe(map[string]interface{}{
+		"id":   fmWs.clientId,
 		"cmd":  "sub",
 		"args": args})
 }
 
-func (fcWs *FCoinWs) SubscribeTrade(pair CurrencyPair) error {
-	if fcWs.tradeCallback == nil {
+func (fmWs *FMexWs) SubscribeTrade(pair CurrencyPair) error {
+	if fmWs.tradeCallback == nil {
 		return errors.New("please set trade callback func")
 	}
-	arg := fmt.Sprintf(FCoinWSTrades, strings.ToLower(pair.ToSymbol("")))
+	arg := fmt.Sprintf(FMexWSTrades, adaptContractType(pair))
 	args := make([]interface{}, 0)
 	args = append(args, arg)
 
-	return fcWs.subscribe(map[string]interface{}{
-		"id":   fcWs.clientId,
+	return fmWs.subscribe(map[string]interface{}{
+		"id":   fmWs.clientId,
 		"cmd":  "sub",
 		"args": args})
 }
 
-func (fcWs *FCoinWs) SubscribeKline(pair CurrencyPair, period int) error {
-	if fcWs.klineCallback == nil {
+func (fmWs *FMexWs) SubscribeKline(pair CurrencyPair, period int) error {
+	if fmWs.klineCallback == nil {
 		return errors.New("place set kline callback func")
 	}
 	periodS, isOk := _INERNAL_KLINE_PERIOD_CONVERTER[period]
@@ -174,23 +170,23 @@ func (fcWs *FCoinWs) SubscribeKline(pair CurrencyPair, period int) error {
 		periodS = "M1"
 	}
 
-	arg := fmt.Sprintf(FCoinWSKLines, periodS, strings.ToLower(pair.ToSymbol("")))
+	arg := fmt.Sprintf(FMexWSKLines, periodS, strings.ToLower(pair.ToSymbol("")))
 	args := make([]interface{}, 0)
 	args = append(args, arg)
 
-	return fcWs.subscribe(map[string]interface{}{
-		"id":   fcWs.clientId,
+	return fmWs.subscribe(map[string]interface{}{
+		"id":   fmWs.clientId,
 		"cmd":  "sub",
 		"args": args})
 }
 
-func (fcWs *FCoinWs) connectWs() {
-	fcWs.Do(func() {
-		fcWs.wsConn = fcWs.WsBuilder.Build()
+func (fmWs *FMexWs) connectWs() {
+	fmWs.Do(func() {
+		fmWs.wsConn = fmWs.WsBuilder.Build()
 	})
 }
 
-func (fcWs *FCoinWs) parseTickerData(tickmap []interface{}) *RawTicker {
+func (fmWs *FMexWs) parseTickerData(tickmap []interface{}) *RawTicker {
 	t := new(RawTicker)
 	t.Date = uint64(time.Now().UnixNano() / 1000000)
 	t.Last = ToFloat64(tickmap[0])
@@ -206,7 +202,7 @@ func (fcWs *FCoinWs) parseTickerData(tickmap []interface{}) *RawTicker {
 	return t
 }
 
-func (fcWs *FCoinWs) parseDepthData(bids, asks []interface{}) *Depth {
+func (fmWs *FMexWs) parseDepthData(bids, asks []interface{}) *Depth {
 	depth := new(Depth)
 	n := 0
 	for i := 0; i < len(bids); {
@@ -225,7 +221,7 @@ func (fcWs *FCoinWs) parseDepthData(bids, asks []interface{}) *Depth {
 	return depth
 }
 
-func (fcWs *FCoinWs) handle(msg []byte) error {
+func (fmWs *FMexWs) handle(msg []byte) error {
 	//fmt.Println("ws msg:", string(msg))
 	datamap := make(map[string]interface{})
 	err := json.Unmarshal(msg, &datamap)
@@ -243,27 +239,27 @@ func (fcWs *FCoinWs) handle(msg []byte) error {
 			st := time.Unix(0, stime*1000*1000)
 			lt := time.Now()
 			offset := st.Sub(lt).Seconds()
-			fcWs.timeoffset = int64(offset)
+			fmWs.timeoffset = int64(offset)
 		case "ticker":
-			tick := fcWs.parseTickerData(datamap["ticker"].([]interface{}))
-			pair, err := fcWs.getPairFromType(resp[1])
+			tick := fmWs.parseTickerData(datamap["ticker"].([]interface{}))
+			pair, err := getPairFromType(resp[1])
 			if err != nil {
 				panic(err)
 			}
 			tick.Pair = pair
-			fcWs.tickerCallback((*Ticker)(unsafe.Pointer(tick)))
+			fmWs.tickerCallback((*Ticker)(unsafe.Pointer(tick)))
 			return nil
 		case "depth":
-			dep := fcWs.parseDepthData(datamap["bids"].([]interface{}), datamap["asks"].([]interface{}))
+			dep := fmWs.parseDepthData(datamap["bids"].([]interface{}), datamap["asks"].([]interface{}))
 			stime := int64(ToInt(datamap["ts"]))
-			dep.UTime = time.Unix(0, stime*1000*1000)
-			pair, err := fcWs.getPairFromType(resp[2])
+			dep.UTime = time.Unix(0, stime*1000000)
+			pair, err := getPairFromType(resp[2])
 			if err != nil {
 				panic(err)
 			}
 			dep.Pair = pair
 
-			fcWs.depthCallback(dep)
+			fmWs.depthCallback(dep)
 			return nil
 		case "candle":
 			period := _INERNAL_KLINE_PERIOD_REVERTER[resp[1]]
@@ -275,12 +271,12 @@ func (fcWs *FCoinWs) handle(msg []byte) error {
 				Low:       ToFloat64(datamap["low"]),
 				Vol:       ToFloat64(datamap["quote_vol"]),
 			}
-			pair, err := fcWs.getPairFromType(resp[2])
+			pair, err := getPairFromType(resp[2])
 			if err != nil {
 				panic(err)
 			}
 			kline.Pair = pair
-			fcWs.klineCallback(kline, period)
+			fmWs.klineCallback(kline, period)
 			return nil
 		case "trade":
 			side := BUY
@@ -294,12 +290,12 @@ func (fcWs *FCoinWs) handle(msg []byte) error {
 				Price:  ToFloat64(datamap["price"]),
 				Date:   int64(ToUint64(datamap["ts"])),
 			}
-			pair, err := fcWs.getPairFromType(resp[1])
+			pair, err := getPairFromType(resp[1])
 			if err != nil {
 				panic(err)
 			}
 			trade.Pair = pair
-			fcWs.tradeCallback(trade)
+			fmWs.tradeCallback(trade)
 			return nil
 		default:
 			return errors.New("unknown message " + msgType)
@@ -309,11 +305,10 @@ func (fcWs *FCoinWs) handle(msg []byte) error {
 	return nil
 }
 
-func (fcWs *FCoinWs) getPairFromType(pair string) (CurrencyPair, error) {
-	for _, v := range fcWs.tradeSymbols {
-		if v.Name == pair {
-			return NewCurrencyPair2(v.BaseCurrency + "_" + v.QuoteCurrency), nil
-		}
+func getPairFromType(pair string) (CurrencyPair, error) {
+	s := strings.Split(pair, "usd_")
+	if len(s) == 2 {
+		return NewCurrencyPair2(s[0] + "_" + "USD"), nil
 	}
-	return NewCurrencyPair2("" + "_" + ""), errors.New("pair not support :" + pair)
+	return CurrencyPair{}, errors.New("pair not support :" + pair)
 }

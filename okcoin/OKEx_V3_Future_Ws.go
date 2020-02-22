@@ -49,8 +49,10 @@ func NewOKExV3FutureWs(contractIDProvider IContractIDProvider) *OKExV3FutureWs {
 	okV3Ws.authoriedSubs = make([]map[string]interface{}, 0)
 	okV3Ws.WsBuilder = NewWsBuilder().
 		WsUrl("wss://real.okex.com:10442/ws/v3").
-		Heartbeat([]byte("ping"), 30*time.Second).
-		ReconnectIntervalTime(24 * time.Hour).
+		AutoReconnect().
+		Heartbeat(func() []byte {
+			return []byte("ping")
+		}, 30*time.Second).
 		UnCompressFunc(FlateUnCompress).
 		ProtoHandleFunc(okV3Ws.handle)
 
@@ -277,14 +279,12 @@ func (okV3Ws *OKExV3FutureWs) reSubscribeAuthoriedChannel() {
 func (okV3Ws *OKExV3FutureWs) connectWs() {
 	okV3Ws.Do(func() {
 		okV3Ws.wsConn = okV3Ws.WsBuilder.Build()
-		okV3Ws.wsConn.ReceiveMessage()
 	})
 }
 
 func (okV3Ws *OKExV3FutureWs) handle(msg []byte) error {
 	if string(msg) == "pong" {
 		log.Println(string(msg))
-		okV3Ws.wsConn.UpdateActiveTime()
 		return nil
 	}
 

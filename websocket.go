@@ -1,9 +1,11 @@
 package goex
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"log"
+	. "github.com/nntaoli-project/GoEx/internal/logger"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -14,31 +16,28 @@ import (
 type WsConfig struct {
 	WsUrl                 string
 	ProxyUrl              string
-	ReqHeaders            map[string][]string          //连接的时候加入的头部信息
-	HeartbeatIntervalTime time.Duration                //
-	HeartbeatData         []byte                       //心跳数据
-	HeartbeatFunc         func() interface{}           //心跳数据2
-	ReconnectIntervalTime time.Duration                //定时重连时间间隔
+	ReqHeaders            map[string][]string //连接的时候加入的头部信息
+	HeartbeatIntervalTime time.Duration       //
+	HeartbeatData         func() []byte       //心跳数据2
+	IsAutoReconnect       bool
 	ProtoHandleFunc       func([]byte) error           //协议处理函数
 	UnCompressFunc        func([]byte) ([]byte, error) //解压函数
 	ErrorHandleFunc       func(err error)
 	IsDump                bool
+	readDeadLineTime      time.Duration
+	reconnectInterval     time.Duration
 }
 
 type WsConn struct {
-	*websocket.Conn
+	c *websocket.Conn
 	sync.Mutex
 	WsConfig
-
-	activeTime  time.Time
-	activeTimeL sync.Mutex
-
-	mu             chan struct{} // lock write data
-	closeHeartbeat chan struct{}
-	closeReconnect chan struct{}
-	closeRecv      chan struct{}
-	closeCheck     chan struct{}
-	subs           []interface{}
+	writeBufferChan        chan []byte
+	pingMessageBufferChan  chan []byte
+	pongMessageBufferChan  chan []byte
+	closeMessageBufferChan chan []byte
+	subs                   []interface{}
+	close                  chan bool
 }
 
 type WsBuilder struct {
@@ -46,7 +45,10 @@ type WsBuilder struct {
 }
 
 func NewWsBuilder() *WsBuilder {
-	return &WsBuilder{&WsConfig{}}
+	return &WsBuilder{&WsConfig{
+		ReqHeaders:        make(map[string][]string, 1),
+		reconnectInterval: time.Second * 10,
+	}}
 }
 
 func (b *WsBuilder) WsUrl(wsUrl string) *WsBuilder {
@@ -64,24 +66,24 @@ func (b *WsBuilder) ReqHeader(key, value string) *WsBuilder {
 	return b
 }
 
+func (b *WsBuilder) AutoReconnect() *WsBuilder {
+	b.wsConfig.IsAutoReconnect = true
+	return b
+}
+
 func (b *WsBuilder) Dump() *WsBuilder {
 	b.wsConfig.IsDump = true
 	return b
 }
 
-func (b *WsBuilder) Heartbeat(data []byte, t time.Duration) *WsBuilder {
+func (b *WsBuilder) Heartbeat(heartbeat func() []byte, t time.Duration) *WsBuilder {
 	b.wsConfig.HeartbeatIntervalTime = t
-	b.wsConfig.HeartbeatData = data
-	return b
-}
-func (b *WsBuilder) Heartbeat2(heartbeat func() interface{}, t time.Duration) *WsBuilder {
-	b.wsConfig.HeartbeatIntervalTime = t
-	b.wsConfig.HeartbeatFunc = heartbeat
+	b.wsConfig.HeartbeatData = heartbeat
 	return b
 }
 
-func (b *WsBuilder) ReconnectIntervalTime(t time.Duration) *WsBuilder {
-	b.wsConfig.ReconnectIntervalTime = t
+func (b *WsBuilder) ReconnectInterval(t time.Duration) *WsBuilder {
+	b.wsConfig.reconnectInterval = t
 	return b
 }
 
@@ -101,11 +103,6 @@ func (b *WsBuilder) ErrorHandleFunc(f func(err error)) *WsBuilder {
 }
 
 func (b *WsBuilder) Build() *WsConn {
-	if b.wsConfig.ErrorHandleFunc == nil {
-		b.wsConfig.ErrorHandleFunc = func(err error) {
-			log.Println(err)
-		}
-	}
 	wsConn := &WsConn{WsConfig: *b.wsConfig}
 	return wsConn.NewWs()
 }
@@ -114,193 +111,218 @@ func (ws *WsConn) NewWs() *WsConn {
 	ws.Lock()
 	defer ws.Unlock()
 
-	ws.connect()
+	if ws.HeartbeatIntervalTime == 0 {
+		ws.readDeadLineTime = time.Minute
+	} else {
+		ws.readDeadLineTime = ws.HeartbeatIntervalTime * 2
+	}
 
-	ws.mu = make(chan struct{}, 1)
-	ws.closeHeartbeat = make(chan struct{}, 1)
-	ws.closeReconnect = make(chan struct{}, 1)
-	ws.closeRecv = make(chan struct{}, 1)
-	ws.closeCheck = make(chan struct{}, 1)
+	if err := ws.connect(); err != nil {
+		Log.Panic(fmt.Errorf("[%s] %s", ws.WsUrl, err.Error()))
+	}
 
-	ws.HeartbeatTimer()
-	ws.ReConnectTimer()
-	ws.checkStatusTimer()
+	ws.close = make(chan bool, 1)
+	ws.pingMessageBufferChan = make(chan []byte, 10)
+	ws.pongMessageBufferChan = make(chan []byte, 10)
+	ws.closeMessageBufferChan = make(chan []byte, 10)
+	ws.writeBufferChan = make(chan []byte, 10)
+
+	go ws.writeRequest()
+	go ws.receiveMessage()
 
 	return ws
 }
 
-func (ws *WsConn) connect() {
+func (ws *WsConn) connect() error {
 	dialer := websocket.DefaultDialer
 
 	if ws.ProxyUrl != "" {
 		proxy, err := url.Parse(ws.ProxyUrl)
 		if err == nil {
-			log.Println("proxy url :", proxy)
+			Log.Infof("[ws][%s] proxy url:%s", ws.WsUrl, proxy)
 			dialer.Proxy = http.ProxyURL(proxy)
 		} else {
-			log.Println("proxy url error ? ", err)
+			Log.Errorf("[ws][%s]parse proxy url [%s] err %s  ", ws.WsUrl, ws.ProxyUrl, err.Error())
 		}
 	}
 
 	wsConn, resp, err := dialer.Dial(ws.WsUrl, http.Header(ws.ReqHeaders))
 	if err != nil {
-		panic(err)
+		Log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
+		if ws.IsDump && resp != nil {
+			dumpData, _ := httputil.DumpResponse(resp, true)
+			Log.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))
+		}
+		return err
 	}
 
-	ws.Conn = wsConn
+	ws.c = wsConn
+
+	if ws.HeartbeatIntervalTime > 0 {
+		wsConn.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
+	}
 
 	if ws.IsDump {
 		dumpData, _ := httputil.DumpResponse(resp, true)
-		log.Println(string(dumpData))
+		Log.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))
 	}
+	Log.Infof("[ws][%s] connected", ws.WsUrl)
 
-	ws.UpdateActiveTime()
+	return nil
 }
 
-func (ws *WsConn) SendJsonMessage(v interface{}) error {
-	ws.mu <- struct{}{}
-	defer func() {
-		<-ws.mu
-	}()
-	return ws.WriteJSON(v)
-}
-
-func (ws *WsConn) SendTextMessage(data []byte) error {
-	ws.mu <- struct{}{}
-	defer func() {
-		<-ws.mu
-	}()
-	return ws.WriteMessage(websocket.TextMessage, data)
-}
-
-func (ws *WsConn) ReConnect() {
-	ws.Lock()
-	defer ws.Unlock()
-
-	log.Println("close ws  error :", ws.Close())
-	time.Sleep(time.Second)
-
-	ws.connect()
-
-	//re subscribe
-	for _, sub := range ws.subs {
-		log.Println("subscribe:", sub)
-		ws.SendJsonMessage(sub)
-	}
-}
-
-func (ws *WsConn) ReConnectTimer() {
-	if ws.ReconnectIntervalTime == 0 {
-		return
-	}
-
-	timer := time.NewTimer(ws.ReconnectIntervalTime)
-
-	go func() {
-		ws.clearChannel(ws.closeReconnect)
-
-		for {
-			select {
-			case <-timer.C:
-				log.Println("reconnect websocket")
-				ws.ReConnect()
-				timer.Reset(ws.ReconnectIntervalTime)
-			case <-ws.closeReconnect:
-				timer.Stop()
-				log.Println("close websocket connect ,  exiting reconnect timer goroutine.")
-				return
-			}
+func (ws *WsConn) reconnect() {
+	ws.c.Close() //主动关闭一次
+	var err error
+	for retry := 1; retry <= 100; retry++ {
+		err = ws.connect()
+		if err != nil {
+			Log.Errorf("[ws] [%s] websocket reconnect fail , %s", ws.WsUrl, err.Error())
+		} else {
+			break
 		}
-	}()
+		time.Sleep(ws.WsConfig.reconnectInterval * time.Duration(retry))
+	}
+
+	if err != nil {
+		Log.Errorf("[ws] [%s] retry reconnect fail , begin exiting. ", ws.WsUrl)
+		ws.CloseWs()
+		if ws.ErrorHandleFunc != nil {
+			ws.ErrorHandleFunc(errors.New("retry reconnect fail"))
+		}
+	} else {
+		//re subscribe
+		var tmp []interface{}
+		copy(tmp, ws.subs)
+		ws.subs = ws.subs[:0]
+		for _, sub := range tmp {
+			ws.Subscribe(sub)
+		}
+	}
 }
 
-func (ws *WsConn) checkStatusTimer() {
+func (ws *WsConn) writeRequest() {
+	var (
+		heartTimer *time.Timer
+		err        error
+	)
+
 	if ws.HeartbeatIntervalTime == 0 {
-		return
+		heartTimer = time.NewTimer(time.Hour)
+	} else {
+		heartTimer = time.NewTimer(ws.HeartbeatIntervalTime)
 	}
 
-	timer := time.NewTimer(ws.HeartbeatIntervalTime)
-
-	go func() {
-		ws.clearChannel(ws.closeCheck)
-
-		for {
-			select {
-			case <-timer.C:
-				now := time.Now()
-				if now.Sub(ws.activeTime) >= 2*ws.HeartbeatIntervalTime {
-					log.Println("active time [ ", ws.activeTime, " ] has expired , begin reconnect ws.")
-					ws.ReConnect()
-				}
-				timer.Reset(ws.HeartbeatIntervalTime)
-			case <-ws.closeCheck:
-				log.Println("check status timer exiting")
-				return
+	for {
+		select {
+		case <-ws.close:
+			Log.Infof("[ws][%s] close websocket , exiting write message goroutine.", ws.WsUrl)
+			return
+		case d := <-ws.writeBufferChan:
+			err = ws.c.WriteMessage(websocket.TextMessage, d)
+		case d := <-ws.pingMessageBufferChan:
+			err = ws.c.WriteMessage(websocket.PingMessage, d)
+		case d := <-ws.pongMessageBufferChan:
+			err = ws.c.WriteMessage(websocket.PongMessage, d)
+		case d := <-ws.closeMessageBufferChan:
+			err = ws.c.WriteMessage(websocket.CloseMessage, d)
+		case <-heartTimer.C:
+			if ws.HeartbeatIntervalTime > 0 {
+				//Log.Debug("send heartbeat data")
+				err = ws.c.WriteMessage(websocket.TextMessage, ws.HeartbeatData())
+				heartTimer.Reset(ws.HeartbeatIntervalTime)
 			}
 		}
-	}()
-}
 
-func (ws *WsConn) HeartbeatTimer() {
-	log.Println("heartbeat interval time = ", ws.HeartbeatIntervalTime)
-	if ws.HeartbeatIntervalTime == 0 || (ws.HeartbeatFunc == nil && ws.HeartbeatData == nil) {
-		return
+		if err != nil {
+			Log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
+			time.Sleep(time.Second)
+		}
 	}
-
-	timer := time.NewTicker(ws.HeartbeatIntervalTime)
-	go func() {
-		ws.clearChannel(ws.closeHeartbeat)
-
-		for {
-			select {
-			case <-timer.C:
-				var err error
-				if ws.HeartbeatFunc != nil {
-					err = ws.SendJsonMessage(ws.HeartbeatFunc())
-				} else {
-					err = ws.SendTextMessage(ws.HeartbeatData)
-				}
-				if err != nil {
-					log.Println("heartbeat error , ", err)
-					time.Sleep(time.Second)
-				}
-			case <-ws.closeHeartbeat:
-				timer.Stop()
-				log.Println("close websocket connect , exiting heartbeat goroutine.")
-				return
-			}
-		}
-	}()
 }
 
 func (ws *WsConn) Subscribe(subEvent interface{}) error {
-	log.Println("Subscribe:", subEvent)
-	err := ws.SendJsonMessage(subEvent)
+	data, err := json.Marshal(subEvent)
 	if err != nil {
+		Log.Errorf("[ws][%s] json encode error , %s", ws.WsUrl, err)
 		return err
 	}
+	ws.writeBufferChan <- data
 	ws.subs = append(ws.subs, subEvent)
 	return nil
 }
 
-func (ws *WsConn) ReceiveMessage() {
-	ws.clearChannel(ws.closeRecv)
+func (ws *WsConn) SendMessage(msg []byte) {
+	ws.writeBufferChan <- msg
+}
 
-	go func() {
-		for {
+func (ws *WsConn) SendPingMessage(msg []byte) {
+	ws.pingMessageBufferChan <- msg
+}
 
-			if len(ws.closeRecv) > 0 {
-				<-ws.closeRecv
-				log.Println("close websocket , exiting receive message goroutine.")
+func (ws *WsConn) SendPongMessage(msg []byte) {
+	ws.pongMessageBufferChan <- msg
+}
+
+func (ws *WsConn) SendCloseMessage(msg []byte) {
+	ws.closeMessageBufferChan <- msg
+}
+
+func (ws *WsConn) SendJsonMessage(m interface{}) error {
+	data, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	ws.writeBufferChan <- data
+	return nil
+}
+
+func (ws *WsConn) receiveMessage() {
+	//exit
+	ws.c.SetCloseHandler(func(code int, text string) error {
+		Log.Infof("[ws][%s] websocket exiting [code=%d , text=%s]", ws.WsUrl, code, text)
+		ws.CloseWs()
+		return nil
+	})
+
+	ws.c.SetPongHandler(func(pong string) error {
+		Log.Debugf("[%s] received [pong] %s", ws.WsUrl, pong)
+		ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
+		return nil
+	})
+
+	ws.c.SetPingHandler(func(ping string) error {
+		Log.Debugf("[%s] received [ping] %s", ws.WsUrl, ping)
+		ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
+		return nil
+	})
+
+	for {
+		select {
+		case <-ws.close:
+			Log.Infof("[ws][%s] close websocket , exiting receive message goroutine.", ws.WsUrl)
+			return
+		default:
+			t, msg, err := ws.c.ReadMessage()
+
+			if err != nil {
+				Log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
+				if ws.IsAutoReconnect {
+					//	if _, ok := err.(*websocket.CloseError); ok {
+					Log.Infof("[ws][%s] Unexpected Closed , Begin Retry Connect.", ws.WsUrl)
+					ws.reconnect()
+					//	}
+					continue
+				}
+
+				if ws.ErrorHandleFunc != nil {
+					ws.ErrorHandleFunc(err)
+				}
+
 				return
 			}
 
-			t, msg, err := ws.ReadMessage()
-			if err != nil {
-				ws.ErrorHandleFunc(err)
-				time.Sleep(time.Second)
-				continue
-			}
+			ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
 
 			switch t {
 			case websocket.TextMessage:
@@ -311,45 +333,27 @@ func (ws *WsConn) ReceiveMessage() {
 				} else {
 					msg2, err := ws.UnCompressFunc(msg)
 					if err != nil {
-						ws.ErrorHandleFunc(fmt.Errorf("%s,%s", "un compress error", err.Error()))
+						Log.Errorf("[ws][%s] uncompress error %s", ws.WsUrl, err.Error())
 					} else {
-						err := ws.ProtoHandleFunc(msg2)
-						if err != nil {
-							ws.ErrorHandleFunc(err)
-						}
+						ws.ProtoHandleFunc(msg2)
 					}
 				}
 			case websocket.CloseMessage:
 				ws.CloseWs()
 				return
 			default:
-				log.Println("error websocket message type , content is :\n", string(msg))
+				Log.Errorf("[ws][%s] error websocket message type , content is :\n %s \n", ws.WsUrl, string(msg))
 			}
 		}
-	}()
-}
-
-func (ws *WsConn) UpdateActiveTime() {
-	ws.activeTimeL.Lock()
-	defer ws.activeTimeL.Unlock()
-
-	ws.activeTime = time.Now()
+	}
 }
 
 func (ws *WsConn) CloseWs() {
-	ws.clearChannel(ws.closeCheck)
-	ws.clearChannel(ws.closeReconnect)
-	ws.clearChannel(ws.closeHeartbeat)
-	ws.clearChannel(ws.closeRecv)
-
-	ws.closeReconnect <- struct{}{}
-	ws.closeHeartbeat <- struct{}{}
-	ws.closeRecv <- struct{}{}
-	ws.closeCheck <- struct{}{}
-
-	err := ws.Close()
+	ws.close <- true
+	close(ws.close)
+	err := ws.c.Close()
 	if err != nil {
-		log.Println("close websocket error , ", err)
+		Log.Error("[ws][", ws.WsUrl, "]close websocket error ,", err)
 	}
 }
 

@@ -3,9 +3,9 @@ package binance
 import (
 	"errors"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"github.com/json-iterator/go"
 	. "github.com/nntaoli-project/GoEx"
+	"strconv"
 	"strings"
 	"time"
 	"unsafe"
@@ -21,6 +21,7 @@ type BinanceWs struct {
 	depthCallback   func(*Depth)
 	tradeCallback   func(*Trade)
 	klineCallback   func(*Kline, int)
+	wsConns         []*WsConn
 }
 
 type AggTrade struct {
@@ -92,14 +93,21 @@ func (bnWs *BinanceWs) SetCallbacks(
 }
 
 func (bnWs *BinanceWs) subscribe(endpoint string, handle func(msg []byte) error) {
-	wsBuilder := NewWsBuilder().
+	wsConn := NewWsBuilder().
 		WsUrl(endpoint).
-		ReconnectIntervalTime(4 * time.Hour).
-		ProtoHandleFunc(handle)
-	wsBuilder.ProxyUrl(bnWs.proxyUrl)
-	wsConn := wsBuilder.Build()
-	wsConn.ReceiveMessage()
+		AutoReconnect().
+		ProtoHandleFunc(handle).
+		ProxyUrl(bnWs.proxyUrl).
+		ReconnectInterval(time.Millisecond * 5).
+		Build()
+	bnWs.wsConns = append(bnWs.wsConns, wsConn)
 	go bnWs.exitHandler(wsConn)
+}
+
+func (bnWs *BinanceWs) Close() {
+	for _, con := range bnWs.wsConns {
+		con.CloseWs()
+	}
 }
 
 func (bnWs *BinanceWs) SubscribeDepth(pair CurrencyPair, size int) error {
@@ -109,7 +117,7 @@ func (bnWs *BinanceWs) SubscribeDepth(pair CurrencyPair, size int) error {
 	if size != 5 && size != 10 && size != 20 {
 		return errors.New("please set depth size as 5 / 10 / 20")
 	}
-	endpoint := fmt.Sprintf("%s/%s@depth%d", bnWs.baseURL, strings.ToLower(pair.ToSymbol("")), size)
+	endpoint := fmt.Sprintf("%s/%s@depth%d@100ms", bnWs.baseURL, strings.ToLower(pair.ToSymbol("")), size)
 
 	handle := func(msg []byte) error {
 		rawDepth := struct {
@@ -161,7 +169,6 @@ func (bnWs *BinanceWs) SubscribeTicker(pair CurrencyPair) error {
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -209,7 +216,6 @@ func (bnWs *BinanceWs) SubscribeTrade(pair CurrencyPair) error {
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -249,7 +255,6 @@ func (bnWs *BinanceWs) SubscribeKline(pair CurrencyPair, period int) error {
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -282,7 +287,7 @@ func (bnWs *BinanceWs) parseDepthData(bids, asks [][]interface{}) *Depth {
 
 func (bnWs *BinanceWs) parseKlineData(k map[string]interface{}) *Kline {
 	kline := &Kline{
-		Timestamp: int64(ToInt(k["t"])),
+		Timestamp: int64(ToInt(k["t"])) / 1000,
 		Open:      ToFloat64(k["o"]),
 		Close:     ToFloat64(k["c"]),
 		High:      ToFloat64(k["h"]),
@@ -335,7 +340,6 @@ func (bnWs *BinanceWs) SubscribeAggTrade(pair CurrencyPair, tradeCallback func(*
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -381,18 +385,18 @@ func (bnWs *BinanceWs) SubscribeDiffDepth(pair CurrencyPair, depthCallback func(
 }
 
 func (bnWs *BinanceWs) exitHandler(c *WsConn) {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	defer c.Close()
+	pingTicker := time.NewTicker(10 * time.Minute)
+	pongTicker := time.NewTicker(time.Second)
+	defer pingTicker.Stop()
+	defer pongTicker.Stop()
+	defer c.CloseWs()
 
 	for {
 		select {
-		case t := <-ticker.C:
-			err := c.WriteMessage(websocket.PingMessage, []byte(t.String()))
-			if err != nil {
-				fmt.Println("wsWrite err:", err)
-				return
-			}
+		case t := <-pingTicker.C:
+			c.SendPingMessage([]byte(strconv.Itoa(int(t.UnixNano() / int64(time.Millisecond)))))
+		case t := <-pongTicker.C:
+			c.SendPongMessage([]byte(strconv.Itoa(int(t.UnixNano() / int64(time.Millisecond)))))
 		}
 	}
 }

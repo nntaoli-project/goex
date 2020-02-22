@@ -20,21 +20,35 @@ var ba = New(&http.Client{
 		}).Dial,
 	},
 	Timeout: 10 * time.Second,
-}, "", "")
+}, "q6y6Gr7fF3jSJLncpfn2PmAA0xu4XRiRFHpFkyJy3d7K68WUxY0Gt8rrajCDUfbI",
+	"AP8C2kh4RyISN3fpRCFMZJddf233XbPcYWQ1S7gBan3pGjCQg2JnyQFSJrIaNzRh",
+)
 
 func TestBinance_GetTicker(t *testing.T) {
-	return
 	ticker, _ := ba.GetTicker(goex.LTC_BTC)
 	t.Log(ticker)
 }
-func TestBinance_LimitSell(t *testing.T) {
-	return
-	order, err := ba.LimitSell("1", "1", goex.LTC_BTC)
+
+func TestBinance_LimitBuy(t *testing.T) {
+	order, err := ba.LimitBuy("0.005", "8000", goex.BTC_USDT)
 	t.Log(order, err)
 }
 
+func TestBinance_LimitSell(t *testing.T) {
+	order, err := ba.LimitSell("0.01", "0.1", goex.LTC_BTC)
+	t.Log(order, err)
+}
+
+func TestBinance_CancelOrder(t *testing.T) {
+	t.Log(ba.CancelOrder("1156274704", goex.BTC_USDT))
+}
+
+func TestBinance_GetOneOrder(t *testing.T) {
+	t.Log(ba.GetOneOrder("1156274704", goex.BTC_USDT))
+}
+
 func TestBinance_GetDepth(t *testing.T) {
-	return
+	//return
 	dep, err := ba.GetDepth(5, goex.ETH_BTC)
 	t.Log(err)
 	if err == nil {
@@ -44,21 +58,32 @@ func TestBinance_GetDepth(t *testing.T) {
 }
 
 func TestBinance_GetAccount(t *testing.T) {
-	return
 	account, err := ba.GetAccount()
 	t.Log(account, err)
 }
 
 func TestBinance_GetUnfinishOrders(t *testing.T) {
-	return
 	orders, err := ba.GetUnfinishOrders(goex.ETH_BTC)
 	t.Log(orders, err)
 }
 func TestBinance_GetKlineRecords(t *testing.T) {
-	return
-	t.Log(ba.GetKlineRecords(goex.ETH_BTC, goex.KLINE_PERIOD_1MIN, 100, int(time.Now().Add(-2*time.Hour).UnixNano())))
+	before := time.Now().Add(-time.Hour).Unix() * 1000
+	kline, _ := ba.GetKlineRecords(goex.ETH_BTC, goex.KLINE_PERIOD_5MIN, 100, int(before))
+	for _, k := range kline {
+		tt := time.Unix(k.Timestamp, 0)
+		t.Log(tt, k.Open, k.Close, k.High, k.Low, k.Vol)
+	}
+}
+
+func TestBinance_GetTrades(t *testing.T) {
+	t.Log(ba.GetTrades(goex.BTC_USDT, 0))
 }
 
 func TestBinance_GetTradeSymbols(t *testing.T) {
-	t.Log(ba.GetTradeSymbols(goex.BTC_USDT))
+	t.Log(ba.GetTradeSymbol(goex.BTC_USDT))
+}
+
+func TestBinance_SetTimeOffset(t *testing.T) {
+	t.Log(ba.setTimeOffset())
+	t.Log(ba.timeOffset)
 }

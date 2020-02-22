@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	. "github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/internal/logger"
 	"sort"
 	"strings"
 	"sync"
@@ -85,9 +86,9 @@ func (ok *OKExFuture) getFutureContractId(pair CurrencyPair, contractAlias strin
 
 	now := time.Now()
 	hour := now.Hour()
-	mintue := now.Minute()
+	minute := now.Minute()
 
-	if ok.allContractInfo.uTime.IsZero() || (hour == 16 && mintue <= 11) {
+	if ok.allContractInfo.uTime.IsZero() || (hour == 16 && minute <= 11) {
 		ok.Lock()
 		defer ok.Unlock()
 
@@ -96,13 +97,19 @@ func (ok *OKExFuture) getFutureContractId(pair CurrencyPair, contractAlias strin
 			ok.allContractInfo.uTime = time.Now()
 			ok.allContractInfo.contractInfos = contractInfo
 		} else {
-			panic(err)
+			time.Sleep(120 * time.Millisecond) //retry
+			contractInfo, err = ok.GetFutureContractInfo()
+			if err != nil {
+				logger.Warnf(fmt.Sprintf("Get Futures Contract Alias Error [%s] ???", err.Error()))
+			}
 		}
 	}
 
 	contractId := ""
 	for _, itm := range ok.allContractInfo.contractInfos {
-		if itm.Alias == contractAlias && itm.UnderlyingIndex == pair.CurrencyA.Symbol && itm.QuoteCurrency == pair.CurrencyB.Symbol {
+		if itm.Alias == contractAlias &&
+			itm.UnderlyingIndex == pair.CurrencyA.Symbol &&
+			itm.QuoteCurrency == pair.CurrencyB.Symbol {
 			contractId = itm.InstrumentID
 			break
 		}
@@ -140,6 +147,44 @@ func (ok *OKExFuture) GetFutureTicker(currencyPair CurrencyPair, contractType st
 		Last: response.Last,
 		Vol:  response.Volume24h,
 		Date: uint64(date.UnixNano() / int64(time.Millisecond))}, nil
+}
+
+func (ok *OKExFuture) GetFutureAllTicker() (*[]FutureTicker, error) {
+	var urlPath = "/api/futures/v3/instruments/ticker"
+
+	var response []struct {
+		InstrumentId string  `json:"instrument_id"`
+		Last         float64 `json:"last,string"`
+		High24h      float64 `json:"high_24h,string"`
+		Low24h       float64 `json:"low_24h,string"`
+		BestBid      float64 `json:"best_bid,string"`
+		BestAsk      float64 `json:"best_ask,string"`
+		Volume24h    float64 `json:"volume_24h,string"`
+		Timestamp    string  `json:"timestamp"`
+	}
+
+	err := ok.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var tickers []FutureTicker
+	for _, t := range response {
+		date, _ := time.Parse(time.RFC3339, t.Timestamp)
+		tickers = append(tickers, FutureTicker{
+			ContractType: t.InstrumentId,
+			Ticker: &Ticker{
+				Pair: NewCurrencyPair3(t.InstrumentId, "-"),
+				Sell: t.BestAsk,
+				Buy:  t.BestBid,
+				Low:  t.Low24h,
+				High: t.High24h,
+				Last: t.Last,
+				Vol:  t.Volume24h,
+				Date: uint64(date.UnixNano() / int64(time.Millisecond))}})
+	}
+
+	return &tickers, nil
 }
 
 func (ok *OKExFuture) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
@@ -189,10 +234,50 @@ func (ok *OKExFuture) GetFutureIndex(currencyPair CurrencyPair) (float64, error)
 }
 
 type CrossedAccountInfo struct {
-	MarginMode string  `json:"margin_mode"`
-	Equity     float64 `json:"equity,string"`
+	MarginMode       string  `json:"margin_mode"`
+	Equity           float64 `json:"equity,string"`
+	RealizedPnl      float64 `json:"realized_pnl,string"`
+	UnrealizedPnl    float64 `json:"unrealized_pnl,string"`
+	MarginFrozen     float64 `json:"margin_frozen,string"`
+	MarginRatio      float64 `json:"margin_ratio,string"`
+	MaintMarginRatio float64 `json:"maint_margin_ratio,string"`
 }
 
+func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount, error) {
+	if len(currencyPair) == 0 {
+		return ok.GetFutureUserinfo()
+	}
+
+	pair := currencyPair[0]
+	urlPath := "/api/futures/v3/accounts/" + pair.ToLower().ToSymbol("-")
+	var response CrossedAccountInfo
+
+	err := ok.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	acc := new(FutureAccount)
+	acc.FutureSubAccounts = make(map[Currency]FutureSubAccount, 1)
+	if response.MarginMode == "crossed" {
+		acc.FutureSubAccounts[pair.CurrencyA] = FutureSubAccount{
+			Currency:      pair.CurrencyA,
+			AccountRights: response.Equity,
+			ProfitReal:    response.RealizedPnl,
+			ProfitUnreal:  response.UnrealizedPnl,
+			KeepDeposit:   response.MarginFrozen,
+			RiskRate:      response.MarginRatio,
+		}
+	} else {
+		//todo 逐仓模式
+		return nil, errors.New("GoEx unsupported  fixed margin mode")
+	}
+
+	return acc, nil
+}
+
+//deprecated
+//基本上已经报废，OK限制10s一次，但是基本上都会返回error：{"code":30014,"message":"Too Many Requests"}
 func (ok *OKExFuture) GetFutureUserinfo() (*FutureAccount, error) {
 	urlPath := "/api/futures/v3/accounts"
 	var response struct {
@@ -274,7 +359,7 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 	//当matchPrice=1以对手价下单，order_type只能选择0:普通委托
 	if param.MatchPrice == 1 {
 		println("注意:当matchPrice=1以对手价下单时，order_type只能选择0:普通委托")
-		param.OrderType = ORDER_TYPE_ORDINARY
+		param.OrderType = ORDER_FEATURE_ORDINARY
 	}
 
 	reqBody, _, _ := ok.BuildRequestBody(param)
@@ -495,12 +580,16 @@ func (ok *OKExFuture) GetUnfinishFutureOrders(currencyPair CurrencyPair, contrac
 func (ok *OKExFuture) GetFee() (float64, error) { panic("") }
 
 func (ok *OKExFuture) GetContractValue(currencyPair CurrencyPair) (float64, error) {
-	for _, info := range ok.allContractInfo.contractInfos {
-		if info.UnderlyingIndex == currencyPair.CurrencyA.Symbol && info.QuoteCurrency == currencyPair.CurrencyB.Symbol {
-			return ToFloat64(info.ContractVal), nil
-		}
+	//for _, info := range ok.allContractInfo.contractInfos {
+	//	if info.UnderlyingIndex == currencyPair.CurrencyA.Symbol && info.QuoteCurrency == currencyPair.CurrencyB.Symbol {
+	//		return ToFloat64(info.ContractVal), nil
+	//	}
+	//}
+	if currencyPair.CurrencyA.Eq(BTC) {
+		return 100, nil
 	}
-	return 0, nil
+
+	return 10, nil
 }
 
 func (ok *OKExFuture) GetDeliveryTime() (int, int, int, int) {

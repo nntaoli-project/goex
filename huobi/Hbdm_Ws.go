@@ -70,12 +70,9 @@ func NewHbdmWs() *HbdmWs {
 	hbdmWs := &HbdmWs{WsBuilder: NewWsBuilder()}
 	hbdmWs.WsBuilder = hbdmWs.WsBuilder.
 		WsUrl("wss://api.hbdm.com/ws").
+		AutoReconnect().
 		//Heartbeat([]byte("{\"event\": \"ping\"} "), 30*time.Second).
 		//Heartbeat(func() []byte { return []byte("{\"op\":\"ping\"}") }(), 5*time.Second).
-		ErrorHandleFunc(func(err error) {
-			log.Println("ws internal error:", err)
-		}).
-		ReconnectIntervalTime(24 * time.Hour).
 		UnCompressFunc(GzipUnCompress).
 		ProtoHandleFunc(hbdmWs.handle)
 	return hbdmWs
@@ -117,7 +114,7 @@ func (hbdmWs *HbdmWs) SubscribeTrade(pair CurrencyPair, contract string) error {
 }
 
 func (hbdmWs *HbdmWs) subscribe(sub map[string]interface{}) error {
-	log.Println(sub)
+//	log.Println(sub)
 	hbdmWs.connectWs()
 	return hbdmWs.wsConn.Subscribe(sub)
 }
@@ -125,7 +122,6 @@ func (hbdmWs *HbdmWs) subscribe(sub map[string]interface{}) error {
 func (hbdmWs *HbdmWs) connectWs() {
 	hbdmWs.Do(func() {
 		hbdmWs.wsConn = hbdmWs.WsBuilder.Build()
-		hbdmWs.wsConn.ReceiveMessage()
 	})
 }
 
@@ -136,12 +132,12 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 			Ping int64
 		}
 		json.Unmarshal(msg, &ping)
+
 		pong := struct {
 			Pong int64 `json:"pong"`
 		}{ping.Ping}
 
 		hbdmWs.wsConn.SendJsonMessage(pong)
-		hbdmWs.wsConn.UpdateActiveTime()
 		return nil
 	}
 
@@ -208,7 +204,7 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 }
 
 func (hbdmWs *HbdmWs) parseTicker(r DetailResponse) FutureTicker {
-	return FutureTicker{Ticker: &Ticker{High: r.High, Low: r.Low, Vol: r.Amount},}
+	return FutureTicker{Ticker: &Ticker{High: r.High, Low: r.Low, Vol: r.Amount}}
 }
 
 func (hbdmWs *HbdmWs) parseDepth(r DepthResponse) Depth {
@@ -258,7 +254,7 @@ func (hbdmWs *HbdmWs) parseTrade(r TradeResponse) []Trade {
 }
 
 func (hbdmWs *HbdmWs) adaptContractSymbol(contract string) string {
-	log.Println(contract)
+	//log.Println(contract)
 	switch contract {
 	case QUARTER_CONTRACT:
 		return "CQ"

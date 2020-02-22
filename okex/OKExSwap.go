@@ -72,6 +72,7 @@ const (
 	GET_POSITION          = "/api/swap/v3/%s/position"
 	GET_DEPTH             = "/api/swap/v3/instruments/%s/depth?size=%d"
 	GET_TICKER            = "/api/swap/v3/instruments/%s/ticker"
+	GET_ALL_TICKER        = "/api/swap/v3/instruments/ticker"
 	GET_UNFINISHED_ORDERS = "/api/swap/v3/orders/%s?status=%d&limit=%d"
 )
 
@@ -95,7 +96,16 @@ func (ok *OKExSwap) GetExchangeName() string {
 }
 
 func (ok *OKExSwap) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
-	var resp BaseTickerInfo
+	var resp struct {
+		InstrumentId string  `json:"instrument_id"`
+		Last         float64 `json:"last,string"`
+		High24h      float64 `json:"high_24h,string"`
+		Low24h       float64 `json:"low_24h,string"`
+		BestBid      float64 `json:"best_bid,string"`
+		BestAsk      float64 `json:"best_ask,string"`
+		Volume24h    float64 `json:"volume_24h,string"`
+		Timestamp    string  `json:"timestamp"`
+	}
 	contractType = ok.adaptContractType(currencyPair)
 	err := ok.DoRequest("GET", fmt.Sprintf(GET_TICKER, contractType), "", &resp)
 	if err != nil {
@@ -109,7 +119,35 @@ func (ok *OKExSwap) GetFutureTicker(currencyPair CurrencyPair, contractType stri
 		Low:  resp.Low24h,
 		High: resp.High24h,
 		Vol:  resp.Volume24h,
+		Buy:  resp.BestBid,
+		Sell: resp.BestAsk,
 		Date: uint64(date.UnixNano() / int64(time.Millisecond))}, nil
+}
+
+func (ok *OKExSwap) GetFutureAllTicker() (*[]FutureTicker, error) {
+	var resp SwapTickerList
+	err := ok.DoRequest("GET", GET_ALL_TICKER, "", &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	var tickers []FutureTicker
+	for _, t := range resp {
+		date, _ := time.Parse(time.RFC3339, t.Timestamp)
+		tickers = append(tickers, FutureTicker{
+			ContractType: t.InstrumentId,
+			Ticker: &Ticker{
+				Pair: NewCurrencyPair3(t.InstrumentId, "-"),
+				Sell: t.BestAsk,
+				Buy:  t.BestBid,
+				Low:  t.Low24h,
+				High: t.High24h,
+				Last: t.Last,
+				Vol:  t.Volume24h,
+				Date: uint64(date.UnixNano() / int64(time.Millisecond))}})
+	}
+
+	return &tickers, nil
 }
 
 func (ok *OKExSwap) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
@@ -210,7 +248,7 @@ type PlaceOrdersInfo struct {
 func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
 
 	reqBody, _, _ := ok.OKEx.BuildRequestBody(PlaceOrderInfo{
-		BasePlaceOrderInfo{ClientOid: strings.Replace(uuid.New().String(), "-", "", 32), Price: price, MatchPrice: "0", Type: fmt.Sprint(openType), Size: amount},
+		BasePlaceOrderInfo{ClientOid: strings.Replace(uuid.New().String(), "-", "", 32), Price: price, MatchPrice: fmt.Sprint(matchPrice), Type: fmt.Sprint(openType), Size: amount},
 		ok.adaptContractType(currencyPair),
 	})
 
@@ -406,14 +444,10 @@ func (ok *OKExSwap) GetFuturePosition(currencyPair CurrencyPair, contractType st
  * LTC/ETH/ETC/BCH: 10美元一张合约
  */
 func (ok *OKExSwap) GetContractValue(currencyPair CurrencyPair) (float64, error) {
-	switch currencyPair {
-	case BTC_USD:
+	if currencyPair.CurrencyA.Eq(BTC) {
 		return 100, nil
-	case LTC_USD, ETH_USD, ETC_USD, BCH_USD:
-		return 10, nil
 	}
-
-	return -1, errors.New("error")
+	return 10, nil
 }
 
 func (ok *OKExSwap) GetFee() (float64, error) {
@@ -470,5 +504,5 @@ func (ok *OKExSwap) AdaptTradeStatus(status int) TradeStatus {
 }
 
 func (ok *OKExSwap) adaptContractType(currencyPair CurrencyPair) string {
-	return fmt.Sprintf("%s-SWAP", currencyPair.ToSymbol("-"))
+	return fmt.Sprintf("%s-SWAP", currencyPair.AdaptUsdtToUsd().ToSymbol("-"))
 }

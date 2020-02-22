@@ -25,8 +25,10 @@ func NewOKExFutureWs() *OKExFutureWs {
 	okWs := &OKExFutureWs{WsBuilder: NewWsBuilder()}
 	okWs.WsBuilder = okWs.WsBuilder.
 		WsUrl("wss://real.okex.com:10440/ws/v1").
-		Heartbeat([]byte("{\"event\": \"ping\"} "), 30*time.Second).
-		ReconnectIntervalTime(24 * time.Hour).
+		AutoReconnect().
+		Heartbeat(func() []byte {
+			return []byte("{\"event\": \"ping\"} ")
+		}, 30*time.Second).
 		UnCompressFunc(FlateUnCompress).
 		ProtoHandleFunc(okWs.handle)
 	return okWs
@@ -75,7 +77,6 @@ func (okWs *OKExFutureWs) subscribe(sub map[string]interface{}) error {
 func (okWs *OKExFutureWs) connectWs() {
 	okWs.Do(func() {
 		okWs.wsConn = okWs.WsBuilder.Build()
-		okWs.wsConn.ReceiveMessage()
 	})
 }
 
@@ -83,7 +84,6 @@ func (okWs *OKExFutureWs) handle(msg []byte) error {
 	//log.Println(string(msg))
 	if string(msg) == "{\"event\":\"pong\"}" {
 		//	log.Println(string(msg))
-		okWs.wsConn.UpdateActiveTime()
 		return nil
 	}
 

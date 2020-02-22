@@ -16,5 +16,6 @@ func TestAPIBuilder_Build(t *testing.T) {
 	assert.Equal(t, builder.APIKey("").APISecretkey("").Build(goex.OKEX).GetExchangeName(), goex.OKEX)
 	assert.Equal(t, builder.APIKey("").APISecretkey("").Build(goex.POLONIEX).GetExchangeName(), goex.POLONIEX)
 	assert.Equal(t, builder.APIKey("").APISecretkey("").Build(goex.KRAKEN).GetExchangeName(), goex.KRAKEN)
+	assert.Equal(t, builder.APIKey("").APISecretkey("").Build(goex.FCOIN_MARGIN).GetExchangeName(), goex.FCOIN_MARGIN)
 	assert.Equal(t, builder.APIKey("").APISecretkey("").BuildFuture(goex.HBDM).GetExchangeName(), goex.HBDM)
 }

@@ -2,6 +2,8 @@ package fcoin
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -34,6 +36,73 @@ type FCoinMargin struct {
 	*FCoin
 }
 
+func NewFcoinMargin(client *http.Client, apikey, secretkey string) *FCoinMargin {
+	return &FCoinMargin{NewFCoin(client, apikey, secretkey)}
+}
+
+func (fm *FCoinMargin) GetExchangeName() string {
+	return FCOIN_MARGIN
+}
+
+func (fm *FCoinMargin) GetAccount() (*Account, error) {
+
+	r, err := fm.doAuthenticatedRequest2("GET", "broker/leveraged_accounts", url.Values{})
+	if err != nil {
+		return nil, err
+	}
+	ok, isOk := r["status"].(string)
+	if !isOk || ok != "ok" {
+		return nil, errors.New("response status error")
+	}
+
+	acc := new(Account)
+	acc.SubAccounts = make(map[Currency]SubAccount)
+	acc.Exchange = fm.GetExchangeName()
+
+	response, isOk := r["data"].([]interface{})
+	if !isOk {
+		return nil, errors.New("response data error")
+	}
+
+	quoteAmount := 0.0
+	quoteFrozenAmount := 0.0
+
+	for _, v := range response {
+		vv, isOk := v.(map[string]interface{})
+		if !isOk {
+			continue
+		}
+		if vv["open"].(bool) != true {
+			continue
+		}
+
+		currency := NewCurrency(vv["base"].(string), "")
+
+		acc.SubAccounts[currency] = SubAccount{
+			Currency:     currency,
+			Amount:       ToFloat64(vv["available_base_currency_amount"]),
+			ForzenAmount: ToFloat64(vv["frozen_base_currency_amount"]),
+		}
+
+		quoteCurrency := NewCurrency(vv["quote"].(string), "")
+		amount := ToFloat64(vv["available_quote_currency_amount"])
+		forzenAmount := ToFloat64(vv["frozen_quote_currency_amount"])
+		if amount > quoteAmount {
+			quoteAmount = amount
+		}
+		if forzenAmount > quoteFrozenAmount {
+			quoteFrozenAmount = forzenAmount
+		}
+		acc.SubAccounts[quoteCurrency] = SubAccount{
+			Currency:     quoteCurrency,
+			Amount:       quoteAmount,
+			ForzenAmount: quoteFrozenAmount,
+		}
+	}
+
+	return acc, nil
+}
+
 func (fm *FCoinMargin) GetMarginAccount(currency CurrencyPair) (*MarginAccount, error) {
 	params := url.Values{}
 	params.Set("account_type", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
@@ -46,12 +115,9 @@ func (fm *FCoinMargin) GetMarginAccount(currency CurrencyPair) (*MarginAccount, 
 	if !isOk || ok != "ok" {
 		return nil, errors.New("response status error")
 	}
-	//fmt.Println(r)
 	acc := MarginAccount{}
 	acc.Sub = make(map[Currency]MarginSubAccount, 2)
-	//	"open": true,                                    #是否已经开通该类型杠杆账户. true:已开通;false:未开通
-	//	"leveraged_account_type": "btcusdt",             #杠杆账户类型
-	//	"state": "open"                                  #账户状态. close 已关闭;open 已开通-未发生借贷;normal 已借贷-风险率正常;blow_up 已爆仓;overrun 已穿仓", allowableValues = "close,open,normal,blow_up,overrun")
+
 	response, isOk := r["data"].(map[string]interface{})
 	if !isOk {
 		return nil, errors.New("response data error")
@@ -67,7 +133,7 @@ func (fm *FCoinMargin) GetMarginAccount(currency CurrencyPair) (*MarginAccount, 
 		Frozen:      ToFloat64(response["frozen_base_currency_amount"]),
 		Available:   ToFloat64(response["available_base_currency_amount"]),
 		CanWithdraw: ToFloat64(response["available_base_currency_loan_amount"]),
-		//Loan:        ToFloat64(response["borrowed"]),
+		Loan:        ToFloat64(response["base_currency_unpaid_amount"]),
 		//LendingFee:  ToFloat64(response["lending_fee"]),
 	}
 
@@ -77,7 +143,7 @@ func (fm *FCoinMargin) GetMarginAccount(currency CurrencyPair) (*MarginAccount, 
 		Frozen:      ToFloat64(response["frozen_quote_currency_amount"]),
 		Available:   ToFloat64(response["available_quote_currency_amount"]),
 		CanWithdraw: ToFloat64(response["available_quote_currency_loan_amount"]),
-		//Loan:        ToFloat64(response["borrowed"]),
+		Loan:        ToFloat64(response["quote_currency_unpaid_amount"]),
 		//LendingFee:  ToFloat64(response["lending_fee"]),
 	}
 
@@ -127,20 +193,36 @@ func (fm *FCoinMargin) Repayment(parameter RepaymentParameter) (repaymentId stri
 	return
 }
 
+func (fm *FCoinMargin) IocBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	return fm.PlaceOrder("ioc", "buy", amount, price, currency, true)
+}
+
+func (fm *FCoinMargin) IocSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return fm.PlaceOrder("ioc", "sell", amount, price, currency, true)
+}
+
+func (fm *FCoinMargin) FokBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+	return fm.PlaceOrder("fok", "buy", amount, price, currency, true)
+}
+
+func (fm *FCoinMargin) FokSell(amount, price string, currency CurrencyPair) (*Order, error) {
+	return fm.PlaceOrder("fok", "sell", amount, price, currency, true)
+}
+
 func (fm *FCoinMargin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.PlaceOrder(ORDER_TYPE_LIMIT, "buy", amount, price, currency, true)
+	return fm.PlaceOrder("limit", "buy", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.PlaceOrder(ORDER_TYPE_LIMIT, "sell", amount, price, currency, true)
+	return fm.PlaceOrder("limit", "sell", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.PlaceOrder(ORDER_TYPE_MARKET, "buy", amount, price, currency, true)
+	return fm.PlaceOrder("market", "buy", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return fm.PlaceOrder(ORDER_TYPE_MARKET, "sell", amount, price, currency, true)
+	return fm.PlaceOrder("market", "sell", amount, price, currency, true)
 }
 
 func (fm *FCoinMargin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
@@ -220,7 +302,34 @@ func (fm *FCoinMargin) GetOrderHistorys(currency CurrencyPair, currentPage, page
 	}
 
 	return ords, nil
+}
 
+/*
+states:submitted,partial_filled,partial_canceled,filled,canceled
+*/
+func (fm *FCoinMargin) GetOrderHistorys2(currency CurrencyPair, currentPage, pageSize int, states ...string) ([]Order, error) {
+	sts := ""
+	for i := 0; i < len(states); i++ {
+		sts += states[i] + ","
+	}
+	sts = sts[:len(sts)-1]
+	params := url.Values{}
+	params.Set("symbol", strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol("")))
+	params.Set("states", sts)
+	params.Set("limit", fmt.Sprint(pageSize))
+	params.Set("account_type", "margin")
+
+	r, err := fm.doAuthenticatedRequest("GET", "orders", params)
+	if err != nil {
+		return nil, err
+	}
+	var ords []Order
+
+	for _, ord := range r.([]interface{}) {
+		ords = append(ords, *fm.toOrder(ord.(map[string]interface{}), currency))
+	}
+
+	return ords, nil
 }
 
 func (fm *FCoinMargin) GetOneLoan(borrowId string) (*MarginOrder, error) {

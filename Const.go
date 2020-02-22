@@ -7,7 +7,7 @@ import (
 type TradeSide int
 
 const (
-	BUY = 1 + iota
+	BUY TradeSide = 1 + iota
 	SELL
 	BUY_MARKET
 	SELL_MARKET
@@ -76,24 +76,39 @@ const (
 	KLINE_PERIOD_1YEAR
 )
 
+type OrderFeature int
+
+const (
+	ORDER_FEATURE_ORDINARY = 0 + iota
+	ORDER_FEATURE_POST_ONLY
+	ORDER_FEATURE_FOK
+	ORDER_FEATURE_IOC
+	ORDER_FEATURE_FAK
+	ORDER_FEATURE_LIMIT
+)
+
+func (of OrderFeature) String() string {
+	if of > 0 && int(of) < len(orderFeatureSymbol) {
+		return orderFeatureSymbol[of]
+	}
+	return fmt.Sprintf("UNKNOWN_ORDER_TYPE(%d)", of)
+}
+
+var orderFeatureSymbol = [...]string{"ORDINARY", "POST_ONLY", "FOK", "IOC", "FAK", "LIMIT"}
+
 type OrderType int
 
 func (ot OrderType) String() string {
-	if ot > 0 && int(ot) < len(orderTypeSymbol) {
-		return orderTypeSymbol[ot]
+	if ot > 0 && int(ot) <= len(orderTypeSymbol) {
+		return orderTypeSymbol[ot-1]
 	}
 	return fmt.Sprintf("UNKNOWN_ORDER_TYPE(%d)", ot)
 }
 
-var orderTypeSymbol = [...]string{"ORDINARY", "POST_ONLY", "FOK", "FAK", "IOC", "LIMIT", "MARKET"}
+var orderTypeSymbol = [...]string{"LIMIT", "MARKET"}
 
 const (
-	ORDER_TYPE_ORDINARY = 0 + iota
-	ORDER_TYPE_POST_ONLY
-	ORDER_TYPE_FOK
-	ORDER_TYPE_FAK
-	ORDER_TYPE_IOC /* = ORDER_TYPE_FAK + iota*/
-	ORDER_TYPE_LIMIT
+	ORDER_TYPE_LIMIT = 1 + iota
 	ORDER_TYPE_MARKET
 )
 
@@ -106,32 +121,38 @@ var (
 
 //exchanges const
 const (
-	OKCOIN_CN   = "okcoin.cn"
-	OKCOIN_COM  = "okcoin.com"
-	OKEX        = "okex.com"
-	OKEX_V3     = "okex.com_v3"
-	OKEX_FUTURE = "okex.com_future"
-	OKEX_SWAP   = "okex.com_swap"
-	HUOBI       = "huobi.com"
-	HUOBI_PRO   = "huobi.pro"
-	BITSTAMP    = "bitstamp.net"
-	KRAKEN      = "kraken.com"
-	ZB          = "zb.com"
-	BITFINEX    = "bitfinex.com"
-	BINANCE     = "binance.com"
-	POLONIEX    = "poloniex.com"
-	COINEX      = "coinex.com"
-	BITHUMB     = "bithumb.com"
-	GATEIO      = "gate.io"
-	BITTREX     = "bittrex.com"
-	GDAX        = "gdax.com"
-	WEX_NZ      = "wex.nz"
-	BIGONE      = "big.one"
-	COIN58      = "58coin.com"
-	FCOIN       = "fcoin.com"
-	HITBTC      = "hitbtc.com"
-	BITMEX      = "bitmex.com"
-	CRYPTOPIA   = "cryptopia.co.nz"
-	HBDM        = "hbdm.com"
-	COINBENE    = "coinbene.com"
+	KUCOIN       = "kucoin.com"
+	OKCOIN_CN    = "okcoin.cn"
+	OKCOIN_COM   = "okcoin.com"
+	OKEX         = "okex.com"
+	OKEX_V3      = "okex.com_v3"
+	OKEX_FUTURE  = "okex.com_future"
+	OKEX_SWAP    = "okex.com_swap"
+	HUOBI        = "huobi.com"
+	HUOBI_PRO    = "huobi.pro"
+	BITSTAMP     = "bitstamp.net"
+	KRAKEN       = "kraken.com"
+	ZB           = "zb.com"
+	BITFINEX     = "bitfinex.com"
+	BINANCE      = "binance.com"
+	BINANCE_SWAP = "binance.com_swap"
+	POLONIEX     = "poloniex.com"
+	COINEX       = "coinex.com"
+	BITHUMB      = "bithumb.com"
+	GATEIO       = "gate.io"
+	BITTREX      = "bittrex.com"
+	GDAX         = "gdax.com"
+	WEX_NZ       = "wex.nz"
+	BIGONE       = "big.one"
+	COIN58       = "58coin.com"
+	FCOIN        = "fcoin.com"
+	FCOIN_MARGIN = "fcoin.com_margin"
+	FMEX         = "fmex.com"
+	HITBTC       = "hitbtc.com"
+	BITMEX       = "bitmex.com"
+	BITMEX_TEST  = "testnet.bitmex.com"
+	CRYPTOPIA    = "cryptopia.co.nz"
+	HBDM         = "hbdm.com"
+	COINBENE     = "coinbene.com"
+	ATOP         = "a.top"
 )

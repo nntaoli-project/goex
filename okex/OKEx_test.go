@@ -2,15 +2,20 @@ package okex
 
 import (
 	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/GoEx/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 	"time"
 )
 
+func init() {
+	logger.Log.SetLevel(logger.DEBUG)
+}
+
 //
 var config2 = &goex.APIConfig{
-	Endpoint: "https://www.okex.com",
+	Endpoint: "https://www.okex.me",
 	//HttpClient: &http.Client{
 	//	Transport: &http.Transport{
 	//		Proxy: func(req *http.Request) (*url.URL, error) {
@@ -41,7 +46,7 @@ func TestOKExSpot_BatchPlaceOrders(t *testing.T) {
 			Price:     0.32,
 			Side:      goex.BUY,
 			Type:      "limit",
-			OrderType: goex.ORDER_TYPE_ORDINARY,
+			OrderType: goex.ORDER_FEATURE_ORDINARY,
 		},
 		{
 			Cid:       okex.UUID(),
@@ -49,7 +54,7 @@ func TestOKExSpot_BatchPlaceOrders(t *testing.T) {
 			Amount:    1,
 			Price:     5.2,
 			Side:      goex.BUY,
-			OrderType: goex.ORDER_TYPE_ORDINARY,
+			OrderType: goex.ORDER_FEATURE_ORDINARY,
 		},
 		goex.Order{
 			Cid:       okex.UUID(),
@@ -58,7 +63,7 @@ func TestOKExSpot_BatchPlaceOrders(t *testing.T) {
 			Price:     0.33,
 			Side:      goex.BUY,
 			Type:      "limit",
-			OrderType: goex.ORDER_TYPE_ORDINARY,
+			OrderType: goex.ORDER_FEATURE_ORDINARY,
 		}}))
 }
 
@@ -116,7 +121,7 @@ func TestOKExFuture_PlaceFutureOrder2(t *testing.T) {
 		Currency:     goex.EOS_USD,
 		ContractName: goex.QUARTER_CONTRACT,
 		OType:        goex.OPEN_BUY,
-		OrderType:    goex.ORDER_TYPE_ORDINARY,
+		OrderType:    goex.ORDER_FEATURE_ORDINARY,
 		Price:        5.9,
 		Amount:       10,
 		LeverRate:    10}))
@@ -218,7 +223,7 @@ func TestOKExMargin_PlaceOrder(t *testing.T) {
 		Amount:    0.2,
 		Price:     6,
 		Type:      "limit",
-		OrderType: goex.ORDER_TYPE_ORDINARY,
+		OrderType: goex.ORDER_FEATURE_ORDINARY,
 		Side:      goex.SELL,
 	}))
 }
