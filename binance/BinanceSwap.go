@@ -3,7 +3,7 @@ package binance
 import (
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"net/url"
 	"strconv"
 	"sync"

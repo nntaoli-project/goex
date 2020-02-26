@@ -2,7 +2,7 @@ package okex
 
 import (
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"github.com/pkg/errors"
 	"time"
 )

@@ -11,7 +11,7 @@ import (
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 )
 
 const (

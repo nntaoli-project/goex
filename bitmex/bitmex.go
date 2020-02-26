@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx/internal/logger"
+	. "github.com/nntaoli-project/goex/internal/logger"
 	"net/url"
 	"strings"
 	"time"
 
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 )
 
 const (
@@ -46,7 +46,7 @@ func (bm *bitmex) doAuthRequest(m, uri, param string, r interface{}) error {
 	sign := bm.generateSignature(m, uri, param, fmt.Sprint(nonce))
 
 	resp, err := NewHttpRequest(bm.HttpClient, m, bm.Endpoint+uri, param, map[string]string{
-		"User-Agent":    "github.com/nntaoli-project/GoEx/bitmex",
+		"User-Agent":    "github.com/nntaoli-project/goex/bitmex",
 		"Content-Type":  "application/json",
 		"Accept":        "application/json",
 		"api-expires":   fmt.Sprint(nonce),
@@ -125,7 +125,7 @@ func (bm *bitmex) PlaceFutureOrder(currencyPair CurrencyPair, contractType, pric
 		OrderId string `json:"orderID"`
 	}
 
-	createOrderParameter.Text = "github.com/nntaoli-project/GoEx/bitmex"
+	createOrderParameter.Text = "github.com/nntaoli-project/goex/bitmex"
 	createOrderParameter.Symbol = bm.adaptCurrencyPairToSymbol(currencyPair, contractType)
 	createOrderParameter.OrdType = "Limit"
 	createOrderParameter.TimeInForce = "GoodTillCancel"

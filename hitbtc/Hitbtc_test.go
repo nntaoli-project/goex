@@ -1,7 +1,7 @@
 package hitbtc
 
 import (
-	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/goex"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"

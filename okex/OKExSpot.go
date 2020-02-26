@@ -3,7 +3,7 @@ package okex
 import (
 	"fmt"
 	"github.com/go-openapi/errors"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"sort"
 	"strings"
 	"time"

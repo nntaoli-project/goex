@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	. "github.com/nntaoli-project/GoEx"
-	"github.com/nntaoli-project/GoEx/internal/logger"
+	. "github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 	"sort"
 	"strings"
 	"sync"
@@ -270,7 +270,7 @@ func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount,
 		}
 	} else {
 		//todo 逐仓模式
-		return nil, errors.New("GoEx unsupported  fixed margin mode")
+		return nil, errors.New("goex unsupported  fixed margin mode")
 	}
 
 	return acc, nil
