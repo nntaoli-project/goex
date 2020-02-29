@@ -683,14 +683,6 @@ func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize
 }
 
 func (bn *Binance) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
-	if pair.CurrencyA.Eq(BCH) || pair.CurrencyA.Eq(BCC) {
-		return NewCurrencyPair(NewCurrency("BCHABC", ""), pair.CurrencyB).AdaptUsdToUsdt()
-	}
-
-	if pair.CurrencyA.Symbol == "BSV" {
-		return NewCurrencyPair(NewCurrency("BCHSV", ""), pair.CurrencyB).AdaptUsdToUsdt()
-	}
-
 	return pair.AdaptUsdToUsdt()
 }
 
