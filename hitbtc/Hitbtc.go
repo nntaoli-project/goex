@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/goex"
 )
 
 const (

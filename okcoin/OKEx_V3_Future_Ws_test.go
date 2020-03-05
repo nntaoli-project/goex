@@ -6,7 +6,7 @@ import (
 	"log"
 	"testing"
 	"sync"
-	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/goex"
 )
 
 

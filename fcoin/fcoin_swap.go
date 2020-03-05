@@ -3,7 +3,7 @@ package fcoin
 import (
 	"fmt"
 	//"github.com/google/uuid"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"github.com/pkg/errors"
 	//"strings
 	"net/url"

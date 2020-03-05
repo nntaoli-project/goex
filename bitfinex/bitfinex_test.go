@@ -1,7 +1,7 @@
 package bitfinex
 
 import (
-	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/goex"
 	"net/http"
 	"testing"
 )

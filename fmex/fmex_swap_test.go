@@ -1,7 +1,7 @@
 package fmex
 
 import (
-	goex "github.com/nntaoli-project/GoEx"
+	goex "github.com/nntaoli-project/goex"
 	"net"
 	"net/http"
 	"net/url"

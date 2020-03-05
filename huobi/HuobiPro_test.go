@@ -1,8 +1,8 @@
 package huobi
 
 import (
-	"github.com/nntaoli-project/GoEx"
-	"github.com/nntaoli-project/GoEx/internal/logger"
+	"github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"net"
 	"net/http"

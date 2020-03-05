@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx/internal/logger"
+	. "github.com/nntaoli-project/goex/internal/logger"
 	"net/url"
 	"strings"
 	"time"
 
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 )
 
 const (
@@ -46,12 +46,13 @@ func (bm *bitmex) doAuthRequest(m, uri, param string, r interface{}) error {
 	sign := bm.generateSignature(m, uri, param, fmt.Sprint(nonce))
 
 	resp, err := NewHttpRequest(bm.HttpClient, m, bm.Endpoint+uri, param, map[string]string{
-		"User-Agent":    "github.com/nntaoli-project/GoEx/bitmex",
+		"User-Agent":    "github.com/nntaoli-project/goex/bitmex",
 		"Content-Type":  "application/json",
 		"Accept":        "application/json",
 		"api-expires":   fmt.Sprint(nonce),
 		"api-key":       bm.ApiKey,
 		"api-signature": sign})
+	Log.Debug("response:", string(resp))
 	if err != nil {
 		return err
 	} else {
@@ -124,7 +125,7 @@ func (bm *bitmex) PlaceFutureOrder(currencyPair CurrencyPair, contractType, pric
 		OrderId string `json:"orderID"`
 	}
 
-	createOrderParameter.Text = "github.com/nntaoli-project/GoEx/bitmex"
+	createOrderParameter.Text = "github.com/nntaoli-project/goex/bitmex"
 	createOrderParameter.Symbol = bm.adaptCurrencyPairToSymbol(currencyPair, contractType)
 	createOrderParameter.OrdType = "Limit"
 	createOrderParameter.TimeInForce = "GoodTillCancel"
@@ -176,20 +177,25 @@ func (bm *bitmex) FutureCancelOrder(currencyPair CurrencyPair, contractType, ord
 }
 
 func (bm *bitmex) GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error) {
-	var response []struct {
-		CurrentQty        int       `json:"currentQty"`
-		OpeningQty        int       `json:"openingQty"`
-		AvgCostPrice      float64   `json:"avgCostPrice"`
-		AvgEntryPrice     float64   `json:"avgEntryPrice"`
-		UnrealisedPnl     float64   `json:"unrealisedPnl"`
-		UnrealisedPnlPcnt float64   `json:"unrealisedPnlPcnt"`
-		OpenOrderBuyQty   float64   `json:"openOrderBuyQty"`
-		OpenOrderSellQty  float64   `json:"OpenOrderSellQty"`
-		OpeningTimestamp  time.Time `json:"openingTimestamp"`
-		LiquidationPrice  float64   `json:"liquidationPrice"`
-		Leverage          int       `json:"leverage"`
-	}
-	er := bm.doAuthRequest("GET", "/api/v1/position", "", &response)
+	var (
+		response []struct {
+			Symbol            string    `json:"symbol"`
+			CurrentQty        int       `json:"currentQty"`
+			OpeningQty        int       `json:"openingQty"`
+			AvgCostPrice      float64   `json:"avgCostPrice"`
+			AvgEntryPrice     float64   `json:"avgEntryPrice"`
+			UnrealisedPnl     float64   `json:"unrealisedPnl"`
+			UnrealisedPnlPcnt float64   `json:"unrealisedPnlPcnt"`
+			OpenOrderBuyQty   float64   `json:"openOrderBuyQty"`
+			OpenOrderSellQty  float64   `json:"OpenOrderSellQty"`
+			OpeningTimestamp  time.Time `json:"openingTimestamp"`
+			LiquidationPrice  float64   `json:"liquidationPrice"`
+			Leverage          int       `json:"leverage"`
+		}
+		param = url.Values{}
+	)
+	param.Set("filter", fmt.Sprintf(`{"symbol":"%s"}`, bm.adaptCurrencyPairToSymbol(currencyPair, contractType)))
+	er := bm.doAuthRequest("GET", "/api/v1/position?"+param.Encode(), "", &response)
 	if er != nil {
 		return nil, er
 	}
@@ -275,7 +281,8 @@ func (bm *bitmex) GetFee() (float64, error) {
 }
 
 func (bm *bitmex) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
-	uri := fmt.Sprintf("/api/v1/orderBook/L2?symbol=%s&depth=%d", bm.adaptCurrencyPairToSymbol(currencyPair, contractType), size)
+	sym := bm.adaptCurrencyPairToSymbol(currencyPair, contractType)
+	uri := fmt.Sprintf("/api/v1/orderBook/L2?symbol=%s&depth=%d", sym , size)
 	resp, err := HttpGet3(bm.HttpClient, bm.Endpoint+uri, nil)
 	if err != nil {
 		return nil, HTTP_ERR_CODE.OriginErr(err.Error())
@@ -286,6 +293,7 @@ func (bm *bitmex) GetFutureDepth(currencyPair CurrencyPair, contractType string,
 	dep := new(Depth)
 	dep.UTime = time.Now()
 	dep.Pair = currencyPair
+	dep.ContractType = sym
 
 	for _, r := range resp {
 		rr := r.(map[string]interface{})

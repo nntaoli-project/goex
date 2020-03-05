@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"net/http"
 	"net/url"
 	"strings"
@@ -315,7 +315,7 @@ func (fm *FMexSwap) MarginTransferOut(currency Currency, amount float64) (bool, 
 func (fm *FMexSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
 	params := url.Values{}
 
-	params.Set("source", "GoEx")
+	params.Set("source", "goex")
 	params.Set("symbol", adaptContractType(currencyPair))
 
 	switch openType {
@@ -386,7 +386,7 @@ func (fm *FMexSwap) PlaceFutureOrder2(ord *OrderParam) (string, error) {
 
 	params := url.Values{}
 
-	params.Set("source", "GoEx")
+	params.Set("source", "goex")
 	params.Set("symbol", adaptContractType(ord.Currency))
 
 	switch ord.Direction {

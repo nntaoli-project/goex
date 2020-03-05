@@ -2,7 +2,7 @@ package kucoin
 
 import (
 	"github.com/Kucoin/kucoin-go-sdk"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	log "github.com/sirupsen/logrus"
 	"time"
 )

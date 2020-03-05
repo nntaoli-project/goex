@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/deckarep/golang-set"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 )
 
 const (

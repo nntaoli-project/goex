@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/json-iterator/go"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
+	"strconv"
 	"strings"
 	"time"
 	"unsafe"
@@ -20,6 +21,7 @@ type BinanceWs struct {
 	depthCallback   func(*Depth)
 	tradeCallback   func(*Trade)
 	klineCallback   func(*Kline, int)
+	wsConns         []*WsConn
 }
 
 type AggTrade struct {
@@ -91,13 +93,21 @@ func (bnWs *BinanceWs) SetCallbacks(
 }
 
 func (bnWs *BinanceWs) subscribe(endpoint string, handle func(msg []byte) error) {
-	wsBuilder := NewWsBuilder().
+	wsConn := NewWsBuilder().
 		WsUrl(endpoint).
 		AutoReconnect().
-		ProtoHandleFunc(handle)
-	wsBuilder.ProxyUrl(bnWs.proxyUrl)
-	wsConn := wsBuilder.Build()
+		ProtoHandleFunc(handle).
+		ProxyUrl(bnWs.proxyUrl).
+		ReconnectInterval(time.Millisecond * 5).
+		Build()
+	bnWs.wsConns = append(bnWs.wsConns, wsConn)
 	go bnWs.exitHandler(wsConn)
+}
+
+func (bnWs *BinanceWs) Close() {
+	for _, con := range bnWs.wsConns {
+		con.CloseWs()
+	}
 }
 
 func (bnWs *BinanceWs) SubscribeDepth(pair CurrencyPair, size int) error {
@@ -159,7 +169,6 @@ func (bnWs *BinanceWs) SubscribeTicker(pair CurrencyPair) error {
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -207,7 +216,6 @@ func (bnWs *BinanceWs) SubscribeTrade(pair CurrencyPair) error {
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -247,7 +255,6 @@ func (bnWs *BinanceWs) SubscribeKline(pair CurrencyPair, period int) error {
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -333,7 +340,6 @@ func (bnWs *BinanceWs) SubscribeAggTrade(pair CurrencyPair, tradeCallback func(*
 		default:
 			return errors.New("unknown message " + msgType)
 		}
-		return nil
 	}
 	bnWs.subscribe(endpoint, handle)
 	return nil
@@ -379,18 +385,18 @@ func (bnWs *BinanceWs) SubscribeDiffDepth(pair CurrencyPair, depthCallback func(
 }
 
 func (bnWs *BinanceWs) exitHandler(c *WsConn) {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	pingTicker := time.NewTicker(10 * time.Minute)
+	pongTicker := time.NewTicker(time.Second)
+	defer pingTicker.Stop()
+	defer pongTicker.Stop()
 	defer c.CloseWs()
 
 	for {
 		select {
-		case t := <-ticker.C:
-			c.SendPingMessage([]byte(t.String()))
-			//if err != nil {
-			//	fmt.Println("wsWrite err:", err)
-			//	return
-			//}
+		case t := <-pingTicker.C:
+			c.SendPingMessage([]byte(strconv.Itoa(int(t.UnixNano() / int64(time.Millisecond)))))
+		case t := <-pongTicker.C:
+			c.SendPongMessage([]byte(strconv.Itoa(int(t.UnixNano() / int64(time.Millisecond)))))
 		}
 	}
 }
