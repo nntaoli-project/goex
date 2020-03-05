@@ -1,7 +1,6 @@
 package builder
 
 import (
-
 	"context"
 	"fmt"
 	. "github.com/nntaoli-project/goex"
@@ -16,7 +15,7 @@ import (
 	"github.com/nntaoli-project/goex/fmex"
 	"github.com/nntaoli-project/goex/kucoin"
 
-	 "github.com/nntaoli-project/goex/atop"
+	"github.com/nntaoli-project/goex/atop"
 	//"github.com/nntaoli-project/goex/coin58"
 	"github.com/nntaoli-project/goex/coinex"
 	"github.com/nntaoli-project/goex/fcoin"
@@ -321,8 +320,13 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiSecretKey: builder.secretkey,
 		})
 
-
-
+	case BINANCE, BINANCE_SWAP:
+		return binance.NewBinanceSwap(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     builder.futuresEndPoint,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey,
+		})
 
 	default:
 		println(fmt.Sprintf("%s not support future", exName))
