@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/json-iterator/go"
-	. "github.com/nntaoli-project/goex"
+	. "github.com/nntaoli-project/goex/v2"
 	"strconv"
 	"strings"
 	"time"

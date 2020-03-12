@@ -1,7 +1,7 @@
 package binance
 
 import (
-	goex "github.com/nntaoli-project/goex"
+	goex "github.com/nntaoli-project/goex/v2"
 	"net"
 	"net/http"
 	"net/url"

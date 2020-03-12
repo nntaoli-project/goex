@@ -1,6 +1,6 @@
-module github.com/nntaoli-project/goex
+module github.com/nntaoli-project/goex/v2
 
-go 1.12
+go 1.14
 
 require (
 	github.com/Kucoin/kucoin-go-sdk v1.2.2
@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/websocket v1.4.1
 	github.com/json-iterator/go v1.1.7
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
+	github.com/nntaoli-project/goex v1.1.0
 	github.com/nubo/jwt v0.0.0-20150918093313-da5b79c3bbaf
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.4.2

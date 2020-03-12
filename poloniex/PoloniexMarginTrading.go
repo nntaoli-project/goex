@@ -3,7 +3,7 @@ package poloniex
 import (
 	"encoding/json"
 	"errors"
-	. "github.com/nntaoli-project/goex"
+	. "github.com/nntaoli-project/goex/v2"
 	"log"
 	"net/url"
 )

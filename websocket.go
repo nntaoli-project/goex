@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
-	. "github.com/nntaoli-project/goex/internal/logger"
+	. "github.com/nntaoli-project/goex/v2/internal/logger"
 	"net/http"
 	"net/http/httputil"
 	"net/url"

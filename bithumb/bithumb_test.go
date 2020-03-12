@@ -1,7 +1,7 @@
 package bithumb
 
 import (
-	"github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/v2"
 	"net/http"
 	"testing"
 )

@@ -3,31 +3,20 @@ package builder
 import (
 	"context"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
-	"github.com/nntaoli-project/goex/bigone"
-	"github.com/nntaoli-project/goex/binance"
-	"github.com/nntaoli-project/goex/bitfinex"
-	"github.com/nntaoli-project/goex/bithumb"
-	"github.com/nntaoli-project/goex/bitmex"
-	"github.com/nntaoli-project/goex/bitstamp"
-	"github.com/nntaoli-project/goex/bittrex"
-	"github.com/nntaoli-project/goex/coinbene"
-	"github.com/nntaoli-project/goex/fmex"
-	"github.com/nntaoli-project/goex/kucoin"
-
-	"github.com/nntaoli-project/goex/atop"
-	//"github.com/nntaoli-project/goex/coin58"
-	"github.com/nntaoli-project/goex/coinex"
-	"github.com/nntaoli-project/goex/fcoin"
-	"github.com/nntaoli-project/goex/gateio"
-	"github.com/nntaoli-project/goex/gdax"
-	"github.com/nntaoli-project/goex/hitbtc"
-	"github.com/nntaoli-project/goex/huobi"
-	"github.com/nntaoli-project/goex/kraken"
-	"github.com/nntaoli-project/goex/okcoin"
-	"github.com/nntaoli-project/goex/okex"
-	"github.com/nntaoli-project/goex/poloniex"
-	"github.com/nntaoli-project/goex/zb"
+	. "github.com/nntaoli-project/goex/v2"
+	"github.com/nntaoli-project/goex/v2/binance"
+	"github.com/nntaoli-project/goex/v2/bitfinex"
+	"github.com/nntaoli-project/goex/v2/bithumb"
+	"github.com/nntaoli-project/goex/v2/bitmex"
+	"github.com/nntaoli-project/goex/v2/bitstamp"
+	"github.com/nntaoli-project/goex/v2/coinbene"
+	"github.com/nntaoli-project/goex/v2/coinex"
+	"github.com/nntaoli-project/goex/v2/hitbtc"
+	"github.com/nntaoli-project/goex/v2/huobi"
+	"github.com/nntaoli-project/goex/v2/kraken"
+	"github.com/nntaoli-project/goex/v2/okex"
+	"github.com/nntaoli-project/goex/v2/poloniex"
+	"github.com/nntaoli-project/goex/v2/zb"
 	"net"
 	"net/http"
 	"net/url"
@@ -229,35 +218,14 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 			Endpoint:     builder.endPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey})
-	case BITTREX:
-		_api = bittrex.New(builder.client, builder.apiKey, builder.secretkey)
 	case BITHUMB:
 		_api = bithumb.New(builder.client, builder.apiKey, builder.secretkey)
-	case GDAX:
-		_api = gdax.New(builder.client, builder.apiKey, builder.secretkey)
-	case GATEIO:
-		_api = gateio.New(builder.client, builder.apiKey, builder.secretkey)
 	case ZB:
 		_api = zb.New(builder.client, builder.apiKey, builder.secretkey)
 	case COINEX:
 		_api = coinex.New(builder.client, builder.apiKey, builder.secretkey)
-	case FCOIN:
-		//	_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey)
-		_api = fcoin.NewWithConfig(&APIConfig{
-			HttpClient:   builder.client,
-			Endpoint:     builder.endPoint,
-			ApiKey:       builder.apiKey,
-			ApiSecretKey: builder.secretkey})
-	case FCOIN_MARGIN:
-		_api = fcoin.NewFcoinMargin(builder.client, builder.apiKey, builder.secretkey)
-	//case COIN58:
-	//	_api = coin58.New58Coin(builder.client, builder.apiKey, builder.secretkey)
-	case BIGONE:
-		_api = bigone.New(builder.client, builder.apiKey, builder.secretkey)
 	case HITBTC:
 		_api = hitbtc.New(builder.client, builder.apiKey, builder.secretkey)
-	case ATOP:
-		_api = atop.New(builder.client, builder.apiKey, builder.secretkey)
 	default:
 		println("exchange name error [" + exName + "].")
 
@@ -311,15 +279,6 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
 		})
-	case FMEX:
-		return fmex.NewFMexSwap(&APIConfig{
-			HttpClient: builder.client,
-			//Endpoint:     "https://api.fmex.com",
-			Endpoint:     builder.futuresEndPoint,
-			ApiKey:       builder.apiKey,
-			ApiSecretKey: builder.secretkey,
-		})
-
 	case BINANCE, BINANCE_SWAP:
 		return binance.NewBinanceSwap(&APIConfig{
 			HttpClient:   builder.client,

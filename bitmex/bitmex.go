@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex/internal/logger"
+	. "github.com/nntaoli-project/goex/v2/internal/logger"
 	"net/url"
 	"strings"
 	"time"
