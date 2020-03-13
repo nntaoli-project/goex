@@ -223,7 +223,7 @@ type OrderResponse struct {
 	InstrumentId   string  `json:"instrument_id"`
 	ClientOid      string  `json:"client_oid"`
 	OrderId        string  `json:"order_id"`
-	Price          float64 `json:"price,string"`
+	Price          string  `json:"price,omitempty"`
 	Size           float64 `json:"size,string"`
 	Notional       string  `json:"notional"`
 	Side           string  `json:"side"`
@@ -240,7 +240,7 @@ func (ok *OKExSpot) adaptOrder(response OrderResponse) *Order {
 	ordInfo := &Order{
 		Cid:        response.ClientOid,
 		OrderID2:   response.OrderId,
-		Price:      response.Price,
+		Price:      ToFloat64(response.Price),
 		Amount:     response.Size,
 		AvgPrice:   ToFloat64(response.PriceAvg),
 		DealAmount: ToFloat64(response.FilledSize),
