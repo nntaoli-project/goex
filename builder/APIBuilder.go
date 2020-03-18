@@ -24,7 +24,6 @@ import (
 	"github.com/nntaoli-project/goex/hitbtc"
 	"github.com/nntaoli-project/goex/huobi"
 	"github.com/nntaoli-project/goex/kraken"
-	"github.com/nntaoli-project/goex/okcoin"
 	"github.com/nntaoli-project/goex/okex"
 	"github.com/nntaoli-project/goex/poloniex"
 	"github.com/nntaoli-project/goex/zb"
@@ -197,8 +196,8 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 	//	_api = okcoin.New(builder.client, builder.apiKey, builder.secretkey)
 	case POLONIEX:
 		_api = poloniex.New(builder.client, builder.apiKey, builder.secretkey)
-	case OKCOIN_COM:
-		_api = okcoin.NewCOM(builder.client, builder.apiKey, builder.secretkey)
+	//case OKCOIN_COM:
+	//	_api = okcoin.NewCOM(builder.client, builder.apiKey, builder.secretkey)
 	case BITSTAMP:
 		_api = bitstamp.NewBitstamp(builder.client, builder.apiKey, builder.secretkey, builder.clientId)
 	case HUOBI_PRO:
@@ -208,9 +207,7 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 			Endpoint:     builder.endPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey})
-	case OKEX:
-		_api = okcoin.NewOKExSpot(builder.client, builder.apiKey, builder.secretkey)
-	case OKEX_V3:
+	case OKEX_V3, OKEX:
 		_api = okex.NewOKEx(&APIConfig{
 			HttpClient:    builder.client,
 			ApiKey:        builder.apiKey,
