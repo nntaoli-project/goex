@@ -113,16 +113,16 @@ const (
 )
 
 var (
-	THIS_WEEK_CONTRACT = "this_week" //周合约
-	NEXT_WEEK_CONTRACT = "next_week" //次周合约
-	QUARTER_CONTRACT   = "quarter"   //季度合约
-	SWAP_CONTRACT      = "swap"      //永续合约
+	THIS_WEEK_CONTRACT  = "this_week"  //周合约
+	NEXT_WEEK_CONTRACT  = "next_week"  //次周合约
+	QUARTER_CONTRACT    = "quarter"    //季度合约
+	BI_QUARTER_CONTRACT = "bi_quarter" // NEXT QUARTER
+	SWAP_CONTRACT       = "swap"       //永续合约
 )
 
 //exchanges const
 const (
 	KUCOIN       = "kucoin.com"
-	OKCOIN_CN    = "okcoin.cn"
 	OKCOIN_COM   = "okcoin.com"
 	OKEX         = "okex.com"
 	OKEX_V3      = "okex.com_v3"
@@ -142,9 +142,7 @@ const (
 	GATEIO       = "gate.io"
 	BITTREX      = "bittrex.com"
 	GDAX         = "gdax.com"
-	WEX_NZ       = "wex.nz"
 	BIGONE       = "big.one"
-	COIN58       = "58coin.com"
 	FCOIN        = "fcoin.com"
 	FCOIN_MARGIN = "fcoin.com_margin"
 	FMEX         = "fmex.com"

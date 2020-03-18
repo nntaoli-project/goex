@@ -434,8 +434,6 @@ func (ok *OKExSwap) GetFuturePosition(currencyPair CurrencyPair, contractType st
 		positions[0].SellProfitReal = sellPosition.RealizedPnl
 		positions[0].SellPriceCost = sellPosition.SettlementPrice
 	}
-
-	//log.Println(resp)
 	return positions, nil
 }
 

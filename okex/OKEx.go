@@ -16,12 +16,13 @@ import (
 const baseUrl = "https://www.okex.com"
 
 type OKEx struct {
-	config     *APIConfig
-	OKExSpot   *OKExSpot
-	OKExFuture *OKExFuture
-	OKExSwap   *OKExSwap
-	OKExWallet *OKExWallet
-	OKExMargin *OKExMargin
+	config         *APIConfig
+	OKExSpot       *OKExSpot
+	OKExFuture     *OKExFuture
+	OKExSwap       *OKExSwap
+	OKExWallet     *OKExWallet
+	OKExMargin     *OKExMargin
+	OKExV3FutureWs *OKExV3FutureWs
 }
 
 func NewOKEx(config *APIConfig) *OKEx {
@@ -34,6 +35,8 @@ func NewOKEx(config *APIConfig) *OKEx {
 	okex.OKExWallet = &OKExWallet{okex}
 	okex.OKExMargin = &OKExMargin{okex}
 	okex.OKExSwap = &OKExSwap{okex, config}
+	okex.OKExV3FutureWs = NewOKExV3FuturesWs()
+	okex.OKExV3FutureWs.OKEx = okex
 	return okex
 }
 
