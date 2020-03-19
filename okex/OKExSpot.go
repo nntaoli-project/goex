@@ -319,17 +319,20 @@ func (ok *OKExSpot) GetExchangeName() string {
 	return OKEX
 }
 
+type spotTickerResponse struct {
+	InstrumentId  string  `json:"instrument_id"`
+	Last          float64 `json:"last,string"`
+	High24h       float64 `json:"high_24h,string"`
+	Low24h        float64 `json:"low_24h,string"`
+	BestBid       float64 `json:"best_bid,string"`
+	BestAsk       float64 `json:"best_ask,string"`
+	BaseVolume24h float64 `json:"base_volume_24h,string"`
+	Timestamp     string  `json:"timestamp"`
+}
+
 func (ok *OKExSpot) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	urlPath := fmt.Sprintf("/api/spot/v3/instruments/%s/ticker", currency.AdaptUsdToUsdt().ToSymbol("-"))
-	var response struct {
-		Last          float64 `json:"last,string"`
-		High24h       float64 `json:"high_24h,string"`
-		Low24h        float64 `json:"low_24h,string"`
-		BestBid       float64 `json:"best_bid,string"`
-		BestAsk       float64 `json:"best_ask,string"`
-		BaseVolume24h float64 `json:"base_volume_24_h,string"`
-		Timestamp     string  `json:"timestamp"`
-	}
+	var response spotTickerResponse
 	err := ok.OKEx.DoRequest("GET", urlPath, "", &response)
 	if err != nil {
 		return nil, err

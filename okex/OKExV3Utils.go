@@ -36,6 +36,35 @@ func adaptKLinePeriod(period KlinePeriod) int {
 	return granularity
 }
 
+func adaptSecondsToKlinePeriod(seconds int) KlinePeriod {
+	var p KlinePeriod
+	switch seconds {
+	case 60:
+		p = KLINE_PERIOD_1MIN
+	case 180:
+		p = KLINE_PERIOD_3MIN
+	case 300:
+		p = KLINE_PERIOD_5MIN
+	case 900:
+		p = KLINE_PERIOD_15MIN
+	case 1800:
+		p = KLINE_PERIOD_30MIN
+	case 3600:
+		p = KLINE_PERIOD_1H
+	case 7200:
+		p = KLINE_PERIOD_2H
+	case 14400:
+		p = KLINE_PERIOD_4H
+	case 21600:
+		p = KLINE_PERIOD_6H
+	case 86400:
+		p = KLINE_PERIOD_1DAY
+	case 604800:
+		p = KLINE_PERIOD_1WEEK
+	}
+	return p
+}
+
 func timeStringToInt64(t string) (int64, error) {
 	timestamp, err := time.Parse(time.RFC3339, t)
 	if err != nil {
