@@ -22,7 +22,7 @@ type OKEx struct {
 	OKExSwap       *OKExSwap
 	OKExWallet     *OKExWallet
 	OKExMargin     *OKExMargin
-	OKExV3FutureWs *OKExV3FutureWs
+	OKExV3FutureWs *OKExV3FuturesWs
 }
 
 func NewOKEx(config *APIConfig) *OKEx {
@@ -35,8 +35,7 @@ func NewOKEx(config *APIConfig) *OKEx {
 	okex.OKExWallet = &OKExWallet{okex}
 	okex.OKExMargin = &OKExMargin{okex}
 	okex.OKExSwap = &OKExSwap{okex, config}
-	okex.OKExV3FutureWs = NewOKExV3FuturesWs()
-	okex.OKExV3FutureWs.OKEx = okex
+	okex.OKExV3FutureWs = NewOKExV3FuturesWs(okex)
 	return okex
 }
 
