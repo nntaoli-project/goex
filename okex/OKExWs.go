@@ -161,7 +161,7 @@ func (okV3Ws *OKExV3Ws) handle(msg []byte) error {
 				return fmt.Errorf("error in websocket: %v", wsResp)
 			}
 		}
-		return fmt.Errorf("unknown websocet message: %v", wsResp)
+		return fmt.Errorf("unknown websocket message: %v", wsResp)
 	}
 
 	if wsResp.Table != "" {
@@ -177,7 +177,7 @@ func (okV3Ws *OKExV3Ws) handle(msg []byte) error {
 		return err
 	}
 
-	return fmt.Errorf("unknown websocet message: %v", wsResp)
+	return fmt.Errorf("unknown websocket message: %v", wsResp)
 }
 
 func (okV3Ws *OKExV3Ws) Login() error {

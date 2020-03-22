@@ -50,6 +50,11 @@ func (okV3Ws *OKExV3FuturesWs) OrderCallback(orderCallback func(*FutureOrder, st
 	return okV3Ws
 }
 
+func (okV3Ws *OKExV3FuturesWs) KlineCallback(klineCallback func(*FutureKline, int)) *OKExV3FuturesWs {
+	okV3Ws.klineCallback = klineCallback
+	return okV3Ws
+}
+
 func (okV3Ws *OKExV3FuturesWs) SetCallbacks(tickerCallback func(*FutureTicker),
 	depthCallback func(*Depth),
 	tradeCallback func(*Trade, string),
@@ -175,9 +180,15 @@ func (okV3Ws *OKExV3FuturesWs) handle(ch string, data json.RawMessage) error {
 			InstrumentId string  `json:"instrument_id"`
 			Timestamp    string  `json:"timestamp"`
 		}
-		orderResp []futureOrderResponse
+		orderResp     []futureOrderResponse
+		klineResponse []struct {
+			Candle       []string `json:"candle"`
+			InstrumentId string   `json:"instrument_id"`
+		}
 	)
-
+	if strings.Contains(ch, "candle") {
+		ch = "candle"
+	}
 	switch ch {
 	case "ticker":
 		err = json.Unmarshal(data, &tickers)
@@ -201,6 +212,30 @@ func (okV3Ws *OKExV3FuturesWs) handle(ch string, data json.RawMessage) error {
 				},
 				ContractType: alias,
 			})
+		}
+		return nil
+	case "candle":
+		err = json.Unmarshal(data, &klineResponse)
+		if err != nil {
+			return err
+		}
+
+		for _, t := range klineResponse {
+			_, pair := okV3Ws.getContractAliasAndCurrencyPairFromInstrumentId(t.InstrumentId)
+			ts, _ := time.Parse(time.RFC3339, t.Candle[0])
+			//granularity := adaptKLinePeriod(KlinePeriod(period))
+			okV3Ws.klineCallback(&FutureKline{
+				Kline: &Kline{
+					Pair:      pair,
+					High:      ToFloat64(t.Candle[2]),
+					Low:       ToFloat64(t.Candle[3]),
+					Timestamp: ts.Unix(),
+					Open:      ToFloat64(t.Candle[1]),
+					Close:     ToFloat64(t.Candle[4]),
+					Vol:       ToFloat64(t.Candle[5]),
+				},
+				Vol2: ToFloat64(t.Candle[6]),
+			}, 1)
 		}
 		return nil
 	case "depth5":
@@ -289,7 +324,7 @@ func (okV3Ws *OKExV3FuturesWs) handle(ch string, data json.RawMessage) error {
 		return nil
 	}
 
-	return fmt.Errorf("unknown websocet message: %s", string(data))
+	return fmt.Errorf("[%s] unknown websocket message: %s", ch, string(data))
 }
 
 func (okV3Ws *OKExV3FuturesWs) getKlinePeriodFormChannel(channel string) int {
