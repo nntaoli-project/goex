@@ -251,7 +251,7 @@ func (okV3Ws *OKExV3SpotWs) handle(ch string, data json.RawMessage) error {
 		}
 	}
 
-	return fmt.Errorf("unknown websocet message: %s", string(data))
+	return fmt.Errorf("unknown websocket message: %s", string(data))
 }
 
 func (okV3Ws *OKExV3SpotWs) getKlinePeriodFormChannel(channel string) int {
