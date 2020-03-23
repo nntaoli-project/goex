@@ -175,8 +175,8 @@ func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 	params.Add("contract_code", "")
 
 	if matchPrice == 1 {
-		params.Set("order_price_type" , "opponent") //对手价下单
-	}else{
+		params.Set("order_price_type", "opponent") //对手价下单
+	} else {
 		params.Set("order_price_type", "limit")
 		params.Add("price", price)
 	}
@@ -371,9 +371,13 @@ func (dm *Hbdm) GetFutureDepth(currencyPair CurrencyPair, contractType string, s
 	mills := ToUint64(ret["ts"])
 	dep.UTime = time.Unix(int64(mills/1000), int64(mills%1000)*int64(time.Millisecond))
 
-	tick := ret["tick"].(map[string]interface{})
-	asks := tick["asks"].([]interface{})
-	bids := tick["bids"].([]interface{})
+	tick, ok1 := ret["tick"].(map[string]interface{})
+	asks, ok2 := tick["asks"].([]interface{})
+	bids, ok3 := tick["bids"].([]interface{})
+
+	if !ok1 || !ok2 || !ok3 {
+		return nil, errors.New("data error")
+	}
 
 	for _, item := range asks {
 		askItem := item.([]interface{})
