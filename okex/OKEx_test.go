@@ -95,6 +95,10 @@ func TestOKExSpot_GetDepth(t *testing.T) {
 	t.Log(dep.BidList)
 }
 
+func TestOKExSpot_GetTrades(t *testing.T) {
+	t.Log(okex.OKExSpot.GetTrades(goex.BTC_USD, 10))
+}
+
 func TestOKExFuture_GetFutureTicker(t *testing.T) {
 	t.Log(okex.OKExFuture.GetFutureTicker(goex.BTC_USD, "BTC-USD-190927"))
 	t.Log(okex.OKExFuture.GetFutureTicker(goex.BTC_USD, goex.QUARTER_CONTRACT))
