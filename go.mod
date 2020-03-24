@@ -1,4 +1,4 @@
-module github.com/nntaoli-project/goex
+module github.com/xiaojun207/goex
 
 go 1.12
 
