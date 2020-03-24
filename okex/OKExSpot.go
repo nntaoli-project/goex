@@ -465,7 +465,6 @@ func (ok *OKExSpot) GetTrades(currency CurrencyPair, since int64) ([]Trade, erro
 		return nil, err
 	}
 
-	log.Println("---ok---")
 	var trades []Trade
 	for _, item := range response {
 		t, _ := time.Parse(time.RFC3339, item.Timestamp)
