@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/go-openapi/errors"
 	. "github.com/nntaoli-project/goex"
-	"log"
 	"sort"
 	"strings"
 	"time"
