@@ -450,5 +450,32 @@ func (ok *OKExSpot) GetKlineRecords(currency CurrencyPair, period, size, since i
 
 //非个人，整个交易所的交易记录
 func (ok *OKExSpot) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	panic("unsupported")
+	urlPath := fmt.Sprintf("/api/spot/v3/instruments/%s/trades?limit=%d", currency.AdaptUsdToUsdt().ToSymbol("-"), since)
+
+	var response []struct {
+		Timestamp string  `json:"timestamp"`
+		TradeId   int64   `json:"trade_id,string"`
+		Price     float64 `json:"price,string"`
+		Size      float64 `json:"size,string"`
+		Side      string  `json:"side"`
+	}
+	err := ok.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var trades []Trade
+	for _, item := range response {
+		t, _ := time.Parse(time.RFC3339, item.Timestamp)
+		trades = append(trades, Trade{
+			Tid:    item.TradeId,
+			Type:   AdaptTradeSide(item.Side),
+			Amount: item.Size,
+			Price:  item.Price,
+			Date:   t.Unix(),
+			Pair:   currency,
+		})
+	}
+
+	return trades, nil
 }
