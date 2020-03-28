@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 type Bitfinex struct {
@@ -223,7 +224,7 @@ func (bfx *Bitfinex) CancelOrder(orderId string, currencyPair CurrencyPair) (boo
 
 func (bfx *Bitfinex) toOrder(respmap map[string]interface{}) *Order {
 	order := new(Order)
-	order.Currency = bfx.symbolToCurrencyPair(respmap["symbol"].(string))
+	order.Currency = symbolToCurrencyPair(respmap["symbol"].(string))
 	order.OrderID = ToInt(respmap["id"])
 	order.OrderID2 = fmt.Sprint(ToInt(respmap["id"]))
 	order.Amount = ToFloat64(respmap["original_amount"])
@@ -317,12 +318,6 @@ func (bfx *Bitfinex) currencyPairToSymbol(currencyPair CurrencyPair) string {
 	return strings.ToUpper(currencyPair.ToSymbol(""))
 }
 
-func (bfx *Bitfinex) symbolToCurrencyPair(symbol string) CurrencyPair {
-	currencyA := strings.ToUpper(symbol[0:3])
-	currencyB := strings.ToUpper(symbol[3:])
-	return NewCurrencyPair(NewCurrency(currencyA, ""), NewCurrency(currencyB, ""))
-}
-
 func (bfx *Bitfinex) adaptTimestamp(timestamp string) int {
 	times := strings.Split(timestamp, ".")
 	intTime, _ := strconv.Atoi(times[0])
@@ -356,4 +351,10 @@ func (bfx *Bitfinex) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
 	}
 
 	return NewCurrencyPair(currencyA, currencyB)
+}
+
+func symbolToCurrencyPair(symbol string) CurrencyPair {
+	currencyA := strings.ToUpper(symbol[0:3])
+	currencyB := strings.ToUpper(symbol[3:])
+	return NewCurrencyPair(NewCurrency(currencyA, ""), NewCurrency(currencyB, ""))
 }
