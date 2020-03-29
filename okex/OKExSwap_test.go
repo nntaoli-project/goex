@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 )
 
 var config = &goex.APIConfig{
@@ -66,4 +67,13 @@ func TestOKExSwap_GetHistoricalFunding(t *testing.T) {
 		funding, err := okExSwap.GetHistoricalFunding(goex.SWAP_CONTRACT, goex.BTC_USD, i)
 		t.Log(err, len(funding))
 	}
+}
+
+func TestOKExSwap_GetKlineRecords(t *testing.T) {
+	since := time.Now().Add(-24 * time.Hour).Unix()
+	t.Log(okExSwap.GetKlineRecords(goex.SWAP_CONTRACT, goex.BTC_USD, goex.KLINE_PERIOD_4H, 0, int(since)))
+}
+
+func TestOKExSwap_GetKlineRecords2(t *testing.T) {
+	t.Log(okExSwap.GetKlineRecords2(goex.SWAP_CONTRACT, goex.BTC_USD, "", "", ""))
 }

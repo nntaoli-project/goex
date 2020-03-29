@@ -5,6 +5,8 @@ import (
 	"github.com/google/uuid"
 	. "github.com/nntaoli-project/goex"
 	"github.com/pkg/errors"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -464,11 +466,63 @@ func (ok *OKExSwap) GetDeliveryTime() (int, int, int, int) {
 	panic("not support")
 }
 
-func (ok *OKExSwap) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
-	panic("not support")
+func (ok *OKExSwap) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+
+	sinceTime := time.Unix(int64(since), 0).UTC()
+
+	if since/int(time.Second) != 1 { //如果不为秒，转为秒
+		sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
+	}
+
+	granularity := adaptKLinePeriod(KlinePeriod(period))
+	if granularity == -1 {
+		return nil, errors.New("kline period parameter is error")
+	}
+	return ok.GetKlineRecords2(contractType, currency, sinceTime.Format(time.RFC3339), "", strconv.Itoa(granularity))
 }
 
-func (ok *OKExSwap) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
+/**
+  since : 单位秒,开始时间
+*/
+func (ok *OKExSwap) GetKlineRecords2(contractType string, currency CurrencyPair, start, end, period string) ([]FutureKline, error) {
+	urlPath := "/api/swap/v3/instruments/%s/candles?%s"
+	params := url.Values{}
+	if start != "" {
+		params.Set("start", start)
+	}
+	if end != "" {
+		params.Set("end", end)
+	}
+	if period != "" {
+		params.Set("period", period)
+	}
+	contractId := ok.adaptContractType(currency)
+
+	var response [][]interface{}
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, params.Encode()), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var klines []FutureKline
+	for _, itm := range response {
+		t, _ := time.Parse(time.RFC3339, fmt.Sprint(itm[0]))
+		klines = append(klines, FutureKline{
+			Kline: &Kline{
+				Timestamp: t.Unix(),
+				Pair:      currency,
+				Open:      ToFloat64(itm[1]),
+				High:      ToFloat64(itm[2]),
+				Low:       ToFloat64(itm[3]),
+				Close:     ToFloat64(itm[4]),
+				Vol:       ToFloat64(itm[5])},
+			Vol2: ToFloat64(itm[6])})
+	}
+
+	return klines, nil
+}
+
+func (ok *OKExSwap) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("not support")
 }
 
