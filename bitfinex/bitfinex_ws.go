@@ -2,10 +2,8 @@ package bitfinex
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
-	"strings"
 	"sync"
 	"time"
 
@@ -61,33 +59,33 @@ func (bws *BitfinexWs) SetCallbacks(tickerCallback func(*Ticker), tradeCallback 
 
 func (bws *BitfinexWs) SubscribeTicker(pair CurrencyPair) error {
 	if bws.tickerCallback == nil {
-		return errors.New("please set ticker callback func")
+		return fmt.Errorf("please set ticker callback func")
 	}
 	return bws.subscribe(map[string]interface{}{
 		"event":   subscribe,
 		"channel": ticker,
-		"symbol":  convertPairToBitfinexSymbol(pair)})
+		"symbol":  convertPairToBitfinexSymbol("t", pair)})
 }
 
 func (bws *BitfinexWs) SubscribeTrade(pair CurrencyPair) error {
 	if bws.tradeCallback == nil {
-		return errors.New("please set trade callback func")
+		return fmt.Errorf("please set trade callback func")
 	}
 	return bws.subscribe(map[string]interface{}{
 		"event":   subscribe,
 		"channel": trades,
-		"symbol":  convertPairToBitfinexSymbol(pair)})
+		"symbol":  convertPairToBitfinexSymbol("t", pair)})
 }
 
 func (bws *BitfinexWs) SubscribeCandle(pair CurrencyPair, klinePeriod KlinePeriod) error {
 	if bws.candleCallback == nil {
-		return errors.New("please set candle callback func")
+		return fmt.Errorf("please set candle callback func")
 	}
-	symbol := convertPairToBitfinexSymbol(pair)
+	symbol := convertPairToBitfinexSymbol("t", pair)
 
 	period, ok := klinePeriods[klinePeriod]
 	if !ok {
-		return errors.New("invalid period")
+		return fmt.Errorf("invalid period")
 	}
 
 	return bws.subscribe(map[string]interface{}{
@@ -150,7 +148,7 @@ func (bws *BitfinexWs) handle(msg []byte) error {
 					return nil
 				}
 
-				kline := bws.candleFromRaw(convertKeyToPair(event.Key), raw)
+				kline := klineFromRaw(convertKeyToPair(event.Key), raw)
 				bws.candleCallback(kline)
 				return nil
 			}
@@ -175,7 +173,6 @@ func (bws *BitfinexWs) tickerFromRaw(pair CurrencyPair, raw []interface{}) *Tick
 }
 
 func (bws *BitfinexWs) tradeFromRaw(pair CurrencyPair, raw []interface{}) *Trade {
-
 	amount := ToFloat64(raw[2])
 	var side TradeSide
 	if amount > 0 {
@@ -192,26 +189,4 @@ func (bws *BitfinexWs) tradeFromRaw(pair CurrencyPair, raw []interface{}) *Trade
 		Price:  ToFloat64(raw[3]),
 		Type:   side,
 	}
-}
-
-func (bws *BitfinexWs) candleFromRaw(pair CurrencyPair, raw []interface{}) *Kline {
-	return &Kline{
-		Pair:      pair,
-		Timestamp: ToInt64(raw[0]),
-		Open:      ToFloat64(raw[1]),
-		Close:     ToFloat64(raw[2]),
-		High:      ToFloat64(raw[3]),
-		Low:       ToFloat64(raw[4]),
-		Vol:       ToFloat64(raw[5]),
-	}
-}
-
-func convertPairToBitfinexSymbol(pair CurrencyPair) string {
-	symbol := pair.ToSymbol("")
-	return "t" + symbol
-}
-
-func convertKeyToPair(key string) CurrencyPair {
-	split := strings.Split(key, ":")
-	return symbolToCurrencyPair(split[2][1:])
 }
