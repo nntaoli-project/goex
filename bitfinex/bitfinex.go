@@ -64,7 +64,6 @@ func (bfx *Bitfinex) GetDepth(size int, currencyPair CurrencyPair) (*Depth, erro
 	if err != nil {
 		return nil, err
 	}
-	println("resp:", resp)
 	bids := resp["bids"].([]interface{})
 	asks := resp["asks"].([]interface{})
 
@@ -180,18 +179,15 @@ func (bfx *Bitfinex) placeOrder(orderType, side, amount, price string, pair Curr
 
 	switch side {
 	case "buy":
-		if orderType == "limit" || orderType == "exchange limit" {
-			order.Side = BUY
-		} else {
+		order.Side = BUY
+		if strings.Contains(orderType, "market") {
 			order.Side = BUY_MARKET
 		}
 	case "sell":
-		if orderType == "limit" || orderType == "exchange limit" {
-			order.Side = SELL
-		} else {
+		order.Side = SELL
+		if strings.Contains(orderType, "market") {
 			order.Side = SELL_MARKET
 		}
-
 	}
 	return order, nil
 }
@@ -210,6 +206,14 @@ func (bfx *Bitfinex) MarketBuy(amount, price string, currencyPair CurrencyPair) 
 
 func (bfx *Bitfinex) MarketSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
 	return bfx.placeOrder("exchange market", "sell", amount, price, currencyPair)
+}
+
+func (bfx *Bitfinex) StopBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+	return bfx.placeOrder("exchange stop", "buy", amount, price, currencyPair)
+}
+
+func (bfx *Bitfinex) StopSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+	return bfx.placeOrder("exchange stop", "sell", amount, price, currencyPair)
 }
 
 func (bfx *Bitfinex) CancelOrder(orderId string, currencyPair CurrencyPair) (bool, error) {
