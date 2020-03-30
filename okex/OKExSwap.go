@@ -223,6 +223,36 @@ func (ok *OKExSwap) GetFutureUserinfo() (*FutureAccount, error) {
 	return &acc, nil
 }
 
+type AccountInfo struct {
+	Info struct {
+		Currency          string `json:"currency"`
+		Equity            string `json:"equity"`
+		FixedBalance      string `json:"fixed_balance"`
+		InstrumentID      string `json:"instrument_id"`
+		MaintMarginRatio  string `json:"maint_margin_ratio"`
+		Margin            string `json:"margin"`
+		MarginFrozen      string `json:"margin_frozen"`
+		MarginMode        string `json:"margin_mode"`
+		MarginRatio       string `json:"margin_ratio"`
+		MaxWithdraw       string `json:"max_withdraw"`
+		RealizedPnl       string `json:"realized_pnl"`
+		Timestamp         string `json:"timestamp"`
+		TotalAvailBalance string `json:"total_avail_balance"`
+		Underlying        string `json:"underlying"`
+		UnrealizedPnl     string `json:"unrealized_pnl"`
+	} `json:"info"`
+}
+
+func (ok *OKExSwap) GetFutureAccountInfo(currency CurrencyPair) (*AccountInfo, error) {
+	var infos AccountInfo
+
+	err := ok.OKEx.DoRequest("GET", fmt.Sprintf("/api/swap/v3/%s/accounts", ok.adaptContractType(currency)), "", &infos)
+	if err != nil {
+		return nil, err
+	}
+	return &infos, nil
+}
+
 /*
  OKEX swap api parameter's definition
  @author Lingting Fu
@@ -505,10 +535,10 @@ func (ok *OKExSwap) GetKlineRecords2(contractType string, currency CurrencyPair,
 		return nil, err
 	}
 
-	var klines []FutureKline
+	var kline []FutureKline
 	for _, itm := range response {
 		t, _ := time.Parse(time.RFC3339, fmt.Sprint(itm[0]))
-		klines = append(klines, FutureKline{
+		kline = append(kline, FutureKline{
 			Kline: &Kline{
 				Timestamp: t.Unix(),
 				Pair:      currency,
@@ -520,7 +550,7 @@ func (ok *OKExSwap) GetKlineRecords2(contractType string, currency CurrencyPair,
 			Vol2: ToFloat64(itm[6])})
 	}
 
-	return klines, nil
+	return kline, nil
 }
 
 func (ok *OKExSwap) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
