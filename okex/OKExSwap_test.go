@@ -71,9 +71,14 @@ func TestOKExSwap_GetHistoricalFunding(t *testing.T) {
 
 func TestOKExSwap_GetKlineRecords(t *testing.T) {
 	since := time.Now().Add(-24 * time.Hour).Unix()
-	t.Log(okExSwap.GetKlineRecords(goex.SWAP_CONTRACT, goex.BTC_USD, goex.KLINE_PERIOD_4H, 0, int(since)))
+	kline, err := okExSwap.GetKlineRecords(goex.SWAP_CONTRACT, goex.BTC_USD, goex.KLINE_PERIOD_4H, 0, int(since))
+	t.Log(err, kline[0].Kline)
 }
 
-func TestOKExSwap_GetKlineRecords2(t *testing.T) {
-	t.Log(okExSwap.GetKlineRecords2(goex.SWAP_CONTRACT, goex.BTC_USD, "", "", ""))
+func TestOKExSwap_GetInstruments(t *testing.T) {
+	t.Log(okExSwap.GetInstruments())
+}
+
+func TestOKExSwap_SetMarginLevel(t *testing.T) {
+	t.Log(okExSwap.SetMarginLevel(goex.EOS_USDT, 5, 3))
 }

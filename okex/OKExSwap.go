@@ -1,6 +1,7 @@
 package okex
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	. "github.com/nntaoli-project/goex"
@@ -556,5 +557,61 @@ func (ok *OKExSwap) AdaptTradeStatus(status int) TradeStatus {
 }
 
 func (ok *OKExSwap) adaptContractType(currencyPair CurrencyPair) string {
-	return fmt.Sprintf("%s-SWAP", currencyPair.AdaptUsdtToUsd().ToSymbol("-"))
+	return fmt.Sprintf("%s-SWAP", currencyPair.ToSymbol("-"))
+}
+
+type Instrument struct {
+	InstrumentID        string    `json:"instrument_id"`
+	UnderlyingIndex     string    `json:"underlying_index"`
+	QuoteCurrency       string    `json:"quote_currency"`
+	Coin                string    `json:"coin"`
+	ContractVal         string    `json:"contract_val"`
+	Listing             time.Time `json:"listing"`
+	Delivery            time.Time `json:"delivery"`
+	SizeIncrement       string    `json:"size_increment"`
+	TickSize            string    `json:"tick_size"`
+	BaseCurrency        string    `json:"base_currency"`
+	Underlying          string    `json:"underlying"`
+	SettlementCurrency  string    `json:"settlement_currency"`
+	IsInverse           string    `json:"is_inverse"`
+	ContractValCurrency string    `json:"contract_val_currency"`
+}
+
+func (ok *OKExSwap) GetInstruments() ([]Instrument, error) {
+	var resp []Instrument
+	err := ok.DoRequest("GET", "/api/swap/v3/instruments", "", &resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+type MarginLeverage struct {
+	LongLeverage  string `json:"long_leverage"`
+	MarginMode    string `json:"margin_mode"`
+	ShortLeverage string `json:"short_leverage"`
+	InstrumentId  string `json:"instrument_id"`
+}
+
+// marginmode
+//1:逐仓-多仓
+//2:逐仓-空仓
+//3:全仓
+func (ok *OKExSwap) SetMarginLevel(currencyPair CurrencyPair, level, marginMode int) (*MarginLeverage, error) {
+	var resp MarginLeverage
+	uri := fmt.Sprintf("/api/swap/v3/accounts/%s/leverage", ok.adaptContractType(currencyPair))
+
+	reqBody := make(map[string]string)
+	reqBody["leverage"] = strconv.Itoa(level)
+	reqBody["side"] = strconv.Itoa(marginMode)
+	data, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ok.DoRequest("POST", uri, string(data), &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }
