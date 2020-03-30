@@ -358,3 +358,17 @@ func symbolToCurrencyPair(symbol string) CurrencyPair {
 	currencyB := strings.ToUpper(symbol[3:])
 	return NewCurrencyPair(NewCurrency(currencyA, ""), NewCurrency(currencyB, ""))
 }
+
+var klinePeriods = map[KlinePeriod]string{
+	KLINE_PERIOD_1MIN:   "1m",
+	KLINE_PERIOD_5MIN:   "5m",
+	KLINE_PERIOD_15MIN:  "15m",
+	KLINE_PERIOD_30MIN:  "30m",
+	KLINE_PERIOD_60MIN:  "1h",
+	KLINE_PERIOD_3H:     "3h",
+	KLINE_PERIOD_6H:     "6h",
+	KLINE_PERIOD_12H:    "12h",
+	KLINE_PERIOD_1DAY:   "1D",
+	KLINE_PERIOD_1WEEK:  "7D",
+	KLINE_PERIOD_1MONTH: "1M",
+}

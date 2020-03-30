@@ -19,7 +19,11 @@ func TestNewBitfinexWs(t *testing.T) {
 		log.Printf("Trade: %+v: ", trade)
 	}
 
-	bitfinexWs.SetCallbacks(handleTicker, handleTrade)
+	handleCandle := func(candle *goex.Kline) {
+		log.Printf("Candle: %+v: ", candle)
+	}
+
+	bitfinexWs.SetCallbacks(handleTicker, handleTrade, handleCandle)
 
 	//Ticker
 	t.Log(bitfinexWs.SubscribeTicker(goex.BTC_USD))
@@ -28,5 +32,7 @@ func TestNewBitfinexWs(t *testing.T) {
 	//Trades
 	t.Log(bitfinexWs.SubscribeTrade(goex.BTC_USD))
 
+	//Candles
+	t.Log(bitfinexWs.SubscribeCandle(goex.BTC_USD, goex.KLINE_PERIOD_1MIN))
 	time.Sleep(time.Minute)
 }
