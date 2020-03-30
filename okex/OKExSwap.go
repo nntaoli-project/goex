@@ -595,15 +595,15 @@ type Instrument struct {
 	UnderlyingIndex     string    `json:"underlying_index"`
 	QuoteCurrency       string    `json:"quote_currency"`
 	Coin                string    `json:"coin"`
-	ContractVal         string    `json:"contract_val"`
+	ContractVal         float64   `json:"contract_val,string"`
 	Listing             time.Time `json:"listing"`
 	Delivery            time.Time `json:"delivery"`
-	SizeIncrement       string    `json:"size_increment"`
-	TickSize            string    `json:"tick_size"`
+	SizeIncrement       int       `json:"size_increment,string"`
+	TickSize            float64   `json:"tick_size,string"`
 	BaseCurrency        string    `json:"base_currency"`
 	Underlying          string    `json:"underlying"`
 	SettlementCurrency  string    `json:"settlement_currency"`
-	IsInverse           string    `json:"is_inverse"`
+	IsInverse           bool      `json:"is_inverse,string"`
 	ContractValCurrency string    `json:"contract_val_currency"`
 }
 
@@ -617,10 +617,10 @@ func (ok *OKExSwap) GetInstruments() ([]Instrument, error) {
 }
 
 type MarginLeverage struct {
-	LongLeverage  string `json:"long_leverage"`
-	MarginMode    string `json:"margin_mode"`
-	ShortLeverage string `json:"short_leverage"`
-	InstrumentId  string `json:"instrument_id"`
+	LongLeverage  float64 `json:"long_leverage,string"`
+	MarginMode    string  `json:"margin_mode"`
+	ShortLeverage float64 `json:"short_leverage,string"`
+	InstrumentId  string  `json:"instrument_id"`
 }
 
 // marginmode
