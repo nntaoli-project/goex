@@ -225,21 +225,21 @@ func (ok *OKExSwap) GetFutureUserinfo() (*FutureAccount, error) {
 
 type AccountInfo struct {
 	Info struct {
-		Currency          string `json:"currency"`
-		Equity            string `json:"equity"`
-		FixedBalance      string `json:"fixed_balance"`
-		InstrumentID      string `json:"instrument_id"`
-		MaintMarginRatio  string `json:"maint_margin_ratio"`
-		Margin            string `json:"margin"`
-		MarginFrozen      string `json:"margin_frozen"`
-		MarginMode        string `json:"margin_mode"`
-		MarginRatio       string `json:"margin_ratio"`
-		MaxWithdraw       string `json:"max_withdraw"`
-		RealizedPnl       string `json:"realized_pnl"`
-		Timestamp         string `json:"timestamp"`
-		TotalAvailBalance string `json:"total_avail_balance"`
-		Underlying        string `json:"underlying"`
-		UnrealizedPnl     string `json:"unrealized_pnl"`
+		Currency          string  `json:"currency"`
+		Equity            float64 `json:"equity,string"`
+		FixedBalance      float64 `json:"fixed_balance,string"`
+		InstrumentID      string  `json:"instrument_id"`
+		MaintMarginRatio  float64 `json:"maint_margin_ratio,string"`
+		Margin            float64 `json:"margin,string"`
+		MarginFrozen      float64 `json:"margin_frozen,string"`
+		MarginMode        string  `json:"margin_mode"`
+		MarginRatio       float64 `json:"margin_ratio,string"`
+		MaxWithdraw       float64 `json:"max_withdraw,string"`
+		RealizedPnl       float64 `json:"realized_pnl,string"`
+		Timestamp         string  `json:"timestamp"`
+		TotalAvailBalance float64 `json:"total_avail_balance,string"`
+		Underlying        string  `json:"underlying"`
+		UnrealizedPnl     float64 `json:"unrealized_pnl,string"`
 	} `json:"info"`
 }
 
