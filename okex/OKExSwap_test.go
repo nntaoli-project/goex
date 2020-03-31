@@ -75,10 +75,25 @@ func TestOKExSwap_GetKlineRecords(t *testing.T) {
 	t.Log(err, kline[0].Kline)
 }
 
+func TestOKExSwap_GetKlineRecords2(t *testing.T) {
+	start := time.Now().Add(time.Minute * -30).UTC().Format(time.RFC3339)
+	t.Log(start)
+	kline, err := okExSwap.GetKlineRecords2(goex.SWAP_CONTRACT, goex.BTC_USDT, start, "", "900")
+	t.Log(err, kline[0].Kline)
+}
+
 func TestOKExSwap_GetInstruments(t *testing.T) {
 	t.Log(okExSwap.GetInstruments())
 }
 
 func TestOKExSwap_SetMarginLevel(t *testing.T) {
 	t.Log(okExSwap.SetMarginLevel(goex.EOS_USDT, 5, 3))
+}
+
+func TestOKExSwap_GetMarginLevel(t *testing.T) {
+	t.Log(okExSwap.GetMarginLevel(goex.EOS_USDT))
+}
+
+func TestOKExSwap_GetFutureAccountInfo(t *testing.T) {
+	t.Log(okExSwap.GetFutureAccountInfo(goex.BTC_USDT))
 }

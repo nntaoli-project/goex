@@ -525,7 +525,7 @@ func (ok *OKExSwap) GetKlineRecords2(contractType string, currency CurrencyPair,
 		params.Set("end", end)
 	}
 	if period != "" {
-		params.Set("period", period)
+		params.Set("granularity", period)
 	}
 	contractId := ok.adaptContractType(currency)
 
@@ -621,6 +621,18 @@ type MarginLeverage struct {
 	MarginMode    string  `json:"margin_mode"`
 	ShortLeverage float64 `json:"short_leverage,string"`
 	InstrumentId  string  `json:"instrument_id"`
+}
+
+func (ok *OKExSwap) GetMarginLevel(currencyPair CurrencyPair) (*MarginLeverage, error) {
+	var resp MarginLeverage
+	uri := fmt.Sprintf("/api/swap/v3/accounts/%s/settings", ok.adaptContractType(currencyPair))
+
+	err := ok.DoRequest("GET", uri, "", &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+
 }
 
 // marginmode
