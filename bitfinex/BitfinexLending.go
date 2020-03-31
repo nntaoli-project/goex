@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
 	"io/ioutil"
 	"strconv"
 	"strings"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 type LendBookItem struct {
@@ -84,7 +85,7 @@ func (bfx *Bitfinex) GetDepositWalletBalance() (*Account, error) {
 
 func (bfx *Bitfinex) GetLendBook(currency Currency) (error, *LendBook) {
 	path := fmt.Sprintf("/lendbook/%s", currency.Symbol)
-	resp, err := bfx.httpClient.Get(BASE_URL + path)
+	resp, err := bfx.httpClient.Get(apiURLV1 + path)
 	if err != nil {
 		return err, nil
 	}
