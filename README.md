@@ -9,10 +9,11 @@ goex项目是为了统一并标准化各个数字资产交易平台的接口而�
 
 [English](https://github.com/nntaoli-project/goex/blob/dev/README_en.md)
 
-### goex已支持交易所 `22+`
+### goex已支持交易所 `23+`
 
 | 交易所 | 行情接口 | 交易接口 | 版本号 |   
 | ---   | ---     | ---     | ---   |  
+| kucoin.com | Y | Y | 1 |
 | hbg.com | Y | Y | 1 |   
 | hbdm.com | Y| Y |  1 |    
 | okex.com  | Y | Y | 3 |
