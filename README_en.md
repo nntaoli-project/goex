@@ -8,7 +8,7 @@ goex project is designed to unify and standardize the interfaces of each digital
 
 [中文](https://github.com/nntaoli-project/goex/blob/dev/README.md)
 
-### Exchanges are supported by goex `22+`
+### Exchanges are supported by goex `23+`
 | Exchange | Market API | Order API | Version |   
 | ---   | ---     | ---     | ---   |  
 | hbg.com | Y | Y | 1 |   
@@ -16,6 +16,7 @@ goex project is designed to unify and standardize the interfaces of each digital
 | okex.com (spot/future)| Y (REST / WS) | Y | 1 |  
 | okex.com (swap future) | Y | Y | 2 |
 | binance.com | Y | Y | 1 |  
+| kucoin.com | Y | Y | 1 |
 | bitstamp.net | Y | Y | 1 |  
 | bitfinex.com | Y | Y | 1 |  
 | zb.com | Y | Y | 1 |  
