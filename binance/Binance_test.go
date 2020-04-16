@@ -9,24 +9,28 @@ import (
 	"time"
 )
 
-var ba = New(&http.Client{
-	Transport: &http.Transport{
-		Proxy: func(req *http.Request) (*url.URL, error) {
-			return url.Parse("socks5://127.0.0.1:1080")
-			return nil, nil
-		},
-		Dial: (&net.Dialer{
+var ba = NewWithConfig(
+	&goex.APIConfig{
+		HttpClient: &http.Client{
+			Transport: &http.Transport{
+				Proxy: func(req *http.Request) (*url.URL, error) {
+					return url.Parse("socks5://127.0.0.1:1080")
+					return nil, nil
+				},
+				Dial: (&net.Dialer{
+					Timeout: 10 * time.Second,
+				}).Dial,
+			},
 			Timeout: 10 * time.Second,
-		}).Dial,
-	},
-	Timeout: 10 * time.Second,
-}, "q6y6Gr7fF3jSJLncpfn2PmAA0xu4XRiRFHpFkyJy3d7K68WUxY0Gt8rrajCDUfbI",
-	"AP8C2kh4RyISN3fpRCFMZJddf233XbPcYWQ1S7gBan3pGjCQg2JnyQFSJrIaNzRh",
-)
+		},
+		Endpoint:     US_API_BASE_URL,
+		ApiKey:       "q6y6Gr7fF3jSJLncpfn2PmAA0xu4XRiRFHpFkyJy3d7K68WUxY0Gt8rrajCDUfbI",
+		ApiSecretKey: "AP8C2kh4RyISN3fpRCFMZJddf233XbPcYWQ1S7gBan3pGjCQg2JnyQFSJrIaNzRh",
+	})
 
 func TestBinance_GetTicker(t *testing.T) {
-	ticker, _ := ba.GetTicker(goex.LTC_BTC)
-	t.Log(ticker)
+	ticker, err := ba.GetTicker(goex.NewCurrencyPair2("USDT_USD"))
+	t.Log(ticker, err)
 }
 
 func TestBinance_LimitBuy(t *testing.T) {

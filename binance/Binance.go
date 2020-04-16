@@ -12,7 +12,9 @@ import (
 )
 
 const (
-	//API_BASE_URL = "https://api.binance.com/"
+	GLOBAL_API_BASE_URL = "https://api.binance.com"
+	US_API_BASE_URL     = "https://api.binance.us"
+	JE_API_BASE_URL     = "https://api.binance.je"
 	//API_V1       = API_BASE_URL + "api/v1/"
 	//API_V3       = API_BASE_URL + "api/v3/"
 
@@ -176,14 +178,14 @@ func (bn *Binance) buildParamsSigned(postForm *url.Values) error {
 func New(client *http.Client, api_key, secret_key string) *Binance {
 	return NewWithConfig(&APIConfig{
 		HttpClient:   client,
-		Endpoint:     "https://api.binance.com",
+		Endpoint:     GLOBAL_API_BASE_URL,
 		ApiKey:       api_key,
 		ApiSecretKey: secret_key})
 }
 
 func NewWithConfig(config *APIConfig) *Binance {
 	if config.Endpoint == "" {
-		config.Endpoint = "https://api.binance.com"
+		config.Endpoint = GLOBAL_API_BASE_URL
 	}
 
 	bn := &Binance{
@@ -224,8 +226,7 @@ func (bn *Binance) setTimeOffset() error {
 }
 
 func (bn *Binance) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	currency2 := bn.adaptCurrencyPair(currency)
-	tickerUri := bn.apiV3 + fmt.Sprintf(TICKER_URI, currency2.ToSymbol(""))
+	tickerUri := bn.apiV3 + fmt.Sprintf(TICKER_URI, currency.ToSymbol(""))
 	tickerMap, err := HttpGet(bn.httpClient, tickerUri)
 
 	if err != nil {
@@ -261,9 +262,8 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 	} else {
 		size = 1000
 	}
-	currencyPair2 := bn.adaptCurrencyPair(currencyPair)
 
-	apiUrl := fmt.Sprintf(bn.apiV3+DEPTH_URI, currencyPair2.ToSymbol(""), size)
+	apiUrl := fmt.Sprintf(bn.apiV3+DEPTH_URI, currencyPair.ToSymbol(""), size)
 	resp, err := HttpGet(bn.httpClient, apiUrl)
 	if err != nil {
 		return nil, err
@@ -309,7 +309,6 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 }
 
 func (bn *Binance) placeOrder(amount, price string, pair CurrencyPair, orderType, orderSide string) (*Order, error) {
-	pair = bn.adaptCurrencyPair(pair)
 	path := bn.apiV3 + ORDER_URI
 	params := url.Values{}
 	params.Set("symbol", pair.ToSymbol(""))
@@ -416,7 +415,6 @@ func (bn *Binance) MarketSell(amount, price string, currencyPair CurrencyPair) (
 }
 
 func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool, error) {
-	currencyPair = bn.adaptCurrencyPair(currencyPair)
 	path := bn.apiV3 + ORDER_URI
 	params := url.Values{}
 	params.Set("symbol", currencyPair.ToSymbol(""))
@@ -446,7 +444,6 @@ func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool,
 
 func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Order, error) {
 	params := url.Values{}
-	currencyPair = bn.adaptCurrencyPair(currencyPair)
 	params.Set("symbol", currencyPair.ToSymbol(""))
 	if orderId != "" {
 		params.Set("orderId", orderId)
@@ -508,7 +505,6 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 
 func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error) {
 	params := url.Values{}
-	currencyPair = bn.adaptCurrencyPair(currencyPair)
 	params.Set("symbol", currencyPair.ToSymbol(""))
 
 	bn.buildParamsSigned(&params)
@@ -576,9 +572,8 @@ func (bn *Binance) GetAllUnfinishOrders() ([]Order, error) {
 }
 
 func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	currency2 := bn.adaptCurrencyPair(currency)
 	params := url.Values{}
-	params.Set("symbol", currency2.ToSymbol(""))
+	params.Set("symbol", currency.ToSymbol(""))
 	params.Set("interval", _INERNAL_KLINE_PERIOD_CONVERTER[period])
 	if since > 0 {
 		params.Set("startTime", strconv.Itoa(since))
@@ -614,7 +609,7 @@ func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since in
 //注意：since is fromId
 func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	param := url.Values{}
-	param.Set("symbol", bn.adaptCurrencyPair(currencyPair).ToSymbol(""))
+	param.Set("symbol", currencyPair.ToSymbol(""))
 	param.Set("limit", "500")
 	if since > 0 {
 		param.Set("fromId", strconv.Itoa(int(since)))
@@ -648,8 +643,7 @@ func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, e
 
 func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
 	params := url.Values{}
-	currency1 := bn.adaptCurrencyPair(currency)
-	params.Set("symbol", currency1.ToSymbol(""))
+	params.Set("symbol", currency.ToSymbol(""))
 
 	bn.buildParamsSigned(&params)
 	path := bn.apiV3 + "allOrders?" + params.Encode()
@@ -680,18 +674,6 @@ func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize
 	}
 	return orders, nil
 
-}
-
-func (bn *Binance) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
-	if pair.CurrencyA.Eq(BCH) || pair.CurrencyA.Eq(BCC) {
-		return NewCurrencyPair(NewCurrency("BCHABC", ""), pair.CurrencyB).AdaptUsdToUsdt()
-	}
-
-	if pair.CurrencyA.Symbol == "BSV" {
-		return NewCurrencyPair(NewCurrency("BCHSV", ""), pair.CurrencyB).AdaptUsdToUsdt()
-	}
-
-	return pair.AdaptUsdToUsdt()
 }
 
 func (bn *Binance) toCurrencyPair(symbol string) CurrencyPair {

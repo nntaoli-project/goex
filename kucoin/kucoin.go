@@ -92,16 +92,16 @@ func (kc *KuCoin) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	clientID := UUID()
-	params := map[string]string{
-		"clientOid": clientID,
-		"side":      "buy",
-		"symbol":    currency.ToSymbol("-"),
-		"type":      "limit",
-		"price":     price,
-		"size":      amount,
+	clientID := GenerateOrderClientId(32)
+	in := kucoin.CreateOrderModel{
+		ClientOid:   clientID,
+		Side:        "buy",
+		Symbol:      currency.ToSymbol("-"),
+		Type:        "limit",
+		Price:       price,
+		Size:        amount,
 	}
-	resp, err := kc.service.CreateOrder(params)
+	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
 		log.Error("KuCoin LimitBuy error:", err)
 		return nil, err
@@ -122,16 +122,16 @@ func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order,
 }
 
 func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	clientID := UUID()
-	params := map[string]string{
-		"clientOid": clientID,
-		"side":      "sell",
-		"symbol":    currency.ToSymbol("-"),
-		"type":      "limit",
-		"price":     price,
-		"size":      amount,
+	clientID := GenerateOrderClientId(32)
+	in := kucoin.CreateOrderModel{
+		ClientOid:   clientID,
+		Side:        "sell",
+		Symbol:      currency.ToSymbol("-"),
+		Type:        "limit",
+		Price:       price,
+		Size:        amount,
 	}
-	resp, err := kc.service.CreateOrder(params)
+	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
 		log.Error("KuCoin LimitSell error:", err)
 		return nil, err
@@ -152,16 +152,17 @@ func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order
 }
 
 func (kc *KuCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	clientID := UUID()
-	params := map[string]string{
-		"clientOid": clientID,
-		"side":      "buy",
-		"symbol":    currency.ToSymbol("-"),
-		"type":      "market",
-		"price":     price,
-		"size":      amount,
+	clientID := GenerateOrderClientId(32)
+	in := kucoin.CreateOrderModel{
+		ClientOid:   clientID,
+		Side:        "buy",
+		Symbol:      currency.ToSymbol("-"),
+		Type:        "market",
+		Price:       price,
+		Size:        amount,
 	}
-	resp, err := kc.service.CreateOrder(params)
+
+	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
 		log.Error("KuCoin MarketBuy error:", err)
 		return nil, err
@@ -182,16 +183,16 @@ func (kc *KuCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order
 }
 
 func (kc *KuCoin) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	clientID := UUID()
-	params := map[string]string{
-		"clientOid": clientID,
-		"side":      "sell",
-		"symbol":    currency.ToSymbol("-"),
-		"type":      "market",
-		"price":     price,
-		"size":      amount,
+	clientID := GenerateOrderClientId(32)
+	in := kucoin.CreateOrderModel{
+		ClientOid:   clientID,
+		Side:        "sell",
+		Symbol:      currency.ToSymbol("-"),
+		Type:        "market",
+		Price:       price,
+		Size:        amount,
 	}
-	resp, err := kc.service.CreateOrder(params)
+	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
 		log.Error("KuCoin MarketSell error:", err)
 		return nil, err
@@ -567,7 +568,7 @@ func (kc *KuCoin) CreateAccount(typo, currency string) (*kucoin.AccountModel, er
 // The inner transfer interface is used for transferring assets between the accounts of a user and is free of charges.
 // For example, a user could transfer assets from their main account to their trading account on the platform.
 func (kc *KuCoin) InnerTransfer(currency, from, to, amount string) (string, error) {
-	resp, err := kc.service.InnerTransferV2(UUID(), currency, from, to, amount)
+	resp, err := kc.service.InnerTransferV2(GenerateOrderClientId(32), currency, from, to, amount)
 	if err != nil {
 		log.Error("KuCoin InnerTransfer error:", err)
 		return "", err
@@ -586,7 +587,7 @@ func (kc *KuCoin) InnerTransfer(currency, from, to, amount string) (string, erro
 // SubTransfer transfers between master account and sub-account.
 func (kc *KuCoin) SubTransfer(currency, amount, direction, subUserId, accountType, subAccountType string) (string, error) {
 	params := map[string]string{
-		"clientOid":      UUID(),
+		"clientOid":      GenerateOrderClientId(32),
 		"currency":       currency,
 		"amount":         amount,
 		"direction":      direction,      // IN or OUT
