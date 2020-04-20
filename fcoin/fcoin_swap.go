@@ -4,7 +4,7 @@ import (
 	"fmt"
 	//"github.com/google/uuid"
 	. "github.com/nntaoli-project/goex"
-	"github.com/pkg/errors"
+	"errors"
 	//"strings
 	"net/url"
 )

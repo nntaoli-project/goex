@@ -3,7 +3,7 @@ package kucoin
 import (
 	"github.com/Kucoin/kucoin-go-sdk"
 	. "github.com/nntaoli-project/goex"
-	log "github.com/sirupsen/logrus"
+	log "github.com/nntaoli-project/goex/internal/logger"
 	"time"
 )
 

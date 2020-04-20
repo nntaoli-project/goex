@@ -2,10 +2,10 @@ package okex
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	. "github.com/nntaoli-project/goex"
-	"github.com/pkg/errors"
 	"net/url"
 	"strconv"
 	"strings"
