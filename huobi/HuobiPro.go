@@ -549,7 +549,7 @@ func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, sinc
 			Close:     ToFloat64(item["close"]),
 			High:      ToFloat64(item["high"]),
 			Low:       ToFloat64(item["low"]),
-			Vol:       ToFloat64(item["vol"]),
+			Vol:       ToFloat64(item["amount"]),
 			Timestamp: int64(ToUint64(item["id"]))})
 	}
 
