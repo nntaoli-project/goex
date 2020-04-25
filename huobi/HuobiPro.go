@@ -61,6 +61,8 @@ func NewHuobiWithConfig(config *APIConfig) *HuoBiPro {
 	hbpro := new(HuoBiPro)
 	if config.Endpoint == "" {
 		hbpro.baseUrl = "https://api.huobi.pro"
+	} else {
+		hbpro.baseUrl = config.Endpoint
 	}
 	hbpro.httpClient = config.HttpClient
 	hbpro.accessKey = config.ApiKey
