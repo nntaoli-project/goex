@@ -3,13 +3,14 @@ package okex
 import (
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	. "github.com/nntaoli-project/goex"
-	"github.com/nntaoli-project/goex/internal/logger"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	. "github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 )
 
 //合约信息
@@ -252,13 +253,8 @@ type CrossedAccountInfo struct {
 	MaintMarginRatio float64 `json:"maint_margin_ratio,string"`
 }
 
-func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount, error) {
-	if len(currencyPair) == 0 {
-		return ok.GetFutureUserinfo()
-	}
-
-	pair := currencyPair[0]
-	urlPath := "/api/futures/v3/accounts/" + pair.ToLower().ToSymbol("-")
+func (ok *OKExFuture) GetAccounts(currencyPair CurrencyPair) (*FutureAccount, error) {
+	urlPath := "/api/futures/v3/accounts/" + currencyPair.ToLower().ToSymbol("-")
 	var response CrossedAccountInfo
 
 	err := ok.DoRequest("GET", urlPath, "", &response)
@@ -269,8 +265,8 @@ func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount,
 	acc := new(FutureAccount)
 	acc.FutureSubAccounts = make(map[Currency]FutureSubAccount, 1)
 	if response.MarginMode == "crossed" {
-		acc.FutureSubAccounts[pair.CurrencyA] = FutureSubAccount{
-			Currency:      pair.CurrencyA,
+		acc.FutureSubAccounts[currencyPair.CurrencyA] = FutureSubAccount{
+			Currency:      currencyPair.CurrencyA,
 			AccountRights: response.Equity,
 			ProfitReal:    response.RealizedPnl,
 			ProfitUnreal:  response.UnrealizedPnl,
@@ -287,7 +283,11 @@ func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount,
 
 //deprecated
 //基本上已经报废，OK限制10s一次，但是基本上都会返回error：{"code":30014,"message":"Too Many Requests"}
-func (ok *OKExFuture) GetFutureUserinfo() (*FutureAccount, error) {
+func (ok *OKExFuture) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
+	if len(currencyPair) == 1 {
+		return ok.GetAccounts(currencyPair[0])
+	}
+
 	urlPath := "/api/futures/v3/accounts"
 	var response struct {
 		Info map[string]map[string]interface{}

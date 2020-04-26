@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	. "github.com/nntaoli-project/goex"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	. "github.com/nntaoli-project/goex"
 )
 
 const (
@@ -182,7 +183,7 @@ func (ok *OKExSwap) GetFutureDepth(currencyPair CurrencyPair, contractType strin
 	return &dep, nil
 }
 
-func (ok *OKExSwap) GetFutureUserinfo() (*FutureAccount, error) {
+func (ok *OKExSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	var infos SwapAccounts
 
 	err := ok.OKEx.DoRequest("GET", GET_ACCOUNTS, "", &infos)

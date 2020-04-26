@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
 	"net/url"
 	"sort"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 type Hbdm struct {
@@ -61,7 +62,7 @@ func (dm *Hbdm) GetExchangeName() string {
 	return HBDM
 }
 
-func (dm *Hbdm) GetFutureUserinfo() (*FutureAccount, error) {
+func (dm *Hbdm) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	path := "/api/v1/contract_account_info"
 	var data []struct {
 		Symbol            string  `json:"symbol"`

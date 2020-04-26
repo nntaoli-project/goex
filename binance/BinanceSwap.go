@@ -3,11 +3,12 @@ package binance
 import (
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
 	"net/url"
 	"strconv"
 	"sync"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 const (
@@ -234,7 +235,7 @@ func (bs *BinanceSwap) GetFutureIndex(currencyPair CurrencyPair) (float64, error
 /**
  *全仓账户
  */
-func (bs *BinanceSwap) GetFutureUserinfo() (*FutureAccount, error) {
+func (bs *BinanceSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	params := url.Values{}
 	bs.buildParamsSigned(&params)
 	path := bs.apiV1 + ACCOUNT_URI + params.Encode()
