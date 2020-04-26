@@ -117,7 +117,7 @@ func (g *Gdax) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 }
 
 func (g *Gdax) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	urlpath := fmt.Sprintf("%s/products/%s/candles", g.baseUrl, currency.ToSymbol("-"))
+	urlpath := fmt.Sprintf("%s/products/%s/candles", g.baseUrl, currency.AdaptUsdtToUsd().ToSymbol("-"))
 	granularity := -1
 	switch period {
 	case KLINE_PERIOD_1MIN:
