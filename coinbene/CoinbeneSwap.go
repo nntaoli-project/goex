@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 type baseResp struct {
@@ -132,7 +133,7 @@ func (swap *CoinbeneSwap) GetFutureDepth(currencyPair CurrencyPair, contractType
 
 func (swap *CoinbeneSwap) GetFutureIndex(currencyPair CurrencyPair) (float64, error) { panic("") }
 
-func (swap *CoinbeneSwap) GetFutureUserinfo() (*FutureAccount, error) {
+func (swap *CoinbeneSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	var data struct {
 		AvailableBalance float64 `json:"availableBalance,string"`
 		FrozenBalance    float64 `json:"frozenBalance,string"`

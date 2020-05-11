@@ -11,3 +11,7 @@ func TestFloatToString(t *testing.T) {
 	assert.Equal(t, "1.10231", FloatToString(1.10231000, 8))
 	assert.NotEqual(t, "1.10231000", FloatToString(1.10231000, 8))
 }
+
+func TestGenerateOrderClientId(t *testing.T) {
+	t.Log(len(GenerateOrderClientId(32)), GenerateOrderClientId(32))
+}

@@ -122,6 +122,7 @@ func FlateUnCompress(data []byte) ([]byte, error) {
 	return ioutil.ReadAll(flate.NewReader(bytes.NewReader(data)))
 }
 
-func UUID() string {
-	return strings.Replace(uuid.New().String(), "-", "", 32)
+func GenerateOrderClientId(size int) string {
+	uuidStr := strings.Replace(uuid.New().String(), "-", "", 32)
+	return "goex-" + uuidStr[0:size-5]
 }

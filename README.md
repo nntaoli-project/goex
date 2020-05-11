@@ -1,15 +1,17 @@
 <div align="center">
-<img width="409" heigth="205" src="https://upload-images.jianshu.io/upload_images/6760989-dec7dc747846880e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt="GoEx">
-<img src="https://travis-ci.org/nntaoli-project/GoEx.svg?branch=dev"/>
+<img width="409" heigth="205" src="https://upload-images.jianshu.io/upload_images/6760989-dec7dc747846880e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt="goex">
+<img src="https://travis-ci.org/nntaoli-project/goex.svg?branch=dev"/>
+<br/>
+	[![](logo.png)] (https://www.jetbrains.com/?from=goex)
 </div>
 
-### GoEx目标
+### goex目标
 
-GoEx项目是为了统一并标准化各个数字资产交易平台的接口而设计，同一个策略可以随时切换到任意一个交易平台，而不需要更改任何代码。
+goex项目是为了统一并标准化各个数字资产交易平台的接口而设计，同一个策略可以随时切换到任意一个交易平台，而不需要更改任何代码。
 
-[English](https://github.com/nntaoli-project/GoEx/blob/dev/README_en.md)
+[English](https://github.com/nntaoli-project/goex/blob/dev/README_en.md)
 
-### GoEx已支持交易所 `22+`
+### goex已支持交易所 `23+`
 
 | 交易所 | 行情接口 | 交易接口 | 版本号 |   
 | ---   | ---     | ---     | ---   |  
@@ -17,6 +19,7 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
 | hbdm.com | Y| Y |  1 |    
 | okex.com  | Y | Y | 3 |
 | binance.com | Y | Y | 1 |  
+| kucoin.com | Y | Y | 1 |
 | bitstamp.net | Y | Y | 1 |  
 | bitfinex.com | Y | Y | 1 |  
 | zb.com | Y | Y | 1 |  
@@ -35,14 +38,14 @@ GoEx项目是为了统一并标准化各个数字资产交易平台的接口而�
 | coinbig.com | Y | Y | * |
 |coinbene.com|Y|Y|*|
 
-### 安装GoEx库  
+### 安装goex库  
 
-``` go get github.com/nntaoli-project/GoEx ```
+``` go get github.com/nntaoli-project/goex ```
 
 >建议go mod 管理依赖
 ``` 
 require (
-          github.com/nntaoli-project/GoEx v1.0.4
+          github.com/nntaoli-project/goex v1.0.4
 )
 ```
 
@@ -53,8 +56,8 @@ require (
    package main
    
    import (
-   	"github.com/nntaoli-project/GoEx"
-   	"github.com/nntaoli-project/GoEx/builder"
+   	"github.com/nntaoli-project/goex"
+   	"github.com/nntaoli-project/goex/builder"
    	"log"
    	"time"
    )
@@ -87,9 +90,9 @@ require (
 
 ```golang
 import (
-	"github.com/nntaoli-project/GoEx"
-	"github.com/nntaoli-project/GoEx/huobi"
-	//"github.com/nntaoli-project/GoEx/okcoin"
+	"github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/huobi"
+	//"github.com/nntaoli-project/goex/okcoin"
 	"log"
 )
 
@@ -115,7 +118,7 @@ func main() {
 
 ### 更多文档
 
-[GoEx.TOP](https://goex.top)
+[goex.TOP](https://goex.top)
 
 ### 注意事项
 
@@ -127,6 +130,14 @@ func main() {
 6. 交流QQ群：574829125
 -----------------
 
+donate
+-----------------
+BTC:13cBHLk6B7t3Uj7caJbCwv1UaiuiA6Qx8z
+
+LTC:LVxM7y1K2dnpuNBU42ei3dKzPySf4VAm1H
+ 
+ETH:0x98573ddb33cdddce480c3bc1f9279ccd88ca1e93
+
 ### 欢迎为作者付一碗面钱
 
-<img src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG" width="250" alt="一碗面钱">&nbsp;&nbsp;&nbsp;<img src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/IMG_1177.jpg" width="250" alt="一碗面钱">
+<img src="https://raw.githubusercontent.com/nntaoli-project/goex/dev/wx_pay.JPG" width="250" alt="一碗面钱">&nbsp;&nbsp;&nbsp;<img src="https://raw.githubusercontent.com/nntaoli-project/goex/dev/IMG_1177.jpg" width="250" alt="一碗面钱">

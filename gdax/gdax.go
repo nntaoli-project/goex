@@ -1,10 +1,14 @@
 package gdax
 
 import (
+	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"sort"
+
+	"github.com/nntaoli-project/goex"
+	. "github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 )
 
 //www.coinbase.com or www.gdax.com
@@ -113,7 +117,51 @@ func (g *Gdax) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 }
 
 func (g *Gdax) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	panic("not implement")
+	urlpath := fmt.Sprintf("%s/products/%s/candles", g.baseUrl, currency.AdaptUsdtToUsd().ToSymbol("-"))
+	granularity := -1
+	switch period {
+	case KLINE_PERIOD_1MIN:
+		granularity = 60
+	case KLINE_PERIOD_5MIN:
+		granularity = 300
+	case KLINE_PERIOD_15MIN:
+		granularity = 900
+	case KLINE_PERIOD_1H, KLINE_PERIOD_60MIN:
+		granularity = 3600
+	case KLINE_PERIOD_6H:
+		granularity = 21600
+	case KLINE_PERIOD_1DAY:
+		granularity = 86400
+	default:
+		return nil, errors.New("unsupport the kline period")
+	}
+	urlpath += fmt.Sprintf("?granularity=%d", granularity)
+	resp, err := HttpGet3(g.httpClient, urlpath, map[string]string{})
+	if err != nil {
+		errCode := HTTP_ERR_CODE
+		errCode.OriginErrMsg = err.Error()
+		return nil, errCode
+	}
+
+	var klines []goex.Kline
+	for i := 0; i < len(resp); i++ {
+		k, is := resp[i].([]interface{})
+		if !is {
+			logger.Error("data format err data =", resp[i])
+			continue
+		}
+		klines = append(klines, goex.Kline{
+			Pair:      currency,
+			Timestamp: goex.ToInt64(k[0]),
+			Low:       goex.ToFloat64(k[1]),
+			High:      goex.ToFloat64(k[2]),
+			Open:      goex.ToFloat64(k[3]),
+			Close:     goex.ToFloat64(k[4]),
+			Vol:       goex.ToFloat64(k[5]),
+		})
+	}
+
+	return klines, nil
 }
 
 //非个人，整个交易所的交易记录

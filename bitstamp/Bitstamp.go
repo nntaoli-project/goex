@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
-	"log"
+	. "github.com/nntaoli-project/goex"
 	"net/http"
 	"net/url"
 	"sort"
@@ -37,7 +36,6 @@ func (bitstamp *Bitstamp) buildPostForm(params *url.Values) {
 	params.Set("signature", strings.ToUpper(sign))
 	params.Set("nonce", fmt.Sprintf("%d", nonce))
 	params.Set("key", bitstamp.accessKey)
-	//log.Println(params.Encode())
 }
 
 func (bitstamp *Bitstamp) GetAccount() (*Account, error) {
@@ -46,15 +44,12 @@ func (bitstamp *Bitstamp) GetAccount() (*Account, error) {
 	bitstamp.buildPostForm(&params)
 	resp, err := HttpPostForm(bitstamp.client, urlStr, params)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
-	//log.Println(string(resp))
 
 	var respmap map[string]interface{}
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
@@ -121,7 +116,6 @@ func (bitstamp *Bitstamp) placeOrder(side string, pair CurrencyPair, amount, pri
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		log.Println(string(resp))
 		return nil, err
 	}
 
@@ -220,7 +214,6 @@ func (bitstamp *Bitstamp) GetOneOrder(orderId string, currency CurrencyPair) (*O
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		log.Println(resp)
 		return nil, err
 	}
 
@@ -290,10 +283,8 @@ func (bitstamp *Bitstamp) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 	respmap := make([]interface{}, 1)
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		log.Println(string(resp))
 		return nil, err
 	}
-	//log.Println(respmap)
 	orders := make([]Order, 0)
 	for _, v := range respmap {
 		ord := v.(map[string]interface{})
@@ -330,7 +321,6 @@ func (bitstamp *Bitstamp) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	if err != nil {
 		return nil, err
 	}
-	//log.Println(respmap)
 	timestamp, _ := strconv.ParseUint(respmap["timestamp"].(string), 10, 64)
 	return &Ticker{
 		Pair: currency,
@@ -345,10 +335,8 @@ func (bitstamp *Bitstamp) GetTicker(currency CurrencyPair) (*Ticker, error) {
 
 func (bitstamp *Bitstamp) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	urlStr := BASE_URL + "v2/order_book/" + strings.ToLower(currency.ToSymbol(""))
-	//println(urlStr)
 	respmap, err := HttpGet(bitstamp.client, urlStr)
 	if err != nil {
-		log.Println("err")
 		return nil, err
 	}
 
@@ -356,7 +344,6 @@ func (bitstamp *Bitstamp) GetDepth(size int, currency CurrencyPair) (*Depth, err
 	bids, isok1 := respmap["bids"].([]interface{})
 	asks, isok2 := respmap["asks"].([]interface{})
 	if !isok1 || !isok2 {
-		log.Println(respmap)
 		return nil, errors.New("Get Depth Error.")
 	}
 

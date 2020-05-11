@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
 	"net/url"
 	"sort"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 type Hbdm struct {
@@ -61,7 +62,7 @@ func (dm *Hbdm) GetExchangeName() string {
 	return HBDM
 }
 
-func (dm *Hbdm) GetFutureUserinfo() (*FutureAccount, error) {
+func (dm *Hbdm) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	path := "/api/v1/contract_account_info"
 	var data []struct {
 		Symbol            string  `json:"symbol"`
@@ -170,11 +171,16 @@ func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 
 	params.Add("contract_type", contractType)
 	params.Add("symbol", currencyPair.CurrencyA.Symbol)
-	params.Add("price", price)
 	params.Add("volume", amount)
 	params.Add("lever_rate", fmt.Sprint(leverRate))
-	params.Add("order_price_type", "limit")
 	params.Add("contract_code", "")
+
+	if matchPrice == 1 {
+		params.Set("order_price_type", "opponent") //对手价下单
+	} else {
+		params.Set("order_price_type", "limit")
+		params.Add("price", price)
+	}
 
 	direction, offset := dm.adaptOpenType(openType)
 	params.Add("offset", offset)
@@ -366,9 +372,13 @@ func (dm *Hbdm) GetFutureDepth(currencyPair CurrencyPair, contractType string, s
 	mills := ToUint64(ret["ts"])
 	dep.UTime = time.Unix(int64(mills/1000), int64(mills%1000)*int64(time.Millisecond))
 
-	tick := ret["tick"].(map[string]interface{})
-	asks := tick["asks"].([]interface{})
-	bids := tick["bids"].([]interface{})
+	tick, ok1 := ret["tick"].(map[string]interface{})
+	asks, ok2 := tick["asks"].([]interface{})
+	bids, ok3 := tick["bids"].([]interface{})
+
+	if !ok1 || !ok2 || !ok3 {
+		return nil, errors.New("data error")
+	}
 
 	for _, item := range asks {
 		askItem := item.([]interface{})
@@ -500,16 +510,16 @@ func (dm *Hbdm) adaptKLinePeriod(period int) string {
 	}
 }
 
-func (dm *Hbdm) adaptOpenType(openType int) (string, string) {
+func (dm *Hbdm) adaptOpenType(openType int) (direction string, offset string) {
 	switch openType {
 	case OPEN_BUY:
 		return "buy", "open"
 	case OPEN_SELL:
 		return "sell", "open"
 	case CLOSE_SELL:
-		return "sell", "close"
-	case CLOSE_BUY:
 		return "buy", "close"
+	case CLOSE_BUY:
+		return "sell", "close"
 	default:
 		return "", ""
 	}

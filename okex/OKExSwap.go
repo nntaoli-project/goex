@@ -1,12 +1,16 @@
 package okex
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	. "github.com/nntaoli-project/GoEx"
-	"github.com/pkg/errors"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	. "github.com/nntaoli-project/goex"
 )
 
 const (
@@ -179,7 +183,7 @@ func (ok *OKExSwap) GetFutureDepth(currencyPair CurrencyPair, contractType strin
 	return &dep, nil
 }
 
-func (ok *OKExSwap) GetFutureUserinfo() (*FutureAccount, error) {
+func (ok *OKExSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	var infos SwapAccounts
 
 	err := ok.OKEx.DoRequest("GET", GET_ACCOUNTS, "", &infos)
@@ -218,6 +222,36 @@ func (ok *OKExSwap) GetFutureUserinfo() (*FutureAccount, error) {
 	}
 
 	return &acc, nil
+}
+
+type AccountInfo struct {
+	Info struct {
+		Currency          string  `json:"currency"`
+		Equity            float64 `json:"equity,string"`
+		FixedBalance      float64 `json:"fixed_balance,string"`
+		InstrumentID      string  `json:"instrument_id"`
+		MaintMarginRatio  float64 `json:"maint_margin_ratio,string"`
+		Margin            float64 `json:"margin,string"`
+		MarginFrozen      float64 `json:"margin_frozen,string"`
+		MarginMode        string  `json:"margin_mode"`
+		MarginRatio       float64 `json:"margin_ratio,string"`
+		MaxWithdraw       float64 `json:"max_withdraw,string"`
+		RealizedPnl       float64 `json:"realized_pnl,string"`
+		Timestamp         string  `json:"timestamp"`
+		TotalAvailBalance float64 `json:"total_avail_balance,string"`
+		Underlying        string  `json:"underlying"`
+		UnrealizedPnl     float64 `json:"unrealized_pnl,string"`
+	} `json:"info"`
+}
+
+func (ok *OKExSwap) GetFutureAccountInfo(currency CurrencyPair) (*AccountInfo, error) {
+	var infos AccountInfo
+
+	err := ok.OKEx.DoRequest("GET", fmt.Sprintf("/api/swap/v3/%s/accounts", ok.adaptContractType(currency)), "", &infos)
+	if err != nil {
+		return nil, err
+	}
+	return &infos, nil
 }
 
 /*
@@ -434,8 +468,6 @@ func (ok *OKExSwap) GetFuturePosition(currencyPair CurrencyPair, contractType st
 		positions[0].SellProfitReal = sellPosition.RealizedPnl
 		positions[0].SellPriceCost = sellPosition.SettlementPrice
 	}
-
-	//log.Println(resp)
 	return positions, nil
 }
 
@@ -466,11 +498,63 @@ func (ok *OKExSwap) GetDeliveryTime() (int, int, int, int) {
 	panic("not support")
 }
 
-func (ok *OKExSwap) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
-	panic("not support")
+func (ok *OKExSwap) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+
+	sinceTime := time.Unix(int64(since), 0).UTC()
+
+	if since/int(time.Second) != 1 { //如果不为秒，转为秒
+		sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
+	}
+
+	granularity := adaptKLinePeriod(KlinePeriod(period))
+	if granularity == -1 {
+		return nil, errors.New("kline period parameter is error")
+	}
+	return ok.GetKlineRecords2(contractType, currency, sinceTime.Format(time.RFC3339), "", strconv.Itoa(granularity))
 }
 
-func (ok *OKExSwap) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
+/**
+  since : 单位秒,开始时间
+*/
+func (ok *OKExSwap) GetKlineRecords2(contractType string, currency CurrencyPair, start, end, period string) ([]FutureKline, error) {
+	urlPath := "/api/swap/v3/instruments/%s/candles?%s"
+	params := url.Values{}
+	if start != "" {
+		params.Set("start", start)
+	}
+	if end != "" {
+		params.Set("end", end)
+	}
+	if period != "" {
+		params.Set("granularity", period)
+	}
+	contractId := ok.adaptContractType(currency)
+
+	var response [][]interface{}
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, params.Encode()), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var kline []FutureKline
+	for _, itm := range response {
+		t, _ := time.Parse(time.RFC3339, fmt.Sprint(itm[0]))
+		kline = append(kline, FutureKline{
+			Kline: &Kline{
+				Timestamp: t.Unix(),
+				Pair:      currency,
+				Open:      ToFloat64(itm[1]),
+				High:      ToFloat64(itm[2]),
+				Low:       ToFloat64(itm[3]),
+				Close:     ToFloat64(itm[4]),
+				Vol:       ToFloat64(itm[5])},
+			Vol2: ToFloat64(itm[6])})
+	}
+
+	return kline, nil
+}
+
+func (ok *OKExSwap) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("not support")
 }
 
@@ -505,4 +589,72 @@ func (ok *OKExSwap) AdaptTradeStatus(status int) TradeStatus {
 
 func (ok *OKExSwap) adaptContractType(currencyPair CurrencyPair) string {
 	return fmt.Sprintf("%s-SWAP", currencyPair.ToSymbol("-"))
+}
+
+type Instrument struct {
+	InstrumentID        string    `json:"instrument_id"`
+	UnderlyingIndex     string    `json:"underlying_index"`
+	QuoteCurrency       string    `json:"quote_currency"`
+	Coin                string    `json:"coin"`
+	ContractVal         float64   `json:"contract_val,string"`
+	Listing             time.Time `json:"listing"`
+	Delivery            time.Time `json:"delivery"`
+	SizeIncrement       int       `json:"size_increment,string"`
+	TickSize            float64   `json:"tick_size,string"`
+	BaseCurrency        string    `json:"base_currency"`
+	Underlying          string    `json:"underlying"`
+	SettlementCurrency  string    `json:"settlement_currency"`
+	IsInverse           bool      `json:"is_inverse,string"`
+	ContractValCurrency string    `json:"contract_val_currency"`
+}
+
+func (ok *OKExSwap) GetInstruments() ([]Instrument, error) {
+	var resp []Instrument
+	err := ok.DoRequest("GET", "/api/swap/v3/instruments", "", &resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+type MarginLeverage struct {
+	LongLeverage  float64 `json:"long_leverage,string"`
+	MarginMode    string  `json:"margin_mode"`
+	ShortLeverage float64 `json:"short_leverage,string"`
+	InstrumentId  string  `json:"instrument_id"`
+}
+
+func (ok *OKExSwap) GetMarginLevel(currencyPair CurrencyPair) (*MarginLeverage, error) {
+	var resp MarginLeverage
+	uri := fmt.Sprintf("/api/swap/v3/accounts/%s/settings", ok.adaptContractType(currencyPair))
+
+	err := ok.DoRequest("GET", uri, "", &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+
+}
+
+// marginmode
+//1:逐仓-多仓
+//2:逐仓-空仓
+//3:全仓
+func (ok *OKExSwap) SetMarginLevel(currencyPair CurrencyPair, level, marginMode int) (*MarginLeverage, error) {
+	var resp MarginLeverage
+	uri := fmt.Sprintf("/api/swap/v3/accounts/%s/leverage", ok.adaptContractType(currencyPair))
+
+	reqBody := make(map[string]string)
+	reqBody["leverage"] = strconv.Itoa(level)
+	reqBody["side"] = strconv.Itoa(marginMode)
+	data, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ok.DoRequest("POST", uri, string(data), &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }

@@ -1,14 +1,14 @@
 <div align="center">
-<img width="409" heigth="205" src="https://upload-images.jianshu.io/upload_images/6760989-dec7dc747846880e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt="GoEx">
+<img width="409" heigth="205" src="https://upload-images.jianshu.io/upload_images/6760989-dec7dc747846880e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt="goex">
 </div>
 
-### GoEx
+### goex
 
-GoEx project is designed to unify and standardize the interfaces of each digital asset trading platform. The same strategy can be switched to any trading platform at any time without changing any code.
+goex project is designed to unify and standardize the interfaces of each digital asset trading platform. The same strategy can be switched to any trading platform at any time without changing any code.
 
-[中文](https://github.com/nntaoli-project/GoEx/blob/dev/README.md)
+[中文](https://github.com/nntaoli-project/goex/blob/dev/README.md)
 
-### Exchanges are supported by GoEx `22+`
+### Exchanges are supported by goex `23+`
 | Exchange | Market API | Order API | Version |   
 | ---   | ---     | ---     | ---   |  
 | hbg.com | Y | Y | 1 |   
@@ -16,6 +16,7 @@ GoEx project is designed to unify and standardize the interfaces of each digital
 | okex.com (spot/future)| Y (REST / WS) | Y | 1 |  
 | okex.com (swap future) | Y | Y | 2 |
 | binance.com | Y | Y | 1 |  
+| kucoin.com | Y | Y | 1 |
 | bitstamp.net | Y | Y | 1 |  
 | bitfinex.com | Y | Y | 1 |  
 | zb.com | Y | Y | 1 |  
@@ -35,8 +36,8 @@ GoEx project is designed to unify and standardize the interfaces of each digital
 | btcchina.com | Y | Y | 1 |
 | coinbig.com | Y | Y | * |
 
-### Install GoEx
-``` go get github.com/nntaoli-project/GoEx ```
+### Install goex
+``` go get github.com/nntaoli-project/goex ```
 
 ### Example
 ```golang
@@ -44,8 +45,8 @@ GoEx project is designed to unify and standardize the interfaces of each digital
    package main
    
    import (
-   	"github.com/nntaoli-project/GoEx"
-   	"github.com/nntaoli-project/GoEx/builder"
+   	"github.com/nntaoli-project/goex"
+   	"github.com/nntaoli-project/goex/builder"
    	"log"
    	"time"
    )
@@ -77,9 +78,9 @@ GoEx project is designed to unify and standardize the interfaces of each digital
 ### websocket Example
 ```golang
 import (
-	"github.com/nntaoli-project/GoEx"
-	"github.com/nntaoli-project/GoEx/huobi"
-	//"github.com/nntaoli-project/GoEx/okcoin"
+	"github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/huobi"
+	//"github.com/nntaoli-project/goex/okcoin"
 	"log"
 )
 
@@ -105,7 +106,7 @@ func main() {
 
 ### More Detail
 
-[GoEx.TOP](https://goex.top)
+[goex.TOP](https://goex.top)
 
 # Highly Recommended(IMPORTANCE)
 1. use GoLand development.
@@ -120,4 +121,4 @@ Join QQ group: [574829125](#)
 
 ### Buy me a Coffe
 
-<img src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/wx_pay.JPG" width="250" alt="Buy me a Coffe">&nbsp;&nbsp;&nbsp;<img src="https://raw.githubusercontent.com/nntaoli-project/GoEx/dev/IMG_1177.jpg" width="250" alt="Buy me a Coffe">
+<img src="https://raw.githubusercontent.com/nntaoli-project/goex/dev/wx_pay.JPG" width="250" alt="Buy me a Coffe">&nbsp;&nbsp;&nbsp;<img src="https://raw.githubusercontent.com/nntaoli-project/goex/dev/IMG_1177.jpg" width="250" alt="Buy me a Coffe">

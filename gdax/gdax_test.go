@@ -1,9 +1,11 @@
 package gdax
 
 import (
-	"github.com/nntaoli-project/GoEx"
 	"net/http"
 	"testing"
+
+	"github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 )
 
 var gdax = New(http.DefaultClient, "", "")
@@ -25,4 +27,9 @@ func TestGdax_GetDepth(t *testing.T) {
 	t.Log("err=>", err)
 	t.Log("bids=>", dep.BidList)
 	t.Log("asks=>", dep.AskList)
+}
+
+func TestGdax_GetKlineRecords(t *testing.T) {
+	logger.SetLevel(logger.DEBUG)
+	t.Log(gdax.GetKlineRecords(goex.BTC_USD, goex.KLINE_PERIOD_1DAY, 0, 0))
 }

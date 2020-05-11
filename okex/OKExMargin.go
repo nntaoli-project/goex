@@ -2,8 +2,8 @@ package okex
 
 import (
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
-	"github.com/pkg/errors"
+	. "github.com/nntaoli-project/goex"
+	"errors"
 	"strings"
 )
 

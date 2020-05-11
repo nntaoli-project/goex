@@ -3,7 +3,7 @@ package okex
 import (
 	"fmt"
 	"github.com/go-openapi/errors"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"sort"
 	"strings"
 	"time"
@@ -223,7 +223,7 @@ type OrderResponse struct {
 	InstrumentId   string  `json:"instrument_id"`
 	ClientOid      string  `json:"client_oid"`
 	OrderId        string  `json:"order_id"`
-	Price          float64 `json:"price,string"`
+	Price          string  `json:"price,omitempty"`
 	Size           float64 `json:"size,string"`
 	Notional       string  `json:"notional"`
 	Side           string  `json:"side"`
@@ -240,7 +240,7 @@ func (ok *OKExSpot) adaptOrder(response OrderResponse) *Order {
 	ordInfo := &Order{
 		Cid:        response.ClientOid,
 		OrderID2:   response.OrderId,
-		Price:      response.Price,
+		Price:      ToFloat64(response.Price),
 		Amount:     response.Size,
 		AvgPrice:   ToFloat64(response.PriceAvg),
 		DealAmount: ToFloat64(response.FilledSize),
@@ -319,17 +319,20 @@ func (ok *OKExSpot) GetExchangeName() string {
 	return OKEX
 }
 
+type spotTickerResponse struct {
+	InstrumentId  string  `json:"instrument_id"`
+	Last          float64 `json:"last,string"`
+	High24h       float64 `json:"high_24h,string"`
+	Low24h        float64 `json:"low_24h,string"`
+	BestBid       float64 `json:"best_bid,string"`
+	BestAsk       float64 `json:"best_ask,string"`
+	BaseVolume24h float64 `json:"base_volume_24h,string"`
+	Timestamp     string  `json:"timestamp"`
+}
+
 func (ok *OKExSpot) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	urlPath := fmt.Sprintf("/api/spot/v3/instruments/%s/ticker", currency.AdaptUsdToUsdt().ToSymbol("-"))
-	var response struct {
-		Last          float64 `json:"last,string"`
-		High24h       float64 `json:"high_24h,string"`
-		Low24h        float64 `json:"low_24h,string"`
-		BestBid       float64 `json:"best_bid,string"`
-		BestAsk       float64 `json:"best_ask,string"`
-		BaseVolume24h float64 `json:"base_volume_24_h,string"`
-		Timestamp     string  `json:"timestamp"`
-	}
+	var response spotTickerResponse
 	err := ok.OKEx.DoRequest("GET", urlPath, "", &response)
 	if err != nil {
 		return nil, err
@@ -447,5 +450,32 @@ func (ok *OKExSpot) GetKlineRecords(currency CurrencyPair, period, size, since i
 
 //非个人，整个交易所的交易记录
 func (ok *OKExSpot) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
-	panic("unsupported")
+	urlPath := fmt.Sprintf("/api/spot/v3/instruments/%s/trades?limit=%d", currencyPair.AdaptUsdToUsdt().ToSymbol("-"), since)
+
+	var response []struct {
+		Timestamp string  `json:"timestamp"`
+		TradeId   int64   `json:"trade_id,string"`
+		Price     float64 `json:"price,string"`
+		Size      float64 `json:"size,string"`
+		Side      string  `json:"side"`
+	}
+	err := ok.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var trades []Trade
+	for _, item := range response {
+		t, _ := time.Parse(time.RFC3339, item.Timestamp)
+		trades = append(trades, Trade{
+			Tid:    item.TradeId,
+			Type:   AdaptTradeSide(item.Side),
+			Amount: item.Size,
+			Price:  item.Price,
+			Date:   t.Unix(),
+			Pair:   currencyPair,
+		})
+	}
+
+	return trades, nil
 }
