@@ -438,7 +438,8 @@ func (dm *Hbdm) GetKlineRecords(contract_type string, currency CurrencyPair, per
 	}
 
 	var klines []FutureKline
-	for _, d := range ret.Data {
+	for i := len(ret.Data) - 1; i >= 0; i-- {
+		d := ret.Data[i]
 		klines = append(klines, FutureKline{
 			Kline: &Kline{
 				Pair:      currency,
