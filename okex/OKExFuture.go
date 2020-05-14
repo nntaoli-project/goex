@@ -281,8 +281,8 @@ func (ok *OKExFuture) GetAccounts(currencyPair CurrencyPair) (*FutureAccount, er
 	return acc, nil
 }
 
-//deprecated
 //基本上已经报废，OK限制10s一次，但是基本上都会返回error：{"code":30014,"message":"Too Many Requests"}
+//加入currency  pair救活了这个接口
 func (ok *OKExFuture) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	if len(currencyPair) == 1 {
 		return ok.GetAccounts(currencyPair[0])
@@ -343,7 +343,7 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 		Price        string `json:"price"`
 		Size         string `json:"size"`
 		MatchPrice   int    `json:"match_price"`
-		Leverage     int    `json:"leverage"`
+		//Leverage     int    `json:"leverage"` //v3 api 已废弃
 	}
 
 	var response struct {
@@ -362,12 +362,12 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 	param.OrderType = ord.OrderType
 	param.Price = ok.normalizePrice(ord.Price, ord.Currency)
 	param.Size = fmt.Sprint(ord.Amount)
-	param.Leverage = ord.LeverRate
+	//param.Leverage = ord.LeverRate
 	param.MatchPrice = matchPrice
 
 	//当matchPrice=1以对手价下单，order_type只能选择0:普通委托
 	if param.MatchPrice == 1 {
-		println("注意:当matchPrice=1以对手价下单时，order_type只能选择0:普通委托")
+		logger.Warn("注意:当matchPrice=1以对手价下单时，order_type只能选择0:普通委托")
 		param.OrderType = ORDER_FEATURE_ORDINARY
 	}
 
@@ -385,7 +385,6 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 	return ord, nil
 }
 
-//deprecated
 func (ok *OKExFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
 	urlPath := "/api/futures/v3/order"
 	var param struct {
