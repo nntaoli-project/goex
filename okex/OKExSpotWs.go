@@ -30,28 +30,24 @@ func NewOKExSpotV3Ws(base *OKEx) *OKExV3SpotWs {
 	return okV3Ws
 }
 
-func (okV3Ws *OKExV3SpotWs) TickerCallback(tickerCallback func(*Ticker)) *OKExV3SpotWs {
+func (okV3Ws *OKExV3SpotWs) TickerCallback(tickerCallback func(*Ticker)) {
 	okV3Ws.tickerCallback = tickerCallback
-	return okV3Ws
 }
 
-func (okV3Ws *OKExV3SpotWs) DepthCallback(depthCallback func(*Depth)) *OKExV3SpotWs {
+func (okV3Ws *OKExV3SpotWs) DepthCallback(depthCallback func(*Depth)) {
 	okV3Ws.depthCallback = depthCallback
-	return okV3Ws
 }
 
-func (okV3Ws *OKExV3SpotWs) TradeCallback(tradeCallback func(*Trade)) *OKExV3SpotWs {
+func (okV3Ws *OKExV3SpotWs) TradeCallback(tradeCallback func(*Trade)) {
 	okV3Ws.tradeCallback = tradeCallback
-	return okV3Ws
-}
-func (okV3Ws *OKExV3SpotWs) KLineCallback(klineCallback func(kline *Kline, period KlinePeriod)) *OKExV3SpotWs {
-	okV3Ws.klineCallback = klineCallback
-	return okV3Ws
 }
 
-func (okV3Ws *OKExV3SpotWs) OrderCallback(orderCallback func(*Order)) *OKExV3SpotWs {
+func (okV3Ws *OKExV3SpotWs) KLineCallback(klineCallback func(kline *Kline, period KlinePeriod)) {
+	okV3Ws.klineCallback = klineCallback
+}
+
+func (okV3Ws *OKExV3SpotWs) OrderCallback(orderCallback func(*Order)) {
 	okV3Ws.orderCallback = orderCallback
-	return okV3Ws
 }
 
 func (okV3Ws *OKExV3SpotWs) SetCallbacks(tickerCallback func(*Ticker),
@@ -66,7 +62,7 @@ func (okV3Ws *OKExV3SpotWs) SetCallbacks(tickerCallback func(*Ticker),
 	okV3Ws.orderCallback = orderCallback
 }
 
-func (okV3Ws *OKExV3SpotWs) SubscribeDepth(currencyPair CurrencyPair, size int) error {
+func (okV3Ws *OKExV3SpotWs) SubscribeDepth(currencyPair CurrencyPair) error {
 	if okV3Ws.depthCallback == nil {
 		return errors.New("please set depth callback func")
 	}

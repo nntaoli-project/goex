@@ -49,7 +49,7 @@ func TestNewOKExV3FuturesWs(t *testing.T) {
 		t.Log(s, order)
 	})
 	//ok.OKExV3FutureWs.SubscribeTicker(goex.EOS_USD, goex.QUARTER_CONTRACT)
-	ok.OKExV3FutureWs.SubscribeDepth(goex.EOS_USDT, goex.QUARTER_CONTRACT, 5)
+	ok.OKExV3FutureWs.SubscribeDepth(goex.EOS_USDT, goex.QUARTER_CONTRACT)
 	//ok.OKExV3FutureWs.SubscribeTrade(goex.EOS_USD, goex.QUARTER_CONTRACT)
 	//ok.OKExV3FutureWs.SubscribeOrder(goex.BSV_USD, goex.NEXT_WEEK_CONTRACT)
 	time.Sleep(1 * time.Minute)

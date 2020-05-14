@@ -30,29 +30,24 @@ func NewOKExV3FuturesWs(base *OKEx) *OKExV3FuturesWs {
 	return okV3Ws
 }
 
-func (okV3Ws *OKExV3FuturesWs) TickerCallback(tickerCallback func(*FutureTicker)) *OKExV3FuturesWs {
+func (okV3Ws *OKExV3FuturesWs) TickerCallback(tickerCallback func(*FutureTicker)) {
 	okV3Ws.tickerCallback = tickerCallback
-	return okV3Ws
 }
 
-func (okV3Ws *OKExV3FuturesWs) DepthCallback(depthCallback func(*Depth)) *OKExV3FuturesWs {
+func (okV3Ws *OKExV3FuturesWs) DepthCallback(depthCallback func(*Depth)) {
 	okV3Ws.depthCallback = depthCallback
-	return okV3Ws
 }
 
-func (okV3Ws *OKExV3FuturesWs) TradeCallback(tradeCallback func(*Trade, string)) *OKExV3FuturesWs {
+func (okV3Ws *OKExV3FuturesWs) TradeCallback(tradeCallback func(*Trade, string)) {
 	okV3Ws.tradeCallback = tradeCallback
-	return okV3Ws
 }
 
-func (okV3Ws *OKExV3FuturesWs) OrderCallback(orderCallback func(*FutureOrder, string)) *OKExV3FuturesWs {
+func (okV3Ws *OKExV3FuturesWs) OrderCallback(orderCallback func(*FutureOrder, string)) {
 	okV3Ws.orderCallback = orderCallback
-	return okV3Ws
 }
 
-func (okV3Ws *OKExV3FuturesWs) KlineCallback(klineCallback func(*FutureKline, int)) *OKExV3FuturesWs {
+func (okV3Ws *OKExV3FuturesWs) KlineCallback(klineCallback func(*FutureKline, int)) {
 	okV3Ws.klineCallback = klineCallback
-	return okV3Ws
 }
 
 func (okV3Ws *OKExV3FuturesWs) SetCallbacks(tickerCallback func(*FutureTicker),
@@ -80,6 +75,7 @@ func (okV3Ws *OKExV3FuturesWs) getChannelName(currencyPair CurrencyPair, contrac
 	} else {
 		prefix = "futures"
 		contractId = okV3Ws.base.OKExFuture.GetFutureContractId(currencyPair, contractType)
+		logger.Info("contractid=",contractId)
 	}
 
 	channelName = prefix + "/%s:" + contractId
@@ -87,11 +83,7 @@ func (okV3Ws *OKExV3FuturesWs) getChannelName(currencyPair CurrencyPair, contrac
 	return channelName
 }
 
-func (okV3Ws *OKExV3FuturesWs) SubscribeDepth(currencyPair CurrencyPair, contractType string, size int) error {
-	if (size > 0) && (size != 5) {
-		return errors.New("only support depth 5")
-	}
-
+func (okV3Ws *OKExV3FuturesWs) SubscribeDepth(currencyPair CurrencyPair, contractType string) error {
 	if okV3Ws.depthCallback == nil {
 		return errors.New("please set depth callback func")
 	}
