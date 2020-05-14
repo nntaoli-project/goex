@@ -3,13 +3,14 @@ package okex
 import (
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	. "github.com/nntaoli-project/goex"
-	"github.com/nntaoli-project/goex/internal/logger"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	. "github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 )
 
 //合约信息
@@ -252,13 +253,8 @@ type CrossedAccountInfo struct {
 	MaintMarginRatio float64 `json:"maint_margin_ratio,string"`
 }
 
-func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount, error) {
-	if len(currencyPair) == 0 {
-		return ok.GetFutureUserinfo()
-	}
-
-	pair := currencyPair[0]
-	urlPath := "/api/futures/v3/accounts/" + pair.ToLower().ToSymbol("-")
+func (ok *OKExFuture) GetAccounts(currencyPair CurrencyPair) (*FutureAccount, error) {
+	urlPath := "/api/futures/v3/accounts/" + currencyPair.ToLower().ToSymbol("-")
 	var response CrossedAccountInfo
 
 	err := ok.DoRequest("GET", urlPath, "", &response)
@@ -269,8 +265,8 @@ func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount,
 	acc := new(FutureAccount)
 	acc.FutureSubAccounts = make(map[Currency]FutureSubAccount, 1)
 	if response.MarginMode == "crossed" {
-		acc.FutureSubAccounts[pair.CurrencyA] = FutureSubAccount{
-			Currency:      pair.CurrencyA,
+		acc.FutureSubAccounts[currencyPair.CurrencyA] = FutureSubAccount{
+			Currency:      currencyPair.CurrencyA,
 			AccountRights: response.Equity,
 			ProfitReal:    response.RealizedPnl,
 			ProfitUnreal:  response.UnrealizedPnl,
@@ -285,9 +281,13 @@ func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount,
 	return acc, nil
 }
 
-//deprecated
 //基本上已经报废，OK限制10s一次，但是基本上都会返回error：{"code":30014,"message":"Too Many Requests"}
-func (ok *OKExFuture) GetFutureUserinfo() (*FutureAccount, error) {
+//加入currency  pair救活了这个接口
+func (ok *OKExFuture) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
+	if len(currencyPair) == 1 {
+		return ok.GetAccounts(currencyPair[0])
+	}
+
 	urlPath := "/api/futures/v3/accounts"
 	var response struct {
 		Info map[string]map[string]interface{}
@@ -343,7 +343,7 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 		Price        string `json:"price"`
 		Size         string `json:"size"`
 		MatchPrice   int    `json:"match_price"`
-		Leverage     int    `json:"leverage"`
+		//Leverage     int    `json:"leverage"` //v3 api 已废弃
 	}
 
 	var response struct {
@@ -362,12 +362,12 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 	param.OrderType = ord.OrderType
 	param.Price = ok.normalizePrice(ord.Price, ord.Currency)
 	param.Size = fmt.Sprint(ord.Amount)
-	param.Leverage = ord.LeverRate
+	//param.Leverage = ord.LeverRate
 	param.MatchPrice = matchPrice
 
 	//当matchPrice=1以对手价下单，order_type只能选择0:普通委托
 	if param.MatchPrice == 1 {
-		println("注意:当matchPrice=1以对手价下单时，order_type只能选择0:普通委托")
+		logger.Warn("注意:当matchPrice=1以对手价下单时，order_type只能选择0:普通委托")
 		param.OrderType = ORDER_FEATURE_ORDINARY
 	}
 
@@ -385,7 +385,6 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 	return ord, nil
 }
 
-//deprecated
 func (ok *OKExFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
 	urlPath := "/api/futures/v3/order"
 	var param struct {

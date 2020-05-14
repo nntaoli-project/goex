@@ -35,8 +35,9 @@ type FutureRestAPI interface {
 
 	/**
 	 *全仓账户
+	 *@param currency
 	 */
-	GetFutureUserinfo() (*FutureAccount, error)
+	GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error)
 
 	/**
 	 * @deprecated

@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
-	. "github.com/nntaoli-project/goex/internal/logger"
 	"math/big"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
+	. "github.com/nntaoli-project/goex/internal/logger"
 )
 
 var HBPOINT = NewCurrency("HBPOINT", "")
@@ -45,6 +46,7 @@ type HuoBiPro struct {
 	accountId  string
 	accessKey  string
 	secretKey  string
+	Symbols    map[string]HuoBiProSymbol
 	//ECDSAPrivateKey string
 }
 
@@ -61,6 +63,8 @@ func NewHuobiWithConfig(config *APIConfig) *HuoBiPro {
 	hbpro := new(HuoBiPro)
 	if config.Endpoint == "" {
 		hbpro.baseUrl = "https://api.huobi.pro"
+	} else {
+		hbpro.baseUrl = config.Endpoint
 	}
 	hbpro.httpClient = config.HttpClient
 	hbpro.accessKey = config.ApiKey
@@ -78,6 +82,11 @@ func NewHuobiWithConfig(config *APIConfig) *HuoBiPro {
 		}
 	}
 
+	hbpro.Symbols = make(map[string]HuoBiProSymbol, 100)
+	_, err := hbpro.GetCurrenciesPrecision()
+	if err != nil {
+		Log.Panic("GetCurrenciesPrecision Error=", err)
+	}
 	return hbpro
 }
 
@@ -103,6 +112,12 @@ func NewHuoBiProSpot(client *http.Client, apikey, secretkey string) *HuoBiPro {
 	} else {
 		hb.accountId = accinfo.Id
 		Log.Info("account state :", accinfo.State)
+	}
+
+	hb.Symbols = make(map[string]HuoBiProSymbol, 100)
+	_, err = hb.GetCurrenciesPrecision()
+	if err != nil {
+		Log.Panic("GetCurrenciesPrecision Error=", err)
 	}
 	return hb
 }
@@ -211,16 +226,18 @@ func (hbpro *HuoBiPro) GetAccount() (*Account, error) {
 }
 
 func (hbpro *HuoBiPro) placeOrder(amount, price string, pair CurrencyPair, orderType string) (string, error) {
+	symbol := hbpro.Symbols[pair.ToLower().ToSymbol("")]
+
 	path := "/v1/order/orders/place"
 	params := url.Values{}
 	params.Set("account-id", hbpro.accountId)
-	params.Set("amount", amount)
+	params.Set("amount", FloatToString(ToFloat64(amount), int(symbol.AmountPrecision)))
 	params.Set("symbol", pair.AdaptUsdToUsdt().ToLower().ToSymbol(""))
 	params.Set("type", orderType)
 
 	switch orderType {
 	case "buy-limit", "sell-limit":
-		params.Set("price", price)
+		params.Set("price", FloatToString(ToFloat64(price), int(symbol.PricePrecision)))
 	}
 
 	hbpro.buildPostForm("POST", path, &params)
@@ -549,7 +566,7 @@ func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, sinc
 			Close:     ToFloat64(item["close"]),
 			High:      ToFloat64(item["high"]),
 			Low:       ToFloat64(item["low"]),
-			Vol:       ToFloat64(item["vol"]),
+			Vol:       ToFloat64(item["amount"]),
 			Timestamp: int64(ToUint64(item["id"]))})
 	}
 
@@ -715,6 +732,7 @@ func (hbpro *HuoBiPro) GetCurrenciesPrecision() ([]HuoBiProSymbol, error) {
 	if !ok {
 		return nil, errors.New("response format error")
 	}
+
 	var Symbols []HuoBiProSymbol
 	for _, v := range data {
 		_sym := v.(map[string]interface{})
@@ -726,6 +744,7 @@ func (hbpro *HuoBiPro) GetCurrenciesPrecision() ([]HuoBiProSymbol, error) {
 		sym.SymbolPartition = _sym["symbol-partition"].(string)
 		sym.Symbol = _sym["symbol"].(string)
 		Symbols = append(Symbols, sym)
+		hbpro.Symbols[sym.Symbol] = sym
 	}
 	//fmt.Println(Symbols)
 	return Symbols, nil

@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"fmt"
+
 	. "github.com/nntaoli-project/goex"
 	"github.com/nntaoli-project/goex/bigone"
 	"github.com/nntaoli-project/goex/binance"
@@ -12,13 +13,16 @@ import (
 	"github.com/nntaoli-project/goex/bitstamp"
 	"github.com/nntaoli-project/goex/bittrex"
 	"github.com/nntaoli-project/goex/coinbene"
-	"github.com/nntaoli-project/goex/fmex"
 	"github.com/nntaoli-project/goex/kucoin"
 
 	"github.com/nntaoli-project/goex/atop"
 	//"github.com/nntaoli-project/goex/coin58"
+	"net"
+	"net/http"
+	"net/url"
+	"time"
+
 	"github.com/nntaoli-project/goex/coinex"
-	"github.com/nntaoli-project/goex/fcoin"
 	"github.com/nntaoli-project/goex/gateio"
 	"github.com/nntaoli-project/goex/gdax"
 	"github.com/nntaoli-project/goex/hitbtc"
@@ -27,10 +31,6 @@ import (
 	"github.com/nntaoli-project/goex/okex"
 	"github.com/nntaoli-project/goex/poloniex"
 	"github.com/nntaoli-project/goex/zb"
-	"net"
-	"net/http"
-	"net/url"
-	"time"
 )
 
 type APIBuilder struct {
@@ -238,17 +238,6 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = zb.New(builder.client, builder.apiKey, builder.secretkey)
 	case COINEX:
 		_api = coinex.New(builder.client, builder.apiKey, builder.secretkey)
-	case FCOIN:
-		//	_api = fcoin.NewFCoin(builder.client, builder.apiKey, builder.secretkey)
-		_api = fcoin.NewWithConfig(&APIConfig{
-			HttpClient:   builder.client,
-			Endpoint:     builder.endPoint,
-			ApiKey:       builder.apiKey,
-			ApiSecretKey: builder.secretkey})
-	case FCOIN_MARGIN:
-		_api = fcoin.NewFcoinMargin(builder.client, builder.apiKey, builder.secretkey)
-	//case COIN58:
-	//	_api = coin58.New58Coin(builder.client, builder.apiKey, builder.secretkey)
 	case BIGONE:
 		_api = bigone.New(builder.client, builder.apiKey, builder.secretkey)
 	case HITBTC:
@@ -304,14 +293,6 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 		return coinbene.NewCoinbeneSwap(APIConfig{
 			HttpClient: builder.client,
 			//	Endpoint:     "http://openapi-contract.coinbene.com",
-			Endpoint:     builder.futuresEndPoint,
-			ApiKey:       builder.apiKey,
-			ApiSecretKey: builder.secretkey,
-		})
-	case FMEX:
-		return fmex.NewFMexSwap(&APIConfig{
-			HttpClient: builder.client,
-			//Endpoint:     "https://api.fmex.com",
 			Endpoint:     builder.futuresEndPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,

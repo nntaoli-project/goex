@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex/internal/logger"
 	"net/url"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex/internal/logger"
 
 	. "github.com/nntaoli-project/goex"
 )
@@ -67,7 +68,7 @@ func (bm *bitmex) toJson(param interface{}) string {
 	return string(dataJson)
 }
 
-func (bm *bitmex) GetFutureUserinfo() (*FutureAccount, error) {
+func (bm *bitmex) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	uri := "/api/v1/user/margin?currency=XBt"
 	var resp struct {
 		Currency           string  `json:"currency"`

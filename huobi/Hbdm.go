@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
 	"net/url"
 	"sort"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 type Hbdm struct {
@@ -61,7 +62,7 @@ func (dm *Hbdm) GetExchangeName() string {
 	return HBDM
 }
 
-func (dm *Hbdm) GetFutureUserinfo() (*FutureAccount, error) {
+func (dm *Hbdm) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	path := "/api/v1/contract_account_info"
 	var data []struct {
 		Symbol            string  `json:"symbol"`
@@ -437,7 +438,8 @@ func (dm *Hbdm) GetKlineRecords(contract_type string, currency CurrencyPair, per
 	}
 
 	var klines []FutureKline
-	for _, d := range ret.Data {
+	for i := len(ret.Data) - 1; i >= 0; i-- {
+		d := ret.Data[i]
 		klines = append(klines, FutureKline{
 			Kline: &Kline{
 				Pair:      currency,
