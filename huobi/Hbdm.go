@@ -340,15 +340,20 @@ func (dm *Hbdm) GetFutureTicker(currencyPair CurrencyPair, contractType string) 
 		return nil, errors.New(ret["err_msg"].(string))
 	}
 
-	tick := ret["tick"].(map[string]interface{})
+	tick, ok1 := ret["tick"].(map[string]interface{})
+	ask, ok2 := tick["ask"].([]interface{})
+	bid, ok3 := tick["bid"].([]interface{})
+	if !ok1 || !ok2 || !ok3 {
+		return nil, errors.New("no tick data")
+	}
 	return &Ticker{
 		Pair: currencyPair,
 		Last: ToFloat64(tick["close"]),
 		Vol:  ToFloat64(tick["amount"]),
 		Low:  ToFloat64(tick["low"]),
 		High: ToFloat64(tick["high"]),
-		Sell: ToFloat64(tick["ask"].([]interface{})[0]),
-		Buy:  ToFloat64(tick["bid"].([]interface{})[0]),
+		Sell: ToFloat64(ask[0]),
+		Buy:  ToFloat64(bid[0]),
 		Date: ToUint64(ret["ts"])}, nil
 }
 
