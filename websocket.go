@@ -14,18 +14,19 @@ import (
 )
 
 type WsConfig struct {
-	WsUrl                 string
-	ProxyUrl              string
-	ReqHeaders            map[string][]string //连接的时候加入的头部信息
-	HeartbeatIntervalTime time.Duration       //
-	HeartbeatData         func() []byte       //心跳数据2
-	IsAutoReconnect       bool
-	ProtoHandleFunc       func([]byte) error           //协议处理函数
-	DecompressFunc        func([]byte) ([]byte, error) //解压函数
-	ErrorHandleFunc       func(err error)
-	IsDump                bool
-	readDeadLineTime      time.Duration
-	reconnectInterval     time.Duration
+	WsUrl                     string
+	ProxyUrl                  string
+	ReqHeaders                map[string][]string //连接的时候加入的头部信息
+	HeartbeatIntervalTime     time.Duration       //
+	HeartbeatData             func() []byte       //心跳数据2
+	IsAutoReconnect           bool
+	ProtoHandleFunc           func([]byte) error           //协议处理函数
+	DecompressFunc            func([]byte) ([]byte, error) //解压函数
+	ErrorHandleFunc           func(err error)
+	ConnectSuccessAfterHandle func()
+	IsDump                    bool
+	readDeadLineTime          time.Duration
+	reconnectInterval         time.Duration
 }
 
 var dialer = &websocket.Dialer{
@@ -165,6 +166,11 @@ func (ws *WsConn) connect() error {
 		Log.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))
 	}
 	Log.Infof("[ws][%s] connected", ws.WsUrl)
+
+	if ws.ConnectSuccessAfterHandle != nil {
+		Log.Infof("[ws] [%s] execute the connect success after handle.", ws.WsUrl)
+		ws.ConnectSuccessAfterHandle()
+	}
 
 	ws.c = wsConn
 	return nil
