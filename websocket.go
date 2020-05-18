@@ -14,19 +14,19 @@ import (
 )
 
 type WsConfig struct {
-	WsUrl                     string
-	ProxyUrl                  string
-	ReqHeaders                map[string][]string //连接的时候加入的头部信息
-	HeartbeatIntervalTime     time.Duration       //
-	HeartbeatData             func() []byte       //心跳数据2
-	IsAutoReconnect           bool
-	ProtoHandleFunc           func([]byte) error           //协议处理函数
-	DecompressFunc            func([]byte) ([]byte, error) //解压函数
-	ErrorHandleFunc           func(err error)
-	ConnectSuccessAfterHandle func()
-	IsDump                    bool
-	readDeadLineTime          time.Duration
-	reconnectInterval         time.Duration
+	WsUrl                          string
+	ProxyUrl                       string
+	ReqHeaders                     map[string][]string //连接的时候加入的头部信息
+	HeartbeatIntervalTime          time.Duration       //
+	HeartbeatData                  func() []byte       //心跳数据2
+	IsAutoReconnect                bool
+	ProtoHandleFunc                func([]byte) error           //协议处理函数
+	DecompressFunc                 func([]byte) ([]byte, error) //解压函数
+	ErrorHandleFunc                func(err error)
+	ConnectSuccessAfterSendMessage []byte //for reconnect
+	IsDump                         bool
+	readDeadLineTime               time.Duration
+	reconnectInterval              time.Duration
 }
 
 var dialer = &websocket.Dialer{
@@ -109,6 +109,11 @@ func (b *WsBuilder) ErrorHandleFunc(f func(err error)) *WsBuilder {
 	return b
 }
 
+func (b *WsBuilder) ConnectSuccessAfterSendMessage(msg []byte) *WsBuilder {
+	b.wsConfig.ConnectSuccessAfterSendMessage = msg
+	return b
+}
+
 func (b *WsBuilder) Build() *WsConn {
 	wsConn := &WsConn{WsConfig: *b.wsConfig}
 	return wsConn.NewWs()
@@ -167,9 +172,9 @@ func (ws *WsConn) connect() error {
 	}
 	Log.Infof("[ws][%s] connected", ws.WsUrl)
 
-	if ws.ConnectSuccessAfterHandle != nil {
-		Log.Infof("[ws] [%s] execute the connect success after handle.", ws.WsUrl)
-		ws.ConnectSuccessAfterHandle()
+	if ws.ConnectSuccessAfterSendMessage != nil && len(ws.ConnectSuccessAfterSendMessage) > 0 {
+		Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(ws.ConnectSuccessAfterSendMessage))
+		ws.SendMessage(ws.ConnectSuccessAfterSendMessage)
 	}
 
 	ws.c = wsConn
