@@ -19,7 +19,6 @@ type OKExV3FuturesWs struct {
 	depthCallback  func(*Depth)
 	tradeCallback  func(*Trade, string)
 	klineCallback  func(*FutureKline, int)
-	orderCallback  func(*FutureOrder, string)
 }
 
 func NewOKExV3FuturesWs(base *OKEx) *OKExV3FuturesWs {
@@ -42,10 +41,6 @@ func (okV3Ws *OKExV3FuturesWs) TradeCallback(tradeCallback func(*Trade, string))
 	okV3Ws.tradeCallback = tradeCallback
 }
 
-func (okV3Ws *OKExV3FuturesWs) OrderCallback(orderCallback func(*FutureOrder, string)) {
-	okV3Ws.orderCallback = orderCallback
-}
-
 func (okV3Ws *OKExV3FuturesWs) KlineCallback(klineCallback func(*FutureKline, int)) {
 	okV3Ws.klineCallback = klineCallback
 }
@@ -53,13 +48,11 @@ func (okV3Ws *OKExV3FuturesWs) KlineCallback(klineCallback func(*FutureKline, in
 func (okV3Ws *OKExV3FuturesWs) SetCallbacks(tickerCallback func(*FutureTicker),
 	depthCallback func(*Depth),
 	tradeCallback func(*Trade, string),
-	klineCallback func(*FutureKline, int),
-	orderCallback func(*FutureOrder, string)) {
+	klineCallback func(*FutureKline, int)) {
 	okV3Ws.tickerCallback = tickerCallback
 	okV3Ws.depthCallback = depthCallback
 	okV3Ws.tradeCallback = tradeCallback
 	okV3Ws.klineCallback = klineCallback
-	okV3Ws.orderCallback = orderCallback
 }
 
 func (okV3Ws *OKExV3FuturesWs) getChannelName(currencyPair CurrencyPair, contractType string) string {
@@ -75,7 +68,7 @@ func (okV3Ws *OKExV3FuturesWs) getChannelName(currencyPair CurrencyPair, contrac
 	} else {
 		prefix = "futures"
 		contractId = okV3Ws.base.OKExFuture.GetFutureContractId(currencyPair, contractType)
-		logger.Info("contractid=",contractId)
+		logger.Info("contractid=", contractId)
 	}
 
 	channelName = prefix + "/%s:" + contractId
@@ -131,17 +124,6 @@ func (okV3Ws *OKExV3FuturesWs) SubscribeKline(currencyPair CurrencyPair, contrac
 		"args": []string{fmt.Sprintf(chName, fmt.Sprintf("candle%ds", seconds))}})
 }
 
-func (okV3Ws *OKExV3FuturesWs) SubscribeOrder(currencyPair CurrencyPair, contractType string) error {
-	if okV3Ws.orderCallback == nil {
-		return errors.New("place set order callback func")
-	}
-	okV3Ws.v3Ws.Login()
-	chName := okV3Ws.getChannelName(currencyPair, contractType)
-	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
-		"op":   "subscribe",
-		"args": []string{fmt.Sprintf(chName, "order")}})
-}
-
 func (okV3Ws *OKExV3FuturesWs) getContractAliasAndCurrencyPairFromInstrumentId(instrumentId string) (alias string, pair CurrencyPair) {
 	if strings.HasSuffix(instrumentId, "SWAP") {
 		ar := strings.Split(instrumentId, "-")
@@ -172,7 +154,6 @@ func (okV3Ws *OKExV3FuturesWs) handle(ch string, data json.RawMessage) error {
 			InstrumentId string  `json:"instrument_id"`
 			Timestamp    string  `json:"timestamp"`
 		}
-		orderResp     []futureOrderResponse
 		klineResponse []struct {
 			Candle       []string `json:"candle"`
 			InstrumentId string   `json:"instrument_id"`
@@ -285,32 +266,6 @@ func (okV3Ws *OKExV3FuturesWs) handle(ch string, data json.RawMessage) error {
 				Price:  resp.Price,
 				Date:   t.Unix(),
 				Pair:   pair,
-			}, alias)
-		}
-		return nil
-	case "order":
-		//2020/03/18 18:05:00 OKExFuturesWs.go:257: [D] [ws] [response] {"table":"futures/order","data":[{"leverage":"20","last_fill_time":"2020-03-18T10:05:00.790Z","filled_qty":"4","fee":"-0.00010655","price_avg":"112.62","type":"1","client_oid":"ce1661e5cb614fd690d0463de7a2eeb0","last_fill_qty":"4","instrument_id":"BSV-USD-200327","last_fill_px":"112.62","pnl":"0","size":"4","price":"112.73","last_fill_id":"15229749","error_code":"0","state":"2","contract_val":"10","order_id":"4573750935784449","order_type":"0","timestamp":"2020-03-18T10:05:00.790Z","status":"2"}]}
-		err := json.Unmarshal(data, &orderResp)
-		if err != nil {
-			return err
-		}
-		for _, o := range orderResp {
-			alias, pair := okV3Ws.getContractAliasAndCurrencyPairFromInstrumentId(o.InstrumentId)
-			okV3Ws.orderCallback(&FutureOrder{
-				ClientOid:    o.ClientOid,
-				OrderID2:     o.OrderId,
-				Price:        o.Price,
-				Amount:       o.Size,
-				AvgPrice:     o.PriceAvg,
-				DealAmount:   o.FilledQty,
-				Status:       okV3Ws.base.adaptOrderState(o.State),
-				Currency:     pair,
-				OrderType:    o.OrderType,
-				OType:        o.Type,
-				LeverRate:    o.Leverage,
-				Fee:          o.Fee,
-				ContractName: o.InstrumentId,
-				OrderTime:    o.Timestamp.UnixNano() / int64(time.Millisecond),
 			}, alias)
 		}
 		return nil

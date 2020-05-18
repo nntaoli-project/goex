@@ -19,7 +19,6 @@ type OKExV3SpotWs struct {
 	depthCallback  func(*Depth)
 	tradeCallback  func(*Trade)
 	klineCallback  func(*Kline, KlinePeriod)
-	orderCallback  func(*Order)
 }
 
 func NewOKExSpotV3Ws(base *OKEx) *OKExV3SpotWs {
@@ -46,20 +45,14 @@ func (okV3Ws *OKExV3SpotWs) KLineCallback(klineCallback func(kline *Kline, perio
 	okV3Ws.klineCallback = klineCallback
 }
 
-func (okV3Ws *OKExV3SpotWs) OrderCallback(orderCallback func(*Order)) {
-	okV3Ws.orderCallback = orderCallback
-}
-
 func (okV3Ws *OKExV3SpotWs) SetCallbacks(tickerCallback func(*Ticker),
 	depthCallback func(*Depth),
 	tradeCallback func(*Trade),
-	klineCallback func(*Kline, KlinePeriod),
-	orderCallback func(*Order)) {
+	klineCallback func(*Kline, KlinePeriod)) {
 	okV3Ws.tickerCallback = tickerCallback
 	okV3Ws.depthCallback = depthCallback
 	okV3Ws.tradeCallback = tradeCallback
 	okV3Ws.klineCallback = klineCallback
-	okV3Ws.orderCallback = orderCallback
 }
 
 func (okV3Ws *OKExV3SpotWs) SubscribeDepth(currencyPair CurrencyPair) error {
@@ -103,16 +96,6 @@ func (okV3Ws *OKExV3SpotWs) SubscribeKline(currencyPair CurrencyPair, period int
 	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
 		"op":   "subscribe",
 		"args": []string{fmt.Sprintf("spot/candle%ds:%s", seconds, currencyPair.ToSymbol("-"))}})
-}
-
-func (okV3Ws *OKExV3SpotWs) SubscribeOrder(currencyPair CurrencyPair, contractType string) error {
-	if okV3Ws.orderCallback == nil {
-		return errors.New("place set order callback func")
-	}
-	okV3Ws.v3Ws.Login()
-	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
-		"op":   "subscribe",
-		"args": []string{fmt.Sprintf("spot/order:%s", currencyPair.ToSymbol("-"))}})
 }
 
 func (okV3Ws *OKExV3SpotWs) getCurrencyPair(instrumentId string) CurrencyPair {
