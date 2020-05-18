@@ -44,10 +44,10 @@ func NewOKExV3Ws(base *OKEx, handle func(channel string, data json.RawMessage) e
 	okV3Ws.authoriedSubs = make([]map[string]interface{}, 0)
 	okV3Ws.WsBuilder = NewWsBuilder().
 		WsUrl("wss://real.okex.com:8443/ws/v3").
-		ReconnectInterval(2*time.Second).
+		ReconnectInterval(time.Second).
 		AutoReconnect().
 		Heartbeat(func() []byte { return []byte("ping") }, 28*time.Second).
-		UnCompressFunc(FlateUnCompress).ProtoHandleFunc(okV3Ws.handle)
+		DecompressFunc(FlateUnCompress).ProtoHandleFunc(okV3Ws.handle)
 	return okV3Ws
 }
 
