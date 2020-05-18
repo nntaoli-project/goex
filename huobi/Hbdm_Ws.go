@@ -73,7 +73,7 @@ func NewHbdmWs() *HbdmWs {
 		AutoReconnect().
 		//Heartbeat([]byte("{\"event\": \"ping\"} "), 30*time.Second).
 		//Heartbeat(func() []byte { return []byte("{\"op\":\"ping\"}") }(), 5*time.Second).
-		DecompressFunc(GzipUnCompress).
+		DecompressFunc(GzipDecompress).
 		ProtoHandleFunc(hbdmWs.handle)
 	return hbdmWs
 }

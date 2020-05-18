@@ -40,7 +40,7 @@ func NewOKExV3Ws(base *OKEx, handle func(channel string, data json.RawMessage) e
 		ReconnectInterval(time.Second).
 		AutoReconnect().
 		Heartbeat(func() []byte { return []byte("ping") }, 28*time.Second).
-		DecompressFunc(FlateUnCompress).ProtoHandleFunc(okV3Ws.handle)
+		DecompressFunc(FlateDecompress).ProtoHandleFunc(okV3Ws.handle)
 	return okV3Ws
 }
 
