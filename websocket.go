@@ -140,6 +140,11 @@ func (ws *WsConn) NewWs() *WsConn {
 	go ws.writeRequest()
 	go ws.receiveMessage()
 
+	if ws.ConnectSuccessAfterSendMessage != nil && len(ws.ConnectSuccessAfterSendMessage) > 0 {
+		Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(ws.ConnectSuccessAfterSendMessage))
+		ws.SendMessage(ws.ConnectSuccessAfterSendMessage)
+	}
+
 	return ws
 }
 
@@ -171,12 +176,6 @@ func (ws *WsConn) connect() error {
 		Log.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))
 	}
 	Log.Infof("[ws][%s] connected", ws.WsUrl)
-
-	if ws.ConnectSuccessAfterSendMessage != nil && len(ws.ConnectSuccessAfterSendMessage) > 0 {
-		Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(ws.ConnectSuccessAfterSendMessage))
-		ws.SendMessage(ws.ConnectSuccessAfterSendMessage)
-	}
-
 	ws.c = wsConn
 	return nil
 }
@@ -205,6 +204,11 @@ func (ws *WsConn) reconnect() {
 		}
 	} else {
 		//re subscribe
+		if ws.ConnectSuccessAfterSendMessage != nil && len(ws.ConnectSuccessAfterSendMessage) > 0 {
+			Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(ws.ConnectSuccessAfterSendMessage))
+			ws.SendMessage(ws.ConnectSuccessAfterSendMessage)
+		}
+
 		for _, sub := range ws.subs {
 			Log.Infof("[ws] re subscribe: ", string(sub))
 			ws.SendMessage(sub)
