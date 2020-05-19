@@ -140,9 +140,10 @@ func (okV3Ws *OKExV3FuturesWs) getContractAliasAndCurrencyPairFromInstrumentId(i
 	}
 }
 
-func (okV3Ws *OKExV3FuturesWs) handle(ch string, data json.RawMessage) error {
+func (okV3Ws *OKExV3FuturesWs) handle(channel string, data json.RawMessage) error {
 	var (
 		err           error
+		ch            string
 		tickers       []tickerResponse
 		depthResp     []depthResponse
 		dep           Depth
@@ -159,9 +160,17 @@ func (okV3Ws *OKExV3FuturesWs) handle(ch string, data json.RawMessage) error {
 			InstrumentId string   `json:"instrument_id"`
 		}
 	)
-	if strings.Contains(ch, "candle") {
+
+	if strings.Contains(channel, "futures/candle") {
 		ch = "candle"
+	} else {
+		ch, err = okV3Ws.v3Ws.parseChannel(channel)
+		if err != nil {
+			logger.Errorf("[%s] parse channel err=%s ,  originChannel=%s", okV3Ws.base.GetExchangeName(), err, ch)
+			return nil
+		}
 	}
+
 	switch ch {
 	case "ticker":
 		err = json.Unmarshal(data, &tickers)

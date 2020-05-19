@@ -120,11 +120,10 @@ func (okV3Ws *OKExV3SpotWs) handle(ch string, data json.RawMessage) error {
 			Candle       []string `json:"candle"`
 			InstrumentId string   `json:"instrument_id"`
 		}
-		orderResp []futureOrderResponse
 	)
 
 	switch ch {
-	case "ticker":
+	case "spot/ticker":
 		err = json.Unmarshal(data, &tickers)
 		if err != nil {
 			return err
@@ -144,7 +143,7 @@ func (okV3Ws *OKExV3SpotWs) handle(ch string, data json.RawMessage) error {
 			})
 		}
 		return nil
-	case "depth5":
+	case "spot/depth5":
 		err := json.Unmarshal(data, &depthResp)
 		if err != nil {
 			logger.Error(err)
@@ -170,7 +169,7 @@ func (okV3Ws *OKExV3SpotWs) handle(ch string, data json.RawMessage) error {
 		//call back func
 		okV3Ws.depthCallback(&dep)
 		return nil
-	case "trade":
+	case "spot/trade":
 		err := json.Unmarshal(data, &tradeResponse)
 		if err != nil {
 			logger.Error("unmarshal error :", err)
@@ -199,19 +198,13 @@ func (okV3Ws *OKExV3SpotWs) handle(ch string, data json.RawMessage) error {
 			})
 		}
 		return nil
-	case "order":
-		err := json.Unmarshal(data, &orderResp)
-		if err != nil {
-			return err
-		}
-		return nil
 	default:
-		if strings.HasPrefix(ch, "candle") {
+		if strings.HasPrefix(ch, "spot/candle") {
 			err := json.Unmarshal(data, &candleResponse)
 			if err != nil {
 				return err
 			}
-			periodMs := strings.TrimPrefix(ch, "candle")
+			periodMs := strings.TrimPrefix(ch, "spot/candle")
 			periodMs = strings.TrimSuffix(periodMs, "s")
 			for _, k := range candleResponse {
 				pair := okV3Ws.getCurrencyPair(k.InstrumentId)

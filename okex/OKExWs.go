@@ -109,17 +109,14 @@ func (okV3Ws *OKExV3Ws) handle(msg []byte) error {
 			return nil
 		case "error":
 			logger.Errorf(string(msg))
+		default:
+			logger.Info(string(msg))
 		}
 		return fmt.Errorf("unknown websocket message: %v", wsResp)
 	}
 
 	if wsResp.Table != "" {
-		channel, err := okV3Ws.parseChannel(wsResp.Table)
-		if err != nil {
-			logger.Error("parse ws channel error:", err)
-			return err
-		}
-		err = okV3Ws.respHandle(channel, wsResp.Data)
+		err = okV3Ws.respHandle(wsResp.Table, wsResp.Data)
 		if err != nil {
 			logger.Error("handle ws data error:", err)
 		}
