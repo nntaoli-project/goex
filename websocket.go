@@ -23,7 +23,7 @@ type WsConfig struct {
 	ProtoHandleFunc                func([]byte) error           //协议处理函数
 	DecompressFunc                 func([]byte) ([]byte, error) //解压函数
 	ErrorHandleFunc                func(err error)
-	ConnectSuccessAfterSendMessage []byte //for reconnect
+	ConnectSuccessAfterSendMessage func() []byte //for reconnect
 	IsDump                         bool
 	readDeadLineTime               time.Duration
 	reconnectInterval              time.Duration
@@ -109,7 +109,7 @@ func (b *WsBuilder) ErrorHandleFunc(f func(err error)) *WsBuilder {
 	return b
 }
 
-func (b *WsBuilder) ConnectSuccessAfterSendMessage(msg []byte) *WsBuilder {
+func (b *WsBuilder) ConnectSuccessAfterSendMessage(msg func() []byte) *WsBuilder {
 	b.wsConfig.ConnectSuccessAfterSendMessage = msg
 	return b
 }
@@ -140,9 +140,10 @@ func (ws *WsConn) NewWs() *WsConn {
 	go ws.writeRequest()
 	go ws.receiveMessage()
 
-	if ws.ConnectSuccessAfterSendMessage != nil && len(ws.ConnectSuccessAfterSendMessage) > 0 {
-		Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(ws.ConnectSuccessAfterSendMessage))
-		ws.SendMessage(ws.ConnectSuccessAfterSendMessage)
+	if ws.ConnectSuccessAfterSendMessage != nil {
+		msg := ws.ConnectSuccessAfterSendMessage()
+		ws.SendMessage(msg)
+		Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(msg))
 	}
 
 	return ws
@@ -204,9 +205,10 @@ func (ws *WsConn) reconnect() {
 		}
 	} else {
 		//re subscribe
-		if ws.ConnectSuccessAfterSendMessage != nil && len(ws.ConnectSuccessAfterSendMessage) > 0 {
-			Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(ws.ConnectSuccessAfterSendMessage))
-			ws.SendMessage(ws.ConnectSuccessAfterSendMessage)
+		if ws.ConnectSuccessAfterSendMessage != nil {
+			msg := ws.ConnectSuccessAfterSendMessage()
+			ws.SendMessage(msg)
+			Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(msg))
 		}
 
 		for _, sub := range ws.subs {
