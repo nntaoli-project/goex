@@ -112,8 +112,8 @@ func (hbdmWs *HbdmWs) SubscribeDepth(pair CurrencyPair, contract string) error {
 		return errors.New("please set depth callback func")
 	}
 	return hbdmWs.subscribe(map[string]interface{}{
-		"id":  "depth_2",
-		"sub": fmt.Sprintf("market.%s_%s.depth.step6", pair.CurrencyA.Symbol, hbdmWs.adaptContractSymbol(contract))})
+		"id":  "futures.depth",
+		"sub": fmt.Sprintf("market.%s_%s.depth.size_20.high_freq", pair.CurrencyA.Symbol, hbdmWs.adaptContractSymbol(contract))})
 }
 
 func (hbdmWs *HbdmWs) SubscribeTrade(pair CurrencyPair, contract string) error {

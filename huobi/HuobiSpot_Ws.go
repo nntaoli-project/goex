@@ -9,6 +9,7 @@ import (
 	"github.com/nntaoli-project/goex/internal/logger"
 	"strings"
 	"sync"
+	"time"
 )
 
 type SpotWs struct {
@@ -61,7 +62,7 @@ func (ws *SpotWs) SubscribeDepth(pair CurrencyPair) error {
 	}
 	return ws.subscribe(map[string]interface{}{
 		"id":  "spot.depth",
-		"sub": fmt.Sprintf("market.%s.depth.step0", pair.ToLower().ToSymbol(""))})
+		"sub": fmt.Sprintf("market.%s.mbp.refresh.20", pair.ToLower().ToSymbol(""))})
 }
 
 func (ws *SpotWs) SubscribeTicker(pair CurrencyPair) error {
@@ -92,7 +93,8 @@ func (ws *SpotWs) handle(msg []byte) error {
 		return err
 	}
 
-	if strings.Contains(resp.Ch, "depth.step") {
+	currencyPair := ParseCurrencyPairFromSpotWsCh(resp.Ch)
+	if strings.Contains(resp.Ch, "mbp.refresh") {
 		var (
 			depthResp DepthResponse
 		)
@@ -103,6 +105,8 @@ func (ws *SpotWs) handle(msg []byte) error {
 		}
 
 		dep := ParseDepthFromResponse(depthResp)
+		dep.Pair = currencyPair
+		dep.UTime = time.Unix(0, resp.Ts*int64(time.Millisecond))
 		ws.depthCallback(&dep)
 
 		return nil
@@ -115,7 +119,7 @@ func (ws *SpotWs) handle(msg []byte) error {
 			return err
 		}
 		ws.tickerCallback(&Ticker{
-			Pair: ParseCurrencyPairFromSpotWsCh(resp.Ch),
+			Pair: currencyPair,
 			Last: tickerResp.Close,
 			High: tickerResp.High,
 			Low:  tickerResp.Low,
