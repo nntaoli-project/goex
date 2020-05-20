@@ -1,11 +1,12 @@
 package huobi
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex"
-	"log"
+	"github.com/nntaoli-project/goex/internal/logger"
 	"sort"
 	"strings"
 	"sync"
@@ -54,6 +55,7 @@ type DetailResponse struct {
 type DepthResponse struct {
 	Bids [][]float64
 	Asks [][]float64
+	Ts   int64 `json:"ts"`
 }
 
 type HbdmWs struct {
@@ -86,6 +88,17 @@ func (hbdmWs *HbdmWs) SetCallbacks(tickerCallback func(*FutureTicker),
 	hbdmWs.tradeCallback = tradeCallback
 }
 
+func (hbdmWs *HbdmWs) TickerCallback(call func(ticker *FutureTicker)) {
+	hbdmWs.tickerCallback = call
+}
+func (hbdmWs *HbdmWs) TradeCallback(call func(trade *Trade, contract string)) {
+	hbdmWs.tradeCallback = call
+}
+
+func (hbdmWs *HbdmWs) DepthCallback(call func(depth *Depth)) {
+	hbdmWs.depthCallback = call
+}
+
 func (hbdmWs *HbdmWs) SubscribeTicker(pair CurrencyPair, contract string) error {
 	if hbdmWs.tickerCallback == nil {
 		return errors.New("please set ticker callback func")
@@ -95,13 +108,13 @@ func (hbdmWs *HbdmWs) SubscribeTicker(pair CurrencyPair, contract string) error 
 		"sub": fmt.Sprintf("market.%s_%s.detail", pair.CurrencyA.Symbol, hbdmWs.adaptContractSymbol(contract))})
 }
 
-func (hbdmWs *HbdmWs) SubscribeDepth(pair CurrencyPair, contract string, size int) error {
+func (hbdmWs *HbdmWs) SubscribeDepth(pair CurrencyPair, contract string) error {
 	if hbdmWs.depthCallback == nil {
 		return errors.New("please set depth callback func")
 	}
 	return hbdmWs.subscribe(map[string]interface{}{
 		"id":  "depth_2",
-		"sub": fmt.Sprintf("market.%s_%s.depth.step0", pair.CurrencyA.Symbol, hbdmWs.adaptContractSymbol(contract))})
+		"sub": fmt.Sprintf("market.%s_%s.depth.step6", pair.CurrencyA.Symbol, hbdmWs.adaptContractSymbol(contract))})
 }
 
 func (hbdmWs *HbdmWs) SubscribeTrade(pair CurrencyPair, contract string) error {
@@ -114,7 +127,7 @@ func (hbdmWs *HbdmWs) SubscribeTrade(pair CurrencyPair, contract string) error {
 }
 
 func (hbdmWs *HbdmWs) subscribe(sub map[string]interface{}) error {
-//	log.Println(sub)
+	//	log.Println(sub)
 	hbdmWs.connectWs()
 	return hbdmWs.wsConn.Subscribe(sub)
 }
@@ -127,17 +140,11 @@ func (hbdmWs *HbdmWs) connectWs() {
 
 func (hbdmWs *HbdmWs) handle(msg []byte) error {
 	//心跳
-	if strings.Contains(string(msg), "ping") {
-		var ping struct {
-			Ping int64
-		}
-		json.Unmarshal(msg, &ping)
-
-		pong := struct {
-			Pong int64 `json:"pong"`
-		}{ping.Ping}
-
-		hbdmWs.wsConn.SendJsonMessage(pong)
+	if bytes.Contains(msg, []byte("ping")) {
+		logger.Info(string(msg))
+		pong := bytes.ReplaceAll(msg, []byte("ping"), []byte("pong"))
+		hbdmWs.wsConn.SendMessage(pong)
+		logger.Info(string(pong))
 		return nil
 	}
 
@@ -148,13 +155,30 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 	}
 
 	if resp.Ch == "" {
-		log.Println(string(msg))
+		logger.Warnf("[%s] ch == \"\" , msg=%s", hbdmWs.wsConn.WsUrl, string(msg))
 		return nil
 	}
 
 	pair, contract, err := hbdmWs.parseCurrencyAndContract(resp.Ch)
 	if err != nil {
+		logger.Errorf("[%s] parse currency and contract err=%s", hbdmWs.wsConn.WsUrl, err)
 		return err
+	}
+
+	if strings.Contains(resp.Ch, ".depth.") {
+		var depResp DepthResponse
+		err := json.Unmarshal(resp.Tick, &depResp)
+		if err != nil {
+			return err
+		}
+
+		dep := hbdmWs.parseDepth(depResp)
+		dep.ContractType = contract
+		dep.Pair = pair
+		dep.UTime = time.Unix(0, resp.Ts*int64(time.Millisecond))
+
+		hbdmWs.depthCallback(&dep)
+		return nil
 	}
 
 	if strings.HasSuffix(resp.Ch, "trade.detail") {
@@ -171,22 +195,6 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 		return nil
 	}
 
-	if strings.Contains(resp.Ch, ".depth.") {
-		var depResp DepthResponse
-		err := json.Unmarshal(resp.Tick, &depResp)
-		if err != nil {
-			return err
-		}
-
-		dep := hbdmWs.parseDepth(depResp)
-		dep.ContractType = contract
-		dep.Pair = pair
-		dep.UTime = time.Unix(resp.Ts/1000, 0)
-
-		hbdmWs.depthCallback(&dep)
-		return nil
-	}
-
 	if strings.HasSuffix(resp.Ch, ".detail") {
 		var detail DetailResponse
 		err := json.Unmarshal(resp.Tick, &detail)
@@ -199,6 +207,8 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 		hbdmWs.tickerCallback(&ticker)
 		return nil
 	}
+
+	logger.Errorf("[%s] unknown message, msg=%s", hbdmWs.wsConn.WsUrl, string(msg))
 
 	return nil
 }

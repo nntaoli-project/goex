@@ -320,6 +320,8 @@ func (builder *APIBuilder) BuildFuturesWs(exName string) (FuturesWsApi, error) {
 			HttpClient: builder.client,
 			Endpoint:   builder.futuresEndPoint,
 		})), nil
+	case HBDM:
+		return huobi.NewHbdmWs(), nil
 	}
 	return nil, errors.New("not support the exchange " + exName)
 }
