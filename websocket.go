@@ -209,6 +209,7 @@ func (ws *WsConn) reconnect() {
 			msg := ws.ConnectSuccessAfterSendMessage()
 			ws.SendMessage(msg)
 			Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(msg))
+			time.Sleep(time.Second) //wait response
 		}
 
 		for _, sub := range ws.subs {
