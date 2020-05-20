@@ -7,7 +7,6 @@ import (
 	"fmt"
 	. "github.com/nntaoli-project/goex"
 	"github.com/nntaoli-project/goex/internal/logger"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -141,10 +140,8 @@ func (hbdmWs *HbdmWs) connectWs() {
 func (hbdmWs *HbdmWs) handle(msg []byte) error {
 	//心跳
 	if bytes.Contains(msg, []byte("ping")) {
-		logger.Info(string(msg))
 		pong := bytes.ReplaceAll(msg, []byte("ping"), []byte("pong"))
 		hbdmWs.wsConn.SendMessage(pong)
-		logger.Info(string(pong))
 		return nil
 	}
 
@@ -172,7 +169,7 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 			return err
 		}
 
-		dep := hbdmWs.parseDepth(depResp)
+		dep := ParseDepthFromResponse(depResp)
 		dep.ContractType = contract
 		dep.Pair = pair
 		dep.UTime = time.Unix(0, resp.Ts*int64(time.Millisecond))
@@ -215,21 +212,6 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 
 func (hbdmWs *HbdmWs) parseTicker(r DetailResponse) FutureTicker {
 	return FutureTicker{Ticker: &Ticker{High: r.High, Low: r.Low, Vol: r.Amount}}
-}
-
-func (hbdmWs *HbdmWs) parseDepth(r DepthResponse) Depth {
-	var dep Depth
-	for _, bid := range r.Bids {
-		dep.BidList = append(dep.BidList, DepthRecord{bid[0], bid[1]})
-	}
-
-	for _, ask := range r.Asks {
-		dep.AskList = append(dep.AskList, DepthRecord{ask[0], ask[1]})
-	}
-
-	sort.Sort(sort.Reverse(dep.BidList))
-	sort.Sort(sort.Reverse(dep.AskList))
-	return dep
 }
 
 func (hbdmWs *HbdmWs) parseCurrencyAndContract(ch string) (CurrencyPair, string, error) {
