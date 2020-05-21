@@ -231,6 +231,7 @@ func (hbpro *HuoBiPro) placeOrder(amount, price string, pair CurrencyPair, order
 	path := "/v1/order/orders/place"
 	params := url.Values{}
 	params.Set("account-id", hbpro.accountId)
+	params.Set("client-order-id", GenerateOrderClientId(32))
 	params.Set("amount", FloatToString(ToFloat64(amount), int(symbol.AmountPrecision)))
 	params.Set("symbol", pair.AdaptUsdToUsdt().ToLower().ToSymbol(""))
 	params.Set("type", orderType)
