@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/nntaoli-project/goex/internal/logger"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -50,6 +52,67 @@ type BaseResponse struct {
 const (
 	defaultBaseUrl = "https://api.hbdm.com"
 )
+
+var (
+	FuturesContractInfos []FuturesContractInfo
+)
+
+func init() {
+	go func() {
+		interval := time.Second
+		intervalTimer := time.NewTimer(interval)
+
+		for {
+			select {
+			case <-intervalTimer.C:
+				var response struct {
+					Status string `json:"status"`
+					Data   []struct {
+						Symbol         string  `json:"symbol"`
+						ContractCode   string  `json:"contract_code"`
+						ContractType   string  `json:"contract_type"`
+						ContractSize   float64 `json:"contract_size"`
+						PriceTick      float64 `json:"price_tick"`
+						DeliveryDate   string  `json:"delivery_date"`
+						CreateDate     string  `json:"create_date"`
+						ContractStatus int     `json:"contract_status"`
+					} `json:"data"`
+				}
+				urlPath := "http://api.hbdm.pro/api/v1/contract_contract_info"
+				respBody, err := HttpGet5(http.DefaultClient, urlPath, map[string]string{})
+				if err != nil {
+					logger.Error("[hbdm] get contract info error=", err)
+					goto reset
+				}
+				err = json.Unmarshal(respBody, &response)
+				if err != nil {
+					logger.Errorf("[hbdm] json unmarshal contract info error=%s", err)
+					goto reset
+				}
+				FuturesContractInfos = FuturesContractInfos[:0]
+				for _, info := range response.Data {
+					FuturesContractInfos = append(FuturesContractInfos, FuturesContractInfo{
+						TickSize: &TickSize{
+							InstrumentID:    info.ContractCode,
+							UnderlyingIndex: info.Symbol,
+							QuoteCurrency:   "",
+							PriceTickSize:   info.PriceTick,
+							AmountTickSize:  0,
+						},
+						ContractVal:  info.ContractSize,
+						Delivery:     info.DeliveryDate,
+						ContractType: info.ContractType,
+					})
+				}
+				interval = 10 * time.Minute
+			reset:
+				intervalTimer.Reset(interval)
+			}
+
+		}
+
+	}()
+}
 
 func NewHbdm(conf *APIConfig) *Hbdm {
 	if conf.Endpoint == "" {
@@ -179,7 +242,7 @@ func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 		params.Set("order_price_type", "opponent") //对手价下单
 	} else {
 		params.Set("order_price_type", "limit")
-		params.Add("price", price)
+		params.Add("price", dm.formatPriceSize(contractType, currencyPair.CurrencyA, price))
 	}
 
 	direction, offset := dm.adaptOpenType(openType)
@@ -604,4 +667,21 @@ func (dm *Hbdm) doRequest(path string, params *url.Values, data interface{}) err
 	}
 
 	return json.Unmarshal(ret.Data, data)
+}
+
+func (dm *Hbdm) formatPriceSize(contract string, currency Currency, price string) string {
+	var tickSize = 0
+	for _, v := range FuturesContractInfos {
+		if (v.ContractType == contract || v.InstrumentID == contract) && v.UnderlyingIndex == currency.Symbol {
+			if v.PriceTickSize == 0 {
+				break
+			}
+			for v.PriceTickSize < 1 {
+				tickSize++
+				v.PriceTickSize *= 10
+			}
+			break
+		}
+	}
+	return FloatToString(ToFloat64(price), tickSize)
 }

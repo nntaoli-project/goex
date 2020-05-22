@@ -191,6 +191,21 @@ type HistoricalFunding struct {
 	FundingTime  time.Time `json:"funding_time"`
 }
 
+type TickSize struct {
+	InstrumentID    string
+	UnderlyingIndex string
+	QuoteCurrency   string
+	PriceTickSize   float64 //下单价格精度
+	AmountTickSize  float64 //数量精度
+}
+
+type FuturesContractInfo struct {
+	*TickSize
+	ContractVal  float64 //合约面值(美元)
+	Delivery     string //交割日期
+	ContractType string //	本周 this_week 次周 next_week 季度 quarter
+}
+
 //api parameter struct
 
 type BorrowParameter struct {
