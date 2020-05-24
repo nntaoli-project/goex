@@ -12,6 +12,8 @@ var bnWs = NewBinanceWs()
 
 func init() {
 	bnWs.proxyUrl = "socks5://127.0.0.1:1080"
+	//bnWs.SetBaseUrl("wss://fstream.binancezh.com/ws")
+	//bnWs.SetCombinedBaseURL("wss://fstream.binancezh.com/stream?streams=")
 	bnWs.SetCallbacks(printfTicker, printfDepth, printfTrade, printfKline)
 }
 
