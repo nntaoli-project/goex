@@ -110,7 +110,7 @@ func ValuesToJson(v url.Values) ([]byte, error) {
 	return json.Marshal(parammap)
 }
 
-func GzipUnCompress(data []byte) ([]byte, error) {
+func GzipDecompress(data []byte) ([]byte, error) {
 	r, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func GzipUnCompress(data []byte) ([]byte, error) {
 	return ioutil.ReadAll(r)
 }
 
-func FlateUnCompress(data []byte) ([]byte, error) {
+func FlateDecompress(data []byte) ([]byte, error) {
 	return ioutil.ReadAll(flate.NewReader(bytes.NewReader(data)))
 }
 

@@ -2,6 +2,7 @@ package builder
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	. "github.com/nntaoli-project/goex"
@@ -310,4 +311,27 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 		println(fmt.Sprintf("%s not support future", exName))
 		return nil
 	}
+}
+
+func (builder *APIBuilder) BuildFuturesWs(exName string) (FuturesWsApi, error) {
+	switch exName {
+	case OKEX_V3, OKEX, OKEX_FUTURE:
+		return okex.NewOKExV3FuturesWs(okex.NewOKEx(&APIConfig{
+			HttpClient: builder.client,
+			Endpoint:   builder.futuresEndPoint,
+		})), nil
+	case HBDM:
+		return huobi.NewHbdmWs(), nil
+	}
+	return nil, errors.New("not support the exchange " + exName)
+}
+
+func (builder *APIBuilder) BuildSpotWs(exName string) (SpotWsApi, error) {
+	switch exName {
+	case OKEX_V3, OKEX:
+		return okex.NewOKExSpotV3Ws(nil), nil
+	case HUOBI_PRO, HUOBI:
+		return huobi.NewSpotWs(), nil
+	}
+	return nil, errors.New("not support the exchange " + exName)
 }

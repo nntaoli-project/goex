@@ -19,7 +19,6 @@ type OKExV3SpotWs struct {
 	depthCallback  func(*Depth)
 	tradeCallback  func(*Trade)
 	klineCallback  func(*Kline, KlinePeriod)
-	orderCallback  func(*Order)
 }
 
 func NewOKExSpotV3Ws(base *OKEx) *OKExV3SpotWs {
@@ -30,43 +29,33 @@ func NewOKExSpotV3Ws(base *OKEx) *OKExV3SpotWs {
 	return okV3Ws
 }
 
-func (okV3Ws *OKExV3SpotWs) TickerCallback(tickerCallback func(*Ticker)) *OKExV3SpotWs {
+func (okV3Ws *OKExV3SpotWs) TickerCallback(tickerCallback func(*Ticker)) {
 	okV3Ws.tickerCallback = tickerCallback
-	return okV3Ws
 }
 
-func (okV3Ws *OKExV3SpotWs) DepthCallback(depthCallback func(*Depth)) *OKExV3SpotWs {
+func (okV3Ws *OKExV3SpotWs) DepthCallback(depthCallback func(*Depth)) {
 	okV3Ws.depthCallback = depthCallback
-	return okV3Ws
 }
 
-func (okV3Ws *OKExV3SpotWs) TradeCallback(tradeCallback func(*Trade)) *OKExV3SpotWs {
+func (okV3Ws *OKExV3SpotWs) TradeCallback(tradeCallback func(*Trade)) {
 	okV3Ws.tradeCallback = tradeCallback
-	return okV3Ws
-}
-func (okV3Ws *OKExV3SpotWs) KLineCallback(klineCallback func(kline *Kline, period KlinePeriod)) *OKExV3SpotWs {
-	okV3Ws.klineCallback = klineCallback
-	return okV3Ws
 }
 
-func (okV3Ws *OKExV3SpotWs) OrderCallback(orderCallback func(*Order)) *OKExV3SpotWs {
-	okV3Ws.orderCallback = orderCallback
-	return okV3Ws
+func (okV3Ws *OKExV3SpotWs) KLineCallback(klineCallback func(kline *Kline, period KlinePeriod)) {
+	okV3Ws.klineCallback = klineCallback
 }
 
 func (okV3Ws *OKExV3SpotWs) SetCallbacks(tickerCallback func(*Ticker),
 	depthCallback func(*Depth),
 	tradeCallback func(*Trade),
-	klineCallback func(*Kline, KlinePeriod),
-	orderCallback func(*Order)) {
+	klineCallback func(*Kline, KlinePeriod)) {
 	okV3Ws.tickerCallback = tickerCallback
 	okV3Ws.depthCallback = depthCallback
 	okV3Ws.tradeCallback = tradeCallback
 	okV3Ws.klineCallback = klineCallback
-	okV3Ws.orderCallback = orderCallback
 }
 
-func (okV3Ws *OKExV3SpotWs) SubscribeDepth(currencyPair CurrencyPair, size int) error {
+func (okV3Ws *OKExV3SpotWs) SubscribeDepth(currencyPair CurrencyPair) error {
 	if okV3Ws.depthCallback == nil {
 		return errors.New("please set depth callback func")
 	}
@@ -109,16 +98,6 @@ func (okV3Ws *OKExV3SpotWs) SubscribeKline(currencyPair CurrencyPair, period int
 		"args": []string{fmt.Sprintf("spot/candle%ds:%s", seconds, currencyPair.ToSymbol("-"))}})
 }
 
-func (okV3Ws *OKExV3SpotWs) SubscribeOrder(currencyPair CurrencyPair, contractType string) error {
-	if okV3Ws.orderCallback == nil {
-		return errors.New("place set order callback func")
-	}
-	okV3Ws.v3Ws.Login()
-	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
-		"op":   "subscribe",
-		"args": []string{fmt.Sprintf("spot/order:%s", currencyPair.ToSymbol("-"))}})
-}
-
 func (okV3Ws *OKExV3SpotWs) getCurrencyPair(instrumentId string) CurrencyPair {
 	return NewCurrencyPair3(instrumentId, "-")
 }
@@ -141,11 +120,10 @@ func (okV3Ws *OKExV3SpotWs) handle(ch string, data json.RawMessage) error {
 			Candle       []string `json:"candle"`
 			InstrumentId string   `json:"instrument_id"`
 		}
-		orderResp []futureOrderResponse
 	)
 
 	switch ch {
-	case "ticker":
+	case "spot/ticker":
 		err = json.Unmarshal(data, &tickers)
 		if err != nil {
 			return err
@@ -165,7 +143,7 @@ func (okV3Ws *OKExV3SpotWs) handle(ch string, data json.RawMessage) error {
 			})
 		}
 		return nil
-	case "depth5":
+	case "spot/depth5":
 		err := json.Unmarshal(data, &depthResp)
 		if err != nil {
 			logger.Error(err)
@@ -191,7 +169,7 @@ func (okV3Ws *OKExV3SpotWs) handle(ch string, data json.RawMessage) error {
 		//call back func
 		okV3Ws.depthCallback(&dep)
 		return nil
-	case "trade":
+	case "spot/trade":
 		err := json.Unmarshal(data, &tradeResponse)
 		if err != nil {
 			logger.Error("unmarshal error :", err)
@@ -220,19 +198,13 @@ func (okV3Ws *OKExV3SpotWs) handle(ch string, data json.RawMessage) error {
 			})
 		}
 		return nil
-	case "order":
-		err := json.Unmarshal(data, &orderResp)
-		if err != nil {
-			return err
-		}
-		return nil
 	default:
-		if strings.HasPrefix(ch, "candle") {
+		if strings.HasPrefix(ch, "spot/candle") {
 			err := json.Unmarshal(data, &candleResponse)
 			if err != nil {
 				return err
 			}
-			periodMs := strings.TrimPrefix(ch, "candle")
+			periodMs := strings.TrimPrefix(ch, "spot/candle")
 			periodMs = strings.TrimSuffix(periodMs, "s")
 			for _, k := range candleResponse {
 				pair := okV3Ws.getCurrencyPair(k.InstrumentId)

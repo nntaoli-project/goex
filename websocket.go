@@ -14,30 +14,37 @@ import (
 )
 
 type WsConfig struct {
-	WsUrl                 string
-	ProxyUrl              string
-	ReqHeaders            map[string][]string //连接的时候加入的头部信息
-	HeartbeatIntervalTime time.Duration       //
-	HeartbeatData         func() []byte       //心跳数据2
-	IsAutoReconnect       bool
-	ProtoHandleFunc       func([]byte) error           //协议处理函数
-	UnCompressFunc        func([]byte) ([]byte, error) //解压函数
-	ErrorHandleFunc       func(err error)
-	IsDump                bool
-	readDeadLineTime      time.Duration
-	reconnectInterval     time.Duration
+	WsUrl                          string
+	ProxyUrl                       string
+	ReqHeaders                     map[string][]string //连接的时候加入的头部信息
+	HeartbeatIntervalTime          time.Duration       //
+	HeartbeatData                  func() []byte       //心跳数据2
+	IsAutoReconnect                bool
+	ProtoHandleFunc                func([]byte) error           //协议处理函数
+	DecompressFunc                 func([]byte) ([]byte, error) //解压函数
+	ErrorHandleFunc                func(err error)
+	ConnectSuccessAfterSendMessage func() []byte //for reconnect
+	IsDump                         bool
+	readDeadLineTime               time.Duration
+	reconnectInterval              time.Duration
+}
+
+var dialer = &websocket.Dialer{
+	Proxy:             http.ProxyFromEnvironment,
+	HandshakeTimeout:  30 * time.Second,
+	EnableCompression: true,
 }
 
 type WsConn struct {
 	c *websocket.Conn
-	sync.Mutex
 	WsConfig
 	writeBufferChan        chan []byte
 	pingMessageBufferChan  chan []byte
 	pongMessageBufferChan  chan []byte
 	closeMessageBufferChan chan []byte
-	subs                   []interface{}
+	subs                   [][]byte
 	close                  chan bool
+	reConnectLock          *sync.Mutex
 }
 
 type WsBuilder struct {
@@ -92,13 +99,18 @@ func (b *WsBuilder) ProtoHandleFunc(f func([]byte) error) *WsBuilder {
 	return b
 }
 
-func (b *WsBuilder) UnCompressFunc(f func([]byte) ([]byte, error)) *WsBuilder {
-	b.wsConfig.UnCompressFunc = f
+func (b *WsBuilder) DecompressFunc(f func([]byte) ([]byte, error)) *WsBuilder {
+	b.wsConfig.DecompressFunc = f
 	return b
 }
 
 func (b *WsBuilder) ErrorHandleFunc(f func(err error)) *WsBuilder {
 	b.wsConfig.ErrorHandleFunc = f
+	return b
+}
+
+func (b *WsBuilder) ConnectSuccessAfterSendMessage(msg func() []byte) *WsBuilder {
+	b.wsConfig.ConnectSuccessAfterSendMessage = msg
 	return b
 }
 
@@ -108,9 +120,6 @@ func (b *WsBuilder) Build() *WsConn {
 }
 
 func (ws *WsConn) NewWs() *WsConn {
-	ws.Lock()
-	defer ws.Unlock()
-
 	if ws.HeartbeatIntervalTime == 0 {
 		ws.readDeadLineTime = time.Minute
 	} else {
@@ -126,16 +135,21 @@ func (ws *WsConn) NewWs() *WsConn {
 	ws.pongMessageBufferChan = make(chan []byte, 10)
 	ws.closeMessageBufferChan = make(chan []byte, 10)
 	ws.writeBufferChan = make(chan []byte, 10)
+	ws.reConnectLock = new(sync.Mutex)
 
 	go ws.writeRequest()
 	go ws.receiveMessage()
+
+	if ws.ConnectSuccessAfterSendMessage != nil {
+		msg := ws.ConnectSuccessAfterSendMessage()
+		ws.SendMessage(msg)
+		Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(msg))
+	}
 
 	return ws
 }
 
 func (ws *WsConn) connect() error {
-	dialer := websocket.DefaultDialer
-
 	if ws.ProxyUrl != "" {
 		proxy, err := url.Parse(ws.ProxyUrl)
 		if err == nil {
@@ -156,22 +170,21 @@ func (ws *WsConn) connect() error {
 		return err
 	}
 
-	ws.c = wsConn
-
-	if ws.HeartbeatIntervalTime > 0 {
-		wsConn.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
-	}
+	wsConn.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
 
 	if ws.IsDump {
 		dumpData, _ := httputil.DumpResponse(resp, true)
 		Log.Debugf("[ws][%s] %s", ws.WsUrl, string(dumpData))
 	}
 	Log.Infof("[ws][%s] connected", ws.WsUrl)
-
+	ws.c = wsConn
 	return nil
 }
 
 func (ws *WsConn) reconnect() {
+	ws.reConnectLock.Lock()
+	defer ws.reConnectLock.Unlock()
+
 	ws.c.Close() //主动关闭一次
 	var err error
 	for retry := 1; retry <= 100; retry++ {
@@ -185,18 +198,23 @@ func (ws *WsConn) reconnect() {
 	}
 
 	if err != nil {
-		Log.Errorf("[ws] [%s] retry reconnect fail , begin exiting. ", ws.WsUrl)
+		Log.Errorf("[ws] [%s] retry connect 100 count fail , begin exiting. ", ws.WsUrl)
 		ws.CloseWs()
 		if ws.ErrorHandleFunc != nil {
 			ws.ErrorHandleFunc(errors.New("retry reconnect fail"))
 		}
 	} else {
 		//re subscribe
-		var tmp []interface{}
-		copy(tmp, ws.subs)
-		ws.subs = ws.subs[:0]
-		for _, sub := range tmp {
-			ws.Subscribe(sub)
+		if ws.ConnectSuccessAfterSendMessage != nil {
+			msg := ws.ConnectSuccessAfterSendMessage()
+			ws.SendMessage(msg)
+			Log.Infof("[ws] [%s] execute the connect success after send message=%s", ws.WsUrl, string(msg))
+			time.Sleep(time.Second) //wait response
+		}
+
+		for _, sub := range ws.subs {
+			Log.Info("[ws] re subscribe: ", string(sub))
+			ws.SendMessage(sub)
 		}
 	}
 }
@@ -228,15 +246,14 @@ func (ws *WsConn) writeRequest() {
 			err = ws.c.WriteMessage(websocket.CloseMessage, d)
 		case <-heartTimer.C:
 			if ws.HeartbeatIntervalTime > 0 {
-				//Log.Debug("send heartbeat data")
 				err = ws.c.WriteMessage(websocket.TextMessage, ws.HeartbeatData())
 				heartTimer.Reset(ws.HeartbeatIntervalTime)
 			}
 		}
 
 		if err != nil {
-			Log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
-			time.Sleep(time.Second)
+			Log.Errorf("[ws][%s] write message %s", ws.WsUrl, err.Error())
+			//time.Sleep(time.Second)
 		}
 	}
 }
@@ -248,7 +265,7 @@ func (ws *WsConn) Subscribe(subEvent interface{}) error {
 		return err
 	}
 	ws.writeBufferChan <- data
-	ws.subs = append(ws.subs, subEvent)
+	ws.subs = append(ws.subs, data)
 	return nil
 }
 
@@ -280,8 +297,8 @@ func (ws *WsConn) SendJsonMessage(m interface{}) error {
 func (ws *WsConn) receiveMessage() {
 	//exit
 	ws.c.SetCloseHandler(func(code int, text string) error {
-		Log.Infof("[ws][%s] websocket exiting [code=%d , text=%s]", ws.WsUrl, code, text)
-		ws.CloseWs()
+		Log.Warnf("[ws][%s] websocket exiting [code=%d , text=%s]", ws.WsUrl, code, text)
+		//ws.CloseWs()
 		return nil
 	})
 
@@ -304,14 +321,11 @@ func (ws *WsConn) receiveMessage() {
 			return
 		default:
 			t, msg, err := ws.c.ReadMessage()
-
 			if err != nil {
 				Log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
 				if ws.IsAutoReconnect {
-					//	if _, ok := err.(*websocket.CloseError); ok {
 					Log.Infof("[ws][%s] Unexpected Closed , Begin Retry Connect.", ws.WsUrl)
 					ws.reconnect()
-					//	}
 					continue
 				}
 
@@ -321,26 +335,24 @@ func (ws *WsConn) receiveMessage() {
 
 				return
 			}
-
+			//			Log.Debug(string(msg))
 			ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
-
 			switch t {
 			case websocket.TextMessage:
 				ws.ProtoHandleFunc(msg)
 			case websocket.BinaryMessage:
-				if ws.UnCompressFunc == nil {
+				if ws.DecompressFunc == nil {
 					ws.ProtoHandleFunc(msg)
 				} else {
-					msg2, err := ws.UnCompressFunc(msg)
+					msg2, err := ws.DecompressFunc(msg)
 					if err != nil {
-						Log.Errorf("[ws][%s] uncompress error %s", ws.WsUrl, err.Error())
+						Log.Errorf("[ws][%s] decompress error %s", ws.WsUrl, err.Error())
 					} else {
 						ws.ProtoHandleFunc(msg2)
 					}
 				}
-			case websocket.CloseMessage:
-				ws.CloseWs()
-				return
+				//	case websocket.CloseMessage:
+				//	ws.CloseWs()
 			default:
 				Log.Errorf("[ws][%s] error websocket message type , content is :\n %s \n", ws.WsUrl, string(msg))
 			}
@@ -349,11 +361,16 @@ func (ws *WsConn) receiveMessage() {
 }
 
 func (ws *WsConn) CloseWs() {
-	ws.close <- true
+	//ws.close <- true
 	close(ws.close)
+	close(ws.writeBufferChan)
+	close(ws.closeMessageBufferChan)
+	close(ws.pingMessageBufferChan)
+	close(ws.pongMessageBufferChan)
+
 	err := ws.c.Close()
 	if err != nil {
-		Log.Error("[ws][", ws.WsUrl, "]close websocket error ,", err)
+		Log.Error("[ws][", ws.WsUrl, "] close websocket error ,", err)
 	}
 }
 

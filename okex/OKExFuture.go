@@ -113,7 +113,7 @@ func (ok *OKExFuture) GetFutureContractId(pair CurrencyPair, contractAlias strin
 			time.Sleep(120 * time.Millisecond) //retry
 			contractInfo, err = ok.GetAllFutureContractInfo()
 			if err != nil {
-				logger.Warnf(fmt.Sprintf("Get Futures Contract Alias Error [%s] ???", err.Error()))
+				logger.Errorf(fmt.Sprintf("Get Futures Contract Id Error [%s] ???", err.Error()))
 			}
 		}
 	}
