@@ -479,3 +479,53 @@ func (ok *OKExSpot) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, 
 
 	return trades, nil
 }
+
+type OKExSpotSymbol struct {
+	BaseCurrency    string
+	QuoteCurrency   string
+	PricePrecision  float64
+	AmountPrecision float64
+	SymbolPartition string
+	Symbol          string
+}
+
+func (ok *OKExSpot) GetCurrenciesPrecision() ([]OKExSpotSymbol, error) {
+	var response []struct {
+		InstrumentId  string `json:"instrument_id"`
+		BaseCurrency  string `json:"base_currency"`
+		QuoteCurrency string `json:"quote_currency"`
+		MinSize       string `json:"min_size"`
+		SizeIncrement string `json:"size_increment"`
+		TickSize      string `json:"tick_size"`
+	}
+	err := ok.DoRequest("GET", "/api/spot/v3/instruments", "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var Symbols []OKExSpotSymbol
+	for _, v := range response {
+
+		var sym OKExSpotSymbol
+		sym.BaseCurrency = v.BaseCurrency
+		sym.QuoteCurrency = v.QuoteCurrency
+		sym.Symbol = v.InstrumentId
+
+		pres := strings.Split(v.TickSize, ".")
+		if len(pres) == 1 {
+			sym.PricePrecision = 0
+		} else {
+			sym.PricePrecision = float64(len(pres[1]))
+		}
+
+		pres = strings.Split(v.SizeIncrement, ".")
+		if len(pres) == 1 {
+			sym.PricePrecision = 0
+		} else {
+			sym.PricePrecision = float64(len(pres[1]))
+		}
+
+		Symbols = append(Symbols, sym)
+	}
+	return Symbols, nil
+}
