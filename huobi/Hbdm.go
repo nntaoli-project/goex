@@ -59,6 +59,9 @@ var (
 
 func init() {
 	go func() {
+		defer func() {
+			logger.Info("[hbdm] Get Futures Tick Size Finished.")
+		}()
 		interval := time.Second
 		intervalTimer := time.NewTimer(interval)
 
@@ -104,9 +107,9 @@ func init() {
 						ContractType: info.ContractType,
 					})
 				}
-				interval = 10 * time.Minute
+				return
 			reset:
-				intervalTimer.Reset(interval)
+				intervalTimer.Reset(10 * interval)
 			}
 
 		}
@@ -598,9 +601,9 @@ func (dm *Hbdm) adaptOffsetDirectionToOpenType(offset, direction string) int {
 	switch offset {
 	case "close":
 		if direction == "buy" {
-			return CLOSE_BUY
-		} else {
 			return CLOSE_SELL
+		} else {
+			return CLOSE_BUY
 		}
 
 	default:
@@ -670,12 +673,13 @@ func (dm *Hbdm) doRequest(path string, params *url.Values, data interface{}) err
 }
 
 func (dm *Hbdm) formatPriceSize(contract string, currency Currency, price string) string {
-	var tickSize = 0
+	var tickSize = 2 //default set 2
 	for _, v := range FuturesContractInfos {
 		if (v.ContractType == contract || v.InstrumentID == contract) && v.UnderlyingIndex == currency.Symbol {
 			if v.PriceTickSize == 0 {
 				break
 			}
+			tickSize = 0
 			for v.PriceTickSize < 1 {
 				tickSize++
 				v.PriceTickSize *= 10
