@@ -92,7 +92,7 @@ func (bnWs *BinanceWs) SetCallbacks(
 	bnWs.klineCallback = klineCallback
 }
 
-func (bnWs *BinanceWs) Subscribe(endpoint string, handle func(msg []byte) error) {
+func (bnWs *BinanceWs) Subscribe(endpoint string, handle func(msg []byte) error) *WsConn {
 	wsConn := NewWsBuilder().
 		WsUrl(endpoint).
 		AutoReconnect().
@@ -102,6 +102,7 @@ func (bnWs *BinanceWs) Subscribe(endpoint string, handle func(msg []byte) error)
 		Build()
 	bnWs.wsConns = append(bnWs.wsConns, wsConn)
 	go bnWs.exitHandler(wsConn)
+	return wsConn
 }
 
 func (bnWs *BinanceWs) Close() {
