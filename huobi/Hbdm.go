@@ -59,6 +59,9 @@ var (
 
 func init() {
 	go func() {
+		defer func() {
+			logger.Info("[hbdm] Get Futures Tick Size Finished.")
+		}()
 		interval := time.Second
 		intervalTimer := time.NewTimer(interval)
 
@@ -104,9 +107,9 @@ func init() {
 						ContractType: info.ContractType,
 					})
 				}
-				interval = 10 * time.Minute
+				return
 			reset:
-				intervalTimer.Reset(interval)
+				intervalTimer.Reset(10 * interval)
 			}
 
 		}
@@ -676,6 +679,7 @@ func (dm *Hbdm) formatPriceSize(contract string, currency Currency, price string
 			if v.PriceTickSize == 0 {
 				break
 			}
+			tickSize = 0
 			for v.PriceTickSize < 1 {
 				tickSize++
 				v.PriceTickSize *= 10
