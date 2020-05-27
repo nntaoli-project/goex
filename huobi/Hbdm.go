@@ -670,7 +670,7 @@ func (dm *Hbdm) doRequest(path string, params *url.Values, data interface{}) err
 }
 
 func (dm *Hbdm) formatPriceSize(contract string, currency Currency, price string) string {
-	var tickSize = 0
+	var tickSize = 2 //default set 2
 	for _, v := range FuturesContractInfos {
 		if (v.ContractType == contract || v.InstrumentID == contract) && v.UnderlyingIndex == currency.Symbol {
 			if v.PriceTickSize == 0 {
