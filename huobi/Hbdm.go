@@ -601,9 +601,9 @@ func (dm *Hbdm) adaptOffsetDirectionToOpenType(offset, direction string) int {
 	switch offset {
 	case "close":
 		if direction == "buy" {
-			return CLOSE_BUY
-		} else {
 			return CLOSE_SELL
+		} else {
+			return CLOSE_BUY
 		}
 
 	default:
