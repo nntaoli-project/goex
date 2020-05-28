@@ -520,9 +520,9 @@ func (ok *OKExSpot) GetCurrenciesPrecision() ([]OKExSpotSymbol, error) {
 
 		pres = strings.Split(v.SizeIncrement, ".")
 		if len(pres) == 1 {
-			sym.PricePrecision = 0
+			sym.AmountPrecision = 0
 		} else {
-			sym.PricePrecision = float64(len(pres[1]))
+			sym.AmountPrecision = float64(len(pres[1]))
 		}
 
 		Symbols = append(Symbols, sym)
