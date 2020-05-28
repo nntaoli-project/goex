@@ -680,9 +680,10 @@ func (dm *Hbdm) formatPriceSize(contract string, currency Currency, price string
 				break
 			}
 			tickSize = 0
-			for v.PriceTickSize < 1 {
+			priceSize := v.PriceTickSize
+			for priceSize < 1 {
 				tickSize++
-				v.PriceTickSize *= 10
+				priceSize *= 10
 			}
 			break
 		}
