@@ -57,7 +57,7 @@ var (
 	FuturesContractInfos []FuturesContractInfo
 )
 
-func init() {
+func hbdmInit() {
 	go func() {
 		defer func() {
 			logger.Info("[hbdm] Get Futures Tick Size Finished.")
@@ -121,6 +121,7 @@ func NewHbdm(conf *APIConfig) *Hbdm {
 	if conf.Endpoint == "" {
 		conf.Endpoint = defaultBaseUrl
 	}
+	hbdmInit()
 	return &Hbdm{conf}
 }
 
