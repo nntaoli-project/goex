@@ -55,6 +55,8 @@ type HuoBiProSymbol struct {
 	QuoteCurrency   string
 	PricePrecision  float64
 	AmountPrecision float64
+	MinAmount       float64
+	MinValue        float64
 	SymbolPartition string
 	Symbol          string
 }
@@ -742,6 +744,8 @@ func (hbpro *HuoBiPro) GetCurrenciesPrecision() ([]HuoBiProSymbol, error) {
 		sym.QuoteCurrency = _sym["quote-currency"].(string)
 		sym.PricePrecision = _sym["price-precision"].(float64)
 		sym.AmountPrecision = _sym["amount-precision"].(float64)
+		sym.MinAmount = _sym["min-order-amt"].(float64)
+		sym.MinValue = _sym["min-order-value"].(float64)
 		sym.SymbolPartition = _sym["symbol-partition"].(string)
 		sym.Symbol = _sym["symbol"].(string)
 		Symbols = append(Symbols, sym)
