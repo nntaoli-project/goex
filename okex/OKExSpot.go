@@ -485,18 +485,20 @@ type OKExSpotSymbol struct {
 	QuoteCurrency   string
 	PricePrecision  float64
 	AmountPrecision float64
+	MinAmount       float64
+	MinValue        float64
 	SymbolPartition string
 	Symbol          string
 }
 
 func (ok *OKExSpot) GetCurrenciesPrecision() ([]OKExSpotSymbol, error) {
 	var response []struct {
-		InstrumentId  string `json:"instrument_id"`
-		BaseCurrency  string `json:"base_currency"`
-		QuoteCurrency string `json:"quote_currency"`
-		MinSize       string `json:"min_size"`
-		SizeIncrement string `json:"size_increment"`
-		TickSize      string `json:"tick_size"`
+		InstrumentId  string  `json:"instrument_id"`
+		BaseCurrency  string  `json:"base_currency"`
+		QuoteCurrency string  `json:"quote_currency"`
+		MinSize       float64 `json:"min_size,string"`
+		SizeIncrement string  `json:"size_increment"`
+		TickSize      string  `json:"tick_size"`
 	}
 	err := ok.DoRequest("GET", "/api/spot/v3/instruments", "", &response)
 	if err != nil {
@@ -505,11 +507,11 @@ func (ok *OKExSpot) GetCurrenciesPrecision() ([]OKExSpotSymbol, error) {
 
 	var Symbols []OKExSpotSymbol
 	for _, v := range response {
-
 		var sym OKExSpotSymbol
 		sym.BaseCurrency = v.BaseCurrency
 		sym.QuoteCurrency = v.QuoteCurrency
 		sym.Symbol = v.InstrumentId
+		sym.MinAmount = v.MinSize
 
 		pres := strings.Split(v.TickSize, ".")
 		if len(pres) == 1 {
