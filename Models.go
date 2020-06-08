@@ -76,7 +76,7 @@ type Ticker struct {
 type FutureTicker struct {
 	*Ticker
 	ContractType string  `json:"omitempty"`
-	ContractId   int     `json:"contractId"`
+	ContractId   string  `json:"contractId"`
 	LimitHigh    float64 `json:"limitHigh,string"`
 	LimitLow     float64 `json:"limitLow,string"`
 	HoldAmount   float64 `json:"hold_amount,string"`
@@ -103,7 +103,8 @@ func (dr DepthRecords) Less(i, j int) bool {
 }
 
 type Depth struct {
-	ContractType string //for future
+	ContractType string `json:"contract_type,omitempty"` //for futures
+	ContractId   string `json:"contract_id,omitempty"`   // for futures
 	Pair         CurrencyPair
 	UTime        time.Time
 	AskList      DepthRecords // Descending order

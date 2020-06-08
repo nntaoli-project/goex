@@ -76,6 +76,7 @@ func NewHbdmWs() *HbdmWs {
 		//Heartbeat(func() []byte { return []byte("{\"op\":\"ping\"}") }(), 5*time.Second).
 		DecompressFunc(GzipDecompress).
 		ProtoHandleFunc(hbdmWs.handle)
+	go hbdmInit()
 	return hbdmWs
 }
 
@@ -144,7 +145,7 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 		hbdmWs.wsConn.SendMessage(pong)
 		return nil
 	}
-
+	
 	var resp WsResponse
 	err := json.Unmarshal(msg, &resp)
 	if err != nil {
@@ -171,6 +172,7 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 
 		dep := ParseDepthFromResponse(depResp)
 		dep.ContractType = contract
+		dep.ContractId = hbdmWs.getContractId(contract)
 		dep.Pair = pair
 		dep.UTime = time.Unix(0, resp.Ts*int64(time.Millisecond))
 
@@ -265,4 +267,13 @@ func (hbdmWs *HbdmWs) adaptTime(tm string) int64 {
 	t, _ := time.ParseInLocation(format, day+" "+tm, local)
 	return t.UnixNano() / 1e6
 
+}
+
+func (hbdmWs *HbdmWs) getContractId(alias string) string {
+	for _, info := range FuturesContractInfos {
+		if info.ContractType == alias {
+			return info.InstrumentID
+		}
+	}
+	return ""
 }
