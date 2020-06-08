@@ -68,7 +68,11 @@ func (okV3Ws *OKExV3FuturesWs) getChannelName(currencyPair CurrencyPair, contrac
 	} else {
 		prefix = "futures"
 		contractId = okV3Ws.base.OKExFuture.GetFutureContractId(currencyPair, contractType)
-		logger.Info("contractid=", contractId)
+		//	logger.Info("contractid=", contractId)
+	}
+
+	if contractId == "" {
+		return ""
 	}
 
 	channelName = prefix + "/%s:" + contractId
@@ -82,6 +86,9 @@ func (okV3Ws *OKExV3FuturesWs) SubscribeDepth(currencyPair CurrencyPair, contrac
 	}
 
 	chName := okV3Ws.getChannelName(currencyPair, contractType)
+	if chName == "" {
+		return errors.New("subscribe error, get channel name fail")
+	}
 
 	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
 		"op":   "subscribe",
@@ -92,7 +99,12 @@ func (okV3Ws *OKExV3FuturesWs) SubscribeTicker(currencyPair CurrencyPair, contra
 	if okV3Ws.tickerCallback == nil {
 		return errors.New("please set ticker callback func")
 	}
+
 	chName := okV3Ws.getChannelName(currencyPair, contractType)
+	if chName == "" {
+		return errors.New("subscribe error, get channel name fail")
+	}
+
 	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
 		"op":   "subscribe",
 		"args": []string{fmt.Sprintf(chName, "ticker")}})
@@ -102,7 +114,12 @@ func (okV3Ws *OKExV3FuturesWs) SubscribeTrade(currencyPair CurrencyPair, contrac
 	if okV3Ws.tradeCallback == nil {
 		return errors.New("please set trade callback func")
 	}
+
 	chName := okV3Ws.getChannelName(currencyPair, contractType)
+	if chName == "" {
+		return errors.New("subscribe error, get channel name fail")
+	}
+
 	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
 		"op":   "subscribe",
 		"args": []string{fmt.Sprintf(chName, "trade")}})
@@ -119,6 +136,10 @@ func (okV3Ws *OKExV3FuturesWs) SubscribeKline(currencyPair CurrencyPair, contrac
 	}
 
 	chName := okV3Ws.getChannelName(currencyPair, contractType)
+	if chName == "" {
+		return errors.New("subscribe error, get channel name fail")
+	}
+	
 	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
 		"op":   "subscribe",
 		"args": []string{fmt.Sprintf(chName, fmt.Sprintf("candle%ds", seconds))}})

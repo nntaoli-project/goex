@@ -81,11 +81,27 @@ func (ok *OKExFuture) GetAllFutureContractInfo() ([]FutureContractInfo, error) {
 }
 
 func (ok *OKExFuture) GetContractInfo(contractId string) (*FutureContractInfo, error) {
+	now := time.Now()
+	if len(ok.allContractInfo.contractInfos) == 0 ||
+		(ok.allContractInfo.uTime.Hour() < 16 && now.Hour() == 16 && now.Minute() <= 10) {
+		ok.Lock()
+		defer ok.Unlock()
+
+		infos, err := ok.GetAllFutureContractInfo()
+		if err != nil {
+			logger.Errorf("Get All Futures Contract Infos Error=%s", err)
+		} else {
+			ok.allContractInfo.contractInfos = infos
+			ok.allContractInfo.uTime = now
+		}
+	}
+
 	for _, itm := range ok.allContractInfo.contractInfos {
 		if itm.InstrumentID == contractId {
 			return &itm, nil
 		}
 	}
+
 	return nil, errors.New("unknown contract id " + contractId)
 }
 
@@ -101,7 +117,7 @@ func (ok *OKExFuture) GetFutureContractId(pair CurrencyPair, contractAlias strin
 	hour := now.Hour()
 	minute := now.Minute()
 
-	if ok.allContractInfo.uTime.IsZero() || (hour == 16 && minute <= 11) {
+	if ok.allContractInfo.uTime.IsZero() || (ok.allContractInfo.uTime.Hour() < 16 && hour == 16 && minute <= 11) {
 		ok.Lock()
 		defer ok.Unlock()
 
