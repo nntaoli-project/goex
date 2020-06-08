@@ -228,6 +228,11 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 }
 
 func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+	fOrder, err := dm.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice, leverRate)
+	return fOrder.OrderID2, err
+}
+
+func (dm *Hbdm) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (*FutureOrder, error) {
 	var data struct {
 		OrderId  int64 `json:"order_id"`
 		COrderId int64 `json:"client_order_id"`
@@ -236,6 +241,7 @@ func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 	params := &url.Values{}
 	path := "/api/v1/contract_order"
 
+	params.Add("client_order_id", fmt.Sprint(time.Now().UnixNano()))
 	params.Add("contract_type", contractType)
 	params.Add("symbol", currencyPair.CurrencyA.Symbol)
 	params.Add("volume", amount)
@@ -255,7 +261,26 @@ func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 
 	err := dm.doRequest(path, params, &data)
 
-	return fmt.Sprint(data.OrderId), err
+	fOrd := &FutureOrder{
+		ClientOid:    params.Get("client_order_id"),
+		ContractName: contractType,
+		Currency:     currencyPair,
+		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+		OType:        openType,
+	}
+
+	if err != nil {
+		return fOrd, err
+	}
+
+	fOrd.OrderID2 = fmt.Sprint(data.OrderId)
+
+	return fOrd, err
+}
+
+func (dm *Hbdm) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+	return dm.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
 }
 
 func (dm *Hbdm) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
