@@ -124,5 +124,5 @@ func FlateDecompress(data []byte) ([]byte, error) {
 
 func GenerateOrderClientId(size int) string {
 	uuidStr := strings.Replace(uuid.New().String(), "-", "", 32)
-	return "goex-" + uuidStr[0:size-5]
+	return "goex" + uuidStr[0:size-5]
 }
