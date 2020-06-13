@@ -182,7 +182,8 @@ func (okV3Ws *OKExV3FuturesWs) handle(channel string, data json.RawMessage) erro
 		}
 	)
 
-	if strings.Contains(channel, "futures/candle") {
+	if strings.Contains(channel, "futures/candle") ||
+		strings.Contains(channel, "swap/candle") {
 		ch = "candle"
 	} else {
 		ch, err = okV3Ws.v3Ws.parseChannel(channel)
