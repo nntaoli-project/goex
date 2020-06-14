@@ -206,9 +206,11 @@ func (ok *OKExSpot) CancelOrder(orderId string, currency CurrencyPair) (bool, er
 	}{currency.AdaptUsdToUsdt().ToLower().ToSymbol("-")}
 	reqBody, _, _ := ok.BuildRequestBody(param)
 	var response struct {
-		ClientOid string `json:"client_oid"`
-		OrderId   string `json:"order_id"`
-		Result    bool   `json:"result"`
+		ClientOid    string `json:"client_oid"`
+		OrderId      string `json:"order_id"`
+		Result       bool   `json:"result"`
+		ErrorCode    string `json:"error_code"`
+		ErrorMessage string `json:"error_message"`
 	}
 	err := ok.OKEx.DoRequest("POST", urlPath, reqBody, &response)
 	if err != nil {
@@ -217,7 +219,7 @@ func (ok *OKExSpot) CancelOrder(orderId string, currency CurrencyPair) (bool, er
 	if response.Result {
 		return true, nil
 	}
-	return false, errors.New(400, "cancel fail, unknown error")
+	return false, errors.New(400, fmt.Sprintf("cancel fail, %s", response.ErrorMessage))
 }
 
 type OrderResponse struct {
@@ -267,7 +269,7 @@ func (ok *OKExSpot) adaptOrder(response OrderResponse) *Order {
 	date, err := time.Parse(time.RFC3339, response.Timestamp)
 	//log.Println(date.Local().UnixNano()/int64(time.Millisecond))
 	if err != nil {
-		logger.Error("parse timestamp err=",err,",timestamp=",response.Timestamp)
+		logger.Error("parse timestamp err=", err, ",timestamp=", response.Timestamp)
 	} else {
 		ordInfo.OrderTime = int(date.UnixNano() / int64(time.Millisecond))
 	}
