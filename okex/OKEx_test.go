@@ -243,3 +243,7 @@ func TestOKExMargin_GetOneOrder(t *testing.T) {
 func TestOKExSpot_GetCurrenciesPrecision(t *testing.T) {
 	t.Log(okex.OKExSpot.GetCurrenciesPrecision())
 }
+
+func TestOKExSpot_GetOrderHistorys(t *testing.T) {
+	t.Log(okex.OKExSpot.GetOrderHistorys(goex.BTC_USDT, 1, 10))
+}
