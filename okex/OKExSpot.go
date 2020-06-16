@@ -267,7 +267,7 @@ func (ok *OKExSpot) adaptOrder(response OrderResponse) *Order {
 	date, err := time.Parse(time.RFC3339, response.Timestamp)
 	//log.Println(date.Local().UnixNano()/int64(time.Millisecond))
 	if err != nil {
-		logger.Error("parse timestamp err=",err,",timestamp=",response.Timestamp)
+		logger.Error("parse timestamp err=", err, ",timestamp=", response.Timestamp)
 	} else {
 		ordInfo.OrderTime = int(date.UnixNano() / int64(time.Millisecond))
 	}
@@ -313,7 +313,21 @@ func (ok *OKExSpot) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 }
 
 func (ok *OKExSpot) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
-	panic("unsupported")
+	urlPath := fmt.Sprintf("/api/spot/v3/orders?instrument_id=%s&state=7", currency.AdaptUsdToUsdt().ToSymbol("-"))
+	var response []OrderResponse
+	err := ok.OKEx.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var orders []Order
+	for _, itm := range response {
+		ord := ok.adaptOrder(itm)
+		ord.Currency = currency
+		orders = append(orders, *ord)
+	}
+
+	return orders, nil
 }
 
 func (ok *OKExSpot) GetExchangeName() string {
