@@ -322,21 +322,6 @@ func (ok *OKExSpot) GetOrderHistorys(currency CurrencyPair, currentPage, pageSiz
 		return nil, err
 	}
 
-	var ords []Order
-	for _, itm := range response {
-		ord := ok.adaptOrder(itm)
-		ord.Currency = currency
-		ords = append(ords, *ord)
-	}
-
-	return ords, nil
-	urlPath := fmt.Sprintf("/api/spot/v3/orders?instrument_id=%s&state=7", currency.AdaptUsdToUsdt().ToSymbol("-"))
-	var response []OrderResponse
-	err := ok.OKEx.DoRequest("GET", urlPath, "", &response)
-	if err != nil {
-		return nil, err
-	}
-
 	var orders []Order
 	for _, itm := range response {
 		ord := ok.adaptOrder(itm)
