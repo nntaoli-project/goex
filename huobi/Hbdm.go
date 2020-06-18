@@ -198,10 +198,14 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 
 	var positions []FuturePosition
 	for _, d := range data {
+		if d.ContractType != contractType {
+			continue
+		}
+		
 		switch d.Direction {
 		case "buy":
 			positions = append(positions, FuturePosition{
-				ContractType:  contractType,
+				ContractType:  d.ContractType,
 				ContractId:    int64(ToInt(d.ContractCode[3:])),
 				Symbol:        currencyPair,
 				BuyAmount:     d.Volume,
@@ -212,7 +216,7 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 				LeverRate:     d.LeverRate})
 		case "sell":
 			positions = append(positions, FuturePosition{
-				ContractType:   contractType,
+				ContractType:   d.ContractType,
 				ContractId:     int64(ToInt(d.ContractCode[3:])),
 				Symbol:         currencyPair,
 				SellAmount:     d.Volume,
