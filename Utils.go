@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
+	"math"
 	"net/url"
 	"strconv"
 	"strings"
@@ -92,10 +93,13 @@ func ToInt64(v interface{}) int64 {
 	}
 }
 
-//n :保留的小数点位数,去除末尾多余的0(StripTrailingZeros)
-func FloatToString(v float64, n int) string {
-	ret := strconv.FormatFloat(v, 'f', n, 64)
-	return strconv.FormatFloat(ToFloat64(ret), 'f', -1, 64) //StripTrailingZeros
+func FloatToString(v float64, precision int) string {
+	return fmt.Sprint(FloatToFixed(v, precision))
+}
+
+func FloatToFixed(v float64, precision int) float64 {
+	p := math.Pow(10, float64(precision))
+	return math.Round(v*p) / p
 }
 
 func ValuesToJson(v url.Values) ([]byte, error) {
@@ -124,5 +128,5 @@ func FlateDecompress(data []byte) ([]byte, error) {
 
 func GenerateOrderClientId(size int) string {
 	uuidStr := strings.Replace(uuid.New().String(), "-", "", 32)
-	return "goex-" + uuidStr[0:size-5]
+	return "goex" + uuidStr[0:size-5]
 }

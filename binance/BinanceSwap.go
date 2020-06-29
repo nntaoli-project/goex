@@ -19,6 +19,10 @@ type BinanceSwap struct {
 	Binance
 }
 
+func (bs *BinanceSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+	return bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
+}
+
 func NewBinanceSwap(config *APIConfig) *BinanceSwap {
 	if config.Endpoint == "" {
 		config.Endpoint = baseUrl
@@ -289,6 +293,11 @@ func (bs *BinanceSwap) Transfer(currency Currency, transferType int, amount floa
 	return ToInt64(respmap["tranId"]), nil
 }
 
+func (bs *BinanceSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+	fOrder, err := bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice, leverRate)
+	return fOrder.OrderID2, err
+}
+
 /**
  * @deprecated
  * 期货下单
@@ -299,13 +308,23 @@ func (bs *BinanceSwap) Transfer(currency Currency, transferType int, amount floa
  * @param openType   1:开多   2:开空   3:平多   4:平空
  * @param matchPrice  是否为对手价 0:不是    1:是   ,当取值为1时,price无效
  */
-func (bs *BinanceSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (*FutureOrder, error) {
+	fOrder := &FutureOrder{
+		Currency:     currencyPair,
+		ClientOid:    GenerateOrderClientId(32),
+		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+		OrderType:    openType,
+		LeverRate:    leverRate,
+		ContractName: contractType,
+	}
 
 	pair := bs.adaptCurrencyPair(currencyPair)
 	path := bs.apiV1 + ORDER_URI
 	params := url.Values{}
 	params.Set("symbol", pair.ToSymbol(""))
 	params.Set("quantity", amount)
+	params.Set("newClientOrderId", fOrder.ClientOid)
 
 	switch openType {
 	case OPEN_BUY, CLOSE_SELL:
@@ -325,20 +344,22 @@ func (bs *BinanceSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType,
 	resp, err := HttpPostForm2(bs.httpClient, path, params,
 		map[string]string{"X-MBX-APIKEY": bs.accessKey})
 	if err != nil {
-		return "", err
+		return fOrder, err
 	}
 
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		return "", err
+		return fOrder, err
 	}
 
 	orderId := ToInt(respmap["orderId"])
 	if orderId <= 0 {
-		return "", errors.New(string(resp))
+		return fOrder, errors.New(string(resp))
 	}
-	return strconv.Itoa(orderId), nil
+	fOrder.OrderID2 = strconv.Itoa(orderId)
+
+	return fOrder, nil
 }
 
 /**

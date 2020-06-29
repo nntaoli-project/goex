@@ -155,3 +155,16 @@ const (
 	COINBENE     = "coinbene.com"
 	ATOP         = "a.top"
 )
+
+const (
+	SUB_ACCOUNT = iota //子账户
+	SPOT               // 币币交易
+	_
+	FUTURE      //交割合约
+	C2C         //法币
+	SPOT_MARGIN //币币杠杆交易
+	WALLET      // 资金账户
+	_
+	TIPS //余币宝
+	SWAP //永续合约
+)

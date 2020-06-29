@@ -335,3 +335,16 @@ func (builder *APIBuilder) BuildSpotWs(exName string) (SpotWsApi, error) {
 	}
 	return nil, errors.New("not support the exchange " + exName)
 }
+
+func (builder *APIBuilder) BuildWallet(exName string) (WalletApi, error) {
+	switch exName {
+	case OKEX_V3, OKEX:
+		return okex.NewOKEx(&APIConfig{
+			HttpClient:    builder.client,
+			ApiKey:        builder.apiKey,
+			ApiSecretKey:  builder.secretkey,
+			ApiPassphrase: builder.apiPassphrase,
+		}).OKExWallet, nil
+	}
+	return nil, errors.New("not support the wallet api for  " + exName)
+}

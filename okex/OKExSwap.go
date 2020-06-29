@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	. "github.com/nntaoli-project/goex"
 )
 
@@ -280,11 +278,30 @@ type PlaceOrdersInfo struct {
 }
 
 func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+	fOrder, err := ok.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice, leverRate)
+	return fOrder.OrderID2, err
+}
 
+func (ok *OKExSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (*FutureOrder, error) {
+	cid := GenerateOrderClientId(32)
 	reqBody, _, _ := ok.OKEx.BuildRequestBody(PlaceOrderInfo{
-		BasePlaceOrderInfo{ClientOid: strings.Replace(uuid.New().String(), "-", "", 32), Price: price, MatchPrice: fmt.Sprint(matchPrice), Type: fmt.Sprint(openType), Size: amount},
+		BasePlaceOrderInfo{
+			ClientOid:  cid,
+			Price:      price,
+			MatchPrice: fmt.Sprint(matchPrice),
+			Type:       fmt.Sprint(openType),
+			Size:       amount},
 		ok.adaptContractType(currencyPair),
 	})
+
+	fOrder := &FutureOrder{
+		ClientOid:    cid,
+		Currency:     currencyPair,
+		ContractName: contractType,
+		OType:        openType,
+		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+	}
 
 	var resp struct {
 		BaseResponse
@@ -294,14 +311,20 @@ func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, pr
 
 	err := ok.DoRequest("POST", PLACE_ORDER, reqBody, &resp)
 	if err != nil {
-		return "", err
+		return fOrder, err
 	}
 
 	if resp.ErrorMessage != "" {
-		return "", errors.New(fmt.Sprintf("%s:%s", resp.ErrorCode, resp.ErrorMessage))
+		return fOrder, errors.New(fmt.Sprintf("%s:%s", resp.ErrorCode, resp.ErrorMessage))
 	}
 
-	return resp.OrderID, nil
+	fOrder.OrderID2 = resp.OrderID
+
+	return fOrder, nil
+}
+
+func (ok *OKExSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+	return ok.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
 }
 
 func (ok *OKExSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {

@@ -57,8 +57,11 @@ var (
 	FuturesContractInfos []FuturesContractInfo
 )
 
-func init() {
+func hbdmInit() {
 	go func() {
+		defer func() {
+			logger.Info("[hbdm] Get Futures Tick Size Finished.")
+		}()
 		interval := time.Second
 		intervalTimer := time.NewTimer(interval)
 
@@ -104,9 +107,9 @@ func init() {
 						ContractType: info.ContractType,
 					})
 				}
-				interval = 10 * time.Minute
+				return
 			reset:
-				intervalTimer.Reset(interval)
+				intervalTimer.Reset(10 * interval)
 			}
 
 		}
@@ -118,6 +121,7 @@ func NewHbdm(conf *APIConfig) *Hbdm {
 	if conf.Endpoint == "" {
 		conf.Endpoint = defaultBaseUrl
 	}
+	hbdmInit()
 	return &Hbdm{conf}
 }
 
@@ -194,10 +198,14 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 
 	var positions []FuturePosition
 	for _, d := range data {
+		if d.ContractType != contractType {
+			continue
+		}
+		
 		switch d.Direction {
 		case "buy":
 			positions = append(positions, FuturePosition{
-				ContractType:  contractType,
+				ContractType:  d.ContractType,
 				ContractId:    int64(ToInt(d.ContractCode[3:])),
 				Symbol:        currencyPair,
 				BuyAmount:     d.Volume,
@@ -208,7 +216,7 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 				LeverRate:     d.LeverRate})
 		case "sell":
 			positions = append(positions, FuturePosition{
-				ContractType:   contractType,
+				ContractType:   d.ContractType,
 				ContractId:     int64(ToInt(d.ContractCode[3:])),
 				Symbol:         currencyPair,
 				SellAmount:     d.Volume,
@@ -224,6 +232,11 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 }
 
 func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+	fOrder, err := dm.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice, leverRate)
+	return fOrder.OrderID2, err
+}
+
+func (dm *Hbdm) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (*FutureOrder, error) {
 	var data struct {
 		OrderId  int64 `json:"order_id"`
 		COrderId int64 `json:"client_order_id"`
@@ -232,6 +245,7 @@ func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 	params := &url.Values{}
 	path := "/api/v1/contract_order"
 
+	params.Add("client_order_id", fmt.Sprint(time.Now().UnixNano()))
 	params.Add("contract_type", contractType)
 	params.Add("symbol", currencyPair.CurrencyA.Symbol)
 	params.Add("volume", amount)
@@ -251,7 +265,26 @@ func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 
 	err := dm.doRequest(path, params, &data)
 
-	return fmt.Sprint(data.OrderId), err
+	fOrd := &FutureOrder{
+		ClientOid:    params.Get("client_order_id"),
+		ContractName: contractType,
+		Currency:     currencyPair,
+		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+		OType:        openType,
+	}
+
+	if err != nil {
+		return fOrd, err
+	}
+
+	fOrd.OrderID2 = fmt.Sprint(data.OrderId)
+
+	return fOrd, err
+}
+
+func (dm *Hbdm) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+	return dm.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
 }
 
 func (dm *Hbdm) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
@@ -598,9 +631,9 @@ func (dm *Hbdm) adaptOffsetDirectionToOpenType(offset, direction string) int {
 	switch offset {
 	case "close":
 		if direction == "buy" {
-			return CLOSE_BUY
-		} else {
 			return CLOSE_SELL
+		} else {
+			return CLOSE_BUY
 		}
 
 	default:
@@ -670,15 +703,17 @@ func (dm *Hbdm) doRequest(path string, params *url.Values, data interface{}) err
 }
 
 func (dm *Hbdm) formatPriceSize(contract string, currency Currency, price string) string {
-	var tickSize = 0
+	var tickSize = 2 //default set 2
 	for _, v := range FuturesContractInfos {
 		if (v.ContractType == contract || v.InstrumentID == contract) && v.UnderlyingIndex == currency.Symbol {
 			if v.PriceTickSize == 0 {
 				break
 			}
-			for v.PriceTickSize < 1 {
+			tickSize = 0
+			priceSize := v.PriceTickSize
+			for priceSize < 1 {
 				tickSize++
-				v.PriceTickSize *= 10
+				priceSize *= 10
 			}
 			break
 		}

@@ -239,3 +239,11 @@ func TestOKExMargin_CancelOrder(t *testing.T) {
 func TestOKExMargin_GetOneOrder(t *testing.T) {
 	t.Log(okex.OKExMargin.GetOneOrder("3174778420532224", goex.EOS_USDT))
 }
+
+func TestOKExSpot_GetCurrenciesPrecision(t *testing.T) {
+	t.Log(okex.OKExSpot.GetCurrenciesPrecision())
+}
+
+func TestOKExSpot_GetOrderHistorys(t *testing.T) {
+	t.Log(okex.OKExSpot.GetOrderHistorys(goex.BTC_USDT, 1, 10))
+}

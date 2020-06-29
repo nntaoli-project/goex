@@ -4,11 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	. "github.com/nntaoli-project/goex"
 	"github.com/nntaoli-project/goex/internal/logger"
 )
@@ -81,11 +79,27 @@ func (ok *OKExFuture) GetAllFutureContractInfo() ([]FutureContractInfo, error) {
 }
 
 func (ok *OKExFuture) GetContractInfo(contractId string) (*FutureContractInfo, error) {
+	now := time.Now()
+	if len(ok.allContractInfo.contractInfos) == 0 ||
+		(ok.allContractInfo.uTime.Hour() < 16 && now.Hour() == 16 && now.Minute() <= 10) {
+		ok.Lock()
+		defer ok.Unlock()
+
+		infos, err := ok.GetAllFutureContractInfo()
+		if err != nil {
+			logger.Errorf("Get All Futures Contract Infos Error=%s", err)
+		} else {
+			ok.allContractInfo.contractInfos = infos
+			ok.allContractInfo.uTime = now
+		}
+	}
+
 	for _, itm := range ok.allContractInfo.contractInfos {
 		if itm.InstrumentID == contractId {
 			return &itm, nil
 		}
 	}
+
 	return nil, errors.New("unknown contract id " + contractId)
 }
 
@@ -101,7 +115,7 @@ func (ok *OKExFuture) GetFutureContractId(pair CurrencyPair, contractAlias strin
 	hour := now.Hour()
 	minute := now.Minute()
 
-	if ok.allContractInfo.uTime.IsZero() || (hour == 16 && minute <= 11) {
+	if ok.allContractInfo.uTime.IsZero() || (ok.allContractInfo.uTime.Hour() < 16 && hour == 16 && minute <= 11) {
 		ok.Lock()
 		defer ok.Unlock()
 
@@ -357,7 +371,7 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 		return nil, errors.New("ord param is nil")
 	}
 	param.InstrumentId = ok.GetFutureContractId(ord.Currency, ord.ContractName)
-	param.ClientOid = strings.Replace(uuid.New().String(), "-", "", 32)
+	param.ClientOid = GenerateOrderClientId(32)
 	param.Type = ord.OType
 	param.OrderType = ord.OrderType
 	param.Price = ok.normalizePrice(ord.Price, ord.Currency)
@@ -386,42 +400,24 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 }
 
 func (ok *OKExFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
-	urlPath := "/api/futures/v3/order"
-	var param struct {
-		ClientOid    string `json:"client_oid"`
-		InstrumentId string `json:"instrument_id"`
-		Type         string `json:"type"`
-		OrderType    string `json:"order_type"`
-		Price        string `json:"price"`
-		Size         string `json:"size"`
-		MatchPrice   string `json:"match_price"`
-		Leverage     string `json:"leverage"`
-	}
+	fOrder, err := ok.PlaceFutureOrder2(matchPrice, &FutureOrder{
+		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+		OType:        openType,
+		ContractName: contractType,
+		Currency:     currencyPair,
+	})
+	return fOrder.OrderID2, err
+}
 
-	var response struct {
-		Result       bool   `json:"result"`
-		ErrorMessage string `json:"error_message"`
-		ErrorCode    string `json:"error_code"`
-		ClientOid    string `json:"client_oid"`
-		OrderId      string `json:"order_id"`
-	}
-
-	param.InstrumentId = ok.GetFutureContractId(currencyPair, contractType)
-	param.ClientOid = strings.Replace(uuid.New().String(), "-", "", 32)
-	param.Type = fmt.Sprint(openType)
-	param.OrderType = "0"
-	param.Price = price
-	param.Size = amount
-	param.MatchPrice = fmt.Sprint(matchPrice)
-	param.Leverage = fmt.Sprint(leverRate)
-
-	reqBody, _, _ := ok.BuildRequestBody(param)
-	err := ok.DoRequest("POST", urlPath, reqBody, &response)
-	if err != nil {
-		return "", err
-	}
-
-	return response.OrderId, nil
+func (ok *OKExFuture) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+	return ok.PlaceFutureOrder2(0, &FutureOrder{
+		Currency:     currencyPair,
+		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+		OType:        openType,
+		ContractName: contractType,
+	})
 }
 
 func (ok *OKExFuture) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {

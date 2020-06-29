@@ -192,6 +192,18 @@ func (swap *CoinbeneSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractTy
 	return data.orderId, nil
 }
 
+func (swap *CoinbeneSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+	orderId, err := swap.PlaceFutureOrder(currencyPair, contractType, price, amount, openType, 0, 10)
+	return &FutureOrder{
+		Currency:     currencyPair,
+		OrderID2:     orderId,
+		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+		OType:        openType,
+		ContractName: contractType,
+	}, err
+}
+
 func (swap *CoinbeneSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
 	var param struct {
 		OrderId string `json:"orderId"`

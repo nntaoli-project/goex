@@ -92,7 +92,7 @@ func (bnWs *BinanceWs) SetCallbacks(
 	bnWs.klineCallback = klineCallback
 }
 
-func (bnWs *BinanceWs) Subscribe(endpoint string, handle func(msg []byte) error) {
+func (bnWs *BinanceWs) Subscribe(endpoint string, handle func(msg []byte) error) *WsConn {
 	wsConn := NewWsBuilder().
 		WsUrl(endpoint).
 		AutoReconnect().
@@ -102,6 +102,7 @@ func (bnWs *BinanceWs) Subscribe(endpoint string, handle func(msg []byte) error)
 		Build()
 	bnWs.wsConns = append(bnWs.wsConns, wsConn)
 	go bnWs.exitHandler(wsConn)
+	return wsConn
 }
 
 func (bnWs *BinanceWs) Close() {
@@ -121,11 +122,10 @@ func (bnWs *BinanceWs) SubscribeDepth(pair CurrencyPair, size int) error {
 
 	handle := func(msg []byte) error {
 		rawDepth := struct {
-			LastUpdateID int64           `json:"T"`
-			Bids         [][]interface{} `json:"b"`
-			Asks         [][]interface{} `json:"a"`
+			LastUpdateID int64           `json:"lastUpdateId"`
+			Bids         [][]interface{} `json:"bids"`
+			Asks         [][]interface{} `json:"asks"`
 		}{}
-
 		err := json.Unmarshal(msg, &rawDepth)
 		if err != nil {
 			fmt.Println("json unmarshal error for ", string(msg))

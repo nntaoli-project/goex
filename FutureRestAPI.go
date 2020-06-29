@@ -51,6 +51,8 @@ type FutureRestAPI interface {
 	 */
 	PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error)
 
+	LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error)
+
 	/**
 	 * 取消订单
 	 * @param symbol   btc_usd:比特币    ltc_usd :莱特币
