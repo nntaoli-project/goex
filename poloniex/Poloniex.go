@@ -166,11 +166,11 @@ func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currenc
 	return order, nil
 }
 
-func (poloniex *Poloniex) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (poloniex *Poloniex) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return poloniex.placeLimitOrder("buy", amount, price, currency)
 }
 
-func (poloniex *Poloniex) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (poloniex *Poloniex) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return poloniex.placeLimitOrder("sell", amount, price, currency)
 }
 

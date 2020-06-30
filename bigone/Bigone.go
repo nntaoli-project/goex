@@ -167,11 +167,11 @@ func (bo *Bigone) placeOrder(amount, price string, pair goex.CurrencyPair, order
 		OrderTime:  int(time.Now().Unix())}, nil
 }
 
-func (bo *Bigone) LimitBuy(amount, price string, currency goex.CurrencyPair) (*goex.Order, error) {
+func (bo *Bigone) LimitBuy(amount, price string, currency goex.CurrencyPair, opt ...goex.LimitOrderOptionalParameter) (*goex.Order, error) {
 	return bo.placeOrder(amount, price, currency, "LIMIT", "BID")
 }
 
-func (bo *Bigone) LimitSell(amount, price string, currency goex.CurrencyPair) (*goex.Order, error) {
+func (bo *Bigone) LimitSell(amount, price string, currency goex.CurrencyPair, opt ...goex.LimitOrderOptionalParameter) (*goex.Order, error) {
 	return bo.placeOrder(amount, price, currency, "LIMIT", "ASK")
 }
 

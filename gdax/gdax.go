@@ -24,10 +24,10 @@ func New(client *http.Client, accesskey, secretkey string) *Gdax {
 	return &Gdax{client, "https://api.gdax.com", accesskey, secretkey}
 }
 
-func (g *Gdax) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (g *Gdax) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	panic("not implement")
 }
-func (g *Gdax) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (g *Gdax) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	panic("not implement")
 }
 func (g *Gdax) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {

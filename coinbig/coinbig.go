@@ -166,11 +166,11 @@ func (cb *CoinBig) placeOrder(amount, price string, pair CurrencyPair, orderType
 		OrderTime:  int(time.Now().Unix())}, nil
 }
 
-func (cb *CoinBig) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (cb *CoinBig) LimitBuy(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return cb.placeOrder(amount, price, currencyPair, "limit", "buy")
 }
 
-func (cb *CoinBig) LimitSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (cb *CoinBig) LimitSell(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return cb.placeOrder(amount, price, currencyPair, "limit", "sell")
 }
 

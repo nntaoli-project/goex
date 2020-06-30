@@ -398,11 +398,11 @@ func (bn *Binance) GetAccount() (*Account, error) {
 	return &acc, nil
 }
 
-func (bn *Binance) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (bn *Binance) LimitBuy(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bn.placeOrder(amount, price, currencyPair, "LIMIT", "BUY")
 }
 
-func (bn *Binance) LimitSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (bn *Binance) LimitSell(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bn.placeOrder(amount, price, currencyPair, "LIMIT", "SELL")
 }
 

@@ -75,7 +75,7 @@ func (zb *Zb) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	asks, isok1 := resp["asks"].([]interface{})
 	bids, isok2 := resp["bids"].([]interface{})
-	
+
 	if isok2 != true || isok1 != true {
 		return nil, errors.New("no depth data!")
 	}
@@ -220,11 +220,11 @@ func (zb *Zb) placeOrder(amount, price string, currency CurrencyPair, tradeType 
 	return order, nil
 }
 
-func (zb *Zb) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (zb *Zb) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return zb.placeOrder(amount, price, currency, 1)
 }
 
-func (zb *Zb) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (zb *Zb) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return zb.placeOrder(amount, price, currency, 0)
 }
 

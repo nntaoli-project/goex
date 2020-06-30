@@ -271,11 +271,11 @@ func (ac *Allcoin) GetAccount() (*Account, error) {
 	return &acc, nil
 }
 
-func (ac *Allcoin) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (ac *Allcoin) LimitBuy(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return ac.placeOrder(amount, price, currencyPair, "LIMIT", "buy")
 }
 
-func (ac *Allcoin) LimitSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (ac *Allcoin) LimitSell(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return ac.placeOrder(amount, price, currencyPair, "LIMIT", "sale")
 }
 
