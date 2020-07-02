@@ -420,6 +420,15 @@ func (ok *OKExFuture) LimitFuturesOrder(currencyPair CurrencyPair, contractType,
 	})
 }
 
+func (ok *OKExFuture) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
+	return ok.PlaceFutureOrder2(1, &FutureOrder{
+		Currency:     currencyPair,
+		Amount:       ToFloat64(amount),
+		OType:        openType,
+		ContractName: contractType,
+	})
+}
+
 func (ok *OKExFuture) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
 	urlPath := fmt.Sprintf("/api/futures/v3/cancel_order/%s/%s", ok.GetFutureContractId(currencyPair, contractType), orderId)
 	var response struct {

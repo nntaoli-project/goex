@@ -121,6 +121,9 @@ func NewHbdm(conf *APIConfig) *Hbdm {
 	if conf.Endpoint == "" {
 		conf.Endpoint = defaultBaseUrl
 	}
+	if conf.Lever <= 0 {
+		conf.Lever = 10
+	}
 	hbdmInit()
 	return &Hbdm{conf}
 }
@@ -201,7 +204,7 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 		if d.ContractType != contractType {
 			continue
 		}
-		
+
 		switch d.Direction {
 		case "buy":
 			positions = append(positions, FuturePosition{
@@ -284,7 +287,11 @@ func (dm *Hbdm) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price
 }
 
 func (dm *Hbdm) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
-	return dm.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
+	return dm.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, dm.config.Lever)
+}
+
+func (dm *Hbdm) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
+	return dm.PlaceFutureOrder2(currencyPair, contractType, "0", amount, openType, 1, dm.config.Lever)
 }
 
 func (dm *Hbdm) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {

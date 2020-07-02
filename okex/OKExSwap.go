@@ -327,6 +327,10 @@ func (ok *OKExSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, p
 	return ok.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
 }
 
+func (ok *OKExSwap) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
+	return ok.PlaceFutureOrder2(currencyPair, contractType, "0", amount, openType, 1, 10)
+}
+
 func (ok *OKExSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
 	var cancelParam struct {
 		OrderId      string `json:"order_id"`
