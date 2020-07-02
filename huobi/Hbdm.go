@@ -239,7 +239,7 @@ func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price,
 	return fOrder.OrderID2, err
 }
 
-func (dm *Hbdm) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (*FutureOrder, error) {
+func (dm *Hbdm) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
 	var data struct {
 		OrderId  int64 `json:"order_id"`
 		COrderId int64 `json:"client_order_id"`
@@ -258,7 +258,18 @@ func (dm *Hbdm) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price
 	if matchPrice == 1 {
 		params.Set("order_price_type", "opponent") //对手价下单
 	} else {
-		params.Set("order_price_type", "limit")
+		orderPriceType := "limit"
+		if len(opt) > 0 {
+			switch opt[0] {
+			case Fok:
+				orderPriceType = "fok"
+			case Ioc:
+				orderPriceType = "ioc"
+			case PostOnly:
+				orderPriceType = "post_only"
+			}
+		}
+		params.Set("order_price_type", orderPriceType)
 		params.Add("price", dm.formatPriceSize(contractType, currencyPair.CurrencyA, price))
 	}
 
@@ -286,7 +297,7 @@ func (dm *Hbdm) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price
 	return fOrd, err
 }
 
-func (dm *Hbdm) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+func (dm *Hbdm) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
 	return dm.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, dm.config.Lever)
 }
 

@@ -176,7 +176,7 @@ func (bm *bitmex) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, pri
 	return fOrder, nil
 }
 
-func (bm *bitmex) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+func (bm *bitmex) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
 	return bm.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
 }
 

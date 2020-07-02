@@ -358,7 +358,7 @@ func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType
 	return fOrder, nil
 }
 
-func (bs *BinanceSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+func (bs *BinanceSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
 	return bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
 }
 

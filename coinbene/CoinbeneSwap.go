@@ -195,7 +195,7 @@ func (swap *CoinbeneSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractTy
 	return data.orderId, nil
 }
 
-func (swap *CoinbeneSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+func (swap *CoinbeneSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
 	orderId, err := swap.PlaceFutureOrder(currencyPair, contractType, price, amount, openType, 0, 10)
 	return &FutureOrder{
 		Currency:     currencyPair,
