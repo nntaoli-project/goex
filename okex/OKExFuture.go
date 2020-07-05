@@ -410,10 +410,32 @@ func (ok *OKExFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, 
 	return fOrder.OrderID2, err
 }
 
-func (ok *OKExFuture) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
-	return ok.PlaceFutureOrder2(0, &FutureOrder{
+func (ok *OKExFuture) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
+	ord := &FutureOrder{
 		Currency:     currencyPair,
 		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+		OType:        openType,
+		ContractName: contractType,
+	}
+
+	if len(opt) > 0 {
+		switch opt[0] {
+		case PostOnly:
+			ord.OrderType = 1
+		case Fok:
+			ord.OrderType = 2
+		case Ioc:
+			ord.OrderType = 3
+		}
+	}
+
+	return ok.PlaceFutureOrder2(0, ord)
+}
+
+func (ok *OKExFuture) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
+	return ok.PlaceFutureOrder2(1, &FutureOrder{
+		Currency:     currencyPair,
 		Amount:       ToFloat64(amount),
 		OType:        openType,
 		ContractName: contractType,

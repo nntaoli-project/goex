@@ -19,10 +19,6 @@ type BinanceSwap struct {
 	Binance
 }
 
-func (bs *BinanceSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
-	return bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
-}
-
 func NewBinanceSwap(config *APIConfig) *BinanceSwap {
 	if config.Endpoint == "" {
 		config.Endpoint = baseUrl
@@ -360,6 +356,14 @@ func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType
 	fOrder.OrderID2 = strconv.Itoa(orderId)
 
 	return fOrder, nil
+}
+
+func (bs *BinanceSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
+	return bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
+}
+
+func (bs *BinanceSwap) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
+	return bs.PlaceFutureOrder2(currencyPair, contractType, "0", amount, openType, 1, 10)
 }
 
 /**

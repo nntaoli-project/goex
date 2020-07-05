@@ -227,11 +227,11 @@ func (exx *Exx) placeOrder(amount, price string, currency CurrencyPair, tradeTyp
 	return order, nil
 }
 
-func (exx *Exx) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (exx *Exx) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return exx.placeOrder(amount, price, currency, 1)
 }
 
-func (exx *Exx) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (exx *Exx) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return exx.placeOrder(amount, price, currency, 0)
 }
 

@@ -59,11 +59,11 @@ func (bit *Bithumb) placeOrder(side, amount, price string, pair CurrencyPair) (*
 		Status:   ORDER_UNFINISH}, nil
 }
 
-func (bit *Bithumb) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bit *Bithumb) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bit.placeOrder("bid", amount, price, currency)
 }
 
-func (bit *Bithumb) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bit *Bithumb) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bit.placeOrder("ask", amount, price, currency)
 }
 

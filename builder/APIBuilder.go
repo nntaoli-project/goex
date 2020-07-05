@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/nntaoli-project/goex/coinex"
-	"github.com/nntaoli-project/goex/gateio"
 	"github.com/nntaoli-project/goex/gdax"
 	"github.com/nntaoli-project/goex/hitbtc"
 	"github.com/nntaoli-project/goex/huobi"
@@ -233,8 +232,6 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = bithumb.New(builder.client, builder.apiKey, builder.secretkey)
 	case GDAX:
 		_api = gdax.New(builder.client, builder.apiKey, builder.secretkey)
-	case GATEIO:
-		_api = gateio.New(builder.client, builder.apiKey, builder.secretkey)
 	case ZB:
 		_api = zb.New(builder.client, builder.apiKey, builder.secretkey)
 	case COINEX:
@@ -334,4 +331,17 @@ func (builder *APIBuilder) BuildSpotWs(exName string) (SpotWsApi, error) {
 		return huobi.NewSpotWs(), nil
 	}
 	return nil, errors.New("not support the exchange " + exName)
+}
+
+func (builder *APIBuilder) BuildWallet(exName string) (WalletApi, error) {
+	switch exName {
+	case OKEX_V3, OKEX:
+		return okex.NewOKEx(&APIConfig{
+			HttpClient:    builder.client,
+			ApiKey:        builder.apiKey,
+			ApiSecretKey:  builder.secretkey,
+			ApiPassphrase: builder.apiPassphrase,
+		}).OKExWallet, nil
+	}
+	return nil, errors.New("not support the wallet api for  " + exName)
 }

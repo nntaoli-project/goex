@@ -103,11 +103,11 @@ func (coinex *CoinEx) placeLimitOrder(side, amount, price string, pair CurrencyP
 	return &order, nil
 }
 
-func (coinex *CoinEx) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (coinex *CoinEx) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return coinex.placeLimitOrder("buy", amount, price, currency)
 }
 
-func (coinex *CoinEx) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (coinex *CoinEx) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return coinex.placeLimitOrder("sell", amount, price, currency)
 }
 

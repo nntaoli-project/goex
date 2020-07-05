@@ -4,20 +4,6 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex"
-	"time"
-)
-
-const (
-	SUB_ACCOUNT = iota //子账户
-	SPOT               // 币币交易
-	_
-	FUTURE      //交割合约
-	C2C         //法币
-	SPOT_MARGIN //币币杠杆交易
-	WALLET      // 资金账户
-	_
-	TIPS //余币宝
-	SWAP //永续合约
 )
 
 const (
@@ -25,25 +11,6 @@ const (
 	WITHDRAWAL_OKEx       = 3 //提币到okex，站内提币
 	WITHDRAWAL_COIN       = 4 //提币到数字货币地址，跨平台提币或者提到自己钱包
 )
-
-type TransferParameter struct {
-	Currency       string  `json:"currency"`
-	From           int     `json:"from"`
-	To             int     `json:"to"`
-	Amount         float64 `json:"amount"`
-	SubAccount     string  `json:"sub_account"`
-	InstrumentId   string  `json:"instrument_id"`
-	ToInstrumentId string  `json:"to_instrument_id"`
-}
-
-type WithdrawParameter struct {
-	Currency    string  `json:"currency"`
-	Amount      float64 `json:"amount,string"`
-	Destination int     `json:"destination"` //提币到(2:OKCoin国际 3:OKEx 4:数字货币地址)
-	ToAddress   string  `json:"to_address"`
-	TradePwd    string  `json:"trade_pwd"`
-	Fee         string  `json:"fee"`
-}
 
 type OKExWallet struct {
 	*OKEx
@@ -166,35 +133,22 @@ func (ok *OKExWallet) GetWithDrawalFee(currency *Currency) ([]WithdrawFee, error
 	return response, nil
 }
 
-type DepositWithDrawHistory struct {
-	WithdrawalId string    `json:"withdrawal_id,omitempty"`
-	Currency     string    `json:"currency"`
-	Txid         string    `json:"txid"`
-	Amount       float64   `json:"amount,string"`
-	From         string    `json:"from,omitempty"`
-	To           string    `json:"to"`
-	Memo         string    `json:"memo,omitempty"`
-	Fee          string    `json:"fee"`
-	Status       int       `json:"status,string"`
-	Timestamp    time.Time `json:"timestamp"`
-}
-
-func (ok *OKExWallet) GetWithDrawalHistory(currency *Currency) ([]DepositWithDrawHistory, error) {
+func (ok *OKExWallet) GetWithDrawHistory(currency *Currency) ([]DepositWithdrawHistory, error) {
 	urlPath := "/api/account/v3/withdrawal/history"
 	if currency != nil && *currency != UNKNOWN {
 		urlPath += "/" + currency.Symbol
 	}
-	var response []DepositWithDrawHistory
+	var response []DepositWithdrawHistory
 	err := ok.DoRequest("GET", urlPath, "", &response)
 	return response, err
 }
 
-func (ok *OKExWallet) GetDepositHistory(currency *Currency) ([]DepositWithDrawHistory, error) {
+func (ok *OKExWallet) GetDepositHistory(currency *Currency) ([]DepositWithdrawHistory, error) {
 	urlPath := "/api/account/v3/deposit/history"
 	if currency != nil && *currency != UNKNOWN {
 		urlPath += "/" + currency.Symbol
 	}
-	var response []DepositWithDrawHistory
+	var response []DepositWithdrawHistory
 	err := ok.DoRequest("GET", urlPath, "", &response)
 	return response, err
 }

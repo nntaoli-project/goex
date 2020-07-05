@@ -221,3 +221,37 @@ type RepaymentParameter struct {
 	BorrowParameter
 	BorrowId string
 }
+
+
+type TransferParameter struct {
+	Currency       string  `json:"currency"`
+	From           int     `json:"from"`
+	To             int     `json:"to"`
+	Amount         float64 `json:"amount"`
+	SubAccount     string  `json:"sub_account"`
+	InstrumentId   string  `json:"instrument_id"`
+	ToInstrumentId string  `json:"to_instrument_id"`
+}
+
+type WithdrawParameter struct {
+	Currency    string  `json:"currency"`
+	Amount      float64 `json:"amount,string"`
+	Destination int     `json:"destination"` //提币到(2:OKCoin国际 3:OKEx 4:数字货币地址)
+	ToAddress   string  `json:"to_address"`
+	TradePwd    string  `json:"trade_pwd"`
+	Fee         string  `json:"fee"`
+}
+
+
+type DepositWithdrawHistory struct {
+	WithdrawalId string    `json:"withdrawal_id,omitempty"`
+	Currency     string    `json:"currency"`
+	Txid         string    `json:"txid"`
+	Amount       float64   `json:"amount,string"`
+	From         string    `json:"from,omitempty"`
+	To           string    `json:"to"`
+	Memo         string    `json:"memo,omitempty"`
+	Fee          string    `json:"fee"`
+	Status       int       `json:"status,string"`
+	Timestamp    time.Time `json:"timestamp"`
+}

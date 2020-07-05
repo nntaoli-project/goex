@@ -265,6 +265,7 @@ type BasePlaceOrderInfo struct {
 	MatchPrice string `json:"match_price"`
 	Type       string `json:"type"`
 	Size       string `json:"size"`
+	OrderType  string `json:"order_type"`
 }
 
 type PlaceOrderInfo struct {
@@ -278,13 +279,13 @@ type PlaceOrdersInfo struct {
 }
 
 func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
-	fOrder, err := ok.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice, leverRate)
+	fOrder, err := ok.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice)
 	return fOrder.OrderID2, err
 }
 
-func (ok *OKExSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (*FutureOrder, error) {
+func (ok *OKExSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
 	cid := GenerateOrderClientId(32)
-	reqBody, _, _ := ok.OKEx.BuildRequestBody(PlaceOrderInfo{
+	param := PlaceOrderInfo{
 		BasePlaceOrderInfo{
 			ClientOid:  cid,
 			Price:      price,
@@ -292,7 +293,20 @@ func (ok *OKExSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, p
 			Type:       fmt.Sprint(openType),
 			Size:       amount},
 		ok.adaptContractType(currencyPair),
-	})
+	}
+
+	if len(opt) > 0 {
+		switch opt[0] {
+		case PostOnly:
+			param.OrderType = "1"
+		case Fok:
+			param.OrderType = "2"
+		case Ioc:
+			param.OrderType = "3"
+		}
+	}
+
+	reqBody, _, _ := ok.OKEx.BuildRequestBody(param)
 
 	fOrder := &FutureOrder{
 		ClientOid:    cid,
@@ -323,8 +337,12 @@ func (ok *OKExSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, p
 	return fOrder, nil
 }
 
-func (ok *OKExSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
-	return ok.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
+func (ok *OKExSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
+	return ok.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, opt...)
+}
+
+func (ok *OKExSwap) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
+	return ok.PlaceFutureOrder2(currencyPair, contractType, "0", amount, openType, 1)
 }
 
 func (ok *OKExSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {

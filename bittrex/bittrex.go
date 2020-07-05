@@ -1,11 +1,11 @@
 package bittrex
 
 import (
+	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex"
 	"net/http"
 	"sort"
-	"errors"
 )
 
 type Bittrex struct {
@@ -19,10 +19,10 @@ func New(client *http.Client, accesskey, secretkey string) *Bittrex {
 	return &Bittrex{client: client, accesskey: accesskey, secretkey: secretkey, baseUrl: "https://bittrex.com/api/v1.1"}
 }
 
-func (bx *Bittrex) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bx *Bittrex) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	panic("not implement")
 }
-func (bx *Bittrex) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bx *Bittrex) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	panic("not implement")
 }
 func (bx *Bittrex) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {

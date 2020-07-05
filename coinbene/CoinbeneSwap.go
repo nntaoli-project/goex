@@ -42,6 +42,9 @@ func NewCoinbeneSwap(config APIConfig) *CoinbeneSwap {
 	if config.Endpoint == "" {
 		config.Endpoint = "http://openapi-contract.coinbene.com"
 	}
+	if config.Lever <= 0 {
+		config.Lever = 10
+	}
 	if strings.HasSuffix(config.Endpoint, "/") {
 		config.Endpoint = config.Endpoint[0 : len(config.Endpoint)-1]
 	}
@@ -192,7 +195,7 @@ func (swap *CoinbeneSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractTy
 	return data.orderId, nil
 }
 
-func (swap *CoinbeneSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error) {
+func (swap *CoinbeneSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
 	orderId, err := swap.PlaceFutureOrder(currencyPair, contractType, price, amount, openType, 0, 10)
 	return &FutureOrder{
 		Currency:     currencyPair,
@@ -202,6 +205,10 @@ func (swap *CoinbeneSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractT
 		OType:        openType,
 		ContractName: contractType,
 	}, err
+}
+
+func (swap *CoinbeneSwap) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
+	panic("not support the market order")
 }
 
 func (swap *CoinbeneSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {

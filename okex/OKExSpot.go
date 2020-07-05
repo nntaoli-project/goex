@@ -162,8 +162,12 @@ func (ok *OKExSpot) PlaceOrder(ty string, ord *Order) (*Order, error) {
 	return ord, nil
 }
 
-func (ok *OKExSpot) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return ok.PlaceOrder("limit", &Order{
+func (ok *OKExSpot) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	ty := "limit"
+	if len(opt) > 0 {
+		ty = opt[0].String()
+	}
+	return ok.PlaceOrder(ty, &Order{
 		Price:    ToFloat64(price),
 		Amount:   ToFloat64(amount),
 		Currency: currency,
@@ -171,8 +175,12 @@ func (ok *OKExSpot) LimitBuy(amount, price string, currency CurrencyPair) (*Orde
 	})
 }
 
-func (ok *OKExSpot) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return ok.PlaceOrder("limit", &Order{
+func (ok *OKExSpot) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	ty := "limit"
+	if len(opt) > 0 {
+		ty = opt[0].String()
+	}
+	return ok.PlaceOrder(ty, &Order{
 		Price:    ToFloat64(price),
 		Amount:   ToFloat64(amount),
 		Currency: currency,

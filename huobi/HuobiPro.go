@@ -264,8 +264,21 @@ func (hbpro *HuoBiPro) placeOrder(amount, price string, pair CurrencyPair, order
 	return respmap["data"].(string), nil
 }
 
-func (hbpro *HuoBiPro) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	orderId, err := hbpro.placeOrder(amount, price, currency, "buy-limit")
+func (hbpro *HuoBiPro) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	orderTy := "buy-limit"
+	if len(opt) > 0 {
+		switch opt[0] {
+		case PostOnly:
+			orderTy = "buy-limit-maker"
+		case Ioc:
+			orderTy = "buy-ioc"
+		case Fok:
+			orderTy = "buy-limit-fok"
+		default:
+			Log.Error("limit order optional parameter error ,opt= ", opt[0])
+		}
+	}
+	orderId, err := hbpro.placeOrder(amount, price, currency, orderTy)
 	if err != nil {
 		return nil, err
 	}
@@ -278,8 +291,21 @@ func (hbpro *HuoBiPro) LimitBuy(amount, price string, currency CurrencyPair) (*O
 		Side:     BUY}, nil
 }
 
-func (hbpro *HuoBiPro) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	orderId, err := hbpro.placeOrder(amount, price, currency, "sell-limit")
+func (hbpro *HuoBiPro) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	orderTy := "sell-limit"
+	if len(opt) > 0 {
+		switch opt[0] {
+		case PostOnly:
+			orderTy = "sell-limit-maker"
+		case Ioc:
+			orderTy = "sell-ioc"
+		case Fok:
+			orderTy = "sell-limit-fok"
+		default:
+			Log.Error("limit order optional parameter error ,opt= ", opt[0])
+		}
+	}
+	orderId, err := hbpro.placeOrder(amount, price, currency, orderTy)
 	if err != nil {
 		return nil, err
 	}

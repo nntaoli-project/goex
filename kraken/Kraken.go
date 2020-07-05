@@ -75,11 +75,11 @@ func (k *Kraken) placeOrder(orderType, side, amount, price string, pair Currency
 		Status:   ORDER_UNFINISH}, nil
 }
 
-func (k *Kraken) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (k *Kraken) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return k.placeOrder("limit", "buy", amount, price, currency)
 }
 
-func (k *Kraken) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (k *Kraken) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return k.placeOrder("limit", "sell", amount, price, currency)
 }
 

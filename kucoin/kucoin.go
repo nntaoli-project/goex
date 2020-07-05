@@ -91,7 +91,7 @@ func (kc *KuCoin) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	return &ticker, nil
 }
 
-func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	clientID := GenerateOrderClientId(32)
 	in := kucoin.CreateOrderModel{
 		ClientOid:   clientID,
@@ -121,7 +121,7 @@ func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order,
 	return &order, nil
 }
 
-func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	clientID := GenerateOrderClientId(32)
 	in := kucoin.CreateOrderModel{
 		ClientOid:   clientID,
