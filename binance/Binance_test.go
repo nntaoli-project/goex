@@ -23,7 +23,7 @@ var ba = NewWithConfig(
 			},
 			Timeout: 10 * time.Second,
 		},
-		Endpoint:     US_API_BASE_URL,
+		Endpoint:     GLOBAL_API_BASE_URL,
 		ApiKey:       "q6y6Gr7fF3jSJLncpfn2PmAA0xu4XRiRFHpFkyJy3d7K68WUxY0Gt8rrajCDUfbI",
 		ApiSecretKey: "AP8C2kh4RyISN3fpRCFMZJddf233XbPcYWQ1S7gBan3pGjCQg2JnyQFSJrIaNzRh",
 	})
@@ -70,6 +70,7 @@ func TestBinance_GetUnfinishOrders(t *testing.T) {
 	orders, err := ba.GetUnfinishOrders(goex.ETH_BTC)
 	t.Log(orders, err)
 }
+
 func TestBinance_GetKlineRecords(t *testing.T) {
 	before := time.Now().Add(-time.Hour).Unix() * 1000
 	kline, _ := ba.GetKlineRecords(goex.ETH_BTC, goex.KLINE_PERIOD_5MIN, 100, int(before))
@@ -90,4 +91,8 @@ func TestBinance_GetTradeSymbols(t *testing.T) {
 func TestBinance_SetTimeOffset(t *testing.T) {
 	t.Log(ba.setTimeOffset())
 	t.Log(ba.timeOffset)
+}
+
+func TestBinance_GetOrderHistorys(t *testing.T) {
+	t.Log(ba.GetOrderHistorys(goex.BTC_USDT, 1, 1))
 }
