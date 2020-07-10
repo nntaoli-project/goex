@@ -167,6 +167,10 @@ type FutureOrder struct {
 	Fee          float64 //手续费
 	ContractName string
 	FinishedTime int64 // finished timestamp
+
+	//策略委托单
+	TriggerPrice float64
+	AlgoType     int //1:限价 2:市场价；触发价格类型，默认是限价；为市场价时，委托价格不必填；
 }
 
 type FuturePosition struct {
