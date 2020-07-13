@@ -76,6 +76,9 @@ const (
 	GET_TICKER            = "/api/swap/v3/instruments/%s/ticker"
 	GET_ALL_TICKER        = "/api/swap/v3/instruments/ticker"
 	GET_UNFINISHED_ORDERS = "/api/swap/v3/orders/%s?status=%d&limit=%d"
+	PLACE_ALGO_ORDER      = "/api/swap/v3/order_algo"
+	CANCEL_ALGO_ORDER     = "/api/swap/v3/cancel_algos"
+	GET_ALGO_ORDER        = "/api/swap/v3/order_algo/%s?order_type=%d&"
 )
 
 type BaseResponse struct {
@@ -698,4 +701,149 @@ func (ok *OKExSwap) SetMarginLevel(currencyPair CurrencyPair, level, marginMode 
 		return nil, err
 	}
 	return &resp, nil
+}
+
+//委托策略下单 algo_type 1:限价 2:市场价；触发价格类型，默认是限价；为市场价时，委托价格不必填；
+func (ok *OKExSwap) PlaceFutureAlgoOrder(ord *FutureOrder) (*FutureOrder, error) {
+	var param struct {
+		InstrumentId string `json:"instrument_id"`
+		Type         int    `json:"type"`
+		OrderType    int    `json:"order_type"` //1：止盈止损 2：跟踪委托 3：冰山委托 4：时间加权
+		Size         string `json:"size"`
+		TriggerPrice string `json:"trigger_price"`
+		AlgoPrice    string `json:"algo_price"`
+		AlgoType     string `json:"algo_type"`
+	}
+
+	var response struct {
+		ErrorMessage string `json:"error_message"`
+		ErrorCode    string `json:"error_code"`
+		DetailMsg    string `json:"detail_msg"`
+
+		Data struct {
+			Result       string `json:"result"`
+			ErrorMessage string `json:"error_message"`
+			ErrorCode    string `json:"error_code"`
+			AlgoId       string `json:"algo_id"`
+			InstrumentId string `json:"instrument_id"`
+			OrderType    int    `json:"order_type"`
+		} `json:"data"`
+	}
+	if ord == nil {
+		return nil, errors.New("ord param is nil")
+	}
+	param.InstrumentId = ok.adaptContractType(ord.Currency)
+	param.Type = ord.OType
+	param.OrderType = ord.OrderType
+	param.AlgoType = fmt.Sprint(ord.AlgoType)
+	param.TriggerPrice = fmt.Sprint(ord.TriggerPrice)
+	param.AlgoPrice = fmt.Sprint(ToFloat64(ord.Price))
+	param.Size = fmt.Sprint(ord.Amount)
+
+	reqBody, _, _ := ok.BuildRequestBody(param)
+	err := ok.DoRequest("POST", PLACE_ALGO_ORDER, reqBody, &response)
+
+	if err != nil {
+		return ord, err
+	}
+
+	ord.OrderID2 = response.Data.AlgoId
+	ord.OrderTime = time.Now().UnixNano() / int64(time.Millisecond)
+
+	return ord, nil
+}
+
+//委托策略撤单
+func (ok *OKExSwap) FutureCancelAlgoOrder(currencyPair CurrencyPair, orderId []string) (bool, error) {
+	if len(orderId) == 0 {
+		return false, errors.New("invalid order id")
+	}
+	var cancelParam struct {
+		InstrumentId string   `json:"instrument_id"`
+		AlgoIds      []string `json:"algo_ids"`
+		OrderType    string   `json:"order_type"`
+	}
+
+	var resp struct {
+		ErrorMessage string `json:"error_message"`
+		ErrorCode    string `json:"error_code"`
+		DetailMsg    string `json:"detailMsg"`
+		Data         struct {
+			Result       string `json:"result"`
+			AlgoIds      string `json:"algo_ids"`
+			InstrumentID string `json:"instrument_id"`
+			OrderType    string `json:"order_type"`
+		} `json:"data"`
+	}
+
+	cancelParam.InstrumentId = ok.adaptContractType(currencyPair)
+	cancelParam.OrderType = "1"
+	cancelParam.AlgoIds = orderId
+
+	reqBody, _, _ := ok.BuildRequestBody(cancelParam)
+
+	err := ok.DoRequest("POST", CANCEL_ALGO_ORDER, reqBody, &resp)
+	if err != nil {
+		return false, err
+	}
+
+	return resp.Data.Result == "success", nil
+}
+
+//获取委托单列表, status和algo_id必填且只能填其一
+func (ok *OKExSwap) GetFutureAlgoOrders(algo_id string, status string, currencyPair CurrencyPair) ([]FutureOrder, error) {
+	uri := fmt.Sprintf(GET_ALGO_ORDER, ok.adaptContractType(currencyPair), 1)
+	if algo_id != "" {
+		uri += "algo_id=" + algo_id
+	} else if status != "" {
+		uri += "status=" + status
+	} else {
+		return nil, errors.New("status or algo_id is needed")
+	}
+
+	var resp struct {
+		OrderStrategyVOS []struct {
+			AlgoId       string `json:"algo_id"`
+			AlgoPrice    string `json:"algo_price"`
+			InstrumentId string `json:"instrument_id"`
+			Leverage     string `json:"leverage"`
+			OrderType    string `json:"order_type"`
+			RealAmount   string `json:"real_amount"`
+			RealPrice    string `json:"real_price"`
+			Size         string `json:"size"`
+			Status       string `json:"status"`
+			Timestamp    string `json:"timestamp"`
+			TriggerPrice string `json:"trigger_price"`
+			Type         string `json:"type"`
+		} `json:"orderStrategyVOS"`
+	}
+
+	err := ok.DoRequest("GET", uri, "", &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	var orders []FutureOrder
+	for _, info := range resp.OrderStrategyVOS {
+		oTime, _ := time.Parse(time.RFC3339, info.Timestamp)
+
+		ord := FutureOrder{
+			OrderID2:     info.AlgoId,
+			Price:        ToFloat64(info.AlgoPrice),
+			Amount:       ToFloat64(info.Size),
+			AvgPrice:     ToFloat64(info.RealPrice),
+			DealAmount:   ToFloat64(info.RealAmount),
+			OrderTime:    oTime.UnixNano() / int64(time.Millisecond),
+			Status:       ok.AdaptTradeStatus(ToInt(info.Status)),
+			Currency:     CurrencyPair{},
+			OrderType:    ToInt(info.OrderType),
+			OType:        ToInt(info.Type),
+			TriggerPrice: ToFloat64(info.TriggerPrice),
+		}
+		ord.Currency = currencyPair
+		orders = append(orders, ord)
+	}
+
+	//log.Println(len(orders))
+	return orders, nil
 }

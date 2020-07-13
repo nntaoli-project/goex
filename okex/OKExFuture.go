@@ -520,6 +520,8 @@ func (ok *OKExFuture) GetFuturePosition(currencyPair CurrencyPair, contractType 
 			ForceLiquPrice: pos.LiquidationPrice,
 			LeverRate:      pos.Leverage,
 			CreateDate:     pos.CreatedAt.Unix(),
+			ShortPnlRatio:  pos.ShortPnlRatio,
+			LongPnlRatio:   pos.LongPnlRatio,
 		})
 	}
 
