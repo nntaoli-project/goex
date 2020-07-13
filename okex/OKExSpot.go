@@ -243,6 +243,7 @@ type OrderResponse struct {
 	FilledNotional string  `json:"filled_notional"`
 	PriceAvg       string  `json:"price_avg"`
 	State          int     `json:"state,string"`
+	Fee            string  `json:"fee"`
 	OrderType      int     `json:"order_type,string"`
 	Timestamp      string  `json:"timestamp"`
 }
@@ -255,7 +256,8 @@ func (ok *OKExSpot) adaptOrder(response OrderResponse) *Order {
 		Amount:     response.Size,
 		AvgPrice:   ToFloat64(response.PriceAvg),
 		DealAmount: ToFloat64(response.FilledSize),
-		Status:     ok.adaptOrderState(response.State)}
+		Status:     ok.adaptOrderState(response.State),
+		Fee:        ToFloat64(response.Fee)}
 
 	switch response.Side {
 	case "buy":
