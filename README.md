@@ -1,7 +1,7 @@
 <div align="center">
 <img width="409" heigth="205" src="https://upload-images.jianshu.io/upload_images/6760989-dec7dc747846880e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt="goex">
-<img src="https://travis-ci.org/nntaoli-project/goex.svg?branch=dev"/>
 </div>
+[文档] https://github.com/nntaoli-project/goex/wiki
 
 ### goex目标
 
