@@ -665,6 +665,45 @@ func (ok *OKExFuture) GetKlineRecords(contractType string, currency CurrencyPair
 	return klines, nil
 }
 
+/**
+  since : 单位秒,开始时间
+  to : 单位秒,结束时间
+*/
+func (ok *OKExFuture) GetKlineRecordsByRange(contractType string, currency CurrencyPair, period, since, to int) ([]FutureKline, error) {
+	urlPath := "/api/futures/v3/instruments/%s/candles?start=%s&end=%s&granularity=%d"
+	contractId := ok.GetFutureContractId(currency, contractType)
+	sinceTime := time.Unix(int64(since), 0).UTC()
+	toTime := time.Unix(int64(to), 0).UTC()
+
+	granularity := adaptKLinePeriod(KlinePeriod(period))
+	if granularity == -1 {
+		return nil, errors.New("kline period parameter is error")
+	}
+
+	var response [][]interface{}
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, sinceTime.Format(time.RFC3339), toTime.Format(time.RFC3339), granularity), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var klines []FutureKline
+	for _, itm := range response {
+		t, _ := time.Parse(time.RFC3339, fmt.Sprint(itm[0]))
+		klines = append(klines, FutureKline{
+			Kline: &Kline{
+				Timestamp: t.Unix(),
+				Pair:      currency,
+				Open:      ToFloat64(itm[1]),
+				High:      ToFloat64(itm[2]),
+				Low:       ToFloat64(itm[3]),
+				Close:     ToFloat64(itm[4]),
+				Vol:       ToFloat64(itm[5])},
+			Vol2: ToFloat64(itm[6])})
+	}
+
+	return klines, nil
+}
+
 func (ok *OKExFuture) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("")
 }
