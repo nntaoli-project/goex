@@ -627,9 +627,9 @@ func (ok *OKExFuture) GetDeliveryTime() (int, int, int, int) {
 /**
   since : 单位秒,开始时间
 */
-func (ok *OKExFuture) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+func (ok *OKExFuture) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
 	urlPath := "/api/futures/v3/instruments/%s/candles?start=%s&granularity=%d"
-	contractId := ok.GetFutureContractId(currency, contract_type)
+	contractId := ok.GetFutureContractId(currency, contractType)
 	sinceTime := time.Unix(int64(since), 0).UTC()
 
 	if since/int(time.Second) != 1 { //如果不为秒，转为秒
@@ -665,7 +665,7 @@ func (ok *OKExFuture) GetKlineRecords(contract_type string, currency CurrencyPai
 	return klines, nil
 }
 
-func (ok *OKExFuture) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
+func (ok *OKExFuture) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("")
 }
 
