@@ -27,7 +27,7 @@ type OrderInfo struct {
 	OrderPriceType string  `json:"order_price_type"`
 	Direction      string  `json:"direction"`
 	Offset         string  `json:"offset"`
-	LeverRate      int     `json:"lever_rate"`
+	LeverRate      float64 `json:"lever_rate"`
 	OrderId        int64   `json:"order_id"`
 	ClientOrderId  int64   `json:"client_order_id"`
 	OrderSource    string  `json:"order_source"`
@@ -184,7 +184,7 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 		ProfitRate     float64 `json:"profit_rate"`
 		Profit         float64 `json:"profit"`
 		PositionMargin float64 `json:"position_margin"`
-		LeverRate      int     `json:"lever_rate"`
+		LeverRate      float64 `json:"lever_rate"`
 		Direction      string  `json:"direction"`
 	}
 
@@ -234,12 +234,12 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 	return positions, nil
 }
 
-func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+func (dm *Hbdm) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error) {
 	fOrder, err := dm.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice, leverRate)
 	return fOrder.OrderID2, err
 }
 
-func (dm *Hbdm) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
+func (dm *Hbdm) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
 	var data struct {
 		OrderId  int64 `json:"order_id"`
 		COrderId int64 `json:"client_order_id"`

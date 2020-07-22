@@ -289,7 +289,7 @@ func (bs *BinanceSwap) Transfer(currency Currency, transferType int, amount floa
 	return ToInt64(respmap["tranId"]), nil
 }
 
-func (bs *BinanceSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+func (bs *BinanceSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error) {
 	fOrder, err := bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice, leverRate)
 	return fOrder.OrderID2, err
 }
@@ -304,7 +304,7 @@ func (bs *BinanceSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType,
  * @param openType   1:开多   2:开空   3:平多   4:平空
  * @param matchPrice  是否为对手价 0:不是    1:是   ,当取值为1时,price无效
  */
-func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (*FutureOrder, error) {
+func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (*FutureOrder, error) {
 	fOrder := &FutureOrder{
 		Currency:     currencyPair,
 		ClientOid:    GenerateOrderClientId(32),
@@ -490,7 +490,7 @@ func (bs *BinanceSwap) GetFuturePosition(currencyPair CurrencyPair, contractType
 			continue
 		}
 		p := FuturePosition{
-			LeverRate:      ToInt(cont["leverage"]),
+			LeverRate:      ToFloat64(cont["leverage"]),
 			Symbol:         currencyPair,
 			ForceLiquPrice: ToFloat64(cont["liquidationPrice"]),
 		}

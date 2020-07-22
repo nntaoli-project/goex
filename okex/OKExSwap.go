@@ -281,7 +281,7 @@ type PlaceOrdersInfo struct {
 	OrderData    []*BasePlaceOrderInfo `json:"order_data"`
 }
 
-func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error) {
 	fOrder, err := ok.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice)
 	return fOrder.OrderID2, err
 }
@@ -511,6 +511,8 @@ func (ok *OKExSwap) GetFuturePosition(currencyPair CurrencyPair, contractType st
 		positions[0].SellPriceAvg = sellPosition.AvgCost
 		positions[0].SellProfitReal = sellPosition.RealizedPnl
 		positions[0].SellPriceCost = sellPosition.SettlementPrice
+
+		positions[0].LeverRate = ToFloat64(sellPosition.Leverage)
 	}
 	return positions, nil
 }

@@ -21,7 +21,7 @@ type baseResp struct {
 type CoinbeneOrder struct {
 	OrderId        string    `json:"orderId"`
 	Direction      string    `json:"direction"`
-	Leverage       int       `json:"leverage,string"`
+	Leverage       float64   `json:"leverage,string"`
 	Symbol         string    `json:"symbol"`
 	OrderType      string    `json:"orderType"`
 	Quantity       float64   `json:"quantity,string"`
@@ -163,7 +163,7 @@ func (swap *CoinbeneSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*Futu
 	return acc, nil
 }
 
-func (swap *CoinbeneSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+func (swap *CoinbeneSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error) {
 	var param struct {
 		Symbol     string `json:"symbol"`
 		Leverage   string `json:"leverage"`
@@ -229,7 +229,7 @@ func (swap *CoinbeneSwap) GetFuturePosition(currencyPair CurrencyPair, contractT
 		AvailableQuantity float64   `json:"availableQuantity,string"`
 		AveragePrice      float64   `json:"averagePrice,string"`
 		CreateTime        time.Time `json:"createTime"`
-		Leverage          int       `json:"leverage,string"`
+		Leverage          float64   `json:"leverage,string"`
 		LiquidationPrice  float64   `json:"liquidationPrice,string"`
 		RealisedPnl       float64   `json:"realisedPnl,string"`
 		UnrealisedPnl     float64   `json:"unrealisedPnl,string"`

@@ -119,7 +119,7 @@ type APIConfig struct {
 	ApiPassphrase string //for okex.com v3 api
 	ClientId      string //for bitstamp.net , huobi.pro
 
-	Lever int //杠杆倍数 , for future
+	Lever float64 //杠杆倍数 , for future
 }
 
 type Kline struct {
@@ -163,7 +163,7 @@ type FutureOrder struct {
 	Currency     CurrencyPair
 	OrderType    int     //ORDINARY=0 POST_ONLY=1 FOK= 2 IOC= 3
 	OType        int     //1：开多 2：开空 3：平多 4： 平空
-	LeverRate    int     //倍数
+	LeverRate    float64 //倍数
 	Fee          float64 //手续费
 	ContractName string
 	FinishedTime int64 // finished timestamp
@@ -180,7 +180,7 @@ type FuturePosition struct {
 	BuyPriceCost   float64
 	BuyProfitReal  float64
 	CreateDate     int64
-	LeverRate      int
+	LeverRate      float64
 	SellAmount     float64
 	SellAvailable  float64
 	SellPriceAvg   float64
@@ -228,7 +228,6 @@ type RepaymentParameter struct {
 	BorrowId string
 }
 
-
 type TransferParameter struct {
 	Currency       string  `json:"currency"`
 	From           int     `json:"from"`
@@ -247,7 +246,6 @@ type WithdrawParameter struct {
 	TradePwd    string  `json:"trade_pwd"`
 	Fee         string  `json:"fee"`
 }
-
 
 type DepositWithdrawHistory struct {
 	WithdrawalId string    `json:"withdrawal_id,omitempty"`

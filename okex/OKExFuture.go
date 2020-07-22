@@ -399,7 +399,7 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 	return ord, nil
 }
 
-func (ok *OKExFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+func (ok *OKExFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error) {
 	fOrder, err := ok.PlaceFutureOrder2(matchPrice, &FutureOrder{
 		Price:        ToFloat64(price),
 		Amount:       ToFloat64(amount),
@@ -473,7 +473,7 @@ func (ok *OKExFuture) GetFuturePosition(currencyPair CurrencyPair, contractType 
 			LongPnlRatio         float64   `json:"long_pnl_ratio,string"`
 			LongUnrealisedPnl    float64   `json:"long_unrealised_pnl,string"`
 			RealisedPnl          float64   `json:"realised_pnl,string"`
-			Leverage             int       `json:"leverage,string"`
+			Leverage             float64   `json:"leverage,string"`
 			ShortQty             float64   `json:"short_qty,string"`
 			ShortAvailQty        float64   `json:"short_avail_qty,string"`
 			ShortAvgCost         float64   `json:"short_avg_cost,string"`
