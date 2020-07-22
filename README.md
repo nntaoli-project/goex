@@ -1,13 +1,17 @@
 <div align="center">
 <img width="409" heigth="205" src="https://upload-images.jianshu.io/upload_images/6760989-dec7dc747846880e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt="goex">
+<img width="198" height="205" src="https://upload-images.jianshu.io/upload_images/6760989-81f29f7a5dbd9bb6.jpg" >
 </div>
-[文档] https://github.com/nntaoli-project/goex/wiki
 
 ### goex目标
 
 goex项目是为了统一并标准化各个数字资产交易平台的接口而设计，同一个策略可以随时切换到任意一个交易平台，而不需要更改任何代码。
 
 [English](https://github.com/nntaoli-project/goex/blob/dev/README_en.md)
+
+### wiki文档
+
+[文档](https://github.com/nntaoli-project/goex/wiki)
 
 ### goex已支持交易所 `23+`
 
