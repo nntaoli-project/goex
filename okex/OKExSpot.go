@@ -162,8 +162,12 @@ func (ok *OKExSpot) PlaceOrder(ty string, ord *Order) (*Order, error) {
 	return ord, nil
 }
 
-func (ok *OKExSpot) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return ok.PlaceOrder("limit", &Order{
+func (ok *OKExSpot) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	ty := "limit"
+	if len(opt) > 0 {
+		ty = opt[0].String()
+	}
+	return ok.PlaceOrder(ty, &Order{
 		Price:    ToFloat64(price),
 		Amount:   ToFloat64(amount),
 		Currency: currency,
@@ -171,8 +175,12 @@ func (ok *OKExSpot) LimitBuy(amount, price string, currency CurrencyPair) (*Orde
 	})
 }
 
-func (ok *OKExSpot) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return ok.PlaceOrder("limit", &Order{
+func (ok *OKExSpot) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	ty := "limit"
+	if len(opt) > 0 {
+		ty = opt[0].String()
+	}
+	return ok.PlaceOrder(ty, &Order{
 		Price:    ToFloat64(price),
 		Amount:   ToFloat64(amount),
 		Currency: currency,
@@ -235,6 +243,7 @@ type OrderResponse struct {
 	FilledNotional string  `json:"filled_notional"`
 	PriceAvg       string  `json:"price_avg"`
 	State          int     `json:"state,string"`
+	Fee            string  `json:"fee"`
 	OrderType      int     `json:"order_type,string"`
 	Timestamp      string  `json:"timestamp"`
 }
@@ -247,7 +256,8 @@ func (ok *OKExSpot) adaptOrder(response OrderResponse) *Order {
 		Amount:     response.Size,
 		AvgPrice:   ToFloat64(response.PriceAvg),
 		DealAmount: ToFloat64(response.FilledSize),
-		Status:     ok.adaptOrderState(response.State)}
+		Status:     ok.adaptOrderState(response.State),
+		Fee:        ToFloat64(response.Fee)}
 
 	switch response.Side {
 	case "buy":

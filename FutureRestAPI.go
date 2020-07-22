@@ -49,9 +49,12 @@ type FutureRestAPI interface {
 	 * @param openType   1:开多   2:开空   3:平多   4:平空
 	 * @param matchPrice  是否为对手价 0:不是    1:是   ,当取值为1时,price无效
 	 */
-	PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error)
+	PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error)
 
-	LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int) (*FutureOrder, error)
+	LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error)
+
+	//对手价下单
+	MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error)
 
 	/**
 	 * 取消订单
@@ -108,10 +111,10 @@ type FutureRestAPI interface {
 	/**
 	 * 获取K线数据
 	 */
-	GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error)
+	GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error)
 
 	/**
 	 * 获取Trade数据
 	 */
-	GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error)
+	GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error)
 }

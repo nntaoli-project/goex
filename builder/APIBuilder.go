@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/nntaoli-project/goex/coinex"
-	"github.com/nntaoli-project/goex/gateio"
 	"github.com/nntaoli-project/goex/gdax"
 	"github.com/nntaoli-project/goex/hitbtc"
 	"github.com/nntaoli-project/goex/huobi"
@@ -233,8 +232,6 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 		_api = bithumb.New(builder.client, builder.apiKey, builder.secretkey)
 	case GDAX:
 		_api = gdax.New(builder.client, builder.apiKey, builder.secretkey)
-	case GATEIO:
-		_api = gateio.New(builder.client, builder.apiKey, builder.secretkey)
 	case ZB:
 		_api = zb.New(builder.client, builder.apiKey, builder.secretkey)
 	case COINEX:

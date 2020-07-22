@@ -306,12 +306,12 @@ func (at *Atop) GetAccount() (*Account, error) {
 }
 
 //hao
-func (at *Atop) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (at *Atop) LimitBuy(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return at.plateOrder(amount, price, currencyPair, "limit", "buy")
 }
 
 //hao
-func (at *Atop) LimitSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (at *Atop) LimitSell(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return at.plateOrder(amount, price, currencyPair, "limit", "sale")
 }
 

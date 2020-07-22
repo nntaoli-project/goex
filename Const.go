@@ -168,3 +168,24 @@ const (
 	TIPS //余币宝
 	SWAP //永续合约
 )
+
+type LimitOrderOptionalParameter int
+
+func (opt LimitOrderOptionalParameter) String() string {
+	switch opt {
+	case PostOnly:
+		return "post_only"
+	case Fok:
+		return "fok"
+	case Ioc:
+		return "ioc"
+	default:
+		return "error-order-optional-parameter"
+	}
+}
+
+const (
+	PostOnly LimitOrderOptionalParameter = iota + 1
+	Ioc
+	Fok
+)

@@ -220,11 +220,11 @@ func (bfx *Bitfinex) placeOrder(orderType, side, amount, price string, pair Curr
 	return order, nil
 }
 
-func (bfx *Bitfinex) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (bfx *Bitfinex) LimitBuy(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bfx.placeOrder("exchange limit", "buy", amount, price, currencyPair)
 }
 
-func (bfx *Bitfinex) LimitSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (bfx *Bitfinex) LimitSell(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bfx.placeOrder("exchange limit", "sell", amount, price, currencyPair)
 }
 

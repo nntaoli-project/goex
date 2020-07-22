@@ -214,11 +214,11 @@ func (hitbtc *Hitbtc) placeOrder(ty goex.TradeSide, amount, price string, curren
 	return hitbtc.toOrder(resp), nil
 }
 
-func (hitbtc *Hitbtc) LimitBuy(amount, price string, currency goex.CurrencyPair) (*goex.Order, error) {
+func (hitbtc *Hitbtc) LimitBuy(amount, price string, currency goex.CurrencyPair, opt ...goex.LimitOrderOptionalParameter) (*goex.Order, error) {
 	return hitbtc.placeOrder(goex.BUY, amount, price, currency)
 }
 
-func (hitbtc *Hitbtc) LimitSell(amount, price string, currency goex.CurrencyPair) (*goex.Order, error) {
+func (hitbtc *Hitbtc) LimitSell(amount, price string, currency goex.CurrencyPair, opt ...goex.LimitOrderOptionalParameter) (*goex.Order, error) {
 	return hitbtc.placeOrder(goex.SELL, amount, price, currency)
 }
 

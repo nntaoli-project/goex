@@ -398,11 +398,11 @@ func (bn *Binance) GetAccount() (*Account, error) {
 	return &acc, nil
 }
 
-func (bn *Binance) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (bn *Binance) LimitBuy(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bn.placeOrder(amount, price, currencyPair, "LIMIT", "BUY")
 }
 
-func (bn *Binance) LimitSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (bn *Binance) LimitSell(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bn.placeOrder(amount, price, currencyPair, "LIMIT", "SELL")
 }
 
@@ -537,40 +537,6 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	return orders, nil
 }
 
-func (bn *Binance) GetAllUnfinishOrders() ([]Order, error) {
-	params := url.Values{}
-
-	bn.buildParamsSigned(&params)
-	path := bn.apiV3 + UNFINISHED_ORDERS_INFO + params.Encode()
-
-	respmap, err := HttpGet3(bn.httpClient, path, map[string]string{"X-MBX-APIKEY": bn.accessKey})
-	if err != nil {
-		return nil, err
-	}
-
-	orders := make([]Order, 0)
-	for _, v := range respmap {
-		ord := v.(map[string]interface{})
-		side := ord["side"].(string)
-		orderSide := SELL
-		if side == "BUY" {
-			orderSide = BUY
-		}
-
-		ordId := ToInt(ord["orderId"])
-		orders = append(orders, Order{
-			OrderID:   ToInt(ord["orderId"]),
-			OrderID2:  strconv.Itoa(ordId),
-			Currency:  bn.toCurrencyPair(ord["symbol"].(string)),
-			Price:     ToFloat64(ord["price"]),
-			Amount:    ToFloat64(ord["origQty"]),
-			Side:      TradeSide(orderSide),
-			Status:    ORDER_UNFINISH,
-			OrderTime: ToInt(ord["time"])})
-	}
-	return orders, nil
-}
-
 func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
 	params := url.Values{}
 	params.Set("symbol", currency.ToSymbol(""))
@@ -662,6 +628,23 @@ func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize
 			orderSide = BUY
 		}
 		ordId := ToInt(ord["orderId"])
+		status := ord["status"].(string)
+		var tradeStatus TradeStatus
+		switch status {
+		case "NEW":
+			tradeStatus = ORDER_UNFINISH
+		case "FILLED":
+			tradeStatus = ORDER_FINISH
+		case "PARTIALLY_FILLED":
+			tradeStatus = ORDER_PART_FINISH
+		case "CANCELED":
+			tradeStatus = ORDER_CANCEL
+		case "PENDING_CANCEL":
+			tradeStatus = ORDER_CANCEL_ING
+		case "REJECTED":
+			tradeStatus = ORDER_REJECT
+		}
+
 		orders = append(orders, Order{
 			OrderID:   ToInt(ord["orderId"]),
 			OrderID2:  strconv.Itoa(ordId),
@@ -669,7 +652,7 @@ func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize
 			Price:     ToFloat64(ord["price"]),
 			Amount:    ToFloat64(ord["origQty"]),
 			Side:      TradeSide(orderSide),
-			Status:    ORDER_UNFINISH,
+			Status:    tradeStatus,
 			OrderTime: ToInt(ord["time"])})
 	}
 	return orders, nil
