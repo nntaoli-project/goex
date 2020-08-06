@@ -216,7 +216,7 @@ func (bm *bitmex) GetFuturePosition(currencyPair CurrencyPair, contractType stri
 			OpenOrderSellQty  float64   `json:"OpenOrderSellQty"`
 			OpeningTimestamp  time.Time `json:"openingTimestamp"`
 			LiquidationPrice  float64   `json:"liquidationPrice"`
-			Leverage          int       `json:"leverage"`
+			Leverage          float64   `json:"leverage"`
 		}
 		param = url.Values{}
 	)
