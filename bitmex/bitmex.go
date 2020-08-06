@@ -161,7 +161,7 @@ func (bm *bitmex) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, pri
 		Price:        ToFloat64(price),
 		Amount:       ToFloat64(amount),
 		OType:        openType,
-		LeverRate:    leverRate,
+		LeverRate:    float64(leverRate),
 		ContractName: contractType,
 	}
 
@@ -233,7 +233,7 @@ func (bm *bitmex) GetFuturePosition(currencyPair CurrencyPair, contractType stri
 		pos.ContractType = contractType
 		pos.CreateDate = p.OpeningTimestamp.Unix()
 		pos.ForceLiquPrice = p.LiquidationPrice
-		pos.LeverRate = p.Leverage
+		pos.LeverRate = float64(p.Leverage)
 
 		if p.CurrentQty < 0 {
 			pos.SellAmount = float64(-p.CurrentQty)
