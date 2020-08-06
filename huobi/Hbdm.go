@@ -216,6 +216,7 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 				BuyPriceAvg:   d.CostOpen,
 				BuyPriceCost:  d.CostHold,
 				BuyProfitReal: d.ProfitRate,
+				BuyProfit:     d.Profit,
 				LeverRate:     d.LeverRate})
 		case "sell":
 			positions = append(positions, FuturePosition{
@@ -227,6 +228,7 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 				SellPriceAvg:   d.CostOpen,
 				SellPriceCost:  d.CostHold,
 				SellProfitReal: d.ProfitRate,
+				SellProfit:     d.Profit,
 				LeverRate:      d.LeverRate})
 		}
 	}

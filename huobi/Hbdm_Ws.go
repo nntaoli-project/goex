@@ -145,7 +145,7 @@ func (hbdmWs *HbdmWs) handle(msg []byte) error {
 		hbdmWs.wsConn.SendMessage(pong)
 		return nil
 	}
-	
+
 	var resp WsResponse
 	err := json.Unmarshal(msg, &resp)
 	if err != nil {

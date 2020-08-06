@@ -33,7 +33,7 @@ var (
 //
 var hbpro = NewHuoBiProSpot(httpProxyClient, apikey, secretkey)
 
-func init()  {
+func init() {
 	logger.Log.SetLevel(logger.DEBUG)
 }
 
