@@ -119,12 +119,12 @@ type BitmexOrder struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (bm *bitmex) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+func (bm *bitmex) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error) {
 	fOrder, err := bm.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice, leverRate)
 	return fOrder.OrderID2, err
 }
 
-func (bm *bitmex) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (*FutureOrder, error) {
+func (bm *bitmex) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (*FutureOrder, error) {
 	var createOrderParameter BitmexOrder
 
 	var resp struct {
@@ -161,7 +161,7 @@ func (bm *bitmex) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, pri
 		Price:        ToFloat64(price),
 		Amount:       ToFloat64(amount),
 		OType:        openType,
-		LeverRate:    float64(leverRate),
+		LeverRate:    leverRate,
 		ContractName: contractType,
 	}
 
@@ -233,7 +233,7 @@ func (bm *bitmex) GetFuturePosition(currencyPair CurrencyPair, contractType stri
 		pos.ContractType = contractType
 		pos.CreateDate = p.OpeningTimestamp.Unix()
 		pos.ForceLiquPrice = p.LiquidationPrice
-		pos.LeverRate = float64(p.Leverage)
+		pos.LeverRate = p.Leverage
 
 		if p.CurrentQty < 0 {
 			pos.SellAmount = float64(-p.CurrentQty)
