@@ -154,6 +154,7 @@ const (
 	HBDM         = "hbdm.com"
 	COINBENE     = "coinbene.com"
 	ATOP         = "a.top"
+	BITGET_SWAP  = "bitget_swap"
 )
 
 const (
