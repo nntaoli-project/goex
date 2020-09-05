@@ -77,7 +77,7 @@ func TestOKExSpot_CancelOrder(t *testing.T) {
 }
 
 func TestOKExSpot_GetOneOrder(t *testing.T) {
-	t.Log(okex.OKExSpot.GetOneOrder("42152275c599444aa8ec1d33bd8003fb", goex.BTC_USD))
+	t.Log(okex.OKExSpot.GetOneOrder("5502594029936640", goex.BTC_USD))
 }
 
 func TestOKExSpot_GetUnfinishOrders(t *testing.T) {
@@ -160,25 +160,25 @@ func TestOKExWallet_GetAccount(t *testing.T) {
 	t.Log(okex.OKExWallet.GetAccount())
 }
 
-func TestOKExWallet_Transfer(t *testing.T) {
-	t.Log(okex.OKExWallet.Transfer(TransferParameter{
-		Currency:     goex.EOS.Symbol,
-		From:         SPOT,
-		To:           SPOT_MARGIN,
-		Amount:       20,
-		InstrumentId: goex.EOS_USDT.ToLower().ToSymbol("-")}))
-}
-
-func TestOKExWallet_Withdrawal(t *testing.T) {
-	t.Log(okex.OKExWallet.Withdrawal(WithdrawParameter{
-		Currency:    goex.EOS.Symbol,
-		Amount:      100,
-		Destination: 2,
-		ToAddress:   "",
-		TradePwd:    "",
-		Fee:         "0.01",
-	}))
-}
+//func TestOKExWallet_Transfer(t *testing.T) {
+//	t.Log(okex.OKExWallet.Transfer(TransferParameter{
+//		Currency:     goex.EOS.Symbol,
+//		From:         SPOT,
+//		To:           SPOT_MARGIN,
+//		Amount:       20,
+//		InstrumentId: goex.EOS_USDT.ToLower().ToSymbol("-")}))
+//}
+//
+//func TestOKExWallet_Withdrawal(t *testing.T) {
+//	t.Log(okex.OKExWallet.Withdrawal(WithdrawParameter{
+//		Currency:    goex.EOS.Symbol,
+//		Amount:      100,
+//		Destination: 2,
+//		ToAddress:   "",
+//		TradePwd:    "",
+//		Fee:         "0.01",
+//	}))
+//}
 
 func TestOKExWallet_GetDepositAddress(t *testing.T) {
 	t.Log(okex.OKExWallet.GetDepositAddress(goex.BTC))
@@ -193,7 +193,7 @@ func TestOKExWallet_GetDepositHistory(t *testing.T) {
 }
 
 func TestOKExWallet_GetWithDrawalHistory(t *testing.T) {
-	t.Log(okex.OKExWallet.GetWithDrawalHistory(&goex.XRP))
+	//t.Log(okex.OKExWallet.GetWithDrawalHistory(&goex.XRP))
 }
 
 func TestOKExMargin_GetMarginAccount(t *testing.T) {
