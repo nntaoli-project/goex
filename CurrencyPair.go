@@ -17,8 +17,10 @@ func (c Currency) Eq(c2 Currency) bool {
 
 // A->B(A兑换为B)
 type CurrencyPair struct {
-	CurrencyA Currency
-	CurrencyB Currency
+	CurrencyA      Currency
+	CurrencyB      Currency
+	AmountTickSize int // 下单量精度
+	PriceTickSize  int //交易对价格精度
 }
 
 var (
@@ -143,12 +145,12 @@ var (
 	UNKNOWN_PAIR = CurrencyPair{UNKNOWN, UNKNOWN}
 )
 
-func (c CurrencyPair) String() string {
-	return c.ToSymbol("_")
+func (pair CurrencyPair) String() string {
+	return pair.ToSymbol("_")
 }
 
-func (c CurrencyPair) Eq(c2 CurrencyPair) bool {
-	return c.String() == c2.String()
+func (pair CurrencyPair) Eq(c2 CurrencyPair) bool {
+	return pair.String() == c2.String()
 }
 
 func (c Currency) AdaptBchToBcc() Currency {
@@ -227,6 +229,16 @@ func NewCurrencyPair3(currencyPairSymbol string, sep string) CurrencyPair {
 			NewCurrency(currencys[1], "")}
 	}
 	return UNKNOWN_PAIR
+}
+
+func (pair *CurrencyPair) SetAmountTickSize(tickSize int) CurrencyPair {
+	pair.AmountTickSize = tickSize
+	return *pair
+}
+
+func (pair *CurrencyPair) SetPriceTickSize(tickSize int) CurrencyPair {
+	pair.PriceTickSize = tickSize
+	return *pair
 }
 
 func (pair CurrencyPair) ToSymbol(joinChar string) string {
