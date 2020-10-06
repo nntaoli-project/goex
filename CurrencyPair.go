@@ -58,6 +58,8 @@ var (
 	HT      = Currency{"HT", "HuoBi Token"}
 	BNB     = Currency{"BNB", "BNB, or Binance Coin, is a cryptocurrency created by Binance."}
 	TRX     = Currency{"TRX", ""}
+	GBP     = Currency{"GBP", ""}
+	XLM     = Currency{"XLM", ""}
 
 	//currency pair
 	BTC_KRW = CurrencyPair{CurrencyA: BTC, CurrencyB: KRW, AmountTickSize: 2, PriceTickSize: 1}
