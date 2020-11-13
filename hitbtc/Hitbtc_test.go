@@ -31,7 +31,7 @@ func TestHitbtc_adaptSymbolToCurrencyPair(t *testing.T) {
 }
 
 func TestGetTicker(t *testing.T) {
-	res, err := htb.GetTicker(goex.BCC_USD)
+	res, err := htb.GetTicker(goex.BCH_USD)
 	require := require.New(t)
 	require.Nil(err)
 	t.Log(res)

@@ -43,7 +43,7 @@ func (zb *Zb) GetExchangeName() string {
 }
 
 func (zb *Zb) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	resp, err := HttpGet(zb.httpClient, MARKET_URL+fmt.Sprintf(TICKER_API, symbol))
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (zb *Zb) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (zb *Zb) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	resp, err := HttpGet(zb.httpClient, MARKET_URL+fmt.Sprintf(DEPTH_API, symbol, size))
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (zb *Zb) GetAccount() (*Account, error) {
 }
 
 func (zb *Zb) placeOrder(amount, price string, currency CurrencyPair, tradeType int) (*Order, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	params := url.Values{}
 	params.Set("method", "order")
 	params.Set("price", price)
@@ -229,7 +229,7 @@ func (zb *Zb) LimitSell(amount, price string, currency CurrencyPair, opt ...Limi
 }
 
 func (zb *Zb) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("-")
 	params := url.Values{}
 	params.Set("method", "cancelOrder")
 	params.Set("id", orderId)
@@ -301,7 +301,7 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 }
 
 func (zb *Zb) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	params := url.Values{}
 	params.Set("method", "getOrder")
 	params.Set("id", orderId)
@@ -331,7 +331,7 @@ func (zb *Zb) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error)
 
 func (zb *Zb) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params := url.Values{}
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	params.Set("method", "getUnfinishedOrdersIgnoreTradeType")
 	params.Set("currency", symbol)
 	params.Set("pageIndex", "1")
