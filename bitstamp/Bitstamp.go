@@ -97,6 +97,21 @@ func (bitstamp *Bitstamp) GetAccount() (*Account, error) {
 		Amount:       ToFloat64(respmap["bch_available"]),
 		ForzenAmount: ToFloat64(respmap["bch_reserved"]),
 		LoanAmount:   0}
+	acc.SubAccounts[GBP] = SubAccount{
+		Currency:     GBP,
+		Amount:       ToFloat64(respmap["gbp_available"]),
+		ForzenAmount: ToFloat64(respmap["gbp_reserved"]),
+		LoanAmount:   0}
+	acc.SubAccounts[PAX] = SubAccount{
+		Currency:     PAX,
+		Amount:       ToFloat64(respmap["pax_available"]),
+		ForzenAmount: ToFloat64(respmap["pax_reserved"]),
+		LoanAmount:   0}
+	acc.SubAccounts[XLM] = SubAccount{
+		Currency:     XLM,
+		Amount:       ToFloat64(respmap["xlm_available"]),
+		ForzenAmount: ToFloat64(respmap["xlm_reserved"]),
+		LoanAmount:   0}
 	return &acc, nil
 }
 

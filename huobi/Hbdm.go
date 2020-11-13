@@ -199,35 +199,72 @@ func (dm *Hbdm) GetFuturePosition(currencyPair CurrencyPair, contractType string
 
 	//	log.Println(data)
 
-	var positions []FuturePosition
+	var (
+		positions   []FuturePosition
+		positionMap = make(map[string]FuturePosition, 1)
+	)
+
 	for _, d := range data {
+		if d.ContractType == "next_quarter" {
+			d.ContractType = BI_QUARTER_CONTRACT
+		}
+
 		if d.ContractType != contractType {
 			continue
 		}
 
+		pos := positionMap[d.ContractCode]
+		pos.ContractType = d.ContractType
+		pos.ContractId = int64(ToInt(d.ContractCode[3:]))
+		pos.Symbol = currencyPair
+
 		switch d.Direction {
 		case "buy":
-			positions = append(positions, FuturePosition{
-				ContractType:  d.ContractType,
-				ContractId:    int64(ToInt(d.ContractCode[3:])),
-				Symbol:        currencyPair,
-				BuyAmount:     d.Volume,
-				BuyAvailable:  d.Available,
-				BuyPriceAvg:   d.CostOpen,
-				BuyPriceCost:  d.CostHold,
-				BuyProfitReal: d.ProfitRate,
-				LeverRate:     d.LeverRate})
+			//positions = append(positions, FuturePosition{
+			//	ContractType:  d.ContractType,
+			//	ContractId:    int64(ToInt(d.ContractCode[3:])),
+			//	Symbol:        currencyPair,
+			//	BuyAmount:     d.Volume,
+			//	BuyAvailable:  d.Available,
+			//	BuyPriceAvg:   d.CostOpen,
+			//	BuyPriceCost:  d.CostHold,
+			//	BuyProfitReal: d.ProfitRate,
+			//	BuyProfit:     d.Profit,
+			//	LeverRate:     d.LeverRate})
+			pos.BuyAmount = d.Volume
+			pos.BuyAvailable = d.Available
+			pos.BuyPriceAvg = d.CostOpen
+			pos.BuyPriceCost = d.CostHold
+			pos.BuyProfit = d.Profit
+			pos.BuyProfitReal = d.ProfitRate
+			pos.LeverRate = d.LeverRate
 		case "sell":
-			positions = append(positions, FuturePosition{
-				ContractType:   d.ContractType,
-				ContractId:     int64(ToInt(d.ContractCode[3:])),
-				Symbol:         currencyPair,
-				SellAmount:     d.Volume,
-				SellAvailable:  d.Available,
-				SellPriceAvg:   d.CostOpen,
-				SellPriceCost:  d.CostHold,
-				SellProfitReal: d.ProfitRate,
-				LeverRate:      d.LeverRate})
+			//	positions = append(positions, FuturePosition{
+			//		ContractType:   d.ContractType,
+			//		ContractId:     int64(ToInt(d.ContractCode[3:])),
+			//		Symbol:         currencyPair,
+			//		SellAmount:     d.Volume,
+			//		SellAvailable:  d.Available,
+			//		SellPriceAvg:   d.CostOpen,
+			//		SellPriceCost:  d.CostHold,
+			//		SellProfitReal: d.ProfitRate,
+			//		SellProfit:     d.Profit,
+			//		LeverRate:      d.LeverRate})
+			pos.SellAmount = d.Volume
+			pos.SellAvailable = d.Available
+			pos.SellPriceAvg = d.CostOpen
+			pos.SellPriceCost = d.CostHold
+			pos.SellProfit = d.Profit
+			pos.SellProfitReal = d.ProfitRate
+			pos.LeverRate = d.LeverRate
+		}
+
+		positionMap[d.ContractCode] = pos
+	}
+
+	for _, pos := range positionMap {
+		if pos.BuyAmount > 0 || pos.SellAmount > 0 {
+			positions = append(positions, pos)
 		}
 	}
 
