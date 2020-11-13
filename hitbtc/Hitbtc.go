@@ -33,7 +33,7 @@ const (
 var (
 	YCC     = goex.Currency{"YCC", "Yuan Chain New"}
 	BTC     = goex.Currency{"BTC", "Bitcoin"}
-	YCC_BTC = goex.CurrencyPair{YCC, BTC}
+	YCC_BTC = goex.CurrencyPair{CurrencyA: YCC, CurrencyB: BTC}
 )
 
 type Hitbtc struct {
@@ -587,7 +587,7 @@ func parseStatus(s string) goex.TradeStatus {
 }
 
 func (hitbtc *Hitbtc) adaptCurrencyPair(pair goex.CurrencyPair) goex.CurrencyPair {
-	return pair.AdaptUsdtToUsd().AdaptBccToBch()
+	return pair.AdaptUsdtToUsd()
 }
 
 func (hitbtc *Hitbtc) adaptSymbolToCurrencyPair(pair string) goex.CurrencyPair {
