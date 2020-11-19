@@ -303,6 +303,13 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
 		})
+	case BINANCE_FUTURES:
+		return binance.NewBinanceFutures(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     builder.futuresEndPoint,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey,
+		})
 
 	default:
 		println(fmt.Sprintf("%s not support future", exName))
