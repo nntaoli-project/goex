@@ -349,6 +349,8 @@ func (builder *APIBuilder) BuildWallet(exName string) (WalletApi, error) {
 			ApiSecretKey:  builder.secretkey,
 			ApiPassphrase: builder.apiPassphrase,
 		}).OKExWallet, nil
+	case HUOBI_PRO:
+		return huobi.NewWallet(), nil
 	}
 	return nil, errors.New("not support the wallet api for  " + exName)
 }

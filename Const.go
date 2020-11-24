@@ -167,8 +167,9 @@ const (
 	SPOT_MARGIN //币币杠杆交易
 	WALLET      // 资金账户
 	_
-	TIPS //余币宝
-	SWAP //永续合约
+	TIPS      //余币宝
+	SWAP      //永续合约
+	SWAP_USDT //usdt本位永续合约
 )
 
 type LimitOrderOptionalParameter int
