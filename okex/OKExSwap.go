@@ -7,6 +7,7 @@ import (
 	"github.com/nntaoli-project/goex/internal/logger"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	. "github.com/nntaoli-project/goex"
@@ -186,39 +187,43 @@ func (ok *OKExSwap) GetFutureDepth(currencyPair CurrencyPair, contractType strin
 }
 
 func (ok *OKExSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
-	var infos SwapAccounts
+	var (
+		err   error
+		infos SwapAccounts
+	)
 
-	err := ok.OKEx.DoRequest("GET", GET_ACCOUNTS, "", &infos)
+	if len(currencyPair) == 1 {
+		accountInfo, err := ok.GetFutureAccountInfo(currencyPair[0])
+		if err != nil {
+			return nil, err
+		}
+
+		if accountInfo == nil {
+			return nil, errors.New("api return info is empty")
+		}
+
+		infos.Info = append(infos.Info, *accountInfo)
+
+		goto wrapperF
+	}
+
+	err = ok.OKEx.DoRequest("GET", GET_ACCOUNTS, "", &infos)
 	if err != nil {
 		return nil, err
 	}
 
 	//log.Println(infos)
+wrapperF:
 	acc := FutureAccount{}
 	acc.FutureSubAccounts = make(map[Currency]FutureSubAccount, 2)
 
 	for _, account := range infos.Info {
 		subAcc := FutureSubAccount{AccountRights: account.Equity,
-			KeepDeposit: account.Margin, ProfitReal: account.RealizedPnl, ProfitUnreal: account.UnrealizedPnl, RiskRate: account.MarginRatio}
-		switch account.InstrumentId {
-		case BTC_USD_SWAP:
-			subAcc.Currency = BTC
-		case LTC_USD_SWAP:
-			subAcc.Currency = LTC
-		case ETH_USD_SWAP:
-			subAcc.Currency = ETH
-		case ETC_USD_SWAP:
-			subAcc.Currency = ETC
-		case BCH_USD_SWAP:
-			subAcc.Currency = BCH
-		case BSV_USD_SWAP:
-			subAcc.Currency = BSV
-		case EOS_USD_SWAP:
-			subAcc.Currency = EOS
-		case XRP_USD_SWAP:
-			subAcc.Currency = XRP
-		default:
-			subAcc.Currency = UNKNOWN
+			KeepDeposit: account.Margin, ProfitReal: account.RealizedPnl,
+			ProfitUnreal: account.UnrealizedPnl, RiskRate: account.MarginRatio}
+		meta := strings.Split(account.InstrumentId, "-")
+		if len(meta) > 0 {
+			subAcc.Currency = NewCurrency(meta[0], "")
 		}
 		acc.FutureSubAccounts[subAcc.Currency] = subAcc
 	}
@@ -226,34 +231,17 @@ func (ok *OKExSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAcco
 	return &acc, nil
 }
 
-type AccountInfo struct {
-	Info struct {
-		Currency          string  `json:"currency"`
-		Equity            float64 `json:"equity,string"`
-		FixedBalance      float64 `json:"fixed_balance,string"`
-		InstrumentID      string  `json:"instrument_id"`
-		MaintMarginRatio  float64 `json:"maint_margin_ratio,string"`
-		Margin            float64 `json:"margin,string"`
-		MarginFrozen      float64 `json:"margin_frozen,string"`
-		MarginMode        string  `json:"margin_mode"`
-		MarginRatio       float64 `json:"margin_ratio,string"`
-		MaxWithdraw       float64 `json:"max_withdraw,string"`
-		RealizedPnl       float64 `json:"realized_pnl,string"`
-		Timestamp         string  `json:"timestamp"`
-		TotalAvailBalance float64 `json:"total_avail_balance,string"`
-		Underlying        string  `json:"underlying"`
-		UnrealizedPnl     float64 `json:"unrealized_pnl,string"`
-	} `json:"info"`
-}
-
-func (ok *OKExSwap) GetFutureAccountInfo(currency CurrencyPair) (*AccountInfo, error) {
-	var infos AccountInfo
+func (ok *OKExSwap) GetFutureAccountInfo(currency CurrencyPair) (*SwapAccountInfo, error) {
+	var infos struct {
+		Info SwapAccountInfo `json:"info"`
+	}
 
 	err := ok.OKEx.DoRequest("GET", fmt.Sprintf("/api/swap/v3/%s/accounts", ok.adaptContractType(currency)), "", &infos)
 	if err != nil {
 		return nil, err
 	}
-	return &infos, nil
+
+	return &infos.Info, nil
 }
 
 /*
