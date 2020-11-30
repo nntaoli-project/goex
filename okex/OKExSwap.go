@@ -283,7 +283,9 @@ func (ok *OKExSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, p
 			Price:      price,
 			MatchPrice: fmt.Sprint(matchPrice),
 			Type:       fmt.Sprint(openType),
-			Size:       amount},
+			Size:       amount,
+			OrderType:  "0",
+		},
 		ok.adaptContractType(currencyPair),
 	}
 
