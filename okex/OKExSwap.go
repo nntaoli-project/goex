@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/nntaoli-project/goex/internal/logger"
 	"net/url"
 	"strconv"
 	"time"
@@ -328,10 +329,12 @@ func (ok *OKExSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, p
 
 	err := ok.DoRequest("POST", PLACE_ORDER, reqBody, &resp)
 	if err != nil {
+		logger.Errorf("[param] %s", param)
 		return fOrder, err
 	}
 
 	if resp.ErrorMessage != "" {
+		logger.Errorf("[param] %s", param)
 		return fOrder, errors.New(fmt.Sprintf("%s:%s", resp.ErrorCode, resp.ErrorMessage))
 	}
 
