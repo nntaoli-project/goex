@@ -296,14 +296,14 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiSecretKey: builder.secretkey,
 		})
 
-	case BINANCE, BINANCE_SWAP:
+	case BINANCE_SWAP:
 		return binance.NewBinanceSwap(&APIConfig{
 			HttpClient:   builder.client,
 			Endpoint:     builder.futuresEndPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
 		})
-	case BINANCE_FUTURES:
+	case BINANCE, BINANCE_FUTURES:
 		return binance.NewBinanceFutures(&APIConfig{
 			HttpClient:   builder.client,
 			Endpoint:     builder.futuresEndPoint,
