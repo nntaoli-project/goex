@@ -24,7 +24,7 @@ type AccountResponse struct {
 	CanTrade bool `json:"canTrade"`
 	Assets   []struct {
 		Asset            string  `json:"asset"`
-		WalletBalance    float64 `json:"walletBlance,string"`
+		WalletBalance    float64 `json:"walletBalance,string"`
 		UnrealizedProfit float64 `json:"unrealizedProfit,string"`
 		MaintMargin      float64 `json:"maintMargin,string"`
 	} `json:"assets"`
