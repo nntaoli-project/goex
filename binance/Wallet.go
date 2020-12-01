@@ -28,7 +28,7 @@ func (w *Wallet) Transfer(param TransferParameter) error {
 	transferUrl := w.conf.Endpoint + "/sapi/v1/futures/transfer"
 
 	postParam := url.Values{}
-	postParam.Set("currency", param.Currency)
+	postParam.Set("asset", param.Currency)
 	postParam.Set("amount", fmt.Sprint(param.Amount))
 
 	if param.From == SPOT && param.To == SWAP_USDT {
@@ -48,7 +48,7 @@ func (w *Wallet) Transfer(param TransferParameter) error {
 	}
 
 	w.ba.buildParamsSigned(&postParam)
-
+	
 	resp, err := HttpPostForm2(w.ba.httpClient, transferUrl, postParam,
 		map[string]string{"X-MBX-APIKEY": w.ba.accessKey})
 
