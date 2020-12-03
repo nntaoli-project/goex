@@ -280,6 +280,13 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			Endpoint:     builder.futuresEndPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey})
+	case HBDM_SWAP:
+		return huobi.NewHbdmSwap(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     builder.endPoint,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey,
+		})
 	case OKEX_SWAP:
 		return okex.NewOKEx(&APIConfig{
 			HttpClient:    builder.client,

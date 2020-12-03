@@ -744,6 +744,7 @@ func (dm *Hbdm) doRequest(path string, params *url.Values, data interface{}) err
 		return err
 	}
 
+	logger.Debugf("response body: %s", string(resp))
 	//log.Println(string(resp))
 	err = json.Unmarshal(resp, &ret)
 	if err != nil {
