@@ -6,6 +6,7 @@ import (
 	. "github.com/nntaoli-project/goex"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -305,6 +306,8 @@ func (bn *Binance) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error)
 		}
 	}
 
+	sort.Sort(sort.Reverse(depth.AskList))
+
 	return depth, nil
 }
 
@@ -492,7 +495,6 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 	ord.Amount = ToFloat64(respmap["origQty"].(string))
 	ord.Price = ToFloat64(respmap["price"].(string))
 	ord.DealAmount = ToFloat64(respmap["executedQty"])
-	ord.AvgPrice = ord.Price // response no avg price ， fill price
 	ord.OrderTime = ToInt(respmap["time"])
 
 	cummulativeQuoteQty := ToFloat64(respmap["cummulativeQuoteQty"])
