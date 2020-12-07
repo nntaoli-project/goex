@@ -280,6 +280,13 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			Endpoint:     builder.futuresEndPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey})
+	case HBDM_SWAP:
+		return huobi.NewHbdmSwap(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     builder.endPoint,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey,
+		})
 	case OKEX_SWAP:
 		return okex.NewOKEx(&APIConfig{
 			HttpClient:    builder.client,
@@ -296,8 +303,15 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiSecretKey: builder.secretkey,
 		})
 
-	case BINANCE, BINANCE_SWAP:
+	case BINANCE_SWAP:
 		return binance.NewBinanceSwap(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     builder.futuresEndPoint,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey,
+		})
+	case BINANCE, BINANCE_FUTURES:
+		return binance.NewBinanceFutures(&APIConfig{
 			HttpClient:   builder.client,
 			Endpoint:     builder.futuresEndPoint,
 			ApiKey:       builder.apiKey,
@@ -342,6 +356,20 @@ func (builder *APIBuilder) BuildWallet(exName string) (WalletApi, error) {
 			ApiSecretKey:  builder.secretkey,
 			ApiPassphrase: builder.apiPassphrase,
 		}).OKExWallet, nil
+	case HUOBI_PRO:
+		return huobi.NewWallet(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     builder.endPoint,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey,
+		}), nil
+	case BINANCE:
+		return binance.NewWallet(&APIConfig{
+			HttpClient:   builder.client,
+			Endpoint:     builder.endPoint,
+			ApiKey:       builder.apiKey,
+			ApiSecretKey: builder.secretkey,
+		}), nil
 	}
 	return nil, errors.New("not support the wallet api for  " + exName)
 }
