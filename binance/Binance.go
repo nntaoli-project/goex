@@ -428,7 +428,7 @@ func (bn *Binance) CancelOrder(orderId string, currencyPair CurrencyPair) (bool,
 	resp, err := HttpDeleteForm(bn.httpClient, path, params, map[string]string{"X-MBX-APIKEY": bn.accessKey})
 
 	if err != nil {
-		return false, err
+		return false, bn.adaptError(err)
 	}
 
 	respmap := make(map[string]interface{})
@@ -705,4 +705,23 @@ func (bn *Binance) GetTradeSymbol(currencyPair CurrencyPair) (*TradeSymbol, erro
 		}
 	}
 	return nil, errors.New("symbol not found")
+}
+
+func (bn *Binance) adaptError(err error) error {
+	errStr := err.Error()
+
+	if strings.Contains(errStr, "Order does not exist") ||
+		strings.Contains(errStr, "Unknown order sent") {
+		return EX_ERR_NOT_FIND_ORDER.OriginErr(errStr)
+	}
+
+	if strings.Contains(errStr, "Too much request") {
+		return EX_ERR_API_LIMIT.OriginErr(errStr)
+	}
+
+	if strings.Contains(errStr, "insufficient") {
+		return EX_ERR_INSUFFICIENT_BALANCE.OriginErr(errStr)
+	}
+
+	return err
 }
