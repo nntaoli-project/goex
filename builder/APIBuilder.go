@@ -343,6 +343,8 @@ func (builder *APIBuilder) BuildSpotWs(exName string) (SpotWsApi, error) {
 		return okex.NewOKExSpotV3Ws(nil), nil
 	case HUOBI_PRO, HUOBI:
 		return huobi.NewSpotWs(), nil
+	case BINANCE:
+		return binance.NewSpotWs(), nil
 	}
 	return nil, errors.New("not support the exchange " + exName)
 }
