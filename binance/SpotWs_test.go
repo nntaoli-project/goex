@@ -10,7 +10,7 @@ import (
 
 var spotWs *SpotWs
 
-func init() {
+func createSpotWs() {
 	os.Setenv("HTTPS_PROXY", "socks5://127.0.0.1:1080")
 	spotWs = NewSpotWs()
 	spotWs.DepthCallback(func(depth *goex.Depth) {
@@ -22,11 +22,16 @@ func init() {
 }
 
 func TestSpotWs_DepthCallback(t *testing.T) {
+	createSpotWs()
+
 	spotWs.SubscribeDepth(goex.BTC_USDT)
+	spotWs.SubscribeTicker(goex.LTC_USDT)
 	time.Sleep(11 * time.Minute)
 }
 
 func TestSpotWs_SubscribeTicker(t *testing.T) {
+	createSpotWs()
+
 	spotWs.SubscribeTicker(goex.LTC_USDT)
 	time.Sleep(30 * time.Minute)
 }

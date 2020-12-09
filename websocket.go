@@ -264,6 +264,7 @@ func (ws *WsConn) Subscribe(subEvent interface{}) error {
 		Log.Errorf("[ws][%s] json encode error , %s", ws.WsUrl, err)
 		return err
 	}
+	Log.Debug(string(data))
 	ws.writeBufferChan <- data
 	ws.subs = append(ws.subs, data)
 	return nil

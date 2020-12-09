@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	. "github.com/nntaoli-project/goex"
 	"github.com/nntaoli-project/goex/bigone"
 	"github.com/nntaoli-project/goex/binance"
@@ -333,6 +332,8 @@ func (builder *APIBuilder) BuildFuturesWs(exName string) (FuturesWsApi, error) {
 		})), nil
 	case HBDM:
 		return huobi.NewHbdmWs(), nil
+	case BINANCE, BINANCE_FUTURES, BINANCE_SWAP:
+		return binance.NewFuturesWs(), nil
 	}
 	return nil, errors.New("not support the exchange " + exName)
 }
