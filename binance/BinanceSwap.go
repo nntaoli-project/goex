@@ -1,15 +1,15 @@
 package binance
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	. "github.com/nntaoli-project/goex"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-
-	. "github.com/nntaoli-project/goex"
 )
 
 const (

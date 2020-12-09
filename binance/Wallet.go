@@ -1,9 +1,11 @@
 package binance
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 	"net/url"
 )
 
@@ -48,7 +50,7 @@ func (w *Wallet) Transfer(param TransferParameter) error {
 	}
 
 	w.ba.buildParamsSigned(&postParam)
-	
+
 	resp, err := HttpPostForm2(w.ba.httpClient, transferUrl, postParam,
 		map[string]string{"X-MBX-APIKEY": w.ba.accessKey})
 
@@ -70,9 +72,46 @@ func (w *Wallet) Transfer(param TransferParameter) error {
 }
 
 func (w *Wallet) GetWithDrawHistory(currency *Currency) ([]DepositWithdrawHistory, error) {
-	return nil, errors.New("not implement")
+	//historyUrl := w.conf.Endpoint + "/wapi/v3/withdrawHistory.html"
+	historyUrl := w.conf.Endpoint + "/sapi/v1/accountSnapshot"
+	postParam := url.Values{}
+	postParam.Set("type", "SPOT")
+	w.ba.buildParamsSigned(&postParam)
+
+	resp, err := HttpGet5(w.ba.httpClient, historyUrl+"?"+postParam.Encode(),
+		map[string]string{"X-MBX-APIKEY": w.ba.accessKey})
+
+	if err != nil {
+		return nil, err
+	}
+	logger.Debugf("response body: %s", string(resp))
+	respmap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respmap)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 func (w *Wallet) GetDepositHistory(currency *Currency) ([]DepositWithdrawHistory, error) {
-	return nil, errors.New("not implement")
+	historyUrl := w.conf.Endpoint + "/wapi/v3/depositHistory.html"
+	postParam := url.Values{}
+	postParam.Set("asset", currency.Symbol)
+	w.ba.buildParamsSigned(&postParam)
+
+	resp, err := HttpGet5(w.ba.httpClient, historyUrl+"?"+postParam.Encode(),
+		map[string]string{"X-MBX-APIKEY": w.ba.accessKey})
+
+	if err != nil {
+		return nil, err
+	}
+	logger.Debugf("response body: %s", string(resp))
+	respmap := make(map[string]interface{})
+	err = json.Unmarshal(resp, &respmap)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
