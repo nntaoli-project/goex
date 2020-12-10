@@ -26,6 +26,7 @@ type AccountResponse struct {
 	Assets   []struct {
 		Asset            string  `json:"asset"`
 		WalletBalance    float64 `json:"walletBalance,string"`
+		MarginBalance    float64 `json:"marginBalance,string"`
 		UnrealizedProfit float64 `json:"unrealizedProfit,string"`
 		MaintMargin      float64 `json:"maintMargin,string"`
 	} `json:"assets"`
@@ -262,7 +263,7 @@ func (bs *BinanceFutures) GetFutureUserinfo(currencyPair ...CurrencyPair) (*Futu
 		currency := NewCurrency(asset.Asset, "")
 		futureAccounts.FutureSubAccounts[currency] = FutureSubAccount{
 			Currency:      NewCurrency(asset.Asset, ""),
-			AccountRights: asset.WalletBalance,
+			AccountRights: asset.MarginBalance,
 			KeepDeposit:   asset.MaintMargin,
 			ProfitReal:    0,
 			ProfitUnreal:  asset.UnrealizedProfit,

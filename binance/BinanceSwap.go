@@ -246,9 +246,6 @@ func (bs *BinanceSwap) GetFutureIndex(currencyPair CurrencyPair) (float64, error
 	return ToFloat64(respmap["markPrice"]), nil
 }
 
-/**
- *全仓账户
- */
 func (bs *BinanceSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	acc, err := bs.f.GetFutureUserinfo(currencyPair...)
 	if err != nil {
@@ -273,10 +270,9 @@ func (bs *BinanceSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureA
 		currency := NewCurrency(vv["asset"].(string), "").AdaptBccToBch()
 		acc.FutureSubAccounts[currency] = FutureSubAccount{
 			Currency:      currency,
-			AccountRights: ToFloat64(vv["walletBalance"]),
-			KeepDeposit:   ToFloat64(vv["marginBalance"]),
+			AccountRights: ToFloat64(vv["marginBalance"]),
+			KeepDeposit:   ToFloat64(vv["maintMargin"]),
 			ProfitUnreal:  ToFloat64(vv["unrealizedProfit"]),
-			RiskRate:      ToFloat64(vv["unrealizedProfit"]),
 		}
 	}
 
