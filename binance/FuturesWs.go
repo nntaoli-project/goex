@@ -59,18 +59,18 @@ func (s *FuturesWs) TradeCallback(f func(trade *goex.Trade, contract string)) {
 
 func (s *FuturesWs) SubscribeDepth(pair goex.CurrencyPair, contractType string) error {
 	switch contractType {
-	case goex.SWAP_CONTRACT, goex.QUARTER_CONTRACT, goex.BI_QUARTER_CONTRACT:
-		sym, _ := s.base.adaptToSymbol(pair.AdaptUsdtToUsd(), contractType)
-		return s.d.Subscribe(req{
-			Method: "SUBSCRIBE",
-			Params: []string{strings.ToLower(sym) + "@depth10@100ms"},
-			Id:     2,
-		})
 	case goex.SWAP_USDT_CONTRACT:
 		return s.f.Subscribe(req{
 			Method: "SUBSCRIBE",
 			Params: []string{pair.AdaptUsdToUsdt().ToLower().ToSymbol("") + "@depth10@100ms"},
 			Id:     1,
+		})
+	default:
+		sym, _ := s.base.adaptToSymbol(pair.AdaptUsdtToUsd(), contractType)
+		return s.d.Subscribe(req{
+			Method: "SUBSCRIBE",
+			Params: []string{strings.ToLower(sym) + "@depth10@100ms"},
+			Id:     2,
 		})
 	}
 	return errors.New("contract is error")
@@ -78,18 +78,18 @@ func (s *FuturesWs) SubscribeDepth(pair goex.CurrencyPair, contractType string) 
 
 func (s *FuturesWs) SubscribeTicker(pair goex.CurrencyPair, contractType string) error {
 	switch contractType {
-	case goex.SWAP_CONTRACT, goex.QUARTER_CONTRACT, goex.BI_QUARTER_CONTRACT:
-		sym, _ := s.base.adaptToSymbol(pair.AdaptUsdtToUsd(), contractType)
-		return s.d.Subscribe(req{
-			Method: "SUBSCRIBE",
-			Params: []string{strings.ToLower(sym) + "@ticker"},
-			Id:     2,
-		})
 	case goex.SWAP_USDT_CONTRACT:
 		return s.f.Subscribe(req{
 			Method: "SUBSCRIBE",
 			Params: []string{pair.AdaptUsdToUsdt().ToLower().ToSymbol("") + "@ticker"},
 			Id:     1,
+		})
+	default:
+		sym, _ := s.base.adaptToSymbol(pair.AdaptUsdtToUsd(), contractType)
+		return s.d.Subscribe(req{
+			Method: "SUBSCRIBE",
+			Params: []string{strings.ToLower(sym) + "@ticker"},
+			Id:     2,
 		})
 	}
 	return errors.New("contract is error")
