@@ -336,7 +336,7 @@ func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 	//log.Println(orders)
 	return orders, nil
 }
-func (Poloniex *Poloniex) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (Poloniex *Poloniex) GetOrderHistorys(currency CurrencyPair, opt ...OptionalParameter) ([]Order, error) {
 	return nil, nil
 }
 

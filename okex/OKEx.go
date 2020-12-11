@@ -159,8 +159,8 @@ func (ok *OKEx) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return ok.OKExSpot.GetUnfinishOrders(currency)
 }
 
-func (ok *OKEx) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
-	return ok.OKExSpot.GetOrderHistorys(currency, currentPage, pageSize)
+func (ok *OKEx) GetOrderHistorys(currency CurrencyPair, opt ...OptionalParameter) ([]Order, error) {
+	return ok.OKExSpot.GetOrderHistorys(currency, opt...)
 }
 
 func (ok *OKEx) GetAccount() (*Account, error) {

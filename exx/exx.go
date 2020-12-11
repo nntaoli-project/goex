@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	EXX			 = "EXX"
+	EXX          = "EXX"
 	API_BASE_URL = "https://api.exx.com/"
 	MARKET_URL   = "http://api.exx.com/data/v1/"
 	TICKER_API   = "ticker?currency=%s"
@@ -46,7 +46,7 @@ func (exx *Exx) GetExchangeName() string {
 }
 
 func (exx *Exx) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToLower().ToSymbol("_")
+	symbol := currency.ToLower().ToSymbol("_")
 	path := MARKET_URL + fmt.Sprintf(TICKER_API, symbol)
 	resp, err := HttpGet(exx.httpClient, path)
 	if err != nil {
@@ -73,7 +73,7 @@ func (exx *Exx) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (exx *Exx) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	resp, err := HttpGet(exx.httpClient, MARKET_URL+fmt.Sprintf(DEPTH_API, symbol))
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (exx *Exx) GetAccount() (*Account, error) {
 }
 
 func (exx *Exx) placeOrder(amount, price string, currency CurrencyPair, tradeType int) (*Order, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	params := url.Values{}
 	params.Set("method", "order")
 	params.Set("price", price)
@@ -237,7 +237,7 @@ func (exx *Exx) LimitSell(amount, price string, currency CurrencyPair, opt ...Li
 
 func (exx *Exx) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
 
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	params := url.Values{}
 	params.Set("method", "cancelOrder")
 	params.Set("id", orderId)
@@ -309,7 +309,7 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 }
 
 func (exx *Exx) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	params := url.Values{}
 	params.Set("method", "getOrder")
 	params.Set("id", orderId)
@@ -339,7 +339,7 @@ func (exx *Exx) GetOneOrder(orderId string, currency CurrencyPair) (*Order, erro
 
 func (exx *Exx) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params := url.Values{}
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	params.Set("method", "getUnfinishedOrdersIgnoreTradeType")
 	params.Set("currency", symbol)
 	params.Set("pageIndex", "1")
@@ -379,7 +379,7 @@ func (exx *Exx) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return orders, nil
 }
 
-func (exx *Exx) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (exx *Exx) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	return nil, nil
 }
 

@@ -441,10 +441,10 @@ func (hbpro *HuoBiPro) CancelOrder(orderId string, currency CurrencyPair) (bool,
 	return true, nil
 }
 
-func (hbpro *HuoBiPro) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (hbpro *HuoBiPro) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	return hbpro.getOrders(queryOrdersParams{
-		pair:   currency,
-		size:   pageSize,
+		pair: currency,
+		//size:   pageSize,
 		states: "partial-canceled,filled",
 		direct: "next",
 	})

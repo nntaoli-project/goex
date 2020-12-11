@@ -5,6 +5,7 @@ import (
 	"github.com/go-openapi/errors"
 	. "github.com/nntaoli-project/goex"
 	"github.com/nntaoli-project/goex/internal/logger"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -324,8 +325,16 @@ func (ok *OKExSpot) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return ords, nil
 }
 
-func (ok *OKExSpot) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
-	urlPath := fmt.Sprintf("/api/spot/v3/orders?instrument_id=%s&state=7", currency.AdaptUsdToUsdt().ToSymbol("-"))
+func (ok *OKExSpot) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
+	urlPath := "/api/spot/v3/orders"
+
+	param := url.Values{}
+	param.Set("instrument_id", currency.AdaptUsdToUsdt().ToSymbol("-"))
+	param.Set("state", "7")
+	MergeOptionalParameter(&param, optional...)
+
+	urlPath += "?" + param.Encode()
+
 	var response []OrderResponse
 	err := ok.OKEx.DoRequest("GET", urlPath, "", &response)
 	if err != nil {

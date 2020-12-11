@@ -94,12 +94,12 @@ func (kc *KuCoin) GetTicker(currency CurrencyPair) (*Ticker, error) {
 func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	clientID := GenerateOrderClientId(32)
 	in := kucoin.CreateOrderModel{
-		ClientOid:   clientID,
-		Side:        "buy",
-		Symbol:      currency.ToSymbol("-"),
-		Type:        "limit",
-		Price:       price,
-		Size:        amount,
+		ClientOid: clientID,
+		Side:      "buy",
+		Symbol:    currency.ToSymbol("-"),
+		Type:      "limit",
+		Price:     price,
+		Size:      amount,
 	}
 	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
@@ -124,12 +124,12 @@ func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair, opt ...L
 func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	clientID := GenerateOrderClientId(32)
 	in := kucoin.CreateOrderModel{
-		ClientOid:   clientID,
-		Side:        "sell",
-		Symbol:      currency.ToSymbol("-"),
-		Type:        "limit",
-		Price:       price,
-		Size:        amount,
+		ClientOid: clientID,
+		Side:      "sell",
+		Symbol:    currency.ToSymbol("-"),
+		Type:      "limit",
+		Price:     price,
+		Size:      amount,
 	}
 	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
@@ -154,12 +154,12 @@ func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair, opt ...
 func (kc *KuCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
 	clientID := GenerateOrderClientId(32)
 	in := kucoin.CreateOrderModel{
-		ClientOid:   clientID,
-		Side:        "buy",
-		Symbol:      currency.ToSymbol("-"),
-		Type:        "market",
-		Price:       price,
-		Size:        amount,
+		ClientOid: clientID,
+		Side:      "buy",
+		Symbol:    currency.ToSymbol("-"),
+		Type:      "market",
+		Price:     price,
+		Size:      amount,
 	}
 
 	resp, err := kc.service.CreateOrder(&in)
@@ -185,12 +185,12 @@ func (kc *KuCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order
 func (kc *KuCoin) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
 	clientID := GenerateOrderClientId(32)
 	in := kucoin.CreateOrderModel{
-		ClientOid:   clientID,
-		Side:        "sell",
-		Symbol:      currency.ToSymbol("-"),
-		Type:        "market",
-		Price:       price,
-		Size:        amount,
+		ClientOid: clientID,
+		Side:      "sell",
+		Symbol:    currency.ToSymbol("-"),
+		Type:      "market",
+		Price:     price,
+		Size:      amount,
 	}
 	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
@@ -314,15 +314,19 @@ func (kc *KuCoin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return orders, nil
 }
 
-func (kc *KuCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (kc *KuCoin) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	params := map[string]string{
 		"status": "done",
 		"symbol": currency.ToSymbol("-"),
 	}
-	pagination := kucoin.PaginationParam{
-		CurrentPage: int64(currentPage),
-		PageSize:    int64(pageSize),
+
+	pagination := kucoin.PaginationParam{}
+
+	if len(optional) > 0 {
+		pagination.CurrentPage = ToInt64(optional[0]["currentPage"])
+		pagination.PageSize = ToInt64(optional[0]["pageSize"])
 	}
+
 	resp, err := kc.service.Orders(params, &pagination)
 	if err != nil {
 		log.Error("KuCoin GetOrderHistorys error:", err)

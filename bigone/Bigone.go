@@ -347,7 +347,7 @@ func (bo *Bigone) GetOneOrder(orderId string, currencyPair goex.CurrencyPair) (*
 func (bo *Bigone) GetUnfinishOrders(currencyPair goex.CurrencyPair) ([]goex.Order, error) {
 	return bo.getOrdersList(currencyPair, -1, goex.ORDER_UNFINISH)
 }
-func (bo *Bigone) GetOrderHistorys(currencyPair goex.CurrencyPair, currentPage, pageSize int) ([]goex.Order, error) {
+func (bo *Bigone) GetOrderHistorys(currencyPair goex.CurrencyPair, opt ...goex.OptionalParameter) ([]goex.Order, error) {
 	return bo.getOrdersList(currencyPair, -1, goex.ORDER_FINISH)
 }
 

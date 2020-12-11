@@ -291,9 +291,10 @@ func (hitbtc *Hitbtc) GetUnfinishOrders(currency goex.CurrencyPair) ([]goex.Orde
 
 // TODO
 // https://api.hitbtc.com/#orders-history
-func (hitbtc *Hitbtc) GetOrderHistorys(currency goex.CurrencyPair, currentPage, pageSize int) ([]goex.Order, error) {
+func (hitbtc *Hitbtc) GetOrderHistorys(currency goex.CurrencyPair, optional ...goex.OptionalParameter) ([]goex.Order, error) {
 	params := url.Values{}
 	params.Set("symbol", currency.ToSymbol(""))
+
 	resp := []map[string]interface{}{}
 	err := hitbtc.doRequest("GET", ORDER_URI+"?"+params.Encode(), &resp)
 	if err != nil {

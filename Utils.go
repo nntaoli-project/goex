@@ -114,6 +114,15 @@ func ValuesToJson(v url.Values) ([]byte, error) {
 	return json.Marshal(parammap)
 }
 
+func MergeOptionalParameter(values *url.Values, opts ...OptionalParameter) url.Values {
+	for _, opt := range opts {
+		for k, v := range opt {
+			values.Set(k, v)
+		}
+	}
+	return *values
+}
+
 func GzipDecompress(data []byte) ([]byte, error) {
 	r, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {

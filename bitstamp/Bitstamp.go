@@ -324,7 +324,7 @@ func (bitstamp *Bitstamp) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 	return orders, nil
 }
 
-func (bitstamp *Bitstamp) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (bitstamp *Bitstamp) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 

@@ -309,7 +309,7 @@ func (bfx *Bitfinex) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, erro
 	return orders, nil
 }
 
-func (bfx *Bitfinex) GetOrderHistorys(currencyPair CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (bfx *Bitfinex) GetOrderHistorys(currencyPair CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 

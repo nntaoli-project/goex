@@ -87,7 +87,7 @@ func TestGetOneOrder(t *testing.T) {
 }
 
 func TestGetOrders(t *testing.T) {
-	res, err := htb.GetOrderHistorys(YCC_BTC, 1, 10)
+	res, err := htb.GetOrderHistorys(YCC_BTC)
 	require := require.New(t)
 	require.Nil(err)
 	t.Log(res)

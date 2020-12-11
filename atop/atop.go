@@ -544,18 +544,17 @@ func (at *Atop) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, erro
 	return trades, nil
 }
 
-func (at *Atop) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (at *Atop) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	//panic("not support")
 	pair := at.adaptCurrencyPair(currency)
 	path := ApiBaseUrl + GetHistorys
 	params := url.Values{}
 	params.Set("market", pair.ToLower().String())
-	//params.Set("type", "1")
-	//params.Set("status", "0")
-	params.Set("page", fmt.Sprint(currentPage))
-	params.Set("pageSize", fmt.Sprint(pageSize))
+
+	MergeOptionalParameter(&params, optional...)
 
 	at.buildPostForm(&params)
+
 	resp, err := HttpPostForm(at.httpClient, path, params)
 	if err != nil {
 		return nil, err

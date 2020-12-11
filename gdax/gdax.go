@@ -45,7 +45,7 @@ func (g *Gdax) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error
 func (g *Gdax) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	panic("not implement")
 }
-func (g *Gdax) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (g *Gdax) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 func (g *Gdax) GetAccount() (*Account, error) {

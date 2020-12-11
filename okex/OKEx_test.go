@@ -15,20 +15,8 @@ func init() {
 
 //
 var config2 = &goex.APIConfig{
-	Endpoint: "https://www.okex.me",
-	//HttpClient: &http.Client{
-	//	Transport: &http.Transport{
-	//		Proxy: func(req *http.Request) (*url.URL, error) {
-	//			return &url.URL{
-	//				Scheme: "socks5",
-	//				Host:   "127.0.0.1:1080"}, nil
-	//		},
-	//	},
-	//}, //需要代理的这样配置
-	HttpClient:    http.DefaultClient,
-	ApiKey:        "",
-	ApiSecretKey:  "",
-	ApiPassphrase: "",
+	Endpoint:   "https://www.okex.me",
+	HttpClient: http.DefaultClient,
 }
 
 var okex = NewOKEx(config2) //线上请用APIBuilder构建
@@ -245,5 +233,10 @@ func TestOKExSpot_GetCurrenciesPrecision(t *testing.T) {
 }
 
 func TestOKExSpot_GetOrderHistorys(t *testing.T) {
-	t.Log(okex.OKExSpot.GetOrderHistorys(goex.BTC_USDT, 1, 10))
+	orders, err := okex.OKExSpot.GetOrderHistorys(goex.NewCurrencyPair2("DASH_USDT"))
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+	t.Log(len(orders))
 }

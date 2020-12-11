@@ -178,7 +178,7 @@ func (coinex *CoinEx) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) 
 	return coinex.GetPendingOrders(1, 100, currency)
 }
 
-func (coinex *CoinEx) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (coinex *CoinEx) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 

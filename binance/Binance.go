@@ -610,7 +610,7 @@ func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, e
 	return trades, nil
 }
 
-func (bn *Binance) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (bn *Binance) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	params := url.Values{}
 	params.Set("symbol", currency.ToSymbol(""))
 

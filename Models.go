@@ -261,3 +261,10 @@ type DepositWithdrawHistory struct {
 	Status       int       `json:"status,string"`
 	Timestamp    time.Time `json:"timestamp"`
 }
+
+type OptionalParameter map[string]string
+
+func (optional OptionalParameter) Optional(name, value string) OptionalParameter {
+	optional[name] = value
+	return optional
+}
