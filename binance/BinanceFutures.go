@@ -622,6 +622,10 @@ func (bs *BinanceFutures) adaptToSymbol(pair CurrencyPair, contractType string) 
 			if info.ContractType == "NEXT_QUARTER" && contractType == BI_QUARTER_CONTRACT {
 				return info.Symbol, nil
 			}
+
+			if info.Symbol == contractType {
+				return info.Symbol,nil
+			}
 		}
 	}
 
