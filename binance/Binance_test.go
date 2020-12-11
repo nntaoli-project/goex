@@ -36,7 +36,7 @@ func TestBinance_CancelOrder(t *testing.T) {
 }
 
 func TestBinance_GetOneOrder(t *testing.T) {
-	odr, err := ba.GetOneOrder("g", goex.BTC_USDT)
+	odr, err := ba.GetOneOrder("3874087228", goex.BTC_USDT)
 	t.Log(err, odr)
 }
 
@@ -83,5 +83,8 @@ func TestBinance_SetTimeOffset(t *testing.T) {
 }
 
 func TestBinance_GetOrderHistorys(t *testing.T) {
-	t.Log(ba.GetOrderHistorys(goex.BTC_USDT))
+	t.Log(ba.GetOrderHistorys(goex.BTC_USDT,
+		goex.OptionalParameter{}.
+			Optional("startTime", "1607656034333").
+			Optional("limit", "5")))
 }

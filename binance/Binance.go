@@ -462,48 +462,9 @@ func (bn *Binance) GetOneOrder(orderId string, currencyPair CurrencyPair) (*Orde
 		return nil, err
 	}
 
-	status := respmap["status"].(string)
-	side := respmap["side"].(string)
+	order := bn.adaptOrder(currencyPair, respmap)
 
-	ord := Order{}
-	ord.Currency = currencyPair
-	ord.OrderID = ToInt(orderId)
-	ord.OrderID2 = orderId
-	ord.Cid, _ = respmap["clientOrderId"].(string)
-	ord.Type = respmap["type"].(string)
-
-	if side == "SELL" {
-		ord.Side = SELL
-	} else {
-		ord.Side = BUY
-	}
-
-	switch status {
-	case "NEW":
-		ord.Status = ORDER_UNFINISH
-	case "FILLED":
-		ord.Status = ORDER_FINISH
-	case "PARTIALLY_FILLED":
-		ord.Status = ORDER_PART_FINISH
-	case "CANCELED":
-		ord.Status = ORDER_CANCEL
-	case "PENDING_CANCEL":
-		ord.Status = ORDER_CANCEL_ING
-	case "REJECTED":
-		ord.Status = ORDER_REJECT
-	}
-
-	ord.Amount = ToFloat64(respmap["origQty"].(string))
-	ord.Price = ToFloat64(respmap["price"].(string))
-	ord.DealAmount = ToFloat64(respmap["executedQty"])
-	ord.OrderTime = ToInt(respmap["time"])
-
-	cummulativeQuoteQty := ToFloat64(respmap["cummulativeQuoteQty"])
-	if cummulativeQuoteQty > 0 {
-		ord.AvgPrice = cummulativeQuoteQty / ord.DealAmount
-	}
-
-	return &ord, nil
+	return &order, nil
 }
 
 func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error) {
@@ -521,22 +482,9 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	orders := make([]Order, 0)
 	for _, v := range respmap {
 		ord := v.(map[string]interface{})
-		side := ord["side"].(string)
-		orderSide := SELL
-		if side == "BUY" {
-			orderSide = BUY
-		}
-		ordId := ToInt(ord["orderId"])
-		orders = append(orders, Order{
-			OrderID:   ordId,
-			OrderID2:  strconv.Itoa(ordId),
-			Currency:  currencyPair,
-			Price:     ToFloat64(ord["price"]),
-			Amount:    ToFloat64(ord["origQty"]),
-			Side:      TradeSide(orderSide),
-			Status:    ORDER_UNFINISH,
-			OrderTime: ToInt(ord["time"])})
+		orders = append(orders, bn.adaptOrder(currencyPair, ord))
 	}
+
 	return orders, nil
 }
 
@@ -612,9 +560,10 @@ func (bn *Binance) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, e
 
 func (bn *Binance) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	params := url.Values{}
-	params.Set("symbol", currency.ToSymbol(""))
-
+	params.Set("symbol", currency.AdaptUsdToUsdt().ToSymbol(""))
+	MergeOptionalParameter(&params, optional...)
 	bn.buildParamsSigned(&params)
+
 	path := bn.apiV3 + "allOrders?" + params.Encode()
 
 	respmap, err := HttpGet3(bn.httpClient, path, map[string]string{"X-MBX-APIKEY": bn.accessKey})
@@ -624,40 +573,10 @@ func (bn *Binance) GetOrderHistorys(currency CurrencyPair, optional ...OptionalP
 
 	orders := make([]Order, 0)
 	for _, v := range respmap {
-		ord := v.(map[string]interface{})
-		side := ord["side"].(string)
-		orderSide := SELL
-		if side == "BUY" {
-			orderSide = BUY
-		}
-		ordId := ToInt(ord["orderId"])
-		status := ord["status"].(string)
-		var tradeStatus TradeStatus
-		switch status {
-		case "NEW":
-			tradeStatus = ORDER_UNFINISH
-		case "FILLED":
-			tradeStatus = ORDER_FINISH
-		case "PARTIALLY_FILLED":
-			tradeStatus = ORDER_PART_FINISH
-		case "CANCELED":
-			tradeStatus = ORDER_CANCEL
-		case "PENDING_CANCEL":
-			tradeStatus = ORDER_CANCEL_ING
-		case "REJECTED":
-			tradeStatus = ORDER_REJECT
-		}
-
-		orders = append(orders, Order{
-			OrderID:   ToInt(ord["orderId"]),
-			OrderID2:  strconv.Itoa(ordId),
-			Currency:  currency,
-			Price:     ToFloat64(ord["price"]),
-			Amount:    ToFloat64(ord["origQty"]),
-			Side:      TradeSide(orderSide),
-			Status:    tradeStatus,
-			OrderTime: ToInt(ord["time"])})
+		orderMap := v.(map[string]interface{})
+		orders = append(orders, bn.adaptOrder(currency, orderMap))
 	}
+
 	return orders, nil
 
 }
@@ -725,4 +644,28 @@ func (bn *Binance) adaptError(err error) error {
 	}
 
 	return err
+}
+
+func (bn *Binance) adaptOrder(currencyPair CurrencyPair, orderMap map[string]interface{}) Order {
+	side := orderMap["side"].(string)
+
+	orderSide := SELL
+	if side == "BUY" {
+		orderSide = BUY
+	}
+
+	return Order{
+		OrderID:      ToInt(orderMap["orderId"]),
+		OrderID2:     fmt.Sprint(orderMap["orderId"]),
+		Cid:          orderMap["clientOrderId"].(string),
+		Currency:     currencyPair,
+		Price:        ToFloat64(orderMap["price"]),
+		Amount:       ToFloat64(orderMap["origQty"]),
+		DealAmount:   ToFloat64(orderMap["executedQty"]),
+		AvgPrice:     FloatToFixed(ToFloat64(orderMap["cummulativeQuoteQty"])/ToFloat64(orderMap["executedQty"]), 8),
+		Side:         TradeSide(orderSide),
+		Status:       adaptOrderStatus(orderMap["status"].(string)),
+		OrderTime:    ToInt(orderMap["time"]),
+		FinishedTime: ToInt64(orderMap["updateTime"]),
+	}
 }

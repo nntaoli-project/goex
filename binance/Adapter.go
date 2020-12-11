@@ -45,3 +45,22 @@ func adaptSymbolToCurrencyPair(symbol string) goex.CurrencyPair {
 
 	return goex.UNKNOWN_PAIR
 }
+
+func adaptOrderStatus(status string) goex.TradeStatus {
+	var tradeStatus goex.TradeStatus
+	switch status {
+	case "NEW":
+		tradeStatus = goex.ORDER_UNFINISH
+	case "FILLED":
+		tradeStatus = goex.ORDER_FINISH
+	case "PARTIALLY_FILLED":
+		tradeStatus = goex.ORDER_PART_FINISH
+	case "CANCELED":
+		tradeStatus = goex.ORDER_CANCEL
+	case "PENDING_CANCEL":
+		tradeStatus = goex.ORDER_CANCEL_ING
+	case "REJECTED":
+		tradeStatus = goex.ORDER_REJECT
+	}
+	return tradeStatus
+}
