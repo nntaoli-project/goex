@@ -396,7 +396,7 @@ func (hitbtc *Hitbtc) GetDepth(size int, currency goex.CurrencyPair) (*goex.Dept
 	return &goex.Depth{AskList: askList, BidList: bidList}, nil
 }
 
-func (hitbtc *Hitbtc) GetKlineRecords(currency goex.CurrencyPair, period, size, since int) ([]goex.Kline, error) {
+func (hitbtc *Hitbtc) GetKlineRecords(currency goex.CurrencyPair, period goex.KlinePeriod, size int, opt ...goex.OptionalParameter) ([]goex.Kline, error) {
 	panic("not implement")
 }
 

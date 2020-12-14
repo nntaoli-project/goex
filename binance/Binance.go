@@ -30,7 +30,7 @@ const (
 	SERVER_TIME_URL        = "time"
 )
 
-var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
+var _INERNAL_KLINE_PERIOD_CONVERTER = map[KlinePeriod]string{
 	KLINE_PERIOD_1MIN:   "1m",
 	KLINE_PERIOD_3MIN:   "3m",
 	KLINE_PERIOD_5MIN:   "5m",
@@ -488,15 +488,12 @@ func (bn *Binance) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	return orders, nil
 }
 
-func (bn *Binance) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (bn *Binance) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
 	params := url.Values{}
 	params.Set("symbol", currency.ToSymbol(""))
 	params.Set("interval", _INERNAL_KLINE_PERIOD_CONVERTER[period])
-	if since > 0 {
-		params.Set("startTime", strconv.Itoa(since))
-	}
-	//params.Set("endTime", strconv.Itoa(int(time.Now().UnixNano()/1000000)))
 	params.Set("limit", fmt.Sprintf("%d", size))
+	MergeOptionalParameter(&params, optional...)
 
 	klineUrl := bn.apiV3 + KLINE_URI + "?" + params.Encode()
 	klines, err := HttpGet3(bn.httpClient, klineUrl, nil)

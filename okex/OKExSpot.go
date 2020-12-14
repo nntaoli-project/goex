@@ -423,16 +423,12 @@ func (ok *OKExSpot) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return dep, nil
 }
 
-func (ok *OKExSpot) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (ok *OKExSpot) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
 	urlPath := "/api/spot/v3/instruments/%s/candles?granularity=%d"
 
-	if since > 0 {
-		sinceTime := time.Unix(int64(since), 0).UTC()
-		if since/int(time.Second) != 1 { //如果不为秒，转为秒
-			sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
-		}
-		urlPath += "&start=" + sinceTime.Format(time.RFC3339)
-	}
+	optParam := url.Values{}
+	MergeOptionalParameter(&optParam, optional...)
+	urlPath += "&" + optParam.Encode()
 
 	granularity := 60
 	switch period {

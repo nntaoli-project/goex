@@ -175,8 +175,8 @@ func (ok *OKEx) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return ok.OKExSpot.GetDepth(size, currency)
 }
 
-func (ok *OKEx) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	return ok.OKExSpot.GetKlineRecords(currency, period, size, since)
+func (ok *OKEx) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
+	return ok.OKExSpot.GetKlineRecords(currency, period, size, optional...)
 }
 
 func (ok *OKEx) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {

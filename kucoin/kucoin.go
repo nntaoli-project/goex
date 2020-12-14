@@ -46,7 +46,7 @@ type KuCoin struct {
 	service       *kucoin.ApiService
 }
 
-var inernalKlinePeriodConverter = map[int]string{
+var inernalKlinePeriodConverter = map[KlinePeriod]string{
 	KLINE_PERIOD_1MIN:  "1min",
 	KLINE_PERIOD_3MIN:  "3min",
 	KLINE_PERIOD_5MIN:  "5min",
@@ -391,8 +391,9 @@ func (kc *KuCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return &depth, nil
 }
 
-func (kc *KuCoin) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	resp, err := kc.service.KLines(currency.ToSymbol("-"), inernalKlinePeriodConverter[period], int64(since), time.Now().UnixNano()/int64(time.Millisecond))
+func (kc *KuCoin) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
+	resp, err := kc.service.KLines(currency.ToSymbol("-"), inernalKlinePeriodConverter[period], 0, 0)
+
 	if err != nil {
 		log.Error("KuCoin GetKlineRecords error:", err)
 		return nil, err

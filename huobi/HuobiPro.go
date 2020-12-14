@@ -17,7 +17,7 @@ import (
 
 var HBPOINT = NewCurrency("HBPOINT", "")
 
-var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
+var _INERNAL_KLINE_PERIOD_CONVERTER = map[KlinePeriod]string{
 	KLINE_PERIOD_1MIN:   "1min",
 	KLINE_PERIOD_5MIN:   "5min",
 	KLINE_PERIOD_15MIN:  "15min",
@@ -559,7 +559,7 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 }
 
 //倒序
-func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
 	url := hbpro.baseUrl + "/market/history/kline?period=%s&size=%d&symbol=%s"
 	symbol := strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol(""))
 	periodS, isOk := _INERNAL_KLINE_PERIOD_CONVERTER[period]

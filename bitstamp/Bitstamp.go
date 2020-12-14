@@ -388,7 +388,7 @@ func (bitstamp *Bitstamp) GetDepth(size int, currency CurrencyPair) (*Depth, err
 	return dep, nil
 }
 
-func (bitstamp *Bitstamp) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (bitstamp *Bitstamp) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
 	panic("not implement")
 }
 

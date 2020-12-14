@@ -766,7 +766,7 @@ func (bs *BinanceSwap) GetKlineRecords(contractType string, currency CurrencyPai
 	currency2 := bs.adaptCurrencyPair(currency)
 	params := url.Values{}
 	params.Set("symbol", currency2.ToSymbol(""))
-	params.Set("interval", _INERNAL_KLINE_PERIOD_CONVERTER[period])
+	params.Set("interval", _INERNAL_KLINE_PERIOD_CONVERTER[KlinePeriod(period)])
 	if since > 0 {
 		params.Set("startTime", strconv.Itoa(since))
 	}

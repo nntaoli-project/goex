@@ -375,7 +375,7 @@ func (zb *Zb) GetOrderHistorys(currency CurrencyPair, opt ...OptionalParameter) 
 	return nil, nil
 }
 
-func (zb *Zb) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (zb *Zb) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]Kline, error) {
 	return nil, nil
 }
 

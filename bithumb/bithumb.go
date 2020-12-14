@@ -335,7 +335,7 @@ func (bit *Bithumb) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return dep, nil
 }
 
-func (bit *Bithumb) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (bit *Bithumb) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]Kline, error) {
 	panic("not implement")
 }
 

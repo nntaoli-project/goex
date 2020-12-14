@@ -471,7 +471,7 @@ func (bo *Bigone) GetDepth(size int, currencyPair goex.CurrencyPair) (*goex.Dept
 	return depth, nil
 }
 
-func (bo *Bigone) GetKlineRecords(currency goex.CurrencyPair, period, size, since int) ([]goex.Kline, error) {
+func (bo *Bigone) GetKlineRecords(currency goex.CurrencyPair, period goex.KlinePeriod, size int, opt ...goex.OptionalParameter) ([]goex.Kline, error) {
 	panic("not implements")
 }
 

@@ -113,7 +113,7 @@ const (
 	Withdrawal = "/trade/api/v1/withdraw"
 )
 
-var KlinePeriodConverter = map[int]string{
+var KlinePeriodConverter = map[KlinePeriod]string{
 	KLINE_PERIOD_1MIN:   "1min",
 	KLINE_PERIOD_3MIN:   "3min",
 	KLINE_PERIOD_5MIN:   "5min",
@@ -472,13 +472,13 @@ func (at *Atop) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error) {
 }
 
 //hao
-func (at *Atop) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (at *Atop) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]Kline, error) {
 	pair := at.adaptCurrencyPair(currency)
 	params := url.Values{}
 	params.Set("market", pair.ToLower().String())
 	//params.Set("type", "1min") //1min,5min,15min,30min,1hour,6hour,1day,7day,30day
 	params.Set("type", KlinePeriodConverter[period]) //1min,5min,15min,30min,1hour,6hour,1day,7day,30day
-	params.Set("since", fmt.Sprintf("%d", size))     //The first time is 0, followed by the value of the response since
+	MergeOptionalParameter(&params, opt...)
 
 	klineUrl := ApiBaseUrl + GetKLine + "?" + params.Encode()
 	kLines, err := HttpGet(at.httpClient, klineUrl)

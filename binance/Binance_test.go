@@ -1,6 +1,7 @@
 package binance
 
 import (
+	"fmt"
 	"github.com/nntaoli-project/goex"
 	"net/http"
 	"testing"
@@ -10,7 +11,7 @@ import (
 var ba = NewWithConfig(
 	&goex.APIConfig{
 		HttpClient: http.DefaultClient,
-		Endpoint:   GLOBAL_API_BASE_URL,
+		Endpoint:   "https://api.binancezh.pro",
 	})
 
 func TestBinance_GetTicker(t *testing.T) {
@@ -19,12 +20,12 @@ func TestBinance_GetTicker(t *testing.T) {
 }
 
 func TestBinance_LimitBuy(t *testing.T) {
-	order, err := ba.LimitBuy("3.43", "29.5", goex.BNB_USDT)
+	order, err := ba.LimitBuy("3", "68.5", goex.LTC_USDT)
 	t.Log(order, err)
 }
 
 func TestBinance_LimitSell(t *testing.T) {
-	order, err := ba.LimitSell("0.0562", "17860", goex.BTC_USDT)
+	order, err := ba.LimitSell("1", "90", goex.LTC_USDT)
 	t.Log(order, err)
 }
 
@@ -61,8 +62,12 @@ func TestBinance_GetUnfinishOrders(t *testing.T) {
 }
 
 func TestBinance_GetKlineRecords(t *testing.T) {
-	before := time.Now().Add(-time.Hour).Unix() * 1000
-	kline, _ := ba.GetKlineRecords(goex.ETH_BTC, goex.KLINE_PERIOD_5MIN, 100, int(before))
+	startTime := time.Now().Add(-24*time.Hour).Unix() * 1000
+	endTime := time.Now().Add(-5*time.Hour).Unix() * 1000
+
+	kline, _ := ba.GetKlineRecords(goex.ETH_BTC, goex.KLINE_PERIOD_5MIN, 100,
+		goex.OptionalParameter{}.Optional("startTime", fmt.Sprint(startTime)).Optional("endTime", fmt.Sprint(endTime)))
+
 	for _, k := range kline {
 		tt := time.Unix(k.Timestamp, 0)
 		t.Log(tt, k.Open, k.Close, k.High, k.Low, k.Vol)
