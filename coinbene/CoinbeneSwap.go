@@ -351,7 +351,7 @@ func (swap *CoinbeneSwap) GetUnfinishFutureOrders(currencyPair CurrencyPair, con
 func (swap *CoinbeneSwap) GetFee() (float64, error)                                    { panic("") }
 func (swap *CoinbeneSwap) GetContractValue(currencyPair CurrencyPair) (float64, error) { panic("") }
 func (swap *CoinbeneSwap) GetDeliveryTime() (int, int, int, int)                       { panic("") }
-func (swap *CoinbeneSwap) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+func (swap *CoinbeneSwap) GetKlineRecords(contract_type string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
 	panic("")
 }
 func (swap *CoinbeneSwap) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {

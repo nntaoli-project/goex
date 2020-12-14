@@ -560,7 +560,7 @@ func (bs *BinanceFutures) GetDeliveryTime() (int, int, int, int) {
 	panic("not supported.")
 }
 
-func (bs *BinanceFutures) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+func (bs *BinanceFutures) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
 	panic("not supported.")
 }
 
@@ -624,7 +624,7 @@ func (bs *BinanceFutures) adaptToSymbol(pair CurrencyPair, contractType string) 
 			}
 
 			if info.Symbol == contractType {
-				return info.Symbol,nil
+				return info.Symbol, nil
 			}
 		}
 	}

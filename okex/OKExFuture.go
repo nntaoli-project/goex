@@ -624,25 +624,16 @@ func (ok *OKExFuture) GetDeliveryTime() (int, int, int, int) {
 	return 4, 16, 0, 0 //星期五，下午4点交割
 }
 
-/**
-  since : 单位秒,开始时间
-*/
-func (ok *OKExFuture) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
-	urlPath := "/api/futures/v3/instruments/%s/candles?start=%s&granularity=%d"
+func (ok *OKExFuture) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
+	urlPath := "/api/futures/v3/instruments/%s/candles?granularity=%d"
 	contractId := ok.GetFutureContractId(currency, contractType)
-	sinceTime := time.Unix(int64(since), 0).UTC()
-
-	if since/int(time.Second) != 1 { //如果不为秒，转为秒
-		sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
-	}
-
 	granularity := adaptKLinePeriod(KlinePeriod(period))
 	if granularity == -1 {
 		return nil, errors.New("kline period parameter is error")
 	}
 
 	var response [][]interface{}
-	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, sinceTime.Format(time.RFC3339), granularity), "", &response)
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, granularity), "", &response)
 	if err != nil {
 		return nil, err
 	}

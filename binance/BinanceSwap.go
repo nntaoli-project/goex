@@ -754,9 +754,9 @@ func (bs *BinanceSwap) GetDeliveryTime() (int, int, int, int) {
 	panic("not supported.")
 }
 
-func (bs *BinanceSwap) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+func (bs *BinanceSwap) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
 	if contractType == SWAP_CONTRACT {
-		return bs.f.GetKlineRecords(contractType, currency.AdaptUsdtToUsd(), period, since, since)
+		return bs.f.GetKlineRecords(contractType, currency.AdaptUsdtToUsd(), period, size, opt...)
 	}
 
 	if contractType != SWAP_USDT_CONTRACT {
@@ -767,11 +767,9 @@ func (bs *BinanceSwap) GetKlineRecords(contractType string, currency CurrencyPai
 	params := url.Values{}
 	params.Set("symbol", currency2.ToSymbol(""))
 	params.Set("interval", _INERNAL_KLINE_PERIOD_CONVERTER[KlinePeriod(period)])
-	if since > 0 {
-		params.Set("startTime", strconv.Itoa(since))
-	}
 	//params.Set("endTime", strconv.Itoa(int(time.Now().UnixNano()/1000000)))
 	params.Set("limit", strconv.Itoa(size))
+	MergeOptionalParameter(&params, opt...)
 
 	klineUrl := bs.apiV1 + KLINE_URI + "?" + params.Encode()
 	klines, err := HttpGet3(bs.httpClient, klineUrl, nil)

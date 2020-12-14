@@ -406,14 +406,9 @@ func (bm *bitmex) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, e
 	panic("no support")
 }
 
-func (bm *bitmex) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+func (bm *bitmex) GetKlineRecords(contract_type string, currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]FutureKline, error) {
 	urlPath := "/api/v1/trade/bucketed?binSize=%s&partial=false&symbol=%s&count=%d&startTime=%s&reverse=true"
 	contractId := bm.adaptCurrencyPairToSymbol(currency, contract_type)
-	sinceTime := time.Unix(int64(since), 0).UTC()
-
-	if since/int(time.Second) != 1 {
-		sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
-	}
 
 	var granularity string
 	switch period {
@@ -427,6 +422,11 @@ func (bm *bitmex) GetKlineRecords(contract_type string, currency CurrencyPair, p
 		granularity = "1d"
 	default:
 		granularity = "5m"
+	}
+
+	sinceTime := time.Now()
+	if len(optional) > 0 && optional[0].GetTime("startTime") != nil {
+		sinceTime = *optional[0].GetTime("startTime")
 	}
 
 	uri := fmt.Sprintf(urlPath, granularity, contractId, size, sinceTime.Format(time.RFC3339))

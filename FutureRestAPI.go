@@ -111,7 +111,7 @@ type FutureRestAPI interface {
 	/**
 	 * 获取K线数据
 	 */
-	GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error)
+	GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]FutureKline, error)
 
 	/**
 	 * 获取Trade数据

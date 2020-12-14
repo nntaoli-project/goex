@@ -426,7 +426,7 @@ func (swap *HbdmSwap) GetContractValue(currencyPair CurrencyPair) (float64, erro
 	}
 }
 
-func (swap *HbdmSwap) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+func (swap *HbdmSwap) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
 	panic("not implement")
 }
 
