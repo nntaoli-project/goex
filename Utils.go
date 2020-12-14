@@ -117,7 +117,7 @@ func ValuesToJson(v url.Values) ([]byte, error) {
 func MergeOptionalParameter(values *url.Values, opts ...OptionalParameter) url.Values {
 	for _, opt := range opts {
 		for k, v := range opt {
-			values.Set(k, v)
+			values.Set(k, fmt.Sprint(v))
 		}
 	}
 	return *values
