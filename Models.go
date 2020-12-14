@@ -1,6 +1,7 @@
 package goex
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -264,7 +265,7 @@ type DepositWithdrawHistory struct {
 
 type OptionalParameter map[string]string
 
-func (optional OptionalParameter) Optional(name, value string) OptionalParameter {
-	optional[name] = value
+func (optional OptionalParameter) Optional(name string, value interface{}) OptionalParameter {
+	optional[name] = fmt.Sprint(value)
 	return optional
 }
