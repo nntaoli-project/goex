@@ -25,6 +25,7 @@ type WsConfig struct {
 	ErrorHandleFunc                func(err error)
 	ConnectSuccessAfterSendMessage func() []byte //for reconnect
 	IsDump                         bool
+	EnableCompression              bool
 	readDeadLineTime               time.Duration
 	reconnectInterval              time.Duration
 }
@@ -99,6 +100,11 @@ func (b *WsBuilder) ProtoHandleFunc(f func([]byte) error) *WsBuilder {
 	return b
 }
 
+func (b *WsBuilder) EnableCompression(enable bool) *WsBuilder {
+	b.wsConfig.EnableCompression = enable
+	return b
+}
+
 func (b *WsBuilder) DecompressFunc(f func([]byte) ([]byte, error)) *WsBuilder {
 	b.wsConfig.DecompressFunc = f
 	return b
@@ -159,6 +165,7 @@ func (ws *WsConn) connect() error {
 			Log.Errorf("[ws][%s]parse proxy url [%s] err %s  ", ws.WsUrl, ws.ProxyUrl, err.Error())
 		}
 	}
+	dialer.EnableCompression = ws.EnableCompression
 
 	wsConn, resp, err := dialer.Dial(ws.WsUrl, http.Header(ws.ReqHeaders))
 	if err != nil {
