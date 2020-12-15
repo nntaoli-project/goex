@@ -316,7 +316,6 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
 		})
-
 	default:
 		println(fmt.Sprintf("%s not support future", exName))
 		return nil
@@ -334,6 +333,8 @@ func (builder *APIBuilder) BuildFuturesWs(exName string) (FuturesWsApi, error) {
 		return huobi.NewHbdmWs(), nil
 	case BINANCE, BINANCE_FUTURES, BINANCE_SWAP:
 		return binance.NewFuturesWs(), nil
+	case BITMEX:
+		return bitmex.NewSwapWs(), nil
 	}
 	return nil, errors.New("not support the exchange " + exName)
 }
