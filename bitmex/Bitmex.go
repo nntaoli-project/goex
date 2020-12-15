@@ -309,6 +309,7 @@ func (bm *bitmex) GetFee() (float64, error) {
 func (bm *bitmex) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
 	sym := bm.adaptCurrencyPairToSymbol(currencyPair, contractType)
 	uri := fmt.Sprintf("/api/v1/orderBook/L2?symbol=%s&depth=%d", sym, size)
+
 	resp, err := HttpGet3(bm.HttpClient, bm.Endpoint+uri, nil)
 	if err != nil {
 		return nil, HTTP_ERR_CODE.OriginErr(err.Error())
