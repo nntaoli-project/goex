@@ -52,7 +52,7 @@ type SwapWs struct {
 
 func NewSwapWs() *SwapWs {
 	s := new(SwapWs)
-	wsBuilder := NewWsBuilder().EnableCompression(false).WsUrl("wss://www.bitmex.com/realtime")
+	wsBuilder := NewWsBuilder().DisableEnableCompression().WsUrl("wss://www.bitmex.com/realtime")
 	wsBuilder = wsBuilder.Heartbeat(func() []byte { return []byte("ping") }, 5*time.Second)
 	wsBuilder = wsBuilder.ProtoHandleFunc(s.handle).AutoReconnect()
 	s.c = wsBuilder.Build()
