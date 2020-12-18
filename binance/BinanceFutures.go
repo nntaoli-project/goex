@@ -543,6 +543,10 @@ func (bs *BinanceFutures) GetUnfinishFutureOrders(currencyPair CurrencyPair, con
 	return orders, nil
 }
 
+func (bs *BinanceFutures) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	panic("implement me")
+}
+
 func (bs *BinanceFutures) GetFee() (float64, error) {
 	panic("not supported.")
 }

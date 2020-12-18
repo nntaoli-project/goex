@@ -3,6 +3,7 @@ package okex
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"sort"
 	"sync"
 	"time"
@@ -530,6 +531,39 @@ func (ok *OKExFuture) GetFuturePosition(currencyPair CurrencyPair, contractType 
 
 func (ok *OKExFuture) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
 	panic("")
+}
+
+func (ok *OKExFuture) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	urlPath := fmt.Sprintf("/api/futures/v3/orders/%s?", ok.GetFutureContractId(pair, contractType))
+
+	param := url.Values{}
+	param.Set("limit", "100")
+	param.Set("state", "7")
+	MergeOptionalParameter(&param, optional...)
+	urlPath += param.Encode()
+
+	var response struct {
+		Result    bool
+		OrderInfo []futureOrderResponse `json:"order_info"`
+	}
+
+	err := ok.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	if !response.Result {
+		return nil, errors.New(fmt.Sprintf("%v", response))
+	}
+
+	orders := make([]FutureOrder, 0, 100)
+	for _, info := range response.OrderInfo {
+		ord := ok.adaptOrder(info)
+		ord.Currency = pair
+		orders = append(orders, ord)
+	}
+
+	return orders, nil
 }
 
 type futureOrderResponse struct {

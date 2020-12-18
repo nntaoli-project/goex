@@ -194,6 +194,10 @@ func (bs *BinanceSwap) GetFutureDepth(currency CurrencyPair, contractType string
 	return depth, nil
 }
 
+func (bs *BinanceSwap) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	panic("implement me")
+}
+
 func (bs *BinanceSwap) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	if contractType == SWAP_CONTRACT {
 		return bs.f.GetTrades(SWAP_CONTRACT, currencyPair.AdaptUsdtToUsd(), since)

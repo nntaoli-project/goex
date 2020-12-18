@@ -457,6 +457,10 @@ func (dm *Hbdm) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, co
 
 }
 
+func (dm *Hbdm) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	panic("implement me")
+}
+
 func (dm *Hbdm) GetContractValue(currencyPair CurrencyPair) (float64, error) {
 	switch currencyPair.CurrencyA {
 	case BTC:

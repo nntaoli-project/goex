@@ -89,6 +89,11 @@ type FutureRestAPI interface {
 	GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType string) ([]FutureOrder, error)
 
 	/**
+	 * 获取个人订单历史,默认获取最近的订单历史列表，返回多少条订单数据，需根据平台接口定义而定
+	 */
+	GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error)
+
+	/**
 	 *获取交易费
 	 */
 	GetFee() (float64, error)

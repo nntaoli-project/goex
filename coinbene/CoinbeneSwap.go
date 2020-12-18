@@ -38,6 +38,10 @@ type CoinbeneSwap struct {
 	config APIConfig
 }
 
+func (swap *CoinbeneSwap) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	panic("implement me")
+}
+
 func NewCoinbeneSwap(config APIConfig) *CoinbeneSwap {
 	if config.Endpoint == "" {
 		config.Endpoint = "http://openapi-contract.coinbene.com"

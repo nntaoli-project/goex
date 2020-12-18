@@ -362,6 +362,32 @@ func (ok *OKExSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, o
 	return resp.Result, nil
 }
 
+func (ok *OKExSwap) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	urlPath := fmt.Sprintf("/api/swap/v3/orders/%s?", ok.adaptContractType(pair))
+
+	param := url.Values{}
+	param.Set("limit", "100")
+	param.Set("state", "7")
+	MergeOptionalParameter(&param, optional...)
+
+	var response SwapOrdersInfo
+
+	err := ok.DoRequest("GET", urlPath+param.Encode(), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	orders := make([]FutureOrder, 0, 100)
+	for _, info := range response.OrderInfo {
+		ord := ok.parseOrder(info)
+		ord.Currency = pair
+		ord.ContractName = contractType
+		orders = append(orders, ord)
+	}
+
+	return orders, nil
+}
+
 func (ok *OKExSwap) parseOrder(ord BaseOrderInfo) FutureOrder {
 	oTime, _ := time.Parse(time.RFC3339, ord.Timestamp)
 	return FutureOrder{

@@ -21,6 +21,10 @@ type bitmex struct {
 	*APIConfig
 }
 
+func (bm *bitmex) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	panic("implement me")
+}
+
 func New(config *APIConfig) *bitmex {
 	bm := &bitmex{config}
 	if bm.Endpoint == "" {
