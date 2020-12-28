@@ -331,6 +331,8 @@ func (builder *APIBuilder) BuildFuturesWs(exName string) (FuturesWsApi, error) {
 		})), nil
 	case HBDM:
 		return huobi.NewHbdmWs(), nil
+	case HBDM_SWAP:
+		return huobi.NewHbdmSwapWs(), nil
 	case BINANCE, BINANCE_FUTURES, BINANCE_SWAP:
 		return binance.NewFuturesWs(), nil
 	case BITMEX:
