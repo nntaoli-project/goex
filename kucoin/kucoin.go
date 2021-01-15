@@ -9,7 +9,7 @@ import (
 
 func New(apiKey, apiSecret, apiPassphrase string) *KuCoin {
 	return NewWithConfig(&APIConfig{
-		Endpoint:      "https://api.kcs.top",
+		Endpoint:      "https://api.kucoin.com",
 		ApiKey:        apiKey,
 		ApiSecretKey:  apiSecret,
 		ApiPassphrase: apiPassphrase,
