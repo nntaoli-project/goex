@@ -27,3 +27,7 @@ func TestKuCoin_GetTrades(t *testing.T) {
 	t.Log(trades)
 }
 
+func TestKuCoin_GetAccount(t *testing.T) {
+	acc, _ := kc.GetAccount()
+	t.Log(acc)
+}

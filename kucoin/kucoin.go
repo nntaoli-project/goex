@@ -9,7 +9,7 @@ import (
 
 func New(apiKey, apiSecret, apiPassphrase string) *KuCoin {
 	return NewWithConfig(&APIConfig{
-		Endpoint:      "https://api.kcs.top",
+		Endpoint:      "https://api.kucoin.com",
 		ApiKey:        apiKey,
 		ApiSecretKey:  apiSecret,
 		ApiPassphrase: apiPassphrase,
@@ -345,7 +345,34 @@ func (kc *KuCoin) GetOrderHistorys(currency CurrencyPair, optional ...OptionalPa
 }
 
 func (kc *KuCoin) GetAccount() (*Account, error) {
-	var account Account
+	accs, err := kc.Accounts("", "")
+	if err != nil {
+		log.Error("KuCoin GetAccount error:", err)
+		return nil, err
+	}
+
+	account := Account{}
+	account.Exchange = kc.GetExchangeName()
+	account.SubAccounts = make(map[Currency]SubAccount)
+
+	for _, v := range accs {
+		currency := NewCurrency(v.Currency, "").AdaptBccToBch()
+		// KuCoin同一币种可能有多种账户类型
+		if sub, exist := account.SubAccounts[currency]; !exist {
+			account.SubAccounts[currency] = SubAccount{
+				Currency:     currency,
+				Amount:       ToFloat64(v.Available),
+				ForzenAmount: ToFloat64(v.Holds),
+			}
+		} else {
+			account.SubAccounts[currency] = SubAccount{
+				Currency:     currency,
+				Amount:       sub.Amount + ToFloat64(v.Available),
+				ForzenAmount: sub.ForzenAmount + ToFloat64(v.Holds),
+			}
+		}
+
+	}
 	return &account, nil
 }
 
