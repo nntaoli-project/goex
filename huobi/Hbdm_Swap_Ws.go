@@ -33,6 +33,18 @@ func NewHbdmSwapWs() *HbdmSwapWs {
 	return ws
 }
 
+//构建usdt本位永续合约ws
+func NewHbdmLinearSwapWs() *HbdmSwapWs {
+	ws := &HbdmSwapWs{WsBuilder: NewWsBuilder()}
+	ws.WsBuilder = ws.WsBuilder.
+		WsUrl("wss://api.hbdm.com/linear-swap-ws").
+		//ProxyUrl("socks5://127.0.0.1:1080").
+		AutoReconnect().
+		DecompressFunc(GzipDecompress).
+		ProtoHandleFunc(ws.handle)
+	return ws
+}
+
 func (ws *HbdmSwapWs) SetCallbacks(tickerCallback func(*FutureTicker),
 	depthCallback func(*Depth),
 	tradeCallback func(*Trade, string)) {
@@ -57,7 +69,7 @@ func (ws *HbdmSwapWs) SubscribeTicker(pair CurrencyPair, contract string) error 
 		return errors.New("please set ticker callback func")
 	}
 
-	if contract == SWAP_CONTRACT {
+	if contract == SWAP_CONTRACT || contract == SWAP_USDT_CONTRACT {
 		return ws.subscribe(map[string]interface{}{
 			"id":  "ticker_1",
 			"sub": fmt.Sprintf("market.%s.detail", pair.ToSymbol("-"))})
@@ -71,7 +83,7 @@ func (ws *HbdmSwapWs) SubscribeDepth(pair CurrencyPair, contract string) error {
 		return errors.New("please set depth callback func")
 	}
 
-	if contract == SWAP_CONTRACT {
+	if contract == SWAP_CONTRACT || contract == SWAP_USDT_CONTRACT {
 		return ws.subscribe(map[string]interface{}{
 			"id":  "swap.depth",
 			"sub": fmt.Sprintf("market.%s.depth.step6", pair.ToSymbol("-"))})
@@ -85,7 +97,7 @@ func (ws *HbdmSwapWs) SubscribeTrade(pair CurrencyPair, contract string) error {
 		return errors.New("please set trade callback func")
 	}
 
-	if contract == SWAP_CONTRACT {
+	if contract == SWAP_CONTRACT || contract == SWAP_USDT_CONTRACT {
 		return ws.subscribe(map[string]interface{}{
 			"id":  "swap_trade_3",
 			"sub": fmt.Sprintf("market.%s.trade.detail", pair.ToSymbol("-"))})
