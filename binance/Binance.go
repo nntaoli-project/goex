@@ -653,7 +653,7 @@ func (bn *Binance) adaptOrder(currencyPair CurrencyPair, orderMap map[string]int
 
 	return Order{
 		OrderID:      ToInt(orderMap["orderId"]),
-		OrderID2:     fmt.Sprint(orderMap["orderId"]),
+		OrderID2:     fmt.Sprintf("%.0f",orderMap["orderId"]),
 		Cid:          orderMap["clientOrderId"].(string),
 		Currency:     currencyPair,
 		Price:        ToFloat64(orderMap["price"]),
