@@ -3,6 +3,7 @@ package binance
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/nntaoli-project/goex"
 	"github.com/nntaoli-project/goex/internal/logger"
 	"net/http"
@@ -28,7 +29,8 @@ func NewFuturesWs() *FuturesWs {
 
 	wsBuilder := goex.NewWsBuilder().
 		ProxyUrl(os.Getenv("HTTPS_PROXY")).
-		ProtoHandleFunc(futuresWs.handle).AutoReconnect()
+		ProtoHandleFunc(futuresWs.handle).AutoReconnect().
+		DecompressFunc(goex.GzipDecompress)
 	futuresWs.f = wsBuilder.WsUrl("wss://fstream.binance.com/ws").Build()
 	futuresWs.d = wsBuilder.WsUrl("wss://dstream.binance.com/ws").Build()
 	futuresWs.base = NewBinanceFutures(&goex.APIConfig{
@@ -58,24 +60,27 @@ func (s *FuturesWs) TradeCallback(f func(trade *goex.Trade, contract string)) {
 }
 
 func (s *FuturesWs) SubscribeDepth(pair goex.CurrencyPair, contractType string) error {
+	return s.SubscribeDepthArgs(pair, contractType, 10, 100)
+}
+func (s *FuturesWs) SubscribeDepthArgs(pair goex.CurrencyPair, contractType string, nums int, speed int) error {
+	numbsSpeedStr := fmt.Sprintf("@depth%d@%dms", nums, speed)
 	switch contractType {
 	case goex.SWAP_USDT_CONTRACT:
 		return s.f.Subscribe(req{
 			Method: "SUBSCRIBE",
-			Params: []string{pair.AdaptUsdToUsdt().ToLower().ToSymbol("") + "@depth10@100ms"},
+			Params: []string{pair.AdaptUsdToUsdt().ToLower().ToSymbol("") + numbsSpeedStr},
 			Id:     1,
 		})
 	default:
 		sym, _ := s.base.adaptToSymbol(pair.AdaptUsdtToUsd(), contractType)
 		return s.d.Subscribe(req{
 			Method: "SUBSCRIBE",
-			Params: []string{strings.ToLower(sym) + "@depth10@100ms"},
+			Params: []string{strings.ToLower(sym) + numbsSpeedStr},
 			Id:     2,
 		})
 	}
 	return errors.New("contract is error")
 }
-
 func (s *FuturesWs) SubscribeTicker(pair goex.CurrencyPair, contractType string) error {
 	switch contractType {
 	case goex.SWAP_USDT_CONTRACT:

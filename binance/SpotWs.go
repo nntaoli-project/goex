@@ -66,6 +66,10 @@ func (s *SpotWs) TradeCallback(f func(trade *goex.Trade)) {
 }
 
 func (s *SpotWs) SubscribeDepth(pair goex.CurrencyPair) error {
+	return s.SubscribeDepthArgs(pair, 10, 100)
+}
+
+func (s *SpotWs) SubscribeDepthArgs(pair goex.CurrencyPair, nums int, speed int) error {
 	defer func() {
 		s.reqId++
 	}()
@@ -73,7 +77,7 @@ func (s *SpotWs) SubscribeDepth(pair goex.CurrencyPair) error {
 	return s.c.Subscribe(req{
 		Method: "SUBSCRIBE",
 		Params: []string{
-			fmt.Sprintf("%s@depth10@100ms", pair.ToLower().ToSymbol("")),
+			fmt.Sprintf("%s@depth%d@%dms", pair.ToLower().ToSymbol(""), nums, speed),
 		},
 		Id: s.reqId,
 	})
