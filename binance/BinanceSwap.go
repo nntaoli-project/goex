@@ -54,6 +54,20 @@ func (bs *BinanceSwap) GetExchangeName() string {
 	return BINANCE_SWAP
 }
 
+func (bn *BinanceSwap) GetExchangeInfo() (*ExchangeInfo, error) {
+	resp, err := HttpGet5(bn.httpClient, bn.apiV1+"exchangeInfo", nil)
+	if err != nil {
+		return nil, err
+	}
+	info := &ExchangeInfo{}
+	err = json.Unmarshal(resp, info)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
+}
+
 func (bs *BinanceSwap) Ping() bool {
 	_, err := HttpGet(bs.httpClient, bs.apiV1+"ping")
 	if err != nil {
