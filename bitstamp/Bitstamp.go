@@ -4,18 +4,38 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
 	"net/http"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 var (
 	BASE_URL = "https://www.bitstamp.net/api/"
 )
+
+var _INTERNAL_KLINE_PERIOD_CONVERTER = map[KlinePeriod]string{
+	KLINE_PERIOD_1MIN:  "60",
+	KLINE_PERIOD_3MIN:  "180",
+	KLINE_PERIOD_5MIN:  "300",
+	KLINE_PERIOD_15MIN: "900",
+	KLINE_PERIOD_30MIN: "1800",
+	KLINE_PERIOD_60MIN: "3600",
+	KLINE_PERIOD_1H:    "3600",
+	KLINE_PERIOD_2H:    "7200",
+	KLINE_PERIOD_4H:    "14400",
+	KLINE_PERIOD_6H:    "21600",
+	// KLINE_PERIOD_8H:     "28800", // Not supported
+	KLINE_PERIOD_12H:  "43200",
+	KLINE_PERIOD_1DAY: "86400",
+	KLINE_PERIOD_3DAY: "259200",
+	// KLINE_PERIOD_1WEEK:  "604800", //Not supported
+	// KLINE_PERIOD_1MONTH: "1M", // Not supported
+}
 
 type Bitstamp struct {
 	client *http.Client
@@ -389,7 +409,52 @@ func (bitstamp *Bitstamp) GetDepth(size int, currency CurrencyPair) (*Depth, err
 }
 
 func (bitstamp *Bitstamp) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
-	panic("not implement")
+
+	params := url.Values{}
+	params.Set("step", _INTERNAL_KLINE_PERIOD_CONVERTER[period])
+	params.Set("limit", fmt.Sprintf("%d", size))
+	MergeOptionalParameter(&params, optional...)
+
+	urlStr := BASE_URL + "v2/ohlc/" + strings.ToLower(currency.ToSymbol("")) + "?" + params.Encode()
+
+	fmt.Println(urlStr)
+
+	type ohlcResp struct {
+		Data struct {
+			Pair string `json:"pair"`
+			Ohlc []struct {
+				High      string `json:"high"`
+				Timestamp string `json:"timestamp"`
+				Volume    string `json:"volume"`
+				Low       string `json:"low"`
+				Close     string `json:"close"`
+				Open      string `json:"open"`
+			} `json:ohlc`
+		} `json:"data"`
+	}
+
+	resp := ohlcResp{}
+	err := HttpGet4(bitstamp.client, urlStr, nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	var klineRecords []Kline
+
+	for _, _record := range resp.Data.Ohlc {
+		r := Kline{Pair: currency}
+		r.Timestamp, _ = strconv.ParseInt(_record.Timestamp, 10, 64) //to unix timestramp
+		r.Open = ToFloat64(_record.Open)
+		r.High = ToFloat64(_record.High)
+		r.Low = ToFloat64(_record.Low)
+		r.Close = ToFloat64(_record.Close)
+		r.Vol = ToFloat64(_record.Volume)
+
+		klineRecords = append(klineRecords, r)
+	}
+
+	return klineRecords, nil
+
 }
 
 ////非个人，整个交易所的交易记录
