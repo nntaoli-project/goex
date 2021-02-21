@@ -32,6 +32,7 @@ type OrderInfo struct {
 	ClientOrderId  int64   `json:"client_order_id"`
 	OrderSource    string  `json:"order_source"`
 	CreatedAt      int64   `json:"created_at"`
+	CreateDate     int64   `json:"create_date"` //for swap contract
 	TradeVolume    float64 `json:"trade_volume"`
 	TradeTurnover  float64 `json:"trade_turnover"`
 	Fee            float64 `json:"fee"`

@@ -4,6 +4,7 @@ import (
 	"github.com/nntaoli-project/goex"
 	"net/http"
 	"testing"
+	"time"
 )
 
 var swap *HbdmSwap
@@ -52,4 +53,10 @@ func TestHbdmSwap_GetUnfinishFutureOrders(t *testing.T) {
 
 func TestHbdmSwap_GetFutureOrder(t *testing.T) {
 	t.Log(swap.GetFutureOrder("784118017750929408", goex.NewCurrencyPair2("DOT_USD"), goex.SWAP_CONTRACT))
+}
+
+func TestHbdmSwap_GetFutureOrderHistory(t *testing.T) {
+	t.Log(swap.GetFutureOrderHistory(goex.NewCurrencyPair2("KSM_USD"), goex.SWAP_CONTRACT,
+		goex.OptionalParameter{}.Optional("start_time", time.Now().Add(-5*24*time.Hour).Unix()*1000),
+		goex.OptionalParameter{}.Optional("end_time", time.Now().Unix()*1000)))
 }
