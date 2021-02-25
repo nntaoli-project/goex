@@ -459,7 +459,48 @@ func (dm *Hbdm) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, co
 }
 
 func (dm *Hbdm) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
-	panic("implement me")
+	path := "/api/v1/contract_hisorders_exact"
+
+	param := url.Values{}
+	param.Set("symbol", pair.CurrencyA.Symbol)
+	param.Set("type", "1")
+	param.Set("trade_type", "0")
+	param.Set("status", "0")
+	param.Set("size", "50")
+
+	MergeOptionalParameter(&param, optional...)
+
+	var data struct {
+		Orders     []OrderInfo `json:"orders"`
+		RemainSize int         `json:"remain_size"`
+		NextId     int         `json:"next_id"`
+	}
+
+	err := dm.doRequest(path, &param, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	var ords []FutureOrder
+	for _, ord := range data.Orders {
+		ords = append(ords, FutureOrder{
+			ContractName: ord.ContractType,
+			Currency:     pair,
+			OType:        dm.adaptOffsetDirectionToOpenType(ord.Offset, ord.Direction),
+			OrderID2:     fmt.Sprint(ord.OrderId),
+			OrderID:      ord.OrderId,
+			Amount:       ord.Volume,
+			Price:        ord.Price,
+			AvgPrice:     ord.TradeAvgPrice,
+			DealAmount:   ord.TradeVolume,
+			Status:       dm.adaptOrderStatus(ord.Status),
+			Fee:          ord.Fee,
+			LeverRate:    ord.LeverRate,
+			OrderTime:    ord.CreateDate,
+		})
+	}
+
+	return ords, nil
 }
 
 func (dm *Hbdm) GetContractValue(currencyPair CurrencyPair) (float64, error) {
