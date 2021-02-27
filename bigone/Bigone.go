@@ -347,7 +347,7 @@ func (bo *Bigone) GetOneOrder(orderId string, currencyPair goex.CurrencyPair) (*
 func (bo *Bigone) GetUnfinishOrders(currencyPair goex.CurrencyPair) ([]goex.Order, error) {
 	return bo.getOrdersList(currencyPair, -1, goex.ORDER_UNFINISH)
 }
-func (bo *Bigone) GetOrderHistorys(currencyPair goex.CurrencyPair, currentPage, pageSize int) ([]goex.Order, error) {
+func (bo *Bigone) GetOrderHistorys(currencyPair goex.CurrencyPair, opt ...goex.OptionalParameter) ([]goex.Order, error) {
 	return bo.getOrdersList(currencyPair, -1, goex.ORDER_FINISH)
 }
 
@@ -471,7 +471,7 @@ func (bo *Bigone) GetDepth(size int, currencyPair goex.CurrencyPair) (*goex.Dept
 	return depth, nil
 }
 
-func (bo *Bigone) GetKlineRecords(currency goex.CurrencyPair, period, size, since int) ([]goex.Kline, error) {
+func (bo *Bigone) GetKlineRecords(currency goex.CurrencyPair, period goex.KlinePeriod, size int, opt ...goex.OptionalParameter) ([]goex.Kline, error) {
 	panic("not implements")
 }
 

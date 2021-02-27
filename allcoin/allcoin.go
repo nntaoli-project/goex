@@ -454,7 +454,7 @@ func (ac *Allcoin) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, e
 	panic("not implements")
 }
 
-func (ac *Allcoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (ac *Allcoin) GetOrderHistorys(currency CurrencyPair, opt ...OptionalParameter) ([]Order, error) {
 	panic("not implements")
 }
 func (ba *Allcoin) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {

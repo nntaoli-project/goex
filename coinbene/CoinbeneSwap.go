@@ -38,6 +38,10 @@ type CoinbeneSwap struct {
 	config APIConfig
 }
 
+func (swap *CoinbeneSwap) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	panic("implement me")
+}
+
 func NewCoinbeneSwap(config APIConfig) *CoinbeneSwap {
 	if config.Endpoint == "" {
 		config.Endpoint = "http://openapi-contract.coinbene.com"
@@ -351,7 +355,7 @@ func (swap *CoinbeneSwap) GetUnfinishFutureOrders(currencyPair CurrencyPair, con
 func (swap *CoinbeneSwap) GetFee() (float64, error)                                    { panic("") }
 func (swap *CoinbeneSwap) GetContractValue(currencyPair CurrencyPair) (float64, error) { panic("") }
 func (swap *CoinbeneSwap) GetDeliveryTime() (int, int, int, int)                       { panic("") }
-func (swap *CoinbeneSwap) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+func (swap *CoinbeneSwap) GetKlineRecords(contract_type string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
 	panic("")
 }
 func (swap *CoinbeneSwap) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {

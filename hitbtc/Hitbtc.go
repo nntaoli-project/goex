@@ -291,9 +291,10 @@ func (hitbtc *Hitbtc) GetUnfinishOrders(currency goex.CurrencyPair) ([]goex.Orde
 
 // TODO
 // https://api.hitbtc.com/#orders-history
-func (hitbtc *Hitbtc) GetOrderHistorys(currency goex.CurrencyPair, currentPage, pageSize int) ([]goex.Order, error) {
+func (hitbtc *Hitbtc) GetOrderHistorys(currency goex.CurrencyPair, optional ...goex.OptionalParameter) ([]goex.Order, error) {
 	params := url.Values{}
 	params.Set("symbol", currency.ToSymbol(""))
+
 	resp := []map[string]interface{}{}
 	err := hitbtc.doRequest("GET", ORDER_URI+"?"+params.Encode(), &resp)
 	if err != nil {
@@ -395,7 +396,7 @@ func (hitbtc *Hitbtc) GetDepth(size int, currency goex.CurrencyPair) (*goex.Dept
 	return &goex.Depth{AskList: askList, BidList: bidList}, nil
 }
 
-func (hitbtc *Hitbtc) GetKlineRecords(currency goex.CurrencyPair, period, size, since int) ([]goex.Kline, error) {
+func (hitbtc *Hitbtc) GetKlineRecords(currency goex.CurrencyPair, period goex.KlinePeriod, size int, opt ...goex.OptionalParameter) ([]goex.Kline, error) {
 	panic("not implement")
 }
 

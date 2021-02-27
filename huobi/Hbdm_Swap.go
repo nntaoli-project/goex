@@ -27,6 +27,7 @@ const (
 	cancelOrderApiPath         = "/swap-api/v1/swap_cancel"
 	getOpenOrdersApiPath       = "/swap-api/v1/swap_openorders"
 	getOrderInfoApiPath        = "/swap-api/v1/swap_order_info"
+	getHistoryOrderPath        = "/swap-api/v1/swap_hisorders_exact"
 )
 
 func NewHbdmSwap(c *APIConfig) *HbdmSwap {
@@ -381,6 +382,54 @@ func (swap *HbdmSwap) GetFutureOrder(orderId string, currencyPair CurrencyPair, 
 	}, nil
 }
 
+func (swap *HbdmSwap) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	params := url.Values{}
+	params.Add("status", "0")     //all
+	params.Add("type", "1")       //all
+	params.Add("trade_type", "0") //all
+
+	if contractType == "" || contractType == SWAP_CONTRACT {
+		params.Add("contract_code", pair.AdaptUsdtToUsd().ToSymbol("-"))
+	} else {
+		return nil, errors.New("contract type is error")
+	}
+
+	MergeOptionalParameter(&params, optional...)
+
+	var historyOrderResp struct {
+		Orders     []OrderInfo `json:"orders"`
+		RemainSize int64       `json:"remain_size"`
+		NextId     int64       `json:"next_id"`
+	}
+
+	err := swap.base.doRequest(getHistoryOrderPath, &params, &historyOrderResp)
+	if err != nil {
+		return nil, err
+	}
+
+	var historyOrders []FutureOrder
+
+	for _, ord := range historyOrderResp.Orders {
+		historyOrders = append(historyOrders, FutureOrder{
+			OrderID:      ord.OrderId,
+			OrderID2:     fmt.Sprintf("%d", ord.OrderId),
+			Price:        ord.Price,
+			Amount:       ord.Volume,
+			AvgPrice:     ord.TradeAvgPrice,
+			DealAmount:   ord.TradeVolume,
+			OrderTime:    ord.CreateDate,
+			Status:       swap.base.adaptOrderStatus(ord.Status),
+			Currency:     pair,
+			OType:        swap.base.adaptOffsetDirectionToOpenType(ord.Offset, ord.Direction),
+			LeverRate:    ord.LeverRate,
+			Fee:          ord.Fee,
+			ContractName: ord.ContractCode,
+		})
+	}
+
+	return historyOrders, nil
+}
+
 func (swap *HbdmSwap) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
 	param := url.Values{}
 	param.Set("contract_code", currencyPair.ToSymbol("-"))
@@ -426,7 +475,7 @@ func (swap *HbdmSwap) GetContractValue(currencyPair CurrencyPair) (float64, erro
 	}
 }
 
-func (swap *HbdmSwap) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+func (swap *HbdmSwap) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
 	panic("not implement")
 }
 

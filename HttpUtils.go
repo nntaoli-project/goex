@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/nntaoli-project/goex/internal/logger"
-	"github.com/valyala/fasthttp"
-	"github.com/valyala/fasthttp/fasthttpproxy"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,6 +12,10 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/nntaoli-project/goex/internal/logger"
+	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
 var (

@@ -32,6 +32,7 @@ type OrderInfo struct {
 	ClientOrderId  int64   `json:"client_order_id"`
 	OrderSource    string  `json:"order_source"`
 	CreatedAt      int64   `json:"created_at"`
+	CreateDate     int64   `json:"create_date"` //for swap contract
 	TradeVolume    float64 `json:"trade_volume"`
 	TradeTurnover  float64 `json:"trade_turnover"`
 	Fee            float64 `json:"fee"`
@@ -457,6 +458,51 @@ func (dm *Hbdm) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, co
 
 }
 
+func (dm *Hbdm) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	path := "/api/v1/contract_hisorders_exact"
+
+	param := url.Values{}
+	param.Set("symbol", pair.CurrencyA.Symbol)
+	param.Set("type", "1")
+	param.Set("trade_type", "0")
+	param.Set("status", "0")
+	param.Set("size", "50")
+
+	MergeOptionalParameter(&param, optional...)
+
+	var data struct {
+		Orders     []OrderInfo `json:"orders"`
+		RemainSize int         `json:"remain_size"`
+		NextId     int         `json:"next_id"`
+	}
+
+	err := dm.doRequest(path, &param, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	var ords []FutureOrder
+	for _, ord := range data.Orders {
+		ords = append(ords, FutureOrder{
+			ContractName: ord.ContractType,
+			Currency:     pair,
+			OType:        dm.adaptOffsetDirectionToOpenType(ord.Offset, ord.Direction),
+			OrderID2:     fmt.Sprint(ord.OrderId),
+			OrderID:      ord.OrderId,
+			Amount:       ord.Volume,
+			Price:        ord.Price,
+			AvgPrice:     ord.TradeAvgPrice,
+			DealAmount:   ord.TradeVolume,
+			Status:       dm.adaptOrderStatus(ord.Status),
+			Fee:          ord.Fee,
+			LeverRate:    ord.LeverRate,
+			OrderTime:    ord.CreateDate,
+		})
+	}
+
+	return ords, nil
+}
+
 func (dm *Hbdm) GetContractValue(currencyPair CurrencyPair) (float64, error) {
 	switch currencyPair.CurrencyA {
 	case BTC:
@@ -566,7 +612,7 @@ func (dm *Hbdm) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
 	return ToFloat64(index), nil
 }
 
-func (dm *Hbdm) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+func (dm *Hbdm) GetKlineRecords(contract_type string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
 	symbol := dm.adaptSymbol(currency, contract_type)
 	periodS := dm.adaptKLinePeriod(period)
 	url := fmt.Sprintf("%s/market/history/kline?symbol=%s&period=%s&size=%d", dm.config.Endpoint, symbol, periodS, size)
@@ -640,7 +686,7 @@ func (dm *Hbdm) adaptSymbol(pair CurrencyPair, contractType string) string {
 	return symbol
 }
 
-func (dm *Hbdm) adaptKLinePeriod(period int) string {
+func (dm *Hbdm) adaptKLinePeriod(period KlinePeriod) string {
 	switch period {
 	case KLINE_PERIOD_1MIN:
 		return "1min"

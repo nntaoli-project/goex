@@ -3,6 +3,7 @@ package okex
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"sort"
 	"sync"
 	"time"
@@ -532,6 +533,39 @@ func (ok *OKExFuture) GetFutureOrders(orderIds []string, currencyPair CurrencyPa
 	panic("")
 }
 
+func (ok *OKExFuture) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	urlPath := fmt.Sprintf("/api/futures/v3/orders/%s?", ok.GetFutureContractId(pair, contractType))
+
+	param := url.Values{}
+	param.Set("limit", "100")
+	param.Set("state", "7")
+	MergeOptionalParameter(&param, optional...)
+	urlPath += param.Encode()
+
+	var response struct {
+		Result    bool
+		OrderInfo []futureOrderResponse `json:"order_info"`
+	}
+
+	err := ok.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	if !response.Result {
+		return nil, errors.New(fmt.Sprintf("%v", response))
+	}
+
+	orders := make([]FutureOrder, 0, 100)
+	for _, info := range response.OrderInfo {
+		ord := ok.adaptOrder(info)
+		ord.Currency = pair
+		orders = append(orders, ord)
+	}
+
+	return orders, nil
+}
+
 type futureOrderResponse struct {
 	InstrumentId string    `json:"instrument_id"`
 	ClientOid    string    `json:"client_oid"`
@@ -624,25 +658,16 @@ func (ok *OKExFuture) GetDeliveryTime() (int, int, int, int) {
 	return 4, 16, 0, 0 //星期五，下午4点交割
 }
 
-/**
-  since : 单位秒,开始时间
-*/
-func (ok *OKExFuture) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
-	urlPath := "/api/futures/v3/instruments/%s/candles?start=%s&granularity=%d"
+func (ok *OKExFuture) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
+	urlPath := "/api/futures/v3/instruments/%s/candles?granularity=%d"
 	contractId := ok.GetFutureContractId(currency, contractType)
-	sinceTime := time.Unix(int64(since), 0).UTC()
-
-	if since/int(time.Second) != 1 { //如果不为秒，转为秒
-		sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
-	}
-
 	granularity := adaptKLinePeriod(KlinePeriod(period))
 	if granularity == -1 {
 		return nil, errors.New("kline period parameter is error")
 	}
 
 	var response [][]interface{}
-	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, sinceTime.Format(time.RFC3339), granularity), "", &response)
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, granularity), "", &response)
 	if err != nil {
 		return nil, err
 	}

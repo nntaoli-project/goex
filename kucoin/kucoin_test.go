@@ -3,7 +3,6 @@ package kucoin
 import (
 	"github.com/nntaoli-project/goex"
 	"testing"
-	"time"
 )
 
 var kc = New("", "", "")
@@ -19,7 +18,7 @@ func TestKuCoin_GetDepth(t *testing.T) {
 }
 
 func TestKuCoin_GetKlineRecords(t *testing.T) {
-	kLines, _ := kc.GetKlineRecords(goex.BTC_USDT, goex.KLINE_PERIOD_1MIN, 10, int(time.Now().Unix()-3600))
+	kLines, _ := kc.GetKlineRecords(goex.BTC_USDT, goex.KLINE_PERIOD_1MIN, 10)
 	t.Log(kLines)
 }
 
@@ -28,3 +27,7 @@ func TestKuCoin_GetTrades(t *testing.T) {
 	t.Log(trades)
 }
 
+func TestKuCoin_GetAccount(t *testing.T) {
+	acc, _ := kc.GetAccount()
+	t.Log(acc)
+}

@@ -1,15 +1,15 @@
 package binance
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	. "github.com/nntaoli-project/goex"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-
-	. "github.com/nntaoli-project/goex"
 )
 
 const (
@@ -194,6 +194,10 @@ func (bs *BinanceSwap) GetFutureDepth(currency CurrencyPair, contractType string
 	return depth, nil
 }
 
+func (bs *BinanceSwap) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	panic("implement me")
+}
+
 func (bs *BinanceSwap) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	if contractType == SWAP_CONTRACT {
 		return bs.f.GetTrades(SWAP_CONTRACT, currencyPair.AdaptUsdtToUsd(), since)
@@ -246,9 +250,6 @@ func (bs *BinanceSwap) GetFutureIndex(currencyPair CurrencyPair) (float64, error
 	return ToFloat64(respmap["markPrice"]), nil
 }
 
-/**
- *全仓账户
- */
 func (bs *BinanceSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
 	acc, err := bs.f.GetFutureUserinfo(currencyPair...)
 	if err != nil {
@@ -273,10 +274,9 @@ func (bs *BinanceSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureA
 		currency := NewCurrency(vv["asset"].(string), "").AdaptBccToBch()
 		acc.FutureSubAccounts[currency] = FutureSubAccount{
 			Currency:      currency,
-			AccountRights: ToFloat64(vv["walletBalance"]),
-			KeepDeposit:   ToFloat64(vv["marginBalance"]),
+			AccountRights: ToFloat64(vv["marginBalance"]),
+			KeepDeposit:   ToFloat64(vv["maintMargin"]),
 			ProfitUnreal:  ToFloat64(vv["unrealizedProfit"]),
-			RiskRate:      ToFloat64(vv["unrealizedProfit"]),
 		}
 	}
 
@@ -758,9 +758,9 @@ func (bs *BinanceSwap) GetDeliveryTime() (int, int, int, int) {
 	panic("not supported.")
 }
 
-func (bs *BinanceSwap) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
+func (bs *BinanceSwap) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
 	if contractType == SWAP_CONTRACT {
-		return bs.f.GetKlineRecords(contractType, currency.AdaptUsdtToUsd(), period, since, since)
+		return bs.f.GetKlineRecords(contractType, currency.AdaptUsdtToUsd(), period, size, opt...)
 	}
 
 	if contractType != SWAP_USDT_CONTRACT {
@@ -770,12 +770,10 @@ func (bs *BinanceSwap) GetKlineRecords(contractType string, currency CurrencyPai
 	currency2 := bs.adaptCurrencyPair(currency)
 	params := url.Values{}
 	params.Set("symbol", currency2.ToSymbol(""))
-	params.Set("interval", _INERNAL_KLINE_PERIOD_CONVERTER[period])
-	if since > 0 {
-		params.Set("startTime", strconv.Itoa(since))
-	}
+	params.Set("interval", _INERNAL_KLINE_PERIOD_CONVERTER[KlinePeriod(period)])
 	//params.Set("endTime", strconv.Itoa(int(time.Now().UnixNano()/1000000)))
 	params.Set("limit", strconv.Itoa(size))
+	MergeOptionalParameter(&params, opt...)
 
 	klineUrl := bs.apiV1 + KLINE_URI + "?" + params.Encode()
 	klines, err := HttpGet3(bs.httpClient, klineUrl, nil)

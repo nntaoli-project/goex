@@ -31,10 +31,11 @@ var (
 )
 
 //
-var hbpro = NewHuoBiProSpot(httpProxyClient, apikey, secretkey)
+var hbpro *HuoBiPro
 
-func init()  {
+func init() {
 	logger.Log.SetLevel(logger.DEBUG)
+	hbpro = NewHuoBiProSpot(httpProxyClient, apikey, secretkey)
 }
 
 func TestHuobiPro_GetTicker(t *testing.T) {
@@ -117,14 +118,15 @@ func TestHuobiPro_CancelOrder(t *testing.T) {
 }
 
 func TestHuobiPro_GetOneOrder(t *testing.T) {
-	return
-	ord, err := hbpro.GetOneOrder("1116237737", goex.LTC_BTC)
+	ord, err := hbpro.GetOneOrder("165062634284339", goex.BTC_USDT)
 	assert.Nil(t, err)
 	t.Log(ord)
 }
 
 func TestHuobiPro_GetOrderHistorys(t *testing.T) {
-	ords, err := hbpro.GetOrderHistorys(goex.NewCurrencyPair2("HT_USDT"), 1, 3)
+	ords, err := hbpro.GetOrderHistorys(
+		goex.NewCurrencyPair2("BTC_USDT"),
+		goex.OptionalParameter{}.Optional("start-date","2020-11-30"))
 	t.Log(err)
 	t.Log(ords)
 }

@@ -21,7 +21,7 @@ func TestBitfinex_GetDepth(t *testing.T) {
 }
 
 func TestBitfinex_GetKline(t *testing.T) {
-	kline, _ := bfx.GetKlineRecords(goex.BTC_USD, goex.KLINE_PERIOD_1MONTH, 10, 0)
+	kline, _ := bfx.GetKlineRecords(goex.BTC_USD, goex.KLINE_PERIOD_1MONTH, 10)
 	for _, k := range kline {
 		t.Log(k)
 	}

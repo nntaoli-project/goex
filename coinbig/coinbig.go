@@ -344,7 +344,7 @@ func (cb *CoinBig) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, error)
 	}
 	return orders, nil
 }
-func (cb *CoinBig) GetOrderHistorys(currencyPair CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (cb *CoinBig) GetOrderHistorys(currencyPair CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	return nil, nil
 }
 func (cb *CoinBig) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {

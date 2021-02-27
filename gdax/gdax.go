@@ -45,7 +45,7 @@ func (g *Gdax) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error
 func (g *Gdax) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	panic("not implement")
 }
-func (g *Gdax) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (g *Gdax) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 func (g *Gdax) GetAccount() (*Account, error) {
@@ -116,7 +116,7 @@ func (g *Gdax) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return dep, nil
 }
 
-func (g *Gdax) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (g *Gdax) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]Kline, error) {
 	urlpath := fmt.Sprintf("%s/products/%s/candles", g.baseUrl, currency.AdaptUsdtToUsd().ToSymbol("-"))
 	granularity := -1
 	switch period {

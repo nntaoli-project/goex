@@ -28,16 +28,15 @@ var httpProxyClient = &http.Client{
 func init() {
 	logger.Log.SetLevel(logger.DEBUG)
 	mex = New(&goex.APIConfig{
-		Endpoint:     "https://testnet.bitmex.com/",
-		HttpClient:   httpProxyClient,
-		ApiKey:       "",
-		ApiSecretKey: ""})
+		Endpoint:   "https://testnet.bitmex.com/",
+		HttpClient: httpProxyClient,
+	})
 }
 
 var mex *bitmex
 
 func TestBitmex_GetFutureDepth(t *testing.T) {
-	dep, err := mex.GetFutureDepth(goex.BTC_USD, "Z19", 5)
+	dep, err := mex.GetFutureDepth(goex.ETH_USDT, goex.SWAP_CONTRACT, 5)
 	assert.Nil(t, err)
 	t.Log(dep.AskList)
 	t.Log(dep.BidList)

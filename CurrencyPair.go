@@ -60,6 +60,10 @@ var (
 	TRX     = Currency{"TRX", ""}
 	GBP     = Currency{"GBP", ""}
 	XLM     = Currency{"XLM", ""}
+	DOT     = Currency{"DOT", ""}
+	DASH    = Currency{"DASH", ""}
+	CRV     = Currency{"CRV", ""}
+	ALGO    = Currency{"ALGO", ""}
 
 	//currency pair
 	BTC_KRW = CurrencyPair{CurrencyA: BTC, CurrencyB: KRW, AmountTickSize: 2, PriceTickSize: 1}
@@ -68,33 +72,41 @@ var (
 	LTC_KRW = CurrencyPair{CurrencyA: LTC, CurrencyB: KRW, AmountTickSize: 2, PriceTickSize: 2}
 	BCH_KRW = CurrencyPair{CurrencyA: BCH, CurrencyB: KRW, AmountTickSize: 2, PriceTickSize: 2}
 
-	BTC_USD = CurrencyPair{CurrencyA: BTC, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 1}
-	LTC_USD = CurrencyPair{CurrencyA: LTC, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
-	ETH_USD = CurrencyPair{CurrencyA: ETH, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
-	ETC_USD = CurrencyPair{CurrencyA: ETC, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
-	BCH_USD = CurrencyPair{CurrencyA: BCH, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
-	XRP_USD = CurrencyPair{CurrencyA: XRP, CurrencyB: USD, AmountTickSize: 3, PriceTickSize: 3}
-	BCD_USD = CurrencyPair{CurrencyA: BCD, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 3}
-	EOS_USD = CurrencyPair{CurrencyA: EOS, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
-	BTG_USD = CurrencyPair{CurrencyA: BTG, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
-	BSV_USD = CurrencyPair{CurrencyA: BSV, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
+	BTC_USD  = CurrencyPair{CurrencyA: BTC, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 1}
+	LTC_USD  = CurrencyPair{CurrencyA: LTC, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
+	ETH_USD  = CurrencyPair{CurrencyA: ETH, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
+	ETC_USD  = CurrencyPair{CurrencyA: ETC, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
+	BCH_USD  = CurrencyPair{CurrencyA: BCH, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
+	XRP_USD  = CurrencyPair{CurrencyA: XRP, CurrencyB: USD, AmountTickSize: 3, PriceTickSize: 3}
+	BCD_USD  = CurrencyPair{CurrencyA: BCD, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 3}
+	EOS_USD  = CurrencyPair{CurrencyA: EOS, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
+	BTG_USD  = CurrencyPair{CurrencyA: BTG, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
+	BSV_USD  = CurrencyPair{CurrencyA: BSV, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
+	DOT_USD  = CurrencyPair{CurrencyA: DOT, CurrencyB: USD, AmountTickSize: 3, PriceTickSize: 2}
+	DASH_USD = CurrencyPair{CurrencyA: DASH, CurrencyB: USD, AmountTickSize: 2, PriceTickSize: 2}
+	CRV_USD  = CurrencyPair{CurrencyA: CRV, CurrencyB: USD, AmountTickSize: 4, PriceTickSize: 3}
+	ALGO_USD = CurrencyPair{CurrencyA: ALGO, CurrencyB: USD, AmountTickSize: 4, PriceTickSize: 4}
 
-	BTC_USDT = CurrencyPair{CurrencyA: BTC, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 1}
-	LTC_USDT = CurrencyPair{CurrencyA: LTC, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	BCH_USDT = CurrencyPair{CurrencyA: BCH, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	ETC_USDT = CurrencyPair{CurrencyA: ETC, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 3}
-	ETH_USDT = CurrencyPair{CurrencyA: ETH, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	BCD_USDT = CurrencyPair{CurrencyA: BCD, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	NEO_USDT = CurrencyPair{CurrencyA: NEO, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	EOS_USDT = CurrencyPair{CurrencyA: EOS, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	XRP_USDT = CurrencyPair{CurrencyA: XRP, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	HSR_USDT = CurrencyPair{CurrencyA: HSR, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	BSV_USDT = CurrencyPair{CurrencyA: BSV, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	OKB_USDT = CurrencyPair{CurrencyA: OKB, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	HT_USDT  = CurrencyPair{CurrencyA: HT, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 4}
-	BNB_USDT = CurrencyPair{CurrencyA: BNB, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
-	PAX_USDT = CurrencyPair{CurrencyA: PAX, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 3}
-	TRX_USDT = CurrencyPair{CurrencyA: TRX, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 3}
+	BTC_USDT  = CurrencyPair{CurrencyA: BTC, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 1}
+	LTC_USDT  = CurrencyPair{CurrencyA: LTC, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	BCH_USDT  = CurrencyPair{CurrencyA: BCH, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	ETC_USDT  = CurrencyPair{CurrencyA: ETC, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 3}
+	ETH_USDT  = CurrencyPair{CurrencyA: ETH, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	BCD_USDT  = CurrencyPair{CurrencyA: BCD, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	NEO_USDT  = CurrencyPair{CurrencyA: NEO, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	EOS_USDT  = CurrencyPair{CurrencyA: EOS, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	XRP_USDT  = CurrencyPair{CurrencyA: XRP, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	HSR_USDT  = CurrencyPair{CurrencyA: HSR, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	BSV_USDT  = CurrencyPair{CurrencyA: BSV, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	OKB_USDT  = CurrencyPair{CurrencyA: OKB, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	HT_USDT   = CurrencyPair{CurrencyA: HT, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 4}
+	BNB_USDT  = CurrencyPair{CurrencyA: BNB, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	PAX_USDT  = CurrencyPair{CurrencyA: PAX, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 3}
+	TRX_USDT  = CurrencyPair{CurrencyA: TRX, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 3}
+	DOT_USDT  = CurrencyPair{CurrencyA: DOT, CurrencyB: USDT, AmountTickSize: 3, PriceTickSize: 2}
+	DASH_USDT = CurrencyPair{CurrencyA: DASH, CurrencyB: USDT, AmountTickSize: 2, PriceTickSize: 2}
+	CRV_USDT  = CurrencyPair{CurrencyA: CRV, CurrencyB: USDT, AmountTickSize: 3, PriceTickSize: 3}
+	ALGO_USDT = CurrencyPair{CurrencyA: ALGO, CurrencyB: USDT, AmountTickSize: 3, PriceTickSize: 4}
 
 	XRP_EUR = CurrencyPair{CurrencyA: XRP, CurrencyB: EUR, AmountTickSize: 2, PriceTickSize: 4}
 
@@ -121,6 +133,7 @@ var (
 	HT_BTC  = CurrencyPair{CurrencyA: HT, CurrencyB: BTC, AmountTickSize: 2, PriceTickSize: 7}
 	BNB_BTC = CurrencyPair{CurrencyA: BNB, CurrencyB: BTC, AmountTickSize: 2, PriceTickSize: 6}
 	TRX_BTC = CurrencyPair{CurrencyA: TRX, CurrencyB: BTC, AmountTickSize: 2, PriceTickSize: 7}
+	DOT_BTC = CurrencyPair{CurrencyA: DOT, CurrencyB: BTC, AmountTickSize: 3, PriceTickSize: 6}
 
 	ETC_ETH = CurrencyPair{CurrencyA: ETC, CurrencyB: ETH, AmountTickSize: 2, PriceTickSize: 4}
 	EOS_ETH = CurrencyPair{CurrencyA: EOS, CurrencyB: ETH, AmountTickSize: 2, PriceTickSize: 4}
@@ -196,6 +209,8 @@ func NewCurrency(symbol, desc string) Currency {
 		return BNB
 	case "trx", "TRX":
 		return TRX
+	case "dot", "DOT":
+		return DOT
 	default:
 		return Currency{strings.ToUpper(symbol), desc}
 	}

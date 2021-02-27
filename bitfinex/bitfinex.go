@@ -89,17 +89,17 @@ func (bfx *Bitfinex) GetDepth(size int, currencyPair CurrencyPair) (*Depth, erro
 	return depth, nil
 }
 
-func (bfx *Bitfinex) GetKlineRecords(currencyPair CurrencyPair, klinePeriod, size, since int) ([]Kline, error) {
+func (bfx *Bitfinex) GetKlineRecords(currencyPair CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
 	symbol := convertPairToBitfinexSymbol("t", currencyPair)
 	if size == 0 {
 		size = 100
 	}
 
-	period, ok := klinePeriods[KlinePeriod(klinePeriod)]
+	periodStr, ok := klinePeriods[period]
 	if !ok {
 		return nil, fmt.Errorf("invalid period")
 	}
-	apiURL := fmt.Sprintf("%s/candles/trade:%s:%s/hist?limit=%d", apiURLV2, period, symbol, size)
+	apiURL := fmt.Sprintf("%s/candles/trade:%s:%s/hist?limit=%d", apiURLV2, periodStr, symbol, size)
 
 	respRaw, err := NewHttpRequest(bfx.httpClient, "GET", apiURL, "", nil)
 	if err != nil {
@@ -309,7 +309,7 @@ func (bfx *Bitfinex) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, erro
 	return orders, nil
 }
 
-func (bfx *Bitfinex) GetOrderHistorys(currencyPair CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (bfx *Bitfinex) GetOrderHistorys(currencyPair CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 

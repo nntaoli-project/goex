@@ -362,6 +362,32 @@ func (ok *OKExSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, o
 	return resp.Result, nil
 }
 
+func (ok *OKExSwap) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	urlPath := fmt.Sprintf("/api/swap/v3/orders/%s?", ok.adaptContractType(pair))
+
+	param := url.Values{}
+	param.Set("limit", "100")
+	param.Set("state", "7")
+	MergeOptionalParameter(&param, optional...)
+
+	var response SwapOrdersInfo
+
+	err := ok.DoRequest("GET", urlPath+param.Encode(), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	orders := make([]FutureOrder, 0, 100)
+	for _, info := range response.OrderInfo {
+		ord := ok.parseOrder(info)
+		ord.Currency = pair
+		ord.ContractName = contractType
+		orders = append(orders, ord)
+	}
+
+	return orders, nil
+}
+
 func (ok *OKExSwap) parseOrder(ord BaseOrderInfo) FutureOrder {
 	oTime, _ := time.Parse(time.RFC3339, ord.Timestamp)
 	return FutureOrder{
@@ -537,19 +563,50 @@ func (ok *OKExSwap) GetDeliveryTime() (int, int, int, int) {
 	panic("not support")
 }
 
-func (ok *OKExSwap) GetKlineRecords(contractType string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
-
-	sinceTime := time.Unix(int64(since), 0).UTC()
-
-	if since/int(time.Second) != 1 { //如果不为秒，转为秒
-		sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
-	}
-
+func (ok *OKExSwap) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
 	granularity := adaptKLinePeriod(KlinePeriod(period))
 	if granularity == -1 {
 		return nil, errors.New("kline period parameter is error")
 	}
-	return ok.GetKlineRecords2(contractType, currency, sinceTime.Format(time.RFC3339), "", strconv.Itoa(granularity))
+	return ok.GetKlineRecords2(contractType, currency, "", "", strconv.Itoa(granularity))
+}
+
+/**
+  since : 单位秒,开始时间
+  to : 单位秒,结束时间
+*/
+func (ok *OKExSwap) GetKlineRecordsByRange(currency CurrencyPair, period, since, to int) ([]FutureKline, error) {
+	urlPath := "/api/swap/v3/instruments/%s/candles?start=%s&end=%s&granularity=%d"
+	sinceTime := time.Unix(int64(since), 0).UTC().Format(time.RFC3339)
+	toTime := time.Unix(int64(to), 0).UTC().Format(time.RFC3339)
+	contractId := ok.adaptContractType(currency)
+	granularity := adaptKLinePeriod(KlinePeriod(period))
+	if granularity == -1 {
+		return nil, errors.New("kline period parameter is error")
+	}
+
+	var response [][]interface{}
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, sinceTime, toTime, granularity), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var klines []FutureKline
+	for _, itm := range response {
+		t, _ := time.Parse(time.RFC3339, fmt.Sprint(itm[0]))
+		klines = append(klines, FutureKline{
+			Kline: &Kline{
+				Timestamp: t.Unix(),
+				Pair:      currency,
+				Open:      ToFloat64(itm[1]),
+				High:      ToFloat64(itm[2]),
+				Low:       ToFloat64(itm[3]),
+				Close:     ToFloat64(itm[4]),
+				Vol:       ToFloat64(itm[5])},
+			Vol2: ToFloat64(itm[6])})
+	}
+
+	return klines, nil
 }
 
 /**

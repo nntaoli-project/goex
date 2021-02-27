@@ -159,8 +159,8 @@ func (ok *OKEx) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return ok.OKExSpot.GetUnfinishOrders(currency)
 }
 
-func (ok *OKEx) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
-	return ok.OKExSpot.GetOrderHistorys(currency, currentPage, pageSize)
+func (ok *OKEx) GetOrderHistorys(currency CurrencyPair, opt ...OptionalParameter) ([]Order, error) {
+	return ok.OKExSpot.GetOrderHistorys(currency, opt...)
 }
 
 func (ok *OKEx) GetAccount() (*Account, error) {
@@ -175,8 +175,8 @@ func (ok *OKEx) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return ok.OKExSpot.GetDepth(size, currency)
 }
 
-func (ok *OKEx) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	return ok.OKExSpot.GetKlineRecords(currency, period, size, since)
+func (ok *OKEx) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
+	return ok.OKExSpot.GetKlineRecords(currency, period, size, optional...)
 }
 
 func (ok *OKEx) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {

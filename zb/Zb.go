@@ -371,11 +371,11 @@ func (zb *Zb) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return orders, nil
 }
 
-func (zb *Zb) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (zb *Zb) GetOrderHistorys(currency CurrencyPair, opt ...OptionalParameter) ([]Order, error) {
 	return nil, nil
 }
 
-func (zb *Zb) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (zb *Zb) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]Kline, error) {
 	return nil, nil
 }
 

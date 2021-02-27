@@ -1,6 +1,7 @@
 package goex
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -260,4 +261,38 @@ type DepositWithdrawHistory struct {
 	Fee          string    `json:"fee"`
 	Status       int       `json:"status,string"`
 	Timestamp    time.Time `json:"timestamp"`
+}
+
+type OptionalParameter map[string]interface{}
+
+func (optional OptionalParameter) Optional(name string, value interface{}) OptionalParameter {
+	optional[name] = value
+	return optional
+}
+
+func (optional OptionalParameter) GetString(name string) string {
+	return fmt.Sprint(optional[name])
+}
+
+func (optional OptionalParameter) GetInt(name string) int {
+	return ToInt(optional[name])
+}
+
+func (optional OptionalParameter) GetInt64(name string) int64 {
+	return ToInt64(optional[name])
+}
+
+func (optional OptionalParameter) GetFloat64(name string) float64 {
+	return ToFloat64(optional[name])
+}
+
+func (optional OptionalParameter) GetTime(name string) *time.Time {
+	val := optional["name"]
+	if val != nil {
+		t, ok := val.(time.Time)
+		if ok {
+			return &t
+		}
+	}
+	return nil
 }
