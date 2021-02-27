@@ -31,15 +31,24 @@ func NewFuturesWs() *FuturesWs {
 		ProtoHandleFunc(futuresWs.handle).AutoReconnect()
 	futuresWs.f = wsBuilder.WsUrl("wss://fstream.binance.com/ws").Build()
 	futuresWs.d = wsBuilder.WsUrl("wss://dstream.binance.com/ws").Build()
-	futuresWs.base = NewBinanceFutures(&goex.APIConfig{
-		HttpClient: &http.Client{
+
+	httpCli := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	if os.Getenv("HTTPS_PROXY") != "" {
+		httpCli = &http.Client{
 			Transport: &http.Transport{
 				Proxy: func(r *http.Request) (*url.URL, error) {
 					return url.Parse(os.Getenv("HTTPS_PROXY"))
 				},
 			},
 			Timeout: 10 * time.Second,
-		},
+		}
+	}
+
+	futuresWs.base = NewBinanceFutures(&goex.APIConfig{
+		HttpClient: httpCli,
 	})
 
 	return futuresWs
