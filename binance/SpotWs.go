@@ -8,6 +8,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -29,7 +30,9 @@ type depthResp struct {
 }
 
 type SpotWs struct {
-	c *goex.WsConn
+	c         *goex.WsConn
+	once      sync.Once
+	wsBuilder *goex.WsBuilder
 
 	reqId int
 
@@ -42,15 +45,20 @@ func NewSpotWs() *SpotWs {
 	spotWs := &SpotWs{}
 	logger.Debugf("proxy url: %s", os.Getenv("HTTPS_PROXY"))
 
-	wsBuilder := goex.NewWsBuilder().
+	spotWs.wsBuilder = goex.NewWsBuilder().
 		WsUrl("wss://stream.binance.com:9443/stream?streams=depth/miniTicker/ticker/trade").
 		ProxyUrl(os.Getenv("HTTPS_PROXY")).
 		ProtoHandleFunc(spotWs.handle).AutoReconnect()
 
-	spotWs.c = wsBuilder.Build()
 	spotWs.reqId = 1
 
 	return spotWs
+}
+
+func (s *SpotWs) connect() {
+	s.once.Do(func() {
+		s.c = s.wsBuilder.Build()
+	})
 }
 
 func (s *SpotWs) DepthCallback(f func(depth *goex.Depth)) {
@@ -70,6 +78,8 @@ func (s *SpotWs) SubscribeDepth(pair goex.CurrencyPair) error {
 		s.reqId++
 	}()
 
+	s.connect()
+
 	return s.c.Subscribe(req{
 		Method: "SUBSCRIBE",
 		Params: []string{
@@ -83,6 +93,8 @@ func (s *SpotWs) SubscribeTicker(pair goex.CurrencyPair) error {
 	defer func() {
 		s.reqId++
 	}()
+
+	s.connect()
 
 	return s.c.Subscribe(req{
 		Method: "SUBSCRIBE",
