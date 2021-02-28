@@ -593,8 +593,6 @@ func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period KlinePeriod
 	return klines, nil
 }
 
-//非个人，整个交易所的交易记录
-//https://github.com/huobiapi/API_Docs/wiki/REST_api_reference#get-markettrade-获取-trade-detail-数据
 func (hbpro *HuoBiPro) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	var (
 		trades []Trade

@@ -6,6 +6,7 @@ import (
 	. "github.com/nntaoli-project/goex"
 	"github.com/nntaoli-project/goex/internal/logger"
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -42,7 +43,9 @@ type depthData struct {
 }
 
 type SwapWs struct {
-	c *WsConn
+	c         *WsConn
+	once      sync.Once
+	wsBuilder *WsBuilder
 
 	depthCall  func(depth *Depth)
 	tickerCall func(ticker *FutureTicker)
@@ -52,12 +55,18 @@ type SwapWs struct {
 
 func NewSwapWs() *SwapWs {
 	s := new(SwapWs)
-	wsBuilder := NewWsBuilder().DisableEnableCompression().WsUrl("wss://www.bitmex.com/realtime")
-	wsBuilder = wsBuilder.Heartbeat(func() []byte { return []byte("ping") }, 5*time.Second)
-	wsBuilder = wsBuilder.ProtoHandleFunc(s.handle).AutoReconnect()
-	s.c = wsBuilder.Build()
+	s.wsBuilder = NewWsBuilder().DisableEnableCompression().WsUrl("wss://www.bitmex.com/realtime")
+	s.wsBuilder = s.wsBuilder.Heartbeat(func() []byte { return []byte("ping") }, 5*time.Second)
+	s.wsBuilder = s.wsBuilder.ProtoHandleFunc(s.handle).AutoReconnect()
+	//s.c = wsBuilder.Build()
 	s.tickerCacheMap = make(map[string]FutureTicker, 10)
 	return s
+}
+
+func (s *SwapWs) connect() {
+	s.once.Do(func() {
+		s.c = s.wsBuilder.Build()
+	})
 }
 
 func (s *SwapWs) DepthCallback(f func(depth *Depth)) {
@@ -74,6 +83,8 @@ func (s *SwapWs) TradeCallback(f func(trade *Trade, contract string)) {
 
 func (s *SwapWs) SubscribeDepth(pair CurrencyPair, contractType string) error {
 	//{"op": "subscribe", "args": ["orderBook10:XBTUSD"]}
+	s.connect()
+
 	op := SubscribeOp{
 		Op: "subscribe",
 		Args: []string{
@@ -84,6 +95,8 @@ func (s *SwapWs) SubscribeDepth(pair CurrencyPair, contractType string) error {
 }
 
 func (s *SwapWs) SubscribeTicker(pair CurrencyPair, contractType string) error {
+	s.connect()
+
 	return s.c.Subscribe(SubscribeOp{
 		Op: "subscribe",
 		Args: []string{

@@ -10,13 +10,18 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
 type FuturesWs struct {
-	base *BinanceFutures
-	f    *goex.WsConn
-	d    *goex.WsConn
+	base  *BinanceFutures
+	fOnce sync.Once
+	dOnce sync.Once
+
+	wsBuilder *goex.WsBuilder
+	f         *goex.WsConn
+	d         *goex.WsConn
 
 	depthCallFn  func(depth *goex.Depth)
 	tickerCallFn func(ticker *goex.FutureTicker)
@@ -26,23 +31,42 @@ type FuturesWs struct {
 func NewFuturesWs() *FuturesWs {
 	futuresWs := new(FuturesWs)
 
-	wsBuilder := goex.NewWsBuilder().
+	futuresWs.wsBuilder = goex.NewWsBuilder().
 		ProxyUrl(os.Getenv("HTTPS_PROXY")).
 		ProtoHandleFunc(futuresWs.handle).AutoReconnect()
-	futuresWs.f = wsBuilder.WsUrl("wss://fstream.binance.com/ws").Build()
-	futuresWs.d = wsBuilder.WsUrl("wss://dstream.binance.com/ws").Build()
-	futuresWs.base = NewBinanceFutures(&goex.APIConfig{
-		HttpClient: &http.Client{
+
+	httpCli := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	if os.Getenv("HTTPS_PROXY") != "" {
+		httpCli = &http.Client{
 			Transport: &http.Transport{
 				Proxy: func(r *http.Request) (*url.URL, error) {
 					return url.Parse(os.Getenv("HTTPS_PROXY"))
 				},
 			},
 			Timeout: 10 * time.Second,
-		},
+		}
+	}
+
+	futuresWs.base = NewBinanceFutures(&goex.APIConfig{
+		HttpClient: httpCli,
 	})
 
 	return futuresWs
+}
+
+func (s *FuturesWs) connectUsdtFutures() {
+	s.fOnce.Do(func() {
+		s.f = s.wsBuilder.WsUrl("wss://fstream.binance.com/ws").Build()
+	})
+}
+
+func (s *FuturesWs) connectFutures() {
+	s.dOnce.Do(func() {
+		s.d = s.wsBuilder.WsUrl("wss://dstream.binance.com/ws").Build()
+	})
 }
 
 func (s *FuturesWs) DepthCallback(f func(depth *goex.Depth)) {
@@ -79,12 +103,14 @@ func (s *FuturesWs) SubscribeDepth(pair goex.CurrencyPair, contractType string) 
 func (s *FuturesWs) SubscribeTicker(pair goex.CurrencyPair, contractType string) error {
 	switch contractType {
 	case goex.SWAP_USDT_CONTRACT:
+		s.connectUsdtFutures()
 		return s.f.Subscribe(req{
 			Method: "SUBSCRIBE",
 			Params: []string{pair.AdaptUsdToUsdt().ToLower().ToSymbol("") + "@ticker"},
 			Id:     1,
 		})
 	default:
+		s.connectFutures()
 		sym, _ := s.base.adaptToSymbol(pair.AdaptUsdtToUsd(), contractType)
 		return s.d.Subscribe(req{
 			Method: "SUBSCRIBE",
