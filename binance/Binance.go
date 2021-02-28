@@ -651,15 +651,22 @@ func (bn *Binance) adaptOrder(currencyPair CurrencyPair, orderMap map[string]int
 		orderSide = BUY
 	}
 
+	quoteQty := ToFloat64(orderMap["cummulativeQuoteQty"])
+	qty := ToFloat64(orderMap["executedQty"])
+	avgPrice := 0.0
+	if qty > 0 {
+		avgPrice = FloatToFixed(quoteQty/qty, 8)
+	}
+
 	return Order{
 		OrderID:      ToInt(orderMap["orderId"]),
-		OrderID2:     fmt.Sprintf("%.0f",orderMap["orderId"]),
+		OrderID2:     fmt.Sprintf("%.0f", orderMap["orderId"]),
 		Cid:          orderMap["clientOrderId"].(string),
 		Currency:     currencyPair,
 		Price:        ToFloat64(orderMap["price"]),
 		Amount:       ToFloat64(orderMap["origQty"]),
 		DealAmount:   ToFloat64(orderMap["executedQty"]),
-		AvgPrice:     FloatToFixed(ToFloat64(orderMap["cummulativeQuoteQty"])/ToFloat64(orderMap["executedQty"]), 8),
+		AvgPrice:     avgPrice,
 		Side:         TradeSide(orderSide),
 		Status:       adaptOrderStatus(orderMap["status"].(string)),
 		OrderTime:    ToInt(orderMap["time"]),
