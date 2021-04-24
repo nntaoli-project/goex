@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/nntaoli-project/goex"
-	"github.com/nntaoli-project/goex/internal/logger"
+	"github.com/Jameslu041/goex"
+	"github.com/Jameslu041/goex/internal/logger"
 )
 
 var gdax = New(http.DefaultClient, "", "")

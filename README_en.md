@@ -6,7 +6,7 @@
 
 goex project is designed to unify and standardize the interfaces of each digital asset trading platform. The same strategy can be switched to any trading platform at any time without changing any code.
 
-[中文](https://github.com/nntaoli-project/goex/blob/dev/README.md)
+[中文](https://github.com/Jameslu041/goex/blob/dev/README.md)
 
 ### Exchanges are supported by goex `23+`
 | Exchange | Market API | Order API | Version |   
@@ -33,12 +33,12 @@ goex project is designed to unify and standardize the interfaces of each digital
 ### Install goex
 > go get   
 
-``` go get github.com/nntaoli-project/goex ```
+``` go get github.com/Jameslu041/goex ```
 > go mod
 
 ``` 
 require (
-          github.com/nntaoli-project/goex latest
+          github.com/Jameslu041/goex latest
 )
 ```
 

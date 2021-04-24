@@ -2,8 +2,8 @@ package kucoin
 
 import (
 	"github.com/Kucoin/kucoin-go-sdk"
-	. "github.com/nntaoli-project/goex"
-	log "github.com/nntaoli-project/goex/internal/logger"
+	. "github.com/Jameslu041/goex"
+	log "github.com/Jameslu041/goex/internal/logger"
 	"time"
 )
 

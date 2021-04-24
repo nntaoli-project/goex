@@ -3,7 +3,7 @@ package okex
 import (
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
+	. "github.com/Jameslu041/goex"
 )
 
 const (

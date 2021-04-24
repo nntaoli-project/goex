@@ -7,11 +7,11 @@
 
 goex项目是为了统一并标准化各个数字资产交易平台的接口而设计，同一个策略可以随时切换到任意一个交易平台，而不需要更改任何代码。
 
-[English](https://github.com/nntaoli-project/goex/blob/dev/README_en.md)
+[English](https://github.com/Jameslu041/goex/blob/dev/README_en.md)
 
 ### wiki文档
 
-[文档](https://github.com/nntaoli-project/goex/wiki)
+[文档](https://github.com/Jameslu041/goex/wiki)
 
 ### goex已支持交易所 `23+`
 
@@ -39,12 +39,12 @@ goex项目是为了统一并标准化各个数字资产交易平台的接口而�
 ### 安装goex库  
 > go get
 
-``` go get github.com/nntaoli-project/goex ```
+``` go get github.com/Jameslu041/goex ```
 
 >建议go mod 管理依赖
 ``` 
 require (
-          github.com/nntaoli-project/goex latest
+          github.com/Jameslu041/goex latest
 )
 ```
 

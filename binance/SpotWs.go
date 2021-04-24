@@ -3,8 +3,8 @@ package binance
 import (
 	json2 "encoding/json"
 	"fmt"
-	"github.com/nntaoli-project/goex"
-	"github.com/nntaoli-project/goex/internal/logger"
+	"github.com/Jameslu041/goex"
+	"github.com/Jameslu041/goex/internal/logger"
 	"os"
 	"sort"
 	"strings"

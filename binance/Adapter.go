@@ -2,7 +2,7 @@ package binance
 
 import (
 	"fmt"
-	"github.com/nntaoli-project/goex"
+	"github.com/Jameslu041/goex"
 	"strings"
 )
 

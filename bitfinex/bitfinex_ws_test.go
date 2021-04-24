@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nntaoli-project/goex"
+	"github.com/Jameslu041/goex"
 )
 
 func TestNewBitfinexWs(t *testing.T) {

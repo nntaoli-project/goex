@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/nntaoli-project/goex"
+	"github.com/Jameslu041/goex"
 )
 
 var bfx = New(http.DefaultClient, "", "")

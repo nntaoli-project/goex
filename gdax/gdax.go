@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/nntaoli-project/goex"
-	. "github.com/nntaoli-project/goex"
-	"github.com/nntaoli-project/goex/internal/logger"
+	"github.com/Jameslu041/goex"
+	. "github.com/Jameslu041/goex"
+	"github.com/Jameslu041/goex/internal/logger"
 )
 
 //www.coinbase.com or www.gdax.com
