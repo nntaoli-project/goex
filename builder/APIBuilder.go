@@ -42,6 +42,7 @@ type APIBuilder struct {
 	apiPassphrase    string
 	futuresEndPoint  string
 	endPoint         string
+	futuresLever     float64
 }
 
 type HttpClientConfig struct {
@@ -186,6 +187,11 @@ func (builder *APIBuilder) Endpoint(endpoint string) (_builer *APIBuilder) {
 	return builder
 }
 
+func (builder *APIBuilder) FuturesLever(lever float64) (_builder *APIBuilder) {
+	builder.futuresLever = lever
+	return builder
+}
+
 func (builder *APIBuilder) Build(exName string) (api API) {
 	var _api API
 	switch exName {
@@ -272,19 +278,22 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			Endpoint:      builder.futuresEndPoint,
 			ApiKey:        builder.apiKey,
 			ApiSecretKey:  builder.secretkey,
-			ApiPassphrase: builder.apiPassphrase}).OKExFuture
+			ApiPassphrase: builder.apiPassphrase,
+			Lever:         builder.futuresLever}).OKExFuture
 	case HBDM:
 		return huobi.NewHbdm(&APIConfig{
 			HttpClient:   builder.client,
 			Endpoint:     builder.futuresEndPoint,
 			ApiKey:       builder.apiKey,
-			ApiSecretKey: builder.secretkey})
+			ApiSecretKey: builder.secretkey,
+			Lever:        builder.futuresLever})
 	case HBDM_SWAP:
 		return huobi.NewHbdmSwap(&APIConfig{
 			HttpClient:   builder.client,
 			Endpoint:     builder.endPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
+			Lever:        builder.futuresLever,
 		})
 	case OKEX_SWAP:
 		return okex.NewOKEx(&APIConfig{
@@ -292,7 +301,8 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			Endpoint:      builder.futuresEndPoint,
 			ApiKey:        builder.apiKey,
 			ApiSecretKey:  builder.secretkey,
-			ApiPassphrase: builder.apiPassphrase}).OKExSwap
+			ApiPassphrase: builder.apiPassphrase,
+			Lever:         builder.futuresLever}).OKExSwap
 	case COINBENE:
 		return coinbene.NewCoinbeneSwap(APIConfig{
 			HttpClient: builder.client,
@@ -300,6 +310,7 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			Endpoint:     builder.futuresEndPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
+			Lever:        builder.futuresLever,
 		})
 
 	case BINANCE_SWAP:
@@ -308,6 +319,7 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			Endpoint:     builder.futuresEndPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
+			Lever:        builder.futuresLever,
 		})
 	case BINANCE, BINANCE_FUTURES:
 		return binance.NewBinanceFutures(&APIConfig{
@@ -315,6 +327,7 @@ func (builder *APIBuilder) BuildFuture(exName string) (api FutureRestAPI) {
 			Endpoint:     builder.futuresEndPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey,
+			Lever:        builder.futuresLever,
 		})
 	default:
 		println(fmt.Sprintf("%s not support future", exName))
