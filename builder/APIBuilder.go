@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	. "github.com/nntaoli-project/goex"
 	"github.com/nntaoli-project/goex/bigone"
 	"github.com/nntaoli-project/goex/binance"
@@ -362,6 +363,8 @@ func (builder *APIBuilder) BuildSpotWs(exName string) (SpotWsApi, error) {
 		return huobi.NewSpotWs(), nil
 	case BINANCE:
 		return binance.NewSpotWs(), nil
+	case BITFINEX:
+		return bitfinex.NewWs(), nil
 	}
 	return nil, errors.New("not support the exchange " + exName)
 }

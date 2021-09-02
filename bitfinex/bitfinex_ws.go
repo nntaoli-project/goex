@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"sync"
 	"time"
 
@@ -23,6 +24,7 @@ type BitfinexWs struct {
 	eventMap map[int64]SubscribeEvent
 
 	tickerCallback func(*Ticker)
+	depthCallback  func(*Depth)
 	tradeCallback  func(*Trade)
 	candleCallback func(*Kline)
 }
@@ -46,7 +48,7 @@ func NewWs() *BitfinexWs {
 	bws := &BitfinexWs{WsBuilder: NewWsBuilder(), eventMap: make(map[int64]SubscribeEvent)}
 	bws.WsBuilder = bws.WsBuilder.
 		WsUrl("wss://api-pub.bitfinex.com/ws/2").
-		AutoReconnect().
+		AutoReconnect().ProxyUrl(os.Getenv("HTTPS_PROXY")).DisableEnableCompression().
 		ProtoHandleFunc(bws.handle)
 	return bws
 }
@@ -57,6 +59,15 @@ func (bws *BitfinexWs) SetCallbacks(tickerCallback func(*Ticker), tradeCallback 
 	bws.candleCallback = candleCallback
 }
 
+func (bws *BitfinexWs) TickerCallback(tickerCallback func(*Ticker)) {
+	bws.tickerCallback = tickerCallback
+}
+func (bws *BitfinexWs) DepthCallback(depthCallback func(*Depth)) {
+	bws.depthCallback = depthCallback
+}
+func (bws *BitfinexWs) TradeCallback(tradeCallback func(*Trade)) {
+	bws.tradeCallback = tradeCallback
+}
 func (bws *BitfinexWs) SubscribeTicker(pair CurrencyPair) error {
 	if bws.tickerCallback == nil {
 		return fmt.Errorf("please set ticker callback func")
@@ -67,6 +78,10 @@ func (bws *BitfinexWs) SubscribeTicker(pair CurrencyPair) error {
 		"symbol":  convertPairToBitfinexSymbol("t", pair)})
 }
 
+func (bws *BitfinexWs) SubscribeDepth(pair CurrencyPair) error {
+	panic("not implements")
+	return nil
+}
 func (bws *BitfinexWs) SubscribeTrade(pair CurrencyPair) error {
 	if bws.tradeCallback == nil {
 		return fmt.Errorf("please set trade callback func")
