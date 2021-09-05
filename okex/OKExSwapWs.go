@@ -13,12 +13,15 @@ import (
 )
 
 type OKExV3SwapWs struct {
-	base           *OKEx
-	v3Ws           *OKExV3Ws
-	tickerCallback func(*FutureTicker)
-	depthCallback  func(*Depth)
-	tradeCallback  func(*Trade, string)
-	klineCallback  func(*FutureKline, int)
+	base             *OKEx
+	v3Ws             *OKExV3Ws
+	tickerCallback   func(*FutureTicker)
+	depthCallback    func(*Depth)
+	tradeCallback    func(*Trade, string)
+	klineCallback    func(*FutureKline, int)
+	orderCallback    func(order *FutureOrder)
+	accountCallback  func(acct *FutureAccount)
+	positionCallback func(pos *FuturePosition)
 }
 
 func NewOKExV3SwapWs(base *OKEx) *OKExV3SwapWs {
@@ -26,6 +29,14 @@ func NewOKExV3SwapWs(base *OKEx) *OKExV3SwapWs {
 		base: base,
 	}
 	okV3Ws.v3Ws = NewOKExV3Ws(base, okV3Ws.handle)
+	return okV3Ws
+}
+
+func NewOKExV3SwapWsWithAuth(base *OKEx) *OKExV3SwapWs {
+	okV3Ws := &OKExV3SwapWs{
+		base: base,
+	}
+	okV3Ws.v3Ws = NewOKExV3WsWithAuth(base, okV3Ws.handle)
 	return okV3Ws
 }
 
@@ -43,6 +54,18 @@ func (okV3Ws *OKExV3SwapWs) TradeCallback(tradeCallback func(*Trade, string)) {
 
 func (okV3Ws *OKExV3SwapWs) KlineCallback(klineCallback func(*FutureKline, int)) {
 	okV3Ws.klineCallback = klineCallback
+}
+
+func (okV3Ws *OKExV3SwapWs) OrderCallback(orderCallback func(*FutureOrder)) {
+	okV3Ws.orderCallback = orderCallback
+}
+
+func (okV3Ws *OKExV3SwapWs) AccountCallback(acctCallback func(*FutureAccount)) {
+	okV3Ws.accountCallback = acctCallback
+}
+
+func (okV3Ws *OKExV3SwapWs) PositionCallback(positionCallback func(position *FuturePosition)) {
+	okV3Ws.positionCallback = positionCallback
 }
 
 func (okV3Ws *OKExV3SwapWs) SetCallbacks(tickerCallback func(*FutureTicker),
@@ -125,6 +148,55 @@ func (okV3Ws *OKExV3SwapWs) SubscribeTrade(currencyPair CurrencyPair, contractTy
 		"args": []string{fmt.Sprintf(chName, "trade")}})
 }
 
+func (okV3Ws *OKExV3SwapWs) SubscribeOrder(currencyPair CurrencyPair, contractType string) error {
+	if okV3Ws.orderCallback == nil {
+		return errors.New("please set order callback func")
+	}
+
+	chName := okV3Ws.getChannelName(currencyPair, contractType)
+	if chName == "" {
+		return errors.New("subscribe error, get channel name fail")
+	}
+
+	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
+		"op":   "subscribe",
+		"args": []string{fmt.Sprintf(chName, "order")}})
+}
+
+//isUSDT: 是否币本位, true: 不是, false: 是
+func (okV3Ws *OKExV3SwapWs) SubscribeAccount(currency Currency, isUSDT bool) error {
+	if okV3Ws.accountCallback == nil {
+		return errors.New("please set account callback func")
+	}
+
+	chName := "swap/account:" + currency.String()
+	if isUSDT {
+		chName += "-USDT"
+	}
+	if chName == "" {
+		return errors.New("subscribe error, get channel name fail")
+	}
+
+	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
+		"op":   "subscribe",
+		"args": []string{chName}})
+}
+
+func (okV3Ws *OKExV3SwapWs) SubscribePosition(currencyPair CurrencyPair, contractType string) error {
+	if okV3Ws.positionCallback == nil {
+		return errors.New("please set position callback func")
+	}
+
+	chName := okV3Ws.getChannelName(currencyPair, contractType)
+	if chName == "" {
+		return errors.New("subscribe error, get channel name fail")
+	}
+
+	return okV3Ws.v3Ws.Subscribe(map[string]interface{}{
+		"op":   "subscribe",
+		"args": []string{fmt.Sprintf(chName, "position")}})
+}
+
 func (okV3Ws *OKExV3SwapWs) SubscribeKline(currencyPair CurrencyPair, contractType string, period int) error {
 	if okV3Ws.klineCallback == nil {
 		return errors.New("place set kline callback func")
@@ -163,11 +235,36 @@ func (okV3Ws *OKExV3SwapWs) getContractAliasAndCurrencyPairFromInstrumentId(inst
 
 func (okV3Ws *OKExV3SwapWs) handle(channel string, data json.RawMessage) error {
 	var (
-		err           error
-		ch            string
-		tickers       []tickerResponse
-		depthResp     []depthResponse
-		dep           Depth
+		err       error
+		ch        string
+		tickers   []tickerResponse
+		depthResp []depthResponse
+		dep       Depth
+		orders    []futureOrderResponse
+		holding   []struct {
+			InstrumentId         string    `json:"instrument_id"`
+			LongQty              float64   `json:"long_qty,string"` //多
+			LongAvailQty         float64   `json:"long_avail_qty,string"`
+			LongAvgCost          float64   `json:"long_avg_cost,string"`
+			LongSettlementPrice  float64   `json:"long_settlement_price,string"`
+			LongMargin           float64   `json:"long_margin,string"`
+			LongPnl              float64   `json:"long_pnl,string"`
+			LongPnlRatio         float64   `json:"long_pnl_ratio,string"`
+			LongUnrealisedPnl    float64   `json:"long_unrealised_pnl,string"`
+			RealisedPnl          float64   `json:"realised_pnl,string"`
+			Leverage             float64   `json:"leverage,string"`
+			ShortQty             float64   `json:"short_qty,string"`
+			ShortAvailQty        float64   `json:"short_avail_qty,string"`
+			ShortAvgCost         float64   `json:"short_avg_cost,string"`
+			ShortSettlementPrice float64   `json:"short_settlement_price,string"`
+			ShortMargin          float64   `json:"short_margin,string"`
+			ShortPnl             float64   `json:"short_pnl,string"`
+			ShortPnlRatio        float64   `json:"short_pnl_ratio,string"`
+			ShortUnrealisedPnl   float64   `json:"short_unrealised_pnl,string"`
+			LiquidationPrice     float64   `json:"liquidation_price,string"`
+			CreatedAt            time.Time `json:"created_at,string"`
+			UpdatedAt            time.Time `json:"updated_at"`
+		}
 		tradeResponse []struct {
 			Side         string  `json:"side"`
 			TradeId      int64   `json:"trade_id,string"`
@@ -302,6 +399,70 @@ func (okV3Ws *OKExV3SwapWs) handle(channel string, data json.RawMessage) error {
 			}, alias)
 		}
 		return nil
+	case "order":
+		err := json.Unmarshal(data, &orders)
+		if err != nil {
+			logger.Error("unmarshal error :", err)
+			return err
+		}
+		for _, r := range orders {
+			order := okV3Ws.base.OKExFuture.adaptOrder(r)
+			okV3Ws.orderCallback(&order)
+		}
+		return nil
+	case "account":
+		var resp []map[string]CrossedAccountInfo
+		err := json.Unmarshal(data, &resp)
+		if err != nil {
+			logger.Error("unmarshal error :", err)
+			return err
+		}
+		fa := FutureAccount{
+			FutureSubAccounts: make(map[Currency]FutureSubAccount, 1),
+		}
+		for _, m := range resp {
+			for k, v := range m {
+				a := FutureSubAccount{
+					Currency:      NewCurrency(k, ""),
+					AccountRights: v.Equity,
+					ProfitReal:    v.RealizedPnl,
+					ProfitUnreal:  v.UnrealizedPnl,
+					KeepDeposit:   v.MarginFrozen,
+					RiskRate:      v.MarginRatio,
+				}
+				fa.FutureSubAccounts[a.Currency] = a
+
+			}
+		}
+		okV3Ws.accountCallback(&fa)
+		return nil
+	case "position":
+		err := json.Unmarshal(data, &holding)
+		if err != nil {
+			logger.Error("unmarshal error :", err)
+			return err
+		}
+		for _, pos := range holding {
+			p := FuturePosition{
+				ContractId:     ToInt64(pos.InstrumentId[8:]),
+				BuyAmount:      pos.LongQty,
+				BuyAvailable:   pos.LongAvailQty,
+				BuyPriceAvg:    pos.LongAvgCost,
+				BuyPriceCost:   pos.LongAvgCost,
+				BuyProfitReal:  pos.LongPnl,
+				SellAmount:     pos.ShortQty,
+				SellAvailable:  pos.ShortAvailQty,
+				SellPriceAvg:   pos.ShortAvgCost,
+				SellPriceCost:  pos.ShortAvgCost,
+				SellProfitReal: pos.ShortPnl,
+				ForceLiquPrice: pos.LiquidationPrice,
+				LeverRate:      pos.Leverage,
+				CreateDate:     pos.CreatedAt.Unix(),
+				ShortPnlRatio:  pos.ShortPnlRatio,
+				LongPnlRatio:   pos.LongPnlRatio,
+			}
+			okV3Ws.positionCallback(&p)
+		}
 	}
 
 	return fmt.Errorf("[%s] unknown websocket message: %s", ch, string(data))
