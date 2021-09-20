@@ -571,8 +571,14 @@ func (ok *OKExSwap) GetKlineRecords(contractType string, currency CurrencyPair, 
 	// check optional parameters for start/end
 	var start, end string
 	if len(opt) > 0 {
-		start = (opt[0]["start"]).(string)
-		start = (opt[0]["end"]).(string)
+		s, ok := opt[0]["start"]
+		if ok {
+			start = (s).(string)
+		}
+		s, ok = opt[0]["end"]
+		if ok {
+			end = (s).(string)
+		}
 	}
 	return ok.GetKlineRecords2(contractType, currency, start, end, strconv.Itoa(granularity), strconv.Itoa(size))
 }
