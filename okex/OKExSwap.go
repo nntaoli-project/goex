@@ -580,7 +580,7 @@ func (ok *OKExSwap) GetKlineRecords(contractType string, currency CurrencyPair, 
 			end = (s).(string)
 		}
 	}
-	return ok.GetKlineRecords2(contractType, currency, start, end, strconv.Itoa(granularity), strconv.Itoa(size))
+	return ok.GetKlineRecords2(contractType, currency, start, end, strconv.Itoa(granularity))
 }
 
 /**
@@ -624,7 +624,7 @@ func (ok *OKExSwap) GetKlineRecordsByRange(currency CurrencyPair, period, since,
 /**
   since : 单位秒,开始时间
 */
-func (ok *OKExSwap) GetKlineRecords2(contractType string, currency CurrencyPair, start, end, period, size string) ([]FutureKline, error) {
+func (ok *OKExSwap) GetKlineRecords2(contractType string, currency CurrencyPair, start, end, period string) ([]FutureKline, error) {
 	urlPath := "/api/swap/v3/instruments/%s/candles?%s"
 	params := url.Values{}
 	if start != "" {
@@ -635,9 +635,6 @@ func (ok *OKExSwap) GetKlineRecords2(contractType string, currency CurrencyPair,
 	}
 	if period != "" {
 		params.Set("granularity", period)
-	}
-	if size != "" {
-		params.Set("size", size)
 	}
 	contractId := ok.adaptContractType(currency)
 

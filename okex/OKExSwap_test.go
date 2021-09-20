@@ -82,7 +82,7 @@ func TestOKExSwap_GetKlineRecords(t *testing.T) {
 func TestOKExSwap_GetKlineRecords2(t *testing.T) {
 	start := time.Now().Add(time.Minute * -30).UTC().Format(time.RFC3339)
 	t.Log(start)
-	kline, err := okExSwap.GetKlineRecords2(goex.SWAP_CONTRACT, goex.BTC_USDT, start, "", "900", "")
+	kline, err := okExSwap.GetKlineRecords2(goex.SWAP_CONTRACT, goex.BTC_USDT, start, "", "900")
 	t.Log(err, kline[0].Kline)
 }
 
