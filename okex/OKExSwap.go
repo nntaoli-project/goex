@@ -568,7 +568,19 @@ func (ok *OKExSwap) GetKlineRecords(contractType string, currency CurrencyPair, 
 	if granularity == -1 {
 		return nil, errors.New("kline period parameter is error")
 	}
-	return ok.GetKlineRecords2(contractType, currency, "", "", strconv.Itoa(granularity))
+	// check optional parameters for start/end
+	var start, end string
+	if len(opt) > 0 {
+		s, ok := opt[0]["start"]
+		if ok {
+			start = (s).(string)
+		}
+		s, ok = opt[0]["end"]
+		if ok {
+			end = (s).(string)
+		}
+	}
+	return ok.GetKlineRecords2(contractType, currency, start, end, strconv.Itoa(granularity))
 }
 
 /**
