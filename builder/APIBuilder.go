@@ -29,6 +29,7 @@ import (
 	"github.com/nntaoli-project/goex/huobi"
 	"github.com/nntaoli-project/goex/kraken"
 	"github.com/nntaoli-project/goex/okex"
+	okexV5 "github.com/nntaoli-project/goex/okex/v5"
 	"github.com/nntaoli-project/goex/poloniex"
 	"github.com/nntaoli-project/goex/zb"
 )
@@ -213,8 +214,16 @@ func (builder *APIBuilder) Build(exName string) (api API) {
 			Endpoint:     builder.endPoint,
 			ApiKey:       builder.apiKey,
 			ApiSecretKey: builder.secretkey})
-	case OKEX_V3, OKEX:
+	case OKEX_V3:
 		_api = okex.NewOKEx(&APIConfig{
+			HttpClient:    builder.client,
+			ApiKey:        builder.apiKey,
+			ApiSecretKey:  builder.secretkey,
+			ApiPassphrase: builder.apiPassphrase,
+			Endpoint:      builder.endPoint,
+		})
+	case OKEX:
+		_api = okexV5.NewOKExV5Spot(&APIConfig{
 			HttpClient:    builder.client,
 			ApiKey:        builder.apiKey,
 			ApiSecretKey:  builder.secretkey,

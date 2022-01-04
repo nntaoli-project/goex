@@ -386,5 +386,5 @@ func (ok *OKExV5Spot) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade
 }
 
 func (ok *OKExV5Spot) GetExchangeName() string {
-	return ok.ExchangeName() + "_v5_spot"
+	return ok.ExchangeName()
 }
