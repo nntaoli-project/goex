@@ -302,7 +302,7 @@ func (optional OptionalParameter) GetFloat64(name string) float64 {
 }
 
 func (optional OptionalParameter) GetTime(name string) *time.Time {
-	val := optional["name"]
+	val := optional[name]
 	if val != nil {
 		t, ok := val.(time.Time)
 		if ok {

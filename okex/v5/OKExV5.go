@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	. "github.com/nntaoli-project/goex"
 	"github.com/nntaoli-project/goex/internal/logger"
 )
@@ -45,10 +44,6 @@ func NewOKExV5(config *APIConfig) *OKExV5 {
 
 func (ok *OKExV5) ExchangeName() string {
 	return OKEX
-}
-
-func (ok *OKExV5) UUID() string {
-	return strings.Replace(uuid.New().String(), "-", "", 32)
 }
 
 func (ok *OKExV5) SetCustomCID(f func() string) {
@@ -289,11 +284,6 @@ func (ok *OKExV5) CreateOrder(param *CreateOrderParam) (*OrderSummaryV5, error) 
 	if param.ClientOrdId != "" {
 		reqBody["clOrdId"] = param.ClientOrdId
 	} else {
-		if ok.customCIDFunc != nil {
-			param.ClientOrdId = ok.customCIDFunc()
-		} else {
-			param.ClientOrdId = ("0bf60374efe445BC" + strings.Replace(uuid.New().String(), "-", "", 32))[:32]
-		}
 		reqBody["clOrdId"] = param.ClientOrdId
 	}
 	if param.Tag != "" {
