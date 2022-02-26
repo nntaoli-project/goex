@@ -143,31 +143,21 @@ func (ok *OKExV5) GetDepthV5(instId string, size int) (*DepthV5, error) {
 	return &response.Data[0], nil
 }
 
-func (ok *OKExV5) GetKlineRecordsV5(instId, after, before, bar, limit string) ([][]string, error) {
+func (ok *OKExV5) GetKlineRecordsV5(instId string, period KlinePeriod, params *url.Values) ([][]string, error) {
+	urlPath := fmt.Sprintf("%s/api/v5/market/candles?instId=%s&bar=%s", ok.config.Endpoint, instId, ok.adaptKLineBar(period))
 
-	urlPath := fmt.Sprintf("%s/api/v5/market/candles?instId=%s", ok.config.Endpoint, instId)
-	params := url.Values{}
-	if after != "" {
-		params.Set("after", after)
-	}
-	if before != "" {
-		params.Set("before", before)
-	}
-	if bar != "" {
-		params.Set("bar", bar)
-	}
-	if limit != "" {
-		params.Set("limit", limit)
-	}
 	if params.Encode() != "" {
 		urlPath = fmt.Sprintf("%s&%s", urlPath, params.Encode())
 	}
+
+	logger.Debugf("[OKExV5] GetKlineRecordsV5 Url: %s", urlPath)
 
 	type CandleResponse struct {
 		Code int        `json:"code,string"`
 		Msg  string     `json:"msg"`
 		Data [][]string `json:"data"`
 	}
+
 	var response CandleResponse
 	err := HttpGet4(ok.config.HttpClient, urlPath, nil, &response)
 	if err != nil {
@@ -659,4 +649,37 @@ func (ok *OKExV5) GetAccountBalances(currency string) (*BalanceV5, error) {
 		return nil, fmt.Errorf("GetAccountBalances error:%s", response.Msg)
 	}
 	return &response.Data[0], nil
+}
+
+func (ok *OKExV5) adaptKLineBar(period KlinePeriod) string {
+	bar := "1D"
+	switch period {
+	case KLINE_PERIOD_1MIN:
+		bar = "1m"
+	case KLINE_PERIOD_3MIN:
+		bar = "3m"
+	case KLINE_PERIOD_5MIN:
+		bar = "5m"
+	case KLINE_PERIOD_15MIN:
+		bar = "15m"
+	case KLINE_PERIOD_30MIN:
+		bar = "30m"
+	case KLINE_PERIOD_1H, KLINE_PERIOD_60MIN:
+		bar = "1H"
+	case KLINE_PERIOD_2H:
+		bar = "2H"
+	case KLINE_PERIOD_4H:
+		bar = "4H"
+	case KLINE_PERIOD_6H:
+		bar = "6H"
+	case KLINE_PERIOD_12H:
+		bar = "12H"
+	case KLINE_PERIOD_1DAY:
+		bar = "1D"
+	case KLINE_PERIOD_1WEEK:
+		bar = "1W"
+	default:
+		bar = "1D"
+	}
+	return bar
 }

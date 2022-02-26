@@ -1,8 +1,9 @@
 package okex
 
 import (
+	"fmt"
 	"math"
-	"strconv"
+	"net/url"
 	"time"
 
 	"github.com/nntaoli-project/goex"
@@ -317,48 +318,11 @@ func (ok *OKExV5Spot) GetDepth(size int, currency CurrencyPair) (*Depth, error) 
 
 func (ok *OKExV5Spot) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
 	// [1m/3m/5m/15m/30m/1H/2H/4H/6H/12H/1D/1W/1M/3M/6M/1Y]
-	bar := "1D"
-	switch period {
-	case KLINE_PERIOD_1MIN:
-		bar = "1m"
-	case KLINE_PERIOD_3MIN:
-		bar = "3m"
-	case KLINE_PERIOD_5MIN:
-		bar = "5m"
-	case KLINE_PERIOD_15MIN:
-		bar = "15m"
-	case KLINE_PERIOD_30MIN:
-		bar = "30m"
-	case KLINE_PERIOD_1H, KLINE_PERIOD_60MIN:
-		bar = "1H"
-	case KLINE_PERIOD_2H:
-		bar = "2H"
-	case KLINE_PERIOD_4H:
-		bar = "4H"
-	case KLINE_PERIOD_6H:
-		bar = "6H"
-	case KLINE_PERIOD_12H:
-		bar = "12H"
-	case KLINE_PERIOD_1DAY:
-		bar = "1D"
-	case KLINE_PERIOD_1WEEK:
-		bar = "1W"
-	default:
-		bar = "1D"
-	}
-	after, before, limit := "", "", strconv.Itoa(size)
+	param := &url.Values{}
+	param.Set("limit", fmt.Sprint(size))
+	MergeOptionalParameter(param, optional...)
 
-	for _, opt := range optional {
-		for k, v := range opt {
-			if k == "after" {
-				after = v.(string)
-			}
-			if k == "before" {
-				before = v.(string)
-			}
-		}
-	}
-	kl, err := ok.GetKlineRecordsV5(currency.ToSymbol("-"), after, before, bar, limit)
+	kl, err := ok.GetKlineRecordsV5(currency.ToSymbol("-"), period, param)
 	if err != nil {
 		return nil, err
 	}

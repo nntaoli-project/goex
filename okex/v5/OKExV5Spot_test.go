@@ -1,8 +1,7 @@
 package okex
 
 import (
-	"net/http"
-	"net/url"
+	log "github.com/nntaoli-project/goex/internal/logger"
 	"testing"
 
 	"github.com/nntaoli-project/goex"
@@ -10,20 +9,24 @@ import (
 
 func newOKExV5SpotClient() *OKExV5Spot {
 	return NewOKExV5Spot(&goex.APIConfig{
-		HttpClient: &http.Client{
-			Transport: &http.Transport{
-				Proxy: func(req *http.Request) (*url.URL, error) {
-					return &url.URL{
-						Scheme: "socks5",
-						Host:   "127.0.0.1:1080"}, nil
-				},
-			},
-		},
+		//HttpClient: &http.Client{
+		//	Transport: &http.Transport{
+		//		Proxy: func(req *http.Request) (*url.URL, error) {
+		//			return &url.URL{
+		//				Scheme: "socks5",
+		//				Host:   "192.168.1.29:2222"}, nil
+		//		},
+		//	},
+		//},
 		Endpoint:      "https://www.okex.com",
 		ApiKey:        "",
 		ApiSecretKey:  "",
 		ApiPassphrase: "",
 	})
+}
+
+func init() {
+	log.SetLevel(log.DEBUG)
 }
 
 func TestOKExV5Spot_GetTicker(t *testing.T) {
