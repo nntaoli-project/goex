@@ -37,3 +37,19 @@ func TestOKExV5Swap_GetFutureDepth(t *testing.T) {
 	t.Log(dep.AskList)
 	t.Log(dep.BidList)
 }
+
+func TestOKExV5Swap_GetKlineRecords(t *testing.T) {
+	swap := NewOKExV5Swap(&goex.APIConfig{
+		HttpClient: http.DefaultClient,
+	})
+
+	klines, err := swap.GetKlineRecords(goex.SWAP_CONTRACT, goex.BTC_USDT, goex.KLINE_PERIOD_1H, 2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	for _, k := range klines {
+		t.Logf("%+v", k.Kline)
+	}
+}
