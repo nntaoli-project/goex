@@ -1,9 +1,10 @@
 package bigone
 
 import (
-	. "github.com/nntaoli-project/goex"
 	"net/http"
 	"testing"
+
+	. "github.com/nntaoli-project/goex"
 
 	"net"
 	"net/url"
@@ -52,7 +53,7 @@ func TestBigoneV3_GetUnfinishOrders(t *testing.T) {
 }
 func TestBigoneV3_GetOrderHistorys(t *testing.T) {
 	return
-	t.Log(b1.GetOrderHistorys(BTC_USDT, 1, 1))
+	t.Log(b1.GetOrderHistorys(BTC_USDT, OptionalParameter{"test": 1}))
 }
 func TestBigoneV3_LimitSell(t *testing.T) {
 	return

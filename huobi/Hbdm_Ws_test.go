@@ -1,10 +1,11 @@
 package huobi
 
 import (
-	"github.com/nntaoli-project/goex"
 	"log"
 	"testing"
 	"time"
+
+	"github.com/nntaoli-project/goex"
 )
 
 func TestNewHbdmWs(t *testing.T) {
@@ -24,7 +25,7 @@ func TestNewHbdmWs(t *testing.T) {
 	})
 
 	t.Log(ws.SubscribeTicker(goex.BTC_USD, goex.QUARTER_CONTRACT))
-	t.Log(ws.SubscribeDepth(goex.BTC_USD, goex.NEXT_WEEK_CONTRACT, 0))
+	t.Log(ws.SubscribeDepth(goex.BTC_USD, goex.NEXT_WEEK_CONTRACT))
 	t.Log(ws.SubscribeTrade(goex.LTC_USD, goex.THIS_WEEK_CONTRACT))
 	time.Sleep(time.Minute)
 }

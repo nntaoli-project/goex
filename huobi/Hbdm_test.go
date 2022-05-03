@@ -1,9 +1,10 @@
 package huobi
 
 import (
-	"github.com/nntaoli-project/goex"
 	"testing"
 	"time"
+
+	"github.com/nntaoli-project/goex"
 )
 
 var dm = NewHbdm(&goex.APIConfig{
@@ -58,7 +59,7 @@ func TestHbdm_GetFutureEstimatedPrice(t *testing.T) {
 }
 
 func TestHbdm_GetKlineRecords(t *testing.T) {
-	klines, _ := dm.GetKlineRecords(goex.QUARTER_CONTRACT, goex.EOS_USD, goex.KLINE_PERIOD_1MIN, 20, 0)
+	klines, _ := dm.GetKlineRecords(goex.QUARTER_CONTRACT, goex.EOS_USD, goex.KLINE_PERIOD_1MIN, 20, goex.OptionalParameter{"test": 0})
 	for _, k := range klines {
 		tt := time.Unix(k.Timestamp, 0)
 		t.Log(k.Pair, tt, k.Open, k.Close, k.High, k.Low, k.Vol, k.Vol2)

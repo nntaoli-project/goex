@@ -1,11 +1,12 @@
 package okex
 
 import (
-	"github.com/nntaoli-project/goex"
 	"net/http"
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/nntaoli-project/goex"
 )
 
 var config = &goex.APIConfig{
@@ -75,7 +76,7 @@ func TestOKExSwap_GetHistoricalFunding(t *testing.T) {
 
 func TestOKExSwap_GetKlineRecords(t *testing.T) {
 	since := time.Now().Add(-24 * time.Hour).Unix()
-	kline, err := okExSwap.GetKlineRecords(goex.SWAP_CONTRACT, goex.BTC_USD, goex.KLINE_PERIOD_4H, 0, int(since))
+	kline, err := okExSwap.GetKlineRecords(goex.SWAP_CONTRACT, goex.BTC_USD, goex.KLINE_PERIOD_4H, 10, goex.OptionalParameter{"since": since})
 	t.Log(err, kline[0].Kline)
 }
 
