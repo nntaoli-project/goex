@@ -21,9 +21,12 @@ func main() {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	//api.SubscribeTicker(goex.BTC_USD, goex.SWAP_USDT_CONTRACT)
+	api.TickerCallback(func(ticker *goex.FutureTicker) {
+		log.Printf("%+v\n", *ticker.Ticker)
+	})
+	api.SubscribeTicker(goex.BTC_USD, goex.SWAP_USDT_CONTRACT)
 	api.DepthCallback(func(depth *goex.Depth) {
-		log.Println(depth)
+		log.Printf("%+v\n", *depth)
 	})
 	api.SubscribeDepth(goex.BTC_USDT, goex.SWAP_USDT_CONTRACT)
 
