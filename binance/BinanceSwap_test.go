@@ -1,12 +1,13 @@
 package binance
 
 import (
-	goex "github.com/nntaoli-project/goex"
 	"net"
 	"net/http"
 	"net/url"
 	"testing"
 	"time"
+
+	goex "github.com/nntaoli-project/goex"
 )
 
 var bs = NewBinanceSwap(&goex.APIConfig{
@@ -15,7 +16,6 @@ var bs = NewBinanceSwap(&goex.APIConfig{
 		Transport: &http.Transport{
 			Proxy: func(req *http.Request) (*url.URL, error) {
 				return url.Parse("socks5://127.0.0.1:1080")
-				return nil, nil
 			},
 			Dial: (&net.Dialer{
 				Timeout: 10 * time.Second,
@@ -40,7 +40,7 @@ func TestBinanceSwap_GetFutureIndex(t *testing.T) {
 }
 
 func TestBinanceSwap_GetKlineRecords(t *testing.T) {
-	kline, err := bs.GetKlineRecords("", goex.BTC_USDT, goex.KLINE_PERIOD_4H, 1, 0)
+	kline, err := bs.GetKlineRecords("", goex.BTC_USDT, goex.KLINE_PERIOD_4H, 1, goex.OptionalParameter{"test": 0})
 	t.Log(err, kline[0].Kline)
 }
 

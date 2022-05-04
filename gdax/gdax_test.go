@@ -31,5 +31,5 @@ func TestGdax_GetDepth(t *testing.T) {
 
 func TestGdax_GetKlineRecords(t *testing.T) {
 	logger.SetLevel(logger.DEBUG)
-	t.Log(gdax.GetKlineRecords(goex.BTC_USD, goex.KLINE_PERIOD_1DAY, 0, 0))
+	t.Log(gdax.GetKlineRecords(goex.BTC_USD, goex.KLINE_PERIOD_1DAY, 0, goex.OptionalParameter{"test": 0}))
 }
