@@ -3,8 +3,6 @@ package binance
 import (
 	"encoding/json"
 	"errors"
-	"github.com/nntaoli-project/goex"
-	"github.com/nntaoli-project/goex/internal/logger"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,6 +10,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 )
 
 type FuturesWs struct {
@@ -59,13 +60,13 @@ func NewFuturesWs() *FuturesWs {
 
 func (s *FuturesWs) connectUsdtFutures() {
 	s.fOnce.Do(func() {
-		s.f = s.wsBuilder.WsUrl("wss://fstream.binance.com/ws").Build()
+		s.f = s.wsBuilder.WsUrl(TESTNET_FUTURE_USD_WS_BASE_URL).Build()
 	})
 }
 
 func (s *FuturesWs) connectFutures() {
 	s.dOnce.Do(func() {
-		s.d = s.wsBuilder.WsUrl("wss://dstream.binance.com/ws").Build()
+		s.d = s.wsBuilder.WsUrl(TESTNET_FUTURE_COIN_WS_BASE_URL).Build()
 	})
 }
 
@@ -84,12 +85,14 @@ func (s *FuturesWs) TradeCallback(f func(trade *goex.Trade, contract string)) {
 func (s *FuturesWs) SubscribeDepth(pair goex.CurrencyPair, contractType string) error {
 	switch contractType {
 	case goex.SWAP_USDT_CONTRACT:
+		s.connectUsdtFutures()
 		return s.f.Subscribe(req{
 			Method: "SUBSCRIBE",
 			Params: []string{pair.AdaptUsdToUsdt().ToLower().ToSymbol("") + "@depth10@100ms"},
 			Id:     1,
 		})
 	default:
+		s.connectFutures()
 		sym, _ := s.base.adaptToSymbol(pair.AdaptUsdtToUsd(), contractType)
 		return s.d.Subscribe(req{
 			Method: "SUBSCRIBE",
