@@ -23,6 +23,7 @@ const (
 	FUTURE_COIN_WS_BASE_URL = "wss://dstream.binance.com/ws"
 
 	TESTNET_SPOT_API_BASE_URL       = "https://api.binance.com"
+	TESTNET_FUTURE_USD_BASE_URL     = "https://testnet.binancefuture.com"
 	TESTNET_FUTURE_USD_WS_BASE_URL  = "wss://fstream.binance.com/ws"
 	TESTNET_FUTURE_COIN_WS_BASE_URL = "wss://dstream.binance.com/ws"
 	//API_V1       = API_BASE_URL + "api/v1/"
