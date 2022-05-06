@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
-	"github.com/nntaoli-project/goex/internal/logger"
 	"math"
 	"net/http"
 	"net/url"
@@ -13,6 +11,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 )
 
 type BaseResponse struct {
