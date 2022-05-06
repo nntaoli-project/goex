@@ -13,24 +13,7 @@ const (
 	BINANCE_TESTNET_API_KEY_SECRET = "YOUR_KEY_SECRET"
 )
 
-func main() {
-
-	binanceWs, err := builder.DefaultAPIBuilder.APIKey(BINANCE_TESTNET_API_KEY).APISecretkey(BINANCE_TESTNET_API_KEY_SECRET).Endpoint(binance.TESTNET_FUTURE_USD_WS_BASE_URL).BuildFuturesWs(goex.BINANCE_FUTURES)
-
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-	binanceWs.TickerCallback(func(ticker *goex.FutureTicker) {
-		//log.Printf("%+v\n", *ticker.Ticker)
-	})
-	binanceWs.SubscribeTicker(goex.BTC_USD, goex.SWAP_USDT_CONTRACT)
-	binanceWs.DepthCallback(func(depth *goex.Depth) {
-		//log.Printf("%+v\n", *depth)
-	})
-	binanceWs.SubscribeDepth(goex.BTC_USDT, goex.SWAP_USDT_CONTRACT)
-
-	//time.Sleep(time.Minute) // run for one minute
-
+func fetchFutureDepthAndIndex() {
 	binanceApi := builder.DefaultAPIBuilder.APIKey(BINANCE_TESTNET_API_KEY).APISecretkey(BINANCE_TESTNET_API_KEY_SECRET).Endpoint(binance.TESTNET_FUTURE_USD_BASE_URL).BuildFuture(goex.BINANCE_SWAP)
 
 	depth, err := binanceApi.GetFutureDepth(goex.BTC_USD, goex.SWAP_USDT_CONTRACT, 100)
@@ -62,6 +45,29 @@ func main() {
 	log.Printf("askTotalAmount: %f, bidTotalAmount: %f, askTotalVol: %f, bidTotalVol: %f", askTotalAmount, bidTotalAmount, askTotalVol, bidTotalVol)
 	log.Printf("ask price averge: %f, bid price averge: %f,", askTotalVol/askTotalAmount, bidTotalVol/bidTotalAmount)
 	log.Printf("ask-bid spread: %f%%,", 100*(depth.AskList[0].Price-depth.BidList[0].Price)/markPrice)
+}
 
-	//select {}
+func main() {
+
+	binanceWs, err := builder.DefaultAPIBuilder.APIKey(BINANCE_TESTNET_API_KEY).APISecretkey(BINANCE_TESTNET_API_KEY_SECRET).Endpoint(binance.TESTNET_FUTURE_USD_WS_BASE_URL).BuildFuturesWs(goex.BINANCE_FUTURES)
+
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	binanceWs.TickerCallback(func(ticker *goex.FutureTicker) {
+		//log.Printf("%+v\n", *ticker.Ticker)
+	})
+	binanceWs.SubscribeTicker(goex.BTC_USD, goex.SWAP_USDT_CONTRACT)
+	binanceWs.DepthCallback(func(depth *goex.Depth) {
+		//log.Printf("%+v\n", *depth)
+	})
+	binanceWs.SubscribeDepth(goex.BTC_USDT, goex.SWAP_USDT_CONTRACT)
+
+	binanceWs.TradeCallback(func(trade *goex.Trade, contractType string) {
+		log.Printf("%+v\n", *trade)
+	})
+	binanceWs.SubscribeTrade(goex.BTC_USDT, goex.SWAP_USDT_CONTRACT)
+
+	select {}
+
 }
