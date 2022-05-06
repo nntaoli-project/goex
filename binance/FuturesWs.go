@@ -2,7 +2,6 @@ package binance
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/url"
 	"os"
@@ -100,7 +99,6 @@ func (s *FuturesWs) SubscribeDepth(pair goex.CurrencyPair, contractType string) 
 			Id:     2,
 		})
 	}
-	return errors.New("contract is error")
 }
 
 func (s *FuturesWs) SubscribeTicker(pair goex.CurrencyPair, contractType string) error {
@@ -121,7 +119,6 @@ func (s *FuturesWs) SubscribeTicker(pair goex.CurrencyPair, contractType string)
 			Id:     2,
 		})
 	}
-	return errors.New("contract is error")
 }
 
 func (s *FuturesWs) SubscribeTrade(pair goex.CurrencyPair, contractType string) error {

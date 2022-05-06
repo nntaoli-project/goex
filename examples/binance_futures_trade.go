@@ -14,7 +14,7 @@ const (
 )
 
 func fetchFutureDepthAndIndex() {
-	binanceApi := builder.DefaultAPIBuilder.APIKey(BINANCE_TESTNET_API_KEY).APISecretkey(BINANCE_TESTNET_API_KEY_SECRET).Endpoint(binance.TESTNET_FUTURE_USD_BASE_URL).BuildFuture(goex.BINANCE_SWAP)
+	binanceApi := builder.DefaultAPIBuilder.APIKey(BINANCE_TESTNET_API_KEY).APISecretkey(BINANCE_TESTNET_API_KEY_SECRET).Endpoint(binance.TESTNET_SPOT_WS_BASE_URL).BuildFuture(goex.BINANCE_SWAP)
 
 	depth, err := binanceApi.GetFutureDepth(goex.BTC_USD, goex.SWAP_USDT_CONTRACT, 100)
 	if err != nil {
@@ -80,7 +80,7 @@ func subscribeSpotMarketData() {
 	binanceWs.TickerCallback(func(ticker *goex.Ticker) {
 		log.Printf("%+v\n", *ticker)
 	})
-	binanceWs.SubscribeTicker(goex.BTC_USD)
+	binanceWs.SubscribeTicker(goex.BTC_USDT)
 	binanceWs.DepthCallback(func(depth *goex.Depth) {
 		log.Printf("%+v\n", *depth)
 	})
