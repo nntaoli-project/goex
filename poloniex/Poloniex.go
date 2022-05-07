@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"log"
 	"net/http"
 	"net/url"
@@ -20,6 +20,7 @@ const (
 	TRADE_API      = BASE_URL + "tradingApi"
 	PUBLIC_URL     = BASE_URL + "public"
 	TICKER_API     = "?command=returnTicker"
+	CURRENCIES_API = "?command=returnCurrencies"
 	ORDER_BOOK_API = "?command=returnOrderBook&currencyPair=%s&depth=%d"
 )
 
@@ -115,7 +116,7 @@ func (poloniex *Poloniex) GetDepth(size int, currency CurrencyPair) (*Depth, err
 
 	return &depth, nil
 }
-func (Poloniex *Poloniex) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (poloniex *Poloniex) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
 	return nil, nil
 }
 
@@ -166,11 +167,11 @@ func (poloniex *Poloniex) placeLimitOrder(command, amount, price string, currenc
 	return order, nil
 }
 
-func (poloniex *Poloniex) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (poloniex *Poloniex) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return poloniex.placeLimitOrder("buy", amount, price, currency)
 }
 
-func (poloniex *Poloniex) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (poloniex *Poloniex) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return poloniex.placeLimitOrder("sell", amount, price, currency)
 }
 
@@ -336,7 +337,7 @@ func (poloniex *Poloniex) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 	//log.Println(orders)
 	return orders, nil
 }
-func (Poloniex *Poloniex) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (poloniex *Poloniex) GetOrderHistorys(currency CurrencyPair, opt ...OptionalParameter) ([]Order, error) {
 	return nil, nil
 }
 
@@ -386,7 +387,7 @@ func (poloniex *Poloniex) GetAccount() (*Account, error) {
 	return acc, nil
 }
 
-func (p *Poloniex) Withdraw(amount string, currency Currency, fees, receiveAddr, safePwd string) (string, error) {
+func (poloniex *Poloniex) Withdraw(amount string, currency Currency, fees, receiveAddr, safePwd string) (string, error) {
 	if currency == BCC {
 		currency = BCH
 	}
@@ -396,16 +397,16 @@ func (p *Poloniex) Withdraw(amount string, currency Currency, fees, receiveAddr,
 	params.Add("amount", amount)
 	params.Add("currency", strings.ToUpper(currency.String()))
 
-	sign, err := p.buildPostForm(&params)
+	sign, err := poloniex.buildPostForm(&params)
 	if err != nil {
 		return "", err
 	}
 
 	headers := map[string]string{
-		"Key":  p.accessKey,
+		"Key":  poloniex.accessKey,
 		"Sign": sign}
 
-	resp, err := HttpPostForm2(p.client, TRADE_API, params, headers)
+	resp, err := HttpPostForm2(poloniex.client, TRADE_API, params, headers)
 
 	if err != nil {
 		log.Println(err)
@@ -512,4 +513,34 @@ func (poloniex *Poloniex) MarketBuy(amount, price string, currency CurrencyPair)
 
 func (poloniex *Poloniex) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
 	panic("unsupport the market order")
+}
+
+func (poloniex *Poloniex) GetAllCurrencies() (map[string]*PoloniexCurrency, error) {
+	respmap, err := HttpGet(poloniex.client, PUBLIC_URL+CURRENCIES_API)
+
+	if err != nil || respmap["error"] != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	result := map[string]*PoloniexCurrency{}
+	for k, v := range respmap {
+		currencyMap := v.(map[string]interface{})
+		poloniexCurrency := new(PoloniexCurrency)
+		poloniexCurrency.ID = int(currencyMap["id"].(float64))
+		poloniexCurrency.Name, _ = currencyMap["name"].(string)
+		poloniexCurrency.TxFee, _ = currencyMap["txFee"].(string)
+		poloniexCurrency.MinConf = int(currencyMap["minConf"].(float64))
+		poloniexCurrency.DepositAddress, _ = currencyMap["depositAddress"].(string)
+		poloniexCurrency.Disabled = int(currencyMap["disabled"].(float64))
+		poloniexCurrency.Delisted = int(currencyMap["delisted"].(float64))
+		poloniexCurrency.Frozen = int(currencyMap["frozen"].(float64))
+		poloniexCurrency.HumanType, _ = currencyMap["humanType"].(string)
+		poloniexCurrency.CurrencyType, _ = currencyMap["currencyType"].(string)
+		poloniexCurrency.Blockchain, _ = currencyMap["blockchain"].(string)
+		poloniexCurrency.IsGeofenced = int(currencyMap["isGeofenced"].(float64))
+
+		result[k] = poloniexCurrency
+	}
+	return result, nil
 }

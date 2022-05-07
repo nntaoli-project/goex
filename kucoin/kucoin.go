@@ -2,14 +2,14 @@ package kucoin
 
 import (
 	"github.com/Kucoin/kucoin-go-sdk"
-	. "github.com/nntaoli-project/GoEx"
-	log "github.com/sirupsen/logrus"
+	. "github.com/nntaoli-project/goex"
+	log "github.com/nntaoli-project/goex/internal/logger"
 	"time"
 )
 
 func New(apiKey, apiSecret, apiPassphrase string) *KuCoin {
 	return NewWithConfig(&APIConfig{
-		Endpoint:      "https://api.kcs.top",
+		Endpoint:      "https://api.kucoin.com",
 		ApiKey:        apiKey,
 		ApiSecretKey:  apiSecret,
 		ApiPassphrase: apiPassphrase,
@@ -46,7 +46,7 @@ type KuCoin struct {
 	service       *kucoin.ApiService
 }
 
-var inernalKlinePeriodConverter = map[int]string{
+var inernalKlinePeriodConverter = map[KlinePeriod]string{
 	KLINE_PERIOD_1MIN:  "1min",
 	KLINE_PERIOD_3MIN:  "3min",
 	KLINE_PERIOD_5MIN:  "5min",
@@ -91,17 +91,17 @@ func (kc *KuCoin) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	return &ticker, nil
 }
 
-func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	clientID := UUID()
-	params := map[string]string{
-		"clientOid": clientID,
-		"side":      "buy",
-		"symbol":    currency.ToSymbol("-"),
-		"type":      "limit",
-		"price":     price,
-		"size":      amount,
+func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	clientID := GenerateOrderClientId(32)
+	in := kucoin.CreateOrderModel{
+		ClientOid: clientID,
+		Side:      "buy",
+		Symbol:    currency.ToSymbol("-"),
+		Type:      "limit",
+		Price:     price,
+		Size:      amount,
 	}
-	resp, err := kc.service.CreateOrder(params)
+	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
 		log.Error("KuCoin LimitBuy error:", err)
 		return nil, err
@@ -121,17 +121,17 @@ func (kc *KuCoin) LimitBuy(amount, price string, currency CurrencyPair) (*Order,
 	return &order, nil
 }
 
-func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	clientID := UUID()
-	params := map[string]string{
-		"clientOid": clientID,
-		"side":      "sell",
-		"symbol":    currency.ToSymbol("-"),
-		"type":      "limit",
-		"price":     price,
-		"size":      amount,
+func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	clientID := GenerateOrderClientId(32)
+	in := kucoin.CreateOrderModel{
+		ClientOid: clientID,
+		Side:      "sell",
+		Symbol:    currency.ToSymbol("-"),
+		Type:      "limit",
+		Price:     price,
+		Size:      amount,
 	}
-	resp, err := kc.service.CreateOrder(params)
+	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
 		log.Error("KuCoin LimitSell error:", err)
 		return nil, err
@@ -152,16 +152,17 @@ func (kc *KuCoin) LimitSell(amount, price string, currency CurrencyPair) (*Order
 }
 
 func (kc *KuCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	clientID := UUID()
-	params := map[string]string{
-		"clientOid": clientID,
-		"side":      "buy",
-		"symbol":    currency.ToSymbol("-"),
-		"type":      "market",
-		"price":     price,
-		"size":      amount,
+	clientID := GenerateOrderClientId(32)
+	in := kucoin.CreateOrderModel{
+		ClientOid: clientID,
+		Side:      "buy",
+		Symbol:    currency.ToSymbol("-"),
+		Type:      "market",
+		Price:     price,
+		Size:      amount,
 	}
-	resp, err := kc.service.CreateOrder(params)
+
+	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
 		log.Error("KuCoin MarketBuy error:", err)
 		return nil, err
@@ -182,16 +183,16 @@ func (kc *KuCoin) MarketBuy(amount, price string, currency CurrencyPair) (*Order
 }
 
 func (kc *KuCoin) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	clientID := UUID()
-	params := map[string]string{
-		"clientOid": clientID,
-		"side":      "sell",
-		"symbol":    currency.ToSymbol("-"),
-		"type":      "market",
-		"price":     price,
-		"size":      amount,
+	clientID := GenerateOrderClientId(32)
+	in := kucoin.CreateOrderModel{
+		ClientOid: clientID,
+		Side:      "sell",
+		Symbol:    currency.ToSymbol("-"),
+		Type:      "market",
+		Price:     price,
+		Size:      amount,
 	}
-	resp, err := kc.service.CreateOrder(params)
+	resp, err := kc.service.CreateOrder(&in)
 	if err != nil {
 		log.Error("KuCoin MarketSell error:", err)
 		return nil, err
@@ -313,15 +314,19 @@ func (kc *KuCoin) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return orders, nil
 }
 
-func (kc *KuCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (kc *KuCoin) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	params := map[string]string{
 		"status": "done",
 		"symbol": currency.ToSymbol("-"),
 	}
-	pagination := kucoin.PaginationParam{
-		CurrentPage: int64(currentPage),
-		PageSize:    int64(pageSize),
+
+	pagination := kucoin.PaginationParam{}
+
+	if len(optional) > 0 {
+		pagination.CurrentPage = ToInt64(optional[0]["currentPage"])
+		pagination.PageSize = ToInt64(optional[0]["pageSize"])
 	}
+
 	resp, err := kc.service.Orders(params, &pagination)
 	if err != nil {
 		log.Error("KuCoin GetOrderHistorys error:", err)
@@ -340,7 +345,34 @@ func (kc *KuCoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize 
 }
 
 func (kc *KuCoin) GetAccount() (*Account, error) {
-	var account Account
+	accs, err := kc.Accounts("", "")
+	if err != nil {
+		log.Error("KuCoin GetAccount error:", err)
+		return nil, err
+	}
+
+	account := Account{}
+	account.Exchange = kc.GetExchangeName()
+	account.SubAccounts = make(map[Currency]SubAccount)
+
+	for _, v := range accs {
+		currency := NewCurrency(v.Currency, "").AdaptBccToBch()
+		// KuCoin同一币种可能有多种账户类型
+		if sub, exist := account.SubAccounts[currency]; !exist {
+			account.SubAccounts[currency] = SubAccount{
+				Currency:     currency,
+				Amount:       ToFloat64(v.Available),
+				ForzenAmount: ToFloat64(v.Holds),
+			}
+		} else {
+			account.SubAccounts[currency] = SubAccount{
+				Currency:     currency,
+				Amount:       sub.Amount + ToFloat64(v.Available),
+				ForzenAmount: sub.ForzenAmount + ToFloat64(v.Holds),
+			}
+		}
+
+	}
 	return &account, nil
 }
 
@@ -386,8 +418,9 @@ func (kc *KuCoin) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return &depth, nil
 }
 
-func (kc *KuCoin) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	resp, err := kc.service.KLines(currency.ToSymbol("-"), inernalKlinePeriodConverter[period], int64(since), time.Now().UnixNano()/int64(time.Millisecond))
+func (kc *KuCoin) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
+	resp, err := kc.service.KLines(currency.ToSymbol("-"), inernalKlinePeriodConverter[period], 0, 0)
+
 	if err != nil {
 		log.Error("KuCoin GetKlineRecords error:", err)
 		return nil, err
@@ -567,7 +600,7 @@ func (kc *KuCoin) CreateAccount(typo, currency string) (*kucoin.AccountModel, er
 // The inner transfer interface is used for transferring assets between the accounts of a user and is free of charges.
 // For example, a user could transfer assets from their main account to their trading account on the platform.
 func (kc *KuCoin) InnerTransfer(currency, from, to, amount string) (string, error) {
-	resp, err := kc.service.InnerTransferV2(UUID(), currency, from, to, amount)
+	resp, err := kc.service.InnerTransferV2(GenerateOrderClientId(32), currency, from, to, amount)
 	if err != nil {
 		log.Error("KuCoin InnerTransfer error:", err)
 		return "", err
@@ -586,7 +619,7 @@ func (kc *KuCoin) InnerTransfer(currency, from, to, amount string) (string, erro
 // SubTransfer transfers between master account and sub-account.
 func (kc *KuCoin) SubTransfer(currency, amount, direction, subUserId, accountType, subAccountType string) (string, error) {
 	params := map[string]string{
-		"clientOid":      UUID(),
+		"clientOid":      GenerateOrderClientId(32),
 		"currency":       currency,
 		"amount":         amount,
 		"direction":      direction,      // IN or OUT

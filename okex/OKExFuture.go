@@ -3,13 +3,13 @@ package okex
 import (
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	. "github.com/nntaoli-project/GoEx"
-	"github.com/nntaoli-project/GoEx/internal/logger"
+	"net/url"
 	"sort"
-	"strings"
 	"sync"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 )
 
 //合约信息
@@ -56,7 +56,7 @@ func (ok *OKExFuture) GetRate() (float64, error) {
 }
 
 func (ok *OKExFuture) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float64, error) {
-	urlPath := fmt.Sprintf("/api/futures/v3/instruments/%s/estimated_price", ok.getFutureContractId(currencyPair, QUARTER_CONTRACT))
+	urlPath := fmt.Sprintf("/api/futures/v3/instruments/%s/estimated_price", ok.GetFutureContractId(currencyPair, QUARTER_CONTRACT))
 	var response struct {
 		InstrumentId    string  `json:"instrument_id"`
 		SettlementPrice float64 `json:"settlement_price,string"`
@@ -69,7 +69,7 @@ func (ok *OKExFuture) GetFutureEstimatedPrice(currencyPair CurrencyPair) (float6
 	return response.SettlementPrice, nil
 }
 
-func (ok *OKExFuture) GetFutureContractInfo() ([]FutureContractInfo, error) {
+func (ok *OKExFuture) GetAllFutureContractInfo() ([]FutureContractInfo, error) {
 	urlPath := "/api/futures/v3/instruments"
 	var response []FutureContractInfo
 	err := ok.DoRequest("GET", urlPath, "", &response)
@@ -79,8 +79,36 @@ func (ok *OKExFuture) GetFutureContractInfo() ([]FutureContractInfo, error) {
 	return response, nil
 }
 
-func (ok *OKExFuture) getFutureContractId(pair CurrencyPair, contractAlias string) string {
-	if contractAlias != QUARTER_CONTRACT && contractAlias != NEXT_WEEK_CONTRACT && contractAlias != THIS_WEEK_CONTRACT { //传Alias，需要转为具体ContractId
+func (ok *OKExFuture) GetContractInfo(contractId string) (*FutureContractInfo, error) {
+	now := time.Now()
+	if len(ok.allContractInfo.contractInfos) == 0 ||
+		(ok.allContractInfo.uTime.Hour() < 16 && now.Hour() == 16 && now.Minute() <= 10) {
+		ok.Lock()
+		defer ok.Unlock()
+
+		infos, err := ok.GetAllFutureContractInfo()
+		if err != nil {
+			logger.Errorf("Get All Futures Contract Infos Error=%s", err)
+		} else {
+			ok.allContractInfo.contractInfos = infos
+			ok.allContractInfo.uTime = now
+		}
+	}
+
+	for _, itm := range ok.allContractInfo.contractInfos {
+		if itm.InstrumentID == contractId {
+			return &itm, nil
+		}
+	}
+
+	return nil, errors.New("unknown contract id " + contractId)
+}
+
+func (ok *OKExFuture) GetFutureContractId(pair CurrencyPair, contractAlias string) string {
+	if contractAlias != QUARTER_CONTRACT &&
+		contractAlias != NEXT_WEEK_CONTRACT &&
+		contractAlias != THIS_WEEK_CONTRACT &&
+		contractAlias != BI_QUARTER_CONTRACT { //传Alias，需要转为具体ContractId
 		return contractAlias
 	}
 
@@ -88,19 +116,19 @@ func (ok *OKExFuture) getFutureContractId(pair CurrencyPair, contractAlias strin
 	hour := now.Hour()
 	minute := now.Minute()
 
-	if ok.allContractInfo.uTime.IsZero() || (hour == 16 && minute <= 11) {
+	if ok.allContractInfo.uTime.IsZero() || (ok.allContractInfo.uTime.Hour() < 16 && hour == 16 && minute <= 11) {
 		ok.Lock()
 		defer ok.Unlock()
 
-		contractInfo, err := ok.GetFutureContractInfo()
+		contractInfo, err := ok.GetAllFutureContractInfo()
 		if err == nil {
 			ok.allContractInfo.uTime = time.Now()
 			ok.allContractInfo.contractInfos = contractInfo
 		} else {
 			time.Sleep(120 * time.Millisecond) //retry
-			contractInfo, err = ok.GetFutureContractInfo()
+			contractInfo, err = ok.GetAllFutureContractInfo()
 			if err != nil {
-				logger.Warnf(fmt.Sprintf("Get Futures Contract Alias Error [%s] ???", err.Error()))
+				logger.Errorf(fmt.Sprintf("Get Futures Contract Id Error [%s] ???", err.Error()))
 			}
 		}
 	}
@@ -118,19 +146,22 @@ func (ok *OKExFuture) getFutureContractId(pair CurrencyPair, contractAlias strin
 	return contractId
 }
 
-func (ok *OKExFuture) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
-	var urlPath = fmt.Sprintf("/api/futures/v3/instruments/%s/ticker", ok.getFutureContractId(currencyPair, contractType))
+type tickerResponse struct {
+	InstrumentId string  `json:"instrument_id"`
+	Last         float64 `json:"last,string"`
+	High24h      float64 `json:"high_24h,string"`
+	Low24h       float64 `json:"low_24h,string"`
+	BestBid      float64 `json:"best_bid,string"`
+	BestAsk      float64 `json:"best_ask,string"`
+	Volume24h    float64 `json:"volume_24h,string"`
+	Timestamp    string  `json:"timestamp"`
+}
 
-	var response struct {
-		InstrumentId string  `json:"instrument_id"`
-		Last         float64 `json:"last,string"`
-		High24h      float64 `json:"high_24h,string"`
-		Low24h       float64 `json:"low_24h,string"`
-		BestBid      float64 `json:"best_bid,string"`
-		BestAsk      float64 `json:"best_ask,string"`
-		Volume24h    float64 `json:"volume_24h,string"`
-		Timestamp    string  `json:"timestamp"`
-	}
+func (ok *OKExFuture) GetFutureTicker(currencyPair CurrencyPair, contractType string) (*Ticker, error) {
+	var (
+		urlPath  = fmt.Sprintf("/api/futures/v3/instruments/%s/ticker", ok.GetFutureContractId(currencyPair, contractType))
+		response tickerResponse
+	)
 	err := ok.DoRequest("GET", urlPath, "", &response)
 	if err != nil {
 		return nil, err
@@ -152,16 +183,7 @@ func (ok *OKExFuture) GetFutureTicker(currencyPair CurrencyPair, contractType st
 func (ok *OKExFuture) GetFutureAllTicker() (*[]FutureTicker, error) {
 	var urlPath = "/api/futures/v3/instruments/ticker"
 
-	var response []struct {
-		InstrumentId string  `json:"instrument_id"`
-		Last         float64 `json:"last,string"`
-		High24h      float64 `json:"high_24h,string"`
-		Low24h       float64 `json:"low_24h,string"`
-		BestBid      float64 `json:"best_bid,string"`
-		BestAsk      float64 `json:"best_ask,string"`
-		Volume24h    float64 `json:"volume_24h,string"`
-		Timestamp    string  `json:"timestamp"`
-	}
+	var response []tickerResponse
 
 	err := ok.DoRequest("GET", urlPath, "", &response)
 	if err != nil {
@@ -187,19 +209,23 @@ func (ok *OKExFuture) GetFutureAllTicker() (*[]FutureTicker, error) {
 	return &tickers, nil
 }
 
+type depthResponse struct {
+	Bids         [][4]interface{} `json:"bids"`
+	Asks         [][4]interface{} `json:"asks"`
+	InstrumentId string           `json:"instrument_id"`
+	Timestamp    string           `json:"timestamp"`
+}
+
 func (ok *OKExFuture) GetFutureDepth(currencyPair CurrencyPair, contractType string, size int) (*Depth, error) {
-	urlPath := fmt.Sprintf("/api/futures/v3/instruments/%s/book?size=%d", ok.getFutureContractId(currencyPair, contractType), size)
-	var response struct {
-		Bids      [][4]interface{} `json:"bids"`
-		Asks      [][4]interface{} `json:"asks"`
-		Timestamp string           `json:"timestamp"`
-	}
+	var (
+		response depthResponse
+		dep      Depth
+	)
+	urlPath := fmt.Sprintf("/api/futures/v3/instruments/%s/book?size=%d", ok.GetFutureContractId(currencyPair, contractType), size)
 	err := ok.DoRequest("GET", urlPath, "", &response)
 	if err != nil {
 		return nil, err
 	}
-
-	var dep Depth
 	dep.Pair = currencyPair
 	dep.ContractType = contractType
 	dep.UTime, _ = time.Parse(time.RFC3339, response.Timestamp)
@@ -213,14 +239,13 @@ func (ok *OKExFuture) GetFutureDepth(currencyPair CurrencyPair, contractType str
 			Price:  ToFloat64(itm[0]),
 			Amount: ToFloat64(itm[1])})
 	}
-
 	sort.Sort(sort.Reverse(dep.AskList))
 	return &dep, nil
 }
 
 func (ok *OKExFuture) GetFutureIndex(currencyPair CurrencyPair) (float64, error) {
 	//统一交易对，当周，次周，季度指数一样的
-	urlPath := fmt.Sprintf("/api/futures/v3/instruments/%s/index", ok.getFutureContractId(currencyPair, QUARTER_CONTRACT))
+	urlPath := fmt.Sprintf("/api/futures/v3/instruments/%s/index", ok.GetFutureContractId(currencyPair, QUARTER_CONTRACT))
 	var response struct {
 		InstrumentId string  `json:"instrument_id"`
 		Index        float64 `json:"index,string"`
@@ -243,13 +268,8 @@ type CrossedAccountInfo struct {
 	MaintMarginRatio float64 `json:"maint_margin_ratio,string"`
 }
 
-func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount, error) {
-	if len(currencyPair) == 0 {
-		return ok.GetFutureUserinfo()
-	}
-
-	pair := currencyPair[0]
-	urlPath := "/api/futures/v3/accounts/" + pair.ToLower().ToSymbol("-")
+func (ok *OKExFuture) GetAccounts(currencyPair CurrencyPair) (*FutureAccount, error) {
+	urlPath := "/api/futures/v3/accounts/" + currencyPair.ToLower().ToSymbol("-")
 	var response CrossedAccountInfo
 
 	err := ok.DoRequest("GET", urlPath, "", &response)
@@ -260,8 +280,8 @@ func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount,
 	acc := new(FutureAccount)
 	acc.FutureSubAccounts = make(map[Currency]FutureSubAccount, 1)
 	if response.MarginMode == "crossed" {
-		acc.FutureSubAccounts[pair.CurrencyA] = FutureSubAccount{
-			Currency:      pair.CurrencyA,
+		acc.FutureSubAccounts[currencyPair.CurrencyA] = FutureSubAccount{
+			Currency:      currencyPair.CurrencyA,
 			AccountRights: response.Equity,
 			ProfitReal:    response.RealizedPnl,
 			ProfitUnreal:  response.UnrealizedPnl,
@@ -270,15 +290,19 @@ func (ok *OKExFuture) GetAccounts(currencyPair ...CurrencyPair) (*FutureAccount,
 		}
 	} else {
 		//todo 逐仓模式
-		return nil, errors.New("GoEx unsupported  fixed margin mode")
+		return nil, errors.New("goex unsupported  fixed margin mode")
 	}
 
 	return acc, nil
 }
 
-//deprecated
 //基本上已经报废，OK限制10s一次，但是基本上都会返回error：{"code":30014,"message":"Too Many Requests"}
-func (ok *OKExFuture) GetFutureUserinfo() (*FutureAccount, error) {
+//加入currency  pair救活了这个接口
+func (ok *OKExFuture) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
+	if len(currencyPair) == 1 {
+		return ok.GetAccounts(currencyPair[0])
+	}
+
 	urlPath := "/api/futures/v3/accounts"
 	var response struct {
 		Info map[string]map[string]interface{}
@@ -334,7 +358,7 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 		Price        string `json:"price"`
 		Size         string `json:"size"`
 		MatchPrice   int    `json:"match_price"`
-		Leverage     int    `json:"leverage"`
+		//Leverage     int    `json:"leverage"` //v3 api 已废弃
 	}
 
 	var response struct {
@@ -347,18 +371,18 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 	if ord == nil {
 		return nil, errors.New("ord param is nil")
 	}
-	param.InstrumentId = ok.getFutureContractId(ord.Currency, ord.ContractName)
-	param.ClientOid = strings.Replace(uuid.New().String(), "-", "", 32)
+	param.InstrumentId = ok.GetFutureContractId(ord.Currency, ord.ContractName)
+	param.ClientOid = GenerateOrderClientId(32)
 	param.Type = ord.OType
 	param.OrderType = ord.OrderType
 	param.Price = ok.normalizePrice(ord.Price, ord.Currency)
 	param.Size = fmt.Sprint(ord.Amount)
-	param.Leverage = ord.LeverRate
+	//param.Leverage = ord.LeverRate
 	param.MatchPrice = matchPrice
 
 	//当matchPrice=1以对手价下单，order_type只能选择0:普通委托
 	if param.MatchPrice == 1 {
-		println("注意:当matchPrice=1以对手价下单时，order_type只能选择0:普通委托")
+		logger.Warn("注意:当matchPrice=1以对手价下单时，order_type只能选择0:普通委托")
 		param.OrderType = ORDER_FEATURE_ORDINARY
 	}
 
@@ -376,48 +400,51 @@ func (ok *OKExFuture) PlaceFutureOrder2(matchPrice int, ord *FutureOrder) (*Futu
 	return ord, nil
 }
 
-//deprecated
-func (ok *OKExFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
-	urlPath := "/api/futures/v3/order"
-	var param struct {
-		ClientOid    string `json:"client_oid"`
-		InstrumentId string `json:"instrument_id"`
-		Type         string `json:"type"`
-		OrderType    string `json:"order_type"`
-		Price        string `json:"price"`
-		Size         string `json:"size"`
-		MatchPrice   string `json:"match_price"`
-		Leverage     string `json:"leverage"`
+func (ok *OKExFuture) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error) {
+	fOrder, err := ok.PlaceFutureOrder2(matchPrice, &FutureOrder{
+		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+		OType:        openType,
+		ContractName: contractType,
+		Currency:     currencyPair,
+	})
+	return fOrder.OrderID2, err
+}
+
+func (ok *OKExFuture) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
+	ord := &FutureOrder{
+		Currency:     currencyPair,
+		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+		OType:        openType,
+		ContractName: contractType,
 	}
 
-	var response struct {
-		Result       bool   `json:"result"`
-		ErrorMessage string `json:"error_message"`
-		ErrorCode    string `json:"error_code"`
-		ClientOid    string `json:"client_oid"`
-		OrderId      string `json:"order_id"`
+	if len(opt) > 0 {
+		switch opt[0] {
+		case PostOnly:
+			ord.OrderType = 1
+		case Fok:
+			ord.OrderType = 2
+		case Ioc:
+			ord.OrderType = 3
+		}
 	}
 
-	param.InstrumentId = ok.getFutureContractId(currencyPair, contractType)
-	param.ClientOid = strings.Replace(uuid.New().String(), "-", "", 32)
-	param.Type = fmt.Sprint(openType)
-	param.OrderType = "0"
-	param.Price = price
-	param.Size = amount
-	param.MatchPrice = fmt.Sprint(matchPrice)
-	param.Leverage = fmt.Sprint(leverRate)
+	return ok.PlaceFutureOrder2(0, ord)
+}
 
-	reqBody, _, _ := ok.BuildRequestBody(param)
-	err := ok.DoRequest("POST", urlPath, reqBody, &response)
-	if err != nil {
-		return "", err
-	}
-
-	return response.OrderId, nil
+func (ok *OKExFuture) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
+	return ok.PlaceFutureOrder2(1, &FutureOrder{
+		Currency:     currencyPair,
+		Amount:       ToFloat64(amount),
+		OType:        openType,
+		ContractName: contractType,
+	})
 }
 
 func (ok *OKExFuture) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
-	urlPath := fmt.Sprintf("/api/futures/v3/cancel_order/%s/%s", ok.getFutureContractId(currencyPair, contractType), orderId)
+	urlPath := fmt.Sprintf("/api/futures/v3/cancel_order/%s/%s", ok.GetFutureContractId(currencyPair, contractType), orderId)
 	var response struct {
 		Result       bool   `json:"result"`
 		OrderId      string `json:"order_id"`
@@ -432,7 +459,7 @@ func (ok *OKExFuture) FutureCancelOrder(currencyPair CurrencyPair, contractType,
 }
 
 func (ok *OKExFuture) GetFuturePosition(currencyPair CurrencyPair, contractType string) ([]FuturePosition, error) {
-	urlPath := fmt.Sprintf("/api/futures/v3/%s/position", ok.getFutureContractId(currencyPair, contractType))
+	urlPath := fmt.Sprintf("/api/futures/v3/%s/position", ok.GetFutureContractId(currencyPair, contractType))
 	var response struct {
 		Result     bool   `json:"result"`
 		MarginMode string `json:"margin_mode"`
@@ -447,7 +474,7 @@ func (ok *OKExFuture) GetFuturePosition(currencyPair CurrencyPair, contractType 
 			LongPnlRatio         float64   `json:"long_pnl_ratio,string"`
 			LongUnrealisedPnl    float64   `json:"long_unrealised_pnl,string"`
 			RealisedPnl          float64   `json:"realised_pnl,string"`
-			Leverage             int       `json:"leverage,string"`
+			Leverage             float64   `json:"leverage,string"`
 			ShortQty             float64   `json:"short_qty,string"`
 			ShortAvailQty        float64   `json:"short_avail_qty,string"`
 			ShortAvgCost         float64   `json:"short_avg_cost,string"`
@@ -494,6 +521,8 @@ func (ok *OKExFuture) GetFuturePosition(currencyPair CurrencyPair, contractType 
 			ForceLiquPrice: pos.LiquidationPrice,
 			LeverRate:      pos.Leverage,
 			CreateDate:     pos.CreatedAt.Unix(),
+			ShortPnlRatio:  pos.ShortPnlRatio,
+			LongPnlRatio:   pos.LongPnlRatio,
 		})
 	}
 
@@ -502,6 +531,39 @@ func (ok *OKExFuture) GetFuturePosition(currencyPair CurrencyPair, contractType 
 
 func (ok *OKExFuture) GetFutureOrders(orderIds []string, currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
 	panic("")
+}
+
+func (ok *OKExFuture) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	urlPath := fmt.Sprintf("/api/futures/v3/orders/%s?", ok.GetFutureContractId(pair, contractType))
+
+	param := url.Values{}
+	param.Set("limit", "100")
+	param.Set("state", "7")
+	MergeOptionalParameter(&param, optional...)
+	urlPath += param.Encode()
+
+	var response struct {
+		Result    bool
+		OrderInfo []futureOrderResponse `json:"order_info"`
+	}
+
+	err := ok.DoRequest("GET", urlPath, "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	if !response.Result {
+		return nil, errors.New(fmt.Sprintf("%v", response))
+	}
+
+	orders := make([]FutureOrder, 0, 100)
+	for _, info := range response.OrderInfo {
+		ord := ok.adaptOrder(info)
+		ord.Currency = pair
+		orders = append(orders, ord)
+	}
+
+	return orders, nil
 }
 
 type futureOrderResponse struct {
@@ -540,7 +602,7 @@ func (ok *OKExFuture) adaptOrder(response futureOrderResponse) FutureOrder {
 }
 
 func (ok *OKExFuture) GetFutureOrder(orderId string, currencyPair CurrencyPair, contractType string) (*FutureOrder, error) {
-	urlPath := fmt.Sprintf("/api/futures/v3/orders/%s/%s", ok.getFutureContractId(currencyPair, contractType), orderId)
+	urlPath := fmt.Sprintf("/api/futures/v3/orders/%s/%s", ok.GetFutureContractId(currencyPair, contractType), orderId)
 	var response futureOrderResponse
 	err := ok.DoRequest("GET", urlPath, "", &response)
 	if err != nil {
@@ -554,7 +616,7 @@ func (ok *OKExFuture) GetFutureOrder(orderId string, currencyPair CurrencyPair, 
 }
 
 func (ok *OKExFuture) GetUnfinishFutureOrders(currencyPair CurrencyPair, contractType string) ([]FutureOrder, error) {
-	urlPath := fmt.Sprintf("/api/futures/v3/orders/%s?state=6&limit=100", ok.getFutureContractId(currencyPair, contractType))
+	urlPath := fmt.Sprintf("/api/futures/v3/orders/%s?state=6&limit=100", ok.GetFutureContractId(currencyPair, contractType))
 	var response struct {
 		Result    bool                  `json:"result"`
 		OrderInfo []futureOrderResponse `json:"order_info"`
@@ -596,48 +658,16 @@ func (ok *OKExFuture) GetDeliveryTime() (int, int, int, int) {
 	return 4, 16, 0, 0 //星期五，下午4点交割
 }
 
-/**
-  since : 单位秒,开始时间
-*/
-func (ok *OKExFuture) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
-	urlPath := "/api/futures/v3/instruments/%s/candles?start=%s&granularity=%d"
-	contractId := ok.getFutureContractId(currency, contract_type)
-	sinceTime := time.Unix(int64(since), 0).UTC()
-
-	if since/int(time.Second) != 1 { //如果不为秒，转为秒
-		sinceTime = time.Unix(int64(since)/int64(time.Second), 0).UTC()
-	}
-
-	granularity := 60
-	switch period {
-	case KLINE_PERIOD_1MIN:
-		granularity = 60
-	case KLINE_PERIOD_3MIN:
-		granularity = 180
-	case KLINE_PERIOD_5MIN:
-		granularity = 300
-	case KLINE_PERIOD_15MIN:
-		granularity = 900
-	case KLINE_PERIOD_30MIN:
-		granularity = 1800
-	case KLINE_PERIOD_1H, KLINE_PERIOD_60MIN:
-		granularity = 3600
-	case KLINE_PERIOD_2H:
-		granularity = 7200
-	case KLINE_PERIOD_4H:
-		granularity = 14400
-	case KLINE_PERIOD_6H:
-		granularity = 21600
-	case KLINE_PERIOD_1DAY:
-		granularity = 86400
-	case KLINE_PERIOD_1WEEK:
-		granularity = 604800
-	default:
-		granularity = 1800
+func (ok *OKExFuture) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
+	urlPath := "/api/futures/v3/instruments/%s/candles?granularity=%d"
+	contractId := ok.GetFutureContractId(currency, contractType)
+	granularity := adaptKLinePeriod(KlinePeriod(period))
+	if granularity == -1 {
+		return nil, errors.New("kline period parameter is error")
 	}
 
 	var response [][]interface{}
-	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, sinceTime.Format(time.RFC3339), granularity), "", &response)
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, granularity), "", &response)
 	if err != nil {
 		return nil, err
 	}
@@ -660,7 +690,46 @@ func (ok *OKExFuture) GetKlineRecords(contract_type string, currency CurrencyPai
 	return klines, nil
 }
 
-func (ok *OKExFuture) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
+/**
+  since : 单位秒,开始时间
+  to : 单位秒,结束时间
+*/
+func (ok *OKExFuture) GetKlineRecordsByRange(contractType string, currency CurrencyPair, period, since, to int) ([]FutureKline, error) {
+	urlPath := "/api/futures/v3/instruments/%s/candles?start=%s&end=%s&granularity=%d"
+	contractId := ok.GetFutureContractId(currency, contractType)
+	sinceTime := time.Unix(int64(since), 0).UTC()
+	toTime := time.Unix(int64(to), 0).UTC()
+
+	granularity := adaptKLinePeriod(KlinePeriod(period))
+	if granularity == -1 {
+		return nil, errors.New("kline period parameter is error")
+	}
+
+	var response [][]interface{}
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, sinceTime.Format(time.RFC3339), toTime.Format(time.RFC3339), granularity), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var klines []FutureKline
+	for _, itm := range response {
+		t, _ := time.Parse(time.RFC3339, fmt.Sprint(itm[0]))
+		klines = append(klines, FutureKline{
+			Kline: &Kline{
+				Timestamp: t.Unix(),
+				Pair:      currency,
+				Open:      ToFloat64(itm[1]),
+				High:      ToFloat64(itm[2]),
+				Low:       ToFloat64(itm[3]),
+				Close:     ToFloat64(itm[4]),
+				Vol:       ToFloat64(itm[5])},
+			Vol2: ToFloat64(itm[6])})
+	}
+
+	return klines, nil
+}
+
+func (ok *OKExFuture) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("")
 }
 
@@ -684,7 +753,7 @@ func (ok *OKExFuture) MarketCloseAllPosition(currency CurrencyPair, contract str
 		Direction    string `json:"direction"`
 	}
 
-	param.InstrumentId = ok.getFutureContractId(currency, contract)
+	param.InstrumentId = ok.GetFutureContractId(currency, contract)
 	if oType == CLOSE_BUY {
 		param.Direction = "long"
 	} else {

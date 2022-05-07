@@ -3,7 +3,7 @@ package allcoin
 import (
 	"encoding/json"
 	"errors"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"log"
 	"net/http"
 	"net/url"
@@ -271,11 +271,11 @@ func (ac *Allcoin) GetAccount() (*Account, error) {
 	return &acc, nil
 }
 
-func (ac *Allcoin) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (ac *Allcoin) LimitBuy(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return ac.placeOrder(amount, price, currencyPair, "LIMIT", "buy")
 }
 
-func (ac *Allcoin) LimitSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (ac *Allcoin) LimitSell(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return ac.placeOrder(amount, price, currencyPair, "LIMIT", "sale")
 }
 
@@ -454,7 +454,7 @@ func (ac *Allcoin) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, e
 	panic("not implements")
 }
 
-func (ac *Allcoin) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (ac *Allcoin) GetOrderHistorys(currency CurrencyPair, opt ...OptionalParameter) ([]Order, error) {
 	panic("not implements")
 }
 func (ba *Allcoin) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {

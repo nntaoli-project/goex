@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 )
 
 type CoinEx struct {
@@ -103,11 +103,11 @@ func (coinex *CoinEx) placeLimitOrder(side, amount, price string, pair CurrencyP
 	return &order, nil
 }
 
-func (coinex *CoinEx) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (coinex *CoinEx) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return coinex.placeLimitOrder("buy", amount, price, currency)
 }
 
-func (coinex *CoinEx) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (coinex *CoinEx) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return coinex.placeLimitOrder("sell", amount, price, currency)
 }
 
@@ -178,7 +178,7 @@ func (coinex *CoinEx) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) 
 	return coinex.GetPendingOrders(1, 100, currency)
 }
 
-func (coinex *CoinEx) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (coinex *CoinEx) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 
@@ -238,7 +238,7 @@ func (coinex *CoinEx) GetAccount() (*Account, error) {
 	return acc, nil
 }
 
-func (coinex *CoinEx) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (coinex *CoinEx) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]Kline, error) {
 	panic("not implement")
 }
 

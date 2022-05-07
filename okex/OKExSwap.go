@@ -1,12 +1,17 @@
 package okex
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	. "github.com/nntaoli-project/GoEx"
-	"github.com/pkg/errors"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/nntaoli-project/goex/internal/logger"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 const (
@@ -74,6 +79,9 @@ const (
 	GET_TICKER            = "/api/swap/v3/instruments/%s/ticker"
 	GET_ALL_TICKER        = "/api/swap/v3/instruments/ticker"
 	GET_UNFINISHED_ORDERS = "/api/swap/v3/orders/%s?status=%d&limit=%d"
+	PLACE_ALGO_ORDER      = "/api/swap/v3/order_algo"
+	CANCEL_ALGO_ORDER     = "/api/swap/v3/cancel_algos"
+	GET_ALGO_ORDER        = "/api/swap/v3/order_algo/%s?order_type=%d&"
 )
 
 type BaseResponse struct {
@@ -179,45 +187,62 @@ func (ok *OKExSwap) GetFutureDepth(currencyPair CurrencyPair, contractType strin
 	return &dep, nil
 }
 
-func (ok *OKExSwap) GetFutureUserinfo() (*FutureAccount, error) {
-	var infos SwapAccounts
+func (ok *OKExSwap) GetFutureUserinfo(currencyPair ...CurrencyPair) (*FutureAccount, error) {
+	var (
+		err   error
+		infos SwapAccounts
+	)
 
-	err := ok.OKEx.DoRequest("GET", GET_ACCOUNTS, "", &infos)
+	if len(currencyPair) == 1 {
+		accountInfo, err := ok.GetFutureAccountInfo(currencyPair[0])
+		if err != nil {
+			return nil, err
+		}
+
+		if accountInfo == nil {
+			return nil, errors.New("api return info is empty")
+		}
+
+		infos.Info = append(infos.Info, *accountInfo)
+
+		goto wrapperF
+	}
+
+	err = ok.OKEx.DoRequest("GET", GET_ACCOUNTS, "", &infos)
 	if err != nil {
 		return nil, err
 	}
 
 	//log.Println(infos)
+wrapperF:
 	acc := FutureAccount{}
 	acc.FutureSubAccounts = make(map[Currency]FutureSubAccount, 2)
 
 	for _, account := range infos.Info {
 		subAcc := FutureSubAccount{AccountRights: account.Equity,
-			KeepDeposit: account.Margin, ProfitReal: account.RealizedPnl, ProfitUnreal: account.UnrealizedPnl, RiskRate: account.MarginRatio}
-		switch account.InstrumentId {
-		case BTC_USD_SWAP:
-			subAcc.Currency = BTC
-		case LTC_USD_SWAP:
-			subAcc.Currency = LTC
-		case ETH_USD_SWAP:
-			subAcc.Currency = ETH
-		case ETC_USD_SWAP:
-			subAcc.Currency = ETC
-		case BCH_USD_SWAP:
-			subAcc.Currency = BCH
-		case BSV_USD_SWAP:
-			subAcc.Currency = BSV
-		case EOS_USD_SWAP:
-			subAcc.Currency = EOS
-		case XRP_USD_SWAP:
-			subAcc.Currency = XRP
-		default:
-			subAcc.Currency = UNKNOWN
+			KeepDeposit: account.Margin, ProfitReal: account.RealizedPnl,
+			ProfitUnreal: account.UnrealizedPnl, RiskRate: account.MarginRatio}
+		meta := strings.Split(account.InstrumentId, "-")
+		if len(meta) > 0 {
+			subAcc.Currency = NewCurrency(meta[0], "")
 		}
 		acc.FutureSubAccounts[subAcc.Currency] = subAcc
 	}
 
 	return &acc, nil
+}
+
+func (ok *OKExSwap) GetFutureAccountInfo(currency CurrencyPair) (*SwapAccountInfo, error) {
+	var infos struct {
+		Info SwapAccountInfo `json:"info"`
+	}
+
+	err := ok.OKEx.DoRequest("GET", fmt.Sprintf("/api/swap/v3/%s/accounts", ok.adaptContractType(currency)), "", &infos)
+	if err != nil {
+		return nil, err
+	}
+
+	return &infos.Info, nil
 }
 
 /*
@@ -233,6 +258,7 @@ type BasePlaceOrderInfo struct {
 	MatchPrice string `json:"match_price"`
 	Type       string `json:"type"`
 	Size       string `json:"size"`
+	OrderType  string `json:"order_type"`
 }
 
 type PlaceOrderInfo struct {
@@ -245,12 +271,46 @@ type PlaceOrdersInfo struct {
 	OrderData    []*BasePlaceOrderInfo `json:"order_data"`
 }
 
-func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice, leverRate int) (string, error) {
+func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error) {
+	fOrder, err := ok.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice)
+	return fOrder.OrderID2, err
+}
 
-	reqBody, _, _ := ok.OKEx.BuildRequestBody(PlaceOrderInfo{
-		BasePlaceOrderInfo{ClientOid: strings.Replace(uuid.New().String(), "-", "", 32), Price: price, MatchPrice: fmt.Sprint(matchPrice), Type: fmt.Sprint(openType), Size: amount},
+func (ok *OKExSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
+	cid := GenerateOrderClientId(32)
+	param := PlaceOrderInfo{
+		BasePlaceOrderInfo{
+			ClientOid:  cid,
+			Price:      price,
+			MatchPrice: fmt.Sprint(matchPrice),
+			Type:       fmt.Sprint(openType),
+			Size:       amount,
+			OrderType:  "0",
+		},
 		ok.adaptContractType(currencyPair),
-	})
+	}
+
+	if len(opt) > 0 {
+		switch opt[0] {
+		case PostOnly:
+			param.OrderType = "1"
+		case Fok:
+			param.OrderType = "2"
+		case Ioc:
+			param.OrderType = "3"
+		}
+	}
+
+	reqBody, _, _ := ok.OKEx.BuildRequestBody(param)
+
+	fOrder := &FutureOrder{
+		ClientOid:    cid,
+		Currency:     currencyPair,
+		ContractName: contractType,
+		OType:        openType,
+		Price:        ToFloat64(price),
+		Amount:       ToFloat64(amount),
+	}
 
 	var resp struct {
 		BaseResponse
@@ -260,14 +320,26 @@ func (ok *OKExSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, pr
 
 	err := ok.DoRequest("POST", PLACE_ORDER, reqBody, &resp)
 	if err != nil {
-		return "", err
+		logger.Errorf("[param] %s", param)
+		return fOrder, err
 	}
 
 	if resp.ErrorMessage != "" {
-		return "", errors.New(fmt.Sprintf("%s:%s", resp.ErrorCode, resp.ErrorMessage))
+		logger.Errorf("[param] %s", param)
+		return fOrder, errors.New(fmt.Sprintf("%s:%s", resp.ErrorCode, resp.ErrorMessage))
 	}
 
-	return resp.OrderID, nil
+	fOrder.OrderID2 = resp.OrderID
+
+	return fOrder, nil
+}
+
+func (ok *OKExSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
+	return ok.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, opt...)
+}
+
+func (ok *OKExSwap) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
+	return ok.PlaceFutureOrder2(currencyPair, contractType, "0", amount, openType, 1)
 }
 
 func (ok *OKExSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
@@ -289,6 +361,32 @@ func (ok *OKExSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, o
 	}
 
 	return resp.Result, nil
+}
+
+func (ok *OKExSwap) GetFutureOrderHistory(pair CurrencyPair, contractType string, optional ...OptionalParameter) ([]FutureOrder, error) {
+	urlPath := fmt.Sprintf("/api/swap/v3/orders/%s?", ok.adaptContractType(pair))
+
+	param := url.Values{}
+	param.Set("limit", "100")
+	param.Set("state", "7")
+	MergeOptionalParameter(&param, optional...)
+
+	var response SwapOrdersInfo
+
+	err := ok.DoRequest("GET", urlPath+param.Encode(), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	orders := make([]FutureOrder, 0, 100)
+	for _, info := range response.OrderInfo {
+		ord := ok.parseOrder(info)
+		ord.Currency = pair
+		ord.ContractName = contractType
+		orders = append(orders, ord)
+	}
+
+	return orders, nil
 }
 
 func (ok *OKExSwap) parseOrder(ord BaseOrderInfo) FutureOrder {
@@ -433,9 +531,9 @@ func (ok *OKExSwap) GetFuturePosition(currencyPair CurrencyPair, contractType st
 		positions[0].SellPriceAvg = sellPosition.AvgCost
 		positions[0].SellProfitReal = sellPosition.RealizedPnl
 		positions[0].SellPriceCost = sellPosition.SettlementPrice
-	}
 
-	//log.Println(resp)
+		positions[0].LeverRate = ToFloat64(sellPosition.Leverage)
+	}
 	return positions, nil
 }
 
@@ -466,11 +564,94 @@ func (ok *OKExSwap) GetDeliveryTime() (int, int, int, int) {
 	panic("not support")
 }
 
-func (ok *OKExSwap) GetKlineRecords(contract_type string, currency CurrencyPair, period, size, since int) ([]FutureKline, error) {
-	panic("not support")
+func (ok *OKExSwap) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
+	granularity := adaptKLinePeriod(KlinePeriod(period))
+	if granularity == -1 {
+		return nil, errors.New("kline period parameter is error")
+	}
+	return ok.GetKlineRecords2(contractType, currency, "", "", strconv.Itoa(granularity))
 }
 
-func (ok *OKExSwap) GetTrades(contract_type string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
+/**
+  since : 单位秒,开始时间
+  to : 单位秒,结束时间
+*/
+func (ok *OKExSwap) GetKlineRecordsByRange(currency CurrencyPair, period, since, to int) ([]FutureKline, error) {
+	urlPath := "/api/swap/v3/instruments/%s/candles?start=%s&end=%s&granularity=%d"
+	sinceTime := time.Unix(int64(since), 0).UTC().Format(time.RFC3339)
+	toTime := time.Unix(int64(to), 0).UTC().Format(time.RFC3339)
+	contractId := ok.adaptContractType(currency)
+	granularity := adaptKLinePeriod(KlinePeriod(period))
+	if granularity == -1 {
+		return nil, errors.New("kline period parameter is error")
+	}
+
+	var response [][]interface{}
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, sinceTime, toTime, granularity), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var klines []FutureKline
+	for _, itm := range response {
+		t, _ := time.Parse(time.RFC3339, fmt.Sprint(itm[0]))
+		klines = append(klines, FutureKline{
+			Kline: &Kline{
+				Timestamp: t.Unix(),
+				Pair:      currency,
+				Open:      ToFloat64(itm[1]),
+				High:      ToFloat64(itm[2]),
+				Low:       ToFloat64(itm[3]),
+				Close:     ToFloat64(itm[4]),
+				Vol:       ToFloat64(itm[5])},
+			Vol2: ToFloat64(itm[6])})
+	}
+
+	return klines, nil
+}
+
+/**
+  since : 单位秒,开始时间
+*/
+func (ok *OKExSwap) GetKlineRecords2(contractType string, currency CurrencyPair, start, end, period string) ([]FutureKline, error) {
+	urlPath := "/api/swap/v3/instruments/%s/candles?%s"
+	params := url.Values{}
+	if start != "" {
+		params.Set("start", start)
+	}
+	if end != "" {
+		params.Set("end", end)
+	}
+	if period != "" {
+		params.Set("granularity", period)
+	}
+	contractId := ok.adaptContractType(currency)
+
+	var response [][]interface{}
+	err := ok.DoRequest("GET", fmt.Sprintf(urlPath, contractId, params.Encode()), "", &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var kline []FutureKline
+	for _, itm := range response {
+		t, _ := time.Parse(time.RFC3339, fmt.Sprint(itm[0]))
+		kline = append(kline, FutureKline{
+			Kline: &Kline{
+				Timestamp: t.Unix(),
+				Pair:      currency,
+				Open:      ToFloat64(itm[1]),
+				High:      ToFloat64(itm[2]),
+				Low:       ToFloat64(itm[3]),
+				Close:     ToFloat64(itm[4]),
+				Vol:       ToFloat64(itm[5])},
+			Vol2: ToFloat64(itm[6])})
+	}
+
+	return kline, nil
+}
+
+func (ok *OKExSwap) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	panic("not support")
 }
 
@@ -504,5 +685,218 @@ func (ok *OKExSwap) AdaptTradeStatus(status int) TradeStatus {
 }
 
 func (ok *OKExSwap) adaptContractType(currencyPair CurrencyPair) string {
-	return fmt.Sprintf("%s-SWAP", currencyPair.AdaptUsdtToUsd().ToSymbol("-"))
+	return fmt.Sprintf("%s-SWAP", currencyPair.ToSymbol("-"))
+}
+
+type Instrument struct {
+	InstrumentID        string    `json:"instrument_id"`
+	UnderlyingIndex     string    `json:"underlying_index"`
+	QuoteCurrency       string    `json:"quote_currency"`
+	Coin                string    `json:"coin"`
+	ContractVal         float64   `json:"contract_val,string"`
+	Listing             time.Time `json:"listing"`
+	Delivery            time.Time `json:"delivery"`
+	SizeIncrement       int       `json:"size_increment,string"`
+	TickSize            float64   `json:"tick_size,string"`
+	BaseCurrency        string    `json:"base_currency"`
+	Underlying          string    `json:"underlying"`
+	SettlementCurrency  string    `json:"settlement_currency"`
+	IsInverse           bool      `json:"is_inverse,string"`
+	ContractValCurrency string    `json:"contract_val_currency"`
+}
+
+func (ok *OKExSwap) GetInstruments() ([]Instrument, error) {
+	var resp []Instrument
+	err := ok.DoRequest("GET", "/api/swap/v3/instruments", "", &resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+type MarginLeverage struct {
+	LongLeverage  float64 `json:"long_leverage,string"`
+	MarginMode    string  `json:"margin_mode"`
+	ShortLeverage float64 `json:"short_leverage,string"`
+	InstrumentId  string  `json:"instrument_id"`
+}
+
+func (ok *OKExSwap) GetMarginLevel(currencyPair CurrencyPair) (*MarginLeverage, error) {
+	var resp MarginLeverage
+	uri := fmt.Sprintf("/api/swap/v3/accounts/%s/settings", ok.adaptContractType(currencyPair))
+
+	err := ok.DoRequest("GET", uri, "", &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+
+}
+
+// marginmode
+//1:逐仓-多仓
+//2:逐仓-空仓
+//3:全仓
+func (ok *OKExSwap) SetMarginLevel(currencyPair CurrencyPair, level, marginMode int) (*MarginLeverage, error) {
+	var resp MarginLeverage
+	uri := fmt.Sprintf("/api/swap/v3/accounts/%s/leverage", ok.adaptContractType(currencyPair))
+
+	reqBody := make(map[string]string)
+	reqBody["leverage"] = strconv.Itoa(level)
+	reqBody["side"] = strconv.Itoa(marginMode)
+	data, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ok.DoRequest("POST", uri, string(data), &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+//委托策略下单 algo_type 1:限价 2:市场价；触发价格类型，默认是限价；为市场价时，委托价格不必填；
+func (ok *OKExSwap) PlaceFutureAlgoOrder(ord *FutureOrder) (*FutureOrder, error) {
+	var param struct {
+		InstrumentId string `json:"instrument_id"`
+		Type         int    `json:"type"`
+		OrderType    int    `json:"order_type"` //1：止盈止损 2：跟踪委托 3：冰山委托 4：时间加权
+		Size         string `json:"size"`
+		TriggerPrice string `json:"trigger_price"`
+		AlgoPrice    string `json:"algo_price"`
+		AlgoType     string `json:"algo_type"`
+	}
+
+	var response struct {
+		ErrorMessage string `json:"error_message"`
+		ErrorCode    string `json:"error_code"`
+		DetailMsg    string `json:"detail_msg"`
+
+		Data struct {
+			Result       string `json:"result"`
+			ErrorMessage string `json:"error_message"`
+			ErrorCode    string `json:"error_code"`
+			AlgoId       string `json:"algo_id"`
+			InstrumentId string `json:"instrument_id"`
+			OrderType    int    `json:"order_type"`
+		} `json:"data"`
+	}
+	if ord == nil {
+		return nil, errors.New("ord param is nil")
+	}
+	param.InstrumentId = ok.adaptContractType(ord.Currency)
+	param.Type = ord.OType
+	param.OrderType = ord.OrderType
+	param.AlgoType = fmt.Sprint(ord.AlgoType)
+	param.TriggerPrice = fmt.Sprint(ord.TriggerPrice)
+	param.AlgoPrice = fmt.Sprint(ToFloat64(ord.Price))
+	param.Size = fmt.Sprint(ord.Amount)
+
+	reqBody, _, _ := ok.BuildRequestBody(param)
+	err := ok.DoRequest("POST", PLACE_ALGO_ORDER, reqBody, &response)
+
+	if err != nil {
+		return ord, err
+	}
+
+	ord.OrderID2 = response.Data.AlgoId
+	ord.OrderTime = time.Now().UnixNano() / int64(time.Millisecond)
+
+	return ord, nil
+}
+
+//委托策略撤单
+func (ok *OKExSwap) FutureCancelAlgoOrder(currencyPair CurrencyPair, orderId []string) (bool, error) {
+	if len(orderId) == 0 {
+		return false, errors.New("invalid order id")
+	}
+	var cancelParam struct {
+		InstrumentId string   `json:"instrument_id"`
+		AlgoIds      []string `json:"algo_ids"`
+		OrderType    string   `json:"order_type"`
+	}
+
+	var resp struct {
+		ErrorMessage string `json:"error_message"`
+		ErrorCode    string `json:"error_code"`
+		DetailMsg    string `json:"detailMsg"`
+		Data         struct {
+			Result       string `json:"result"`
+			AlgoIds      string `json:"algo_ids"`
+			InstrumentID string `json:"instrument_id"`
+			OrderType    string `json:"order_type"`
+		} `json:"data"`
+	}
+
+	cancelParam.InstrumentId = ok.adaptContractType(currencyPair)
+	cancelParam.OrderType = "1"
+	cancelParam.AlgoIds = orderId
+
+	reqBody, _, _ := ok.BuildRequestBody(cancelParam)
+
+	err := ok.DoRequest("POST", CANCEL_ALGO_ORDER, reqBody, &resp)
+	if err != nil {
+		return false, err
+	}
+
+	return resp.Data.Result == "success", nil
+}
+
+//获取委托单列表, status和algo_id必填且只能填其一
+func (ok *OKExSwap) GetFutureAlgoOrders(algo_id string, status string, currencyPair CurrencyPair) ([]FutureOrder, error) {
+	uri := fmt.Sprintf(GET_ALGO_ORDER, ok.adaptContractType(currencyPair), 1)
+	if algo_id != "" {
+		uri += "algo_id=" + algo_id
+	} else if status != "" {
+		uri += "status=" + status
+	} else {
+		return nil, errors.New("status or algo_id is needed")
+	}
+
+	var resp struct {
+		OrderStrategyVOS []struct {
+			AlgoId       string `json:"algo_id"`
+			AlgoPrice    string `json:"algo_price"`
+			InstrumentId string `json:"instrument_id"`
+			Leverage     string `json:"leverage"`
+			OrderType    string `json:"order_type"`
+			RealAmount   string `json:"real_amount"`
+			RealPrice    string `json:"real_price"`
+			Size         string `json:"size"`
+			Status       string `json:"status"`
+			Timestamp    string `json:"timestamp"`
+			TriggerPrice string `json:"trigger_price"`
+			Type         string `json:"type"`
+		} `json:"orderStrategyVOS"`
+	}
+
+	err := ok.DoRequest("GET", uri, "", &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	var orders []FutureOrder
+	for _, info := range resp.OrderStrategyVOS {
+		oTime, _ := time.Parse(time.RFC3339, info.Timestamp)
+
+		ord := FutureOrder{
+			OrderID2:     info.AlgoId,
+			Price:        ToFloat64(info.AlgoPrice),
+			Amount:       ToFloat64(info.Size),
+			AvgPrice:     ToFloat64(info.RealPrice),
+			DealAmount:   ToFloat64(info.RealAmount),
+			OrderTime:    oTime.UnixNano() / int64(time.Millisecond),
+			Status:       ok.AdaptTradeStatus(ToInt(info.Status)),
+			Currency:     CurrencyPair{},
+			OrderType:    ToInt(info.OrderType),
+			OType:        ToInt(info.Type),
+			TriggerPrice: ToFloat64(info.TriggerPrice),
+		}
+		ord.Currency = currencyPair
+		orders = append(orders, ord)
+	}
+
+	//log.Println(len(orders))
+	return orders, nil
 }

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"log"
 	"net/http"
 	"net/url"
@@ -43,7 +43,7 @@ func (zb *Zb) GetExchangeName() string {
 }
 
 func (zb *Zb) GetTicker(currency CurrencyPair) (*Ticker, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	resp, err := HttpGet(zb.httpClient, MARKET_URL+fmt.Sprintf(TICKER_API, symbol))
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (zb *Zb) GetTicker(currency CurrencyPair) (*Ticker, error) {
 }
 
 func (zb *Zb) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	resp, err := HttpGet(zb.httpClient, MARKET_URL+fmt.Sprintf(DEPTH_API, symbol, size))
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (zb *Zb) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 
 	asks, isok1 := resp["asks"].([]interface{})
 	bids, isok2 := resp["bids"].([]interface{})
-	
+
 	if isok2 != true || isok1 != true {
 		return nil, errors.New("no depth data!")
 	}
@@ -170,7 +170,7 @@ func (zb *Zb) GetAccount() (*Account, error) {
 }
 
 func (zb *Zb) placeOrder(amount, price string, currency CurrencyPair, tradeType int) (*Order, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	params := url.Values{}
 	params.Set("method", "order")
 	params.Set("price", price)
@@ -220,16 +220,16 @@ func (zb *Zb) placeOrder(amount, price string, currency CurrencyPair, tradeType 
 	return order, nil
 }
 
-func (zb *Zb) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (zb *Zb) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return zb.placeOrder(amount, price, currency, 1)
 }
 
-func (zb *Zb) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (zb *Zb) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return zb.placeOrder(amount, price, currency, 0)
 }
 
 func (zb *Zb) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("-")
 	params := url.Values{}
 	params.Set("method", "cancelOrder")
 	params.Set("id", orderId)
@@ -301,7 +301,7 @@ func parseOrder(order *Order, ordermap map[string]interface{}) {
 }
 
 func (zb *Zb) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error) {
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	params := url.Values{}
 	params.Set("method", "getOrder")
 	params.Set("id", orderId)
@@ -331,7 +331,7 @@ func (zb *Zb) GetOneOrder(orderId string, currency CurrencyPair) (*Order, error)
 
 func (zb *Zb) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	params := url.Values{}
-	symbol := currency.AdaptBchToBcc().AdaptUsdToUsdt().ToSymbol("_")
+	symbol := currency.ToSymbol("_")
 	params.Set("method", "getUnfinishedOrdersIgnoreTradeType")
 	params.Set("currency", symbol)
 	params.Set("pageIndex", "1")
@@ -371,11 +371,11 @@ func (zb *Zb) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return orders, nil
 }
 
-func (zb *Zb) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (zb *Zb) GetOrderHistorys(currency CurrencyPair, opt ...OptionalParameter) ([]Order, error) {
 	return nil, nil
 }
 
-func (zb *Zb) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (zb *Zb) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]Kline, error) {
 	return nil, nil
 }
 

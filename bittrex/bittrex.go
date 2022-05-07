@@ -1,11 +1,11 @@
 package bittrex
 
 import (
+	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"net/http"
 	"sort"
-	"errors"
 )
 
 type Bittrex struct {
@@ -19,10 +19,10 @@ func New(client *http.Client, accesskey, secretkey string) *Bittrex {
 	return &Bittrex{client: client, accesskey: accesskey, secretkey: secretkey, baseUrl: "https://bittrex.com/api/v1.1"}
 }
 
-func (bx *Bittrex) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bx *Bittrex) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	panic("not implement")
 }
-func (bx *Bittrex) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bx *Bittrex) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	panic("not implement")
 }
 func (bx *Bittrex) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
@@ -40,7 +40,7 @@ func (bx *Bittrex) GetOneOrder(orderId string, currency CurrencyPair) (*Order, e
 func (bx *Bittrex) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	panic("not implement")
 }
-func (bx *Bittrex) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (bx *Bittrex) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 func (bx *Bittrex) GetAccount() (*Account, error) {
@@ -105,7 +105,7 @@ func (bx *Bittrex) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return dep, nil
 }
 
-func (bx *Bittrex) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (bx *Bittrex) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]Kline, error) {
 	panic("not implement")
 }
 

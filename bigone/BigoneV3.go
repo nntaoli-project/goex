@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/goex"
 	"github.com/nubo/jwt"
 )
 
@@ -355,7 +355,7 @@ func (bo *BigoneV3) GetOneOrder(orderId string, currencyPair goex.CurrencyPair) 
 func (bo *BigoneV3) GetUnfinishOrders(currencyPair goex.CurrencyPair) ([]goex.Order, error) {
 	return bo.getOrdersList(currencyPair, 200, goex.ORDER_UNFINISH)
 }
-func (bo *BigoneV3) GetOrderHistorys(currencyPair goex.CurrencyPair, currentPage, pageSize int) ([]goex.Order, error) {
+func (bo *BigoneV3) GetOrderHistorys(currencyPair goex.CurrencyPair, opt goex.OptionalParameter) ([]goex.Order, error) {
 	return bo.getOrdersList(currencyPair, 200, goex.ORDER_FINISH)
 }
 

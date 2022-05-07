@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/nntaoli-project/GoEx/internal/logger"
-	"github.com/valyala/fasthttp"
-	"github.com/valyala/fasthttp/fasthttpproxy"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,50 +12,62 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/nntaoli-project/goex/internal/logger"
+	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
-var fastHttpClient fasthttp.Client
-
-func init() {
-	fastHttpClient.MaxConnsPerHost = 2
-	fastHttpClient.ReadTimeout = 10 * time.Second
-	fastHttpClient.WriteTimeout = 10 * time.Second
-}
+var (
+	fastHttpClient = &fasthttp.Client{
+		Name:                "goex-http-utils",
+		MaxConnsPerHost:     16,
+		MaxIdleConnDuration: 20 * time.Second,
+		ReadTimeout:         10 * time.Second,
+		WriteTimeout:        10 * time.Second,
+	}
+	socksDialer fasthttp.DialFunc
+)
 
 func NewHttpRequestWithFasthttp(client *http.Client, reqMethod, reqUrl, postData string, headers map[string]string) ([]byte, error) {
 	logger.Log.Debug("use fasthttp client")
 	transport := client.Transport
+
 	if transport != nil {
 		if proxy, err := transport.(*http.Transport).Proxy(nil); err == nil && proxy != nil {
 			proxyUrl := proxy.String()
 			logger.Log.Debug("proxy url: ", proxyUrl)
 			if proxy.Scheme != "socks5" {
 				logger.Log.Error("fasthttp only support the socks5 proxy")
-			} else {
-				fastHttpClient.Dial = fasthttpproxy.FasthttpSocksDialer(strings.TrimPrefix(proxyUrl, proxy.Scheme+"://"))
+			} else if socksDialer == nil {
+				socksDialer = fasthttpproxy.FasthttpSocksDialer(strings.TrimPrefix(proxyUrl, proxy.Scheme+"://"))
+				fastHttpClient.Dial = socksDialer
 			}
 		}
 	}
+
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
 	defer func() {
 		fasthttp.ReleaseRequest(req)
 		fasthttp.ReleaseResponse(resp)
 	}()
+
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
 	req.Header.SetMethod(reqMethod)
 	req.SetRequestURI(reqUrl)
 	req.SetBodyString(postData)
-	err := fastHttpClient.DoTimeout(req, resp, 10*time.Second)
+
+	err := fastHttpClient.Do(req, resp)
 	if err != nil {
 		return nil, err
 	}
+
 	if resp.StatusCode() != 200 {
 		return nil, errors.New(fmt.Sprintf("HttpStatusCode:%d ,Desc:%s", resp.StatusCode(), string(resp.Body())))
 	}
-
 	return resp.Body(), nil
 }
 

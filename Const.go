@@ -65,6 +65,7 @@ const (
 	KLINE_PERIOD_60MIN
 	KLINE_PERIOD_1H
 	KLINE_PERIOD_2H
+	KLINE_PERIOD_3H
 	KLINE_PERIOD_4H
 	KLINE_PERIOD_6H
 	KLINE_PERIOD_8H
@@ -113,46 +114,83 @@ const (
 )
 
 var (
-	THIS_WEEK_CONTRACT = "this_week" //周合约
-	NEXT_WEEK_CONTRACT = "next_week" //次周合约
-	QUARTER_CONTRACT   = "quarter"   //季度合约
-	SWAP_CONTRACT      = "swap"      //永续合约
+	THIS_WEEK_CONTRACT  = "this_week"  //周合约
+	NEXT_WEEK_CONTRACT  = "next_week"  //次周合约
+	QUARTER_CONTRACT    = "quarter"    //季度合约
+	BI_QUARTER_CONTRACT = "bi_quarter" // NEXT QUARTER
+	SWAP_CONTRACT       = "swap"       //永续合约
+	SWAP_USDT_CONTRACT  = "swap-usdt"
 )
 
 //exchanges const
 const (
-	KUCOIN       = "kucoin.com"
-	OKCOIN_CN    = "okcoin.cn"
-	OKCOIN_COM   = "okcoin.com"
-	OKEX         = "okex.com"
-	OKEX_V3      = "okex.com_v3"
-	OKEX_FUTURE  = "okex.com_future"
-	OKEX_SWAP    = "okex.com_swap"
-	HUOBI        = "huobi.com"
-	HUOBI_PRO    = "huobi.pro"
-	BITSTAMP     = "bitstamp.net"
-	KRAKEN       = "kraken.com"
-	ZB           = "zb.com"
-	BITFINEX     = "bitfinex.com"
-	BINANCE      = "binance.com"
-	BINANCE_SWAP = "binance.com_swap"
-	POLONIEX     = "poloniex.com"
-	COINEX       = "coinex.com"
-	BITHUMB      = "bithumb.com"
-	GATEIO       = "gate.io"
-	BITTREX      = "bittrex.com"
-	GDAX         = "gdax.com"
-	WEX_NZ       = "wex.nz"
-	BIGONE       = "big.one"
-	COIN58       = "58coin.com"
-	FCOIN        = "fcoin.com"
-	FCOIN_MARGIN = "fcoin.com_margin"
-	FMEX         = "fmex.com"
-	HITBTC       = "hitbtc.com"
-	BITMEX       = "bitmex.com"
-	BITMEX_TEST  = "testnet.bitmex.com"
-	CRYPTOPIA    = "cryptopia.co.nz"
-	HBDM         = "hbdm.com"
-	COINBENE     = "coinbene.com"
-	ATOP         = "a.top"
+	KUCOIN          = "kucoin.com"
+	OKCOIN_COM      = "okcoin.com"
+	OKEX            = "okex.com"
+	OKEX_V3         = "okex.com_v3"
+	OKEX_FUTURE     = "okex.com_future"
+	OKEX_SWAP       = "okex.com_swap"
+	HUOBI           = "huobi.com"
+	HUOBI_PRO       = "huobi.pro"
+	BITSTAMP        = "bitstamp.net"
+	KRAKEN          = "kraken.com"
+	ZB              = "zb.com"
+	BITFINEX        = "bitfinex.com"
+	BINANCE         = "binance.com"
+	BINANCE_SWAP    = "binance.com_swap"
+	BINANCE_FUTURES = "binance.com_futures"
+	POLONIEX        = "poloniex.com"
+	COINEX          = "coinex.com"
+	BITHUMB         = "bithumb.com"
+	GATEIO          = "gate.io"
+	BITTREX         = "bittrex.com"
+	GDAX            = "gdax.com"
+	BIGONE          = "big.one"
+	FCOIN           = "fcoin.com"
+	FCOIN_MARGIN    = "fcoin.com_margin"
+	FMEX            = "fmex.com"
+	HITBTC          = "hitbtc.com"
+	BITMEX          = "bitmex.com"
+	BITMEX_TEST     = "testnet.bitmex.com"
+	CRYPTOPIA       = "cryptopia.co.nz"
+	HBDM            = "hbdm.com"
+	HBDM_SWAP       = "hbdm.com_swap"
+	COINBENE        = "coinbene.com"
+	ATOP            = "a.top"
+	BITGET_SWAP     = "bitget_swap"
+)
+
+const (
+	SUB_ACCOUNT = iota //子账户
+	SPOT               // 币币交易
+	_
+	FUTURE      //交割合约
+	C2C         //法币
+	SPOT_MARGIN //币币杠杆交易
+	WALLET      // 资金账户
+	_
+	TIPS      //余币宝
+	SWAP      //永续合约
+	SWAP_USDT //usdt本位永续合约
+)
+
+type LimitOrderOptionalParameter int
+
+func (opt LimitOrderOptionalParameter) String() string {
+	switch opt {
+	case PostOnly:
+		return "post_only"
+	case Fok:
+		return "fok"
+	case Ioc:
+		return "ioc"
+	default:
+		return "error-order-optional-parameter"
+	}
+}
+
+const (
+	PostOnly LimitOrderOptionalParameter = iota + 1
+	Ioc
+	Fok
 )

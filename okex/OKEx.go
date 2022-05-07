@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	. "github.com/nntaoli-project/GoEx"
-	"github.com/nntaoli-project/GoEx/internal/logger"
+	. "github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 	"strings"
 	"sync"
 	"time"
@@ -16,12 +16,15 @@ import (
 const baseUrl = "https://www.okex.com"
 
 type OKEx struct {
-	config     *APIConfig
-	OKExSpot   *OKExSpot
-	OKExFuture *OKExFuture
-	OKExSwap   *OKExSwap
-	OKExWallet *OKExWallet
-	OKExMargin *OKExMargin
+	config          *APIConfig
+	OKExSpot        *OKExSpot
+	OKExFuture      *OKExFuture
+	OKExSwap        *OKExSwap
+	OKExWallet      *OKExWallet
+	OKExMargin      *OKExMargin
+	OKExV3FuturesWs *OKExV3FuturesWs
+	OKExV3SpotWs    *OKExV3SpotWs
+	OKExV3SwapWs    *OKExV3SwapWs
 }
 
 func NewOKEx(config *APIConfig) *OKEx {
@@ -34,6 +37,9 @@ func NewOKEx(config *APIConfig) *OKEx {
 	okex.OKExWallet = &OKExWallet{okex}
 	okex.OKExMargin = &OKExMargin{okex}
 	okex.OKExSwap = &OKExSwap{okex, config}
+	okex.OKExV3FuturesWs = NewOKExV3FuturesWs(okex)
+	okex.OKExV3SpotWs = NewOKExSpotV3Ws(okex)
+	okex.OKExV3SwapWs = NewOKExV3SwapWs(okex)
 	return okex
 }
 
@@ -48,8 +54,7 @@ func (ok *OKEx) UUID() string {
 func (ok *OKEx) DoRequest(httpMethod, uri, reqBody string, response interface{}) error {
 	url := ok.config.Endpoint + uri
 	sign, timestamp := ok.doParamSign(httpMethod, uri, reqBody)
-	logger.Log.Debug("sign=", sign)
-	logger.Log.Debug("timestamp=", timestamp)
+	//logger.Log.Debug("timestamp=", timestamp, ", sign=", sign)
 	resp, err := NewHttpRequest(ok.config.HttpClient, httpMethod, url, reqBody, map[string]string{
 		CONTENT_TYPE: APPLICATION_JSON_UTF8,
 		ACCEPT:       APPLICATION_JSON,
@@ -126,12 +131,12 @@ func (ok *OKEx) IsoTime() string {
 	return iso
 }
 
-func (ok *OKEx) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	return ok.OKExSpot.LimitBuy(amount, price, currency)
+func (ok *OKEx) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	return ok.OKExSpot.LimitBuy(amount, price, currency, opt...)
 }
 
-func (ok *OKEx) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	return ok.OKExSpot.LimitSell(amount, price, currency)
+func (ok *OKEx) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	return ok.OKExSpot.LimitSell(amount, price, currency, opt...)
 }
 
 func (ok *OKEx) MarketBuy(amount, price string, currency CurrencyPair) (*Order, error) {
@@ -154,8 +159,8 @@ func (ok *OKEx) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return ok.OKExSpot.GetUnfinishOrders(currency)
 }
 
-func (ok *OKEx) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
-	return ok.OKExSpot.GetOrderHistorys(currency, currentPage, pageSize)
+func (ok *OKEx) GetOrderHistorys(currency CurrencyPair, opt ...OptionalParameter) ([]Order, error) {
+	return ok.OKExSpot.GetOrderHistorys(currency, opt...)
 }
 
 func (ok *OKEx) GetAccount() (*Account, error) {
@@ -170,8 +175,8 @@ func (ok *OKEx) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return ok.OKExSpot.GetDepth(size, currency)
 }
 
-func (ok *OKEx) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	return ok.OKExSpot.GetKlineRecords(currency, period, size, since)
+func (ok *OKEx) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
+	return ok.OKExSpot.GetKlineRecords(currency, period, size, optional...)
 }
 
 func (ok *OKEx) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {

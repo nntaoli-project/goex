@@ -1,25 +1,27 @@
 package goex
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
 
 type Order struct {
-	Price      float64
-	Amount     float64
-	AvgPrice   float64
-	DealAmount float64
-	Fee        float64
-	Cid        string //客户端自定义ID
-	OrderID2   string
-	OrderID    int //deprecated
-	OrderTime  int
-	Status     TradeStatus
-	Currency   CurrencyPair
-	Side       TradeSide
-	Type       string //limit / market
-	OrderType  int    //0:default,1:maker,2:fok,3:ioc
+	Price        float64
+	Amount       float64
+	AvgPrice     float64
+	DealAmount   float64
+	Fee          float64
+	Cid          string //客户端自定义ID
+	OrderID2     string
+	OrderID      int //deprecated
+	Status       TradeStatus
+	Currency     CurrencyPair
+	Side         TradeSide
+	Type         string //limit / market
+	OrderType    int    //0:default,1:maker,2:fok,3:ioc
+	OrderTime    int    // create  timestamp
+	FinishedTime int64  //finished timestamp
 }
 
 type Trade struct {
@@ -75,7 +77,7 @@ type Ticker struct {
 type FutureTicker struct {
 	*Ticker
 	ContractType string  `json:"omitempty"`
-	ContractId   int     `json:"contractId"`
+	ContractId   string  `json:"contractId"`
 	LimitHigh    float64 `json:"limitHigh,string"`
 	LimitLow     float64 `json:"limitLow,string"`
 	HoldAmount   float64 `json:"hold_amount,string"`
@@ -102,7 +104,8 @@ func (dr DepthRecords) Less(i, j int) bool {
 }
 
 type Depth struct {
-	ContractType string //for future
+	ContractType string `json:"contract_type,omitempty"` //for futures
+	ContractId   string `json:"contract_id,omitempty"`   // for futures
 	Pair         CurrencyPair
 	UTime        time.Time
 	AskList      DepthRecords // Descending order
@@ -117,7 +120,7 @@ type APIConfig struct {
 	ApiPassphrase string //for okex.com v3 api
 	ClientId      string //for bitstamp.net , huobi.pro
 
-	Lever int //杠杆倍数 , for future
+	Lever float64 //杠杆倍数 , for future
 }
 
 type Kline struct {
@@ -161,9 +164,14 @@ type FutureOrder struct {
 	Currency     CurrencyPair
 	OrderType    int     //ORDINARY=0 POST_ONLY=1 FOK= 2 IOC= 3
 	OType        int     //1：开多 2：开空 3：平多 4： 平空
-	LeverRate    int     //倍数
+	LeverRate    float64 //倍数
 	Fee          float64 //手续费
 	ContractName string
+	FinishedTime int64 // finished timestamp
+
+	//策略委托单
+	TriggerPrice float64
+	AlgoType     int //1:限价 2:市场价；触发价格类型，默认是限价；为市场价时，委托价格不必填；
 }
 
 type FuturePosition struct {
@@ -172,23 +180,42 @@ type FuturePosition struct {
 	BuyPriceAvg    float64
 	BuyPriceCost   float64
 	BuyProfitReal  float64
+	BuyProfit      float64
 	CreateDate     int64
-	LeverRate      int
+	LeverRate      float64
 	SellAmount     float64
 	SellAvailable  float64
 	SellPriceAvg   float64
 	SellPriceCost  float64
 	SellProfitReal float64
+	SellProfit     float64
 	Symbol         CurrencyPair //btc_usd:比特币,ltc_usd:莱特币
 	ContractType   string
 	ContractId     int64
 	ForceLiquPrice float64 //预估爆仓价
+	ShortPnlRatio  float64 //空仓收益率
+	LongPnlRatio   float64 //多仓收益率
 }
 
 type HistoricalFunding struct {
 	InstrumentId string    `json:"instrument_id"`
 	RealizedRate float64   `json:"realized_rate,string"`
 	FundingTime  time.Time `json:"funding_time"`
+}
+
+type TickSize struct {
+	InstrumentID    string
+	UnderlyingIndex string
+	QuoteCurrency   string
+	PriceTickSize   float64 //下单价格精度
+	AmountTickSize  float64 //数量精度
+}
+
+type FuturesContractInfo struct {
+	*TickSize
+	ContractVal  float64 //合约面值(美元)
+	Delivery     string  //交割日期
+	ContractType string  //	本周 this_week 次周 next_week 季度 quarter
 }
 
 //api parameter struct
@@ -202,4 +229,85 @@ type BorrowParameter struct {
 type RepaymentParameter struct {
 	BorrowParameter
 	BorrowId string
+}
+
+type TransferParameter struct {
+	Currency       string  `json:"currency"`
+	From           int     `json:"from"`
+	To             int     `json:"to"`
+	Amount         float64 `json:"amount"`
+	SubAccount     string  `json:"sub_account"`
+	InstrumentId   string  `json:"instrument_id"`
+	ToInstrumentId string  `json:"to_instrument_id"`
+}
+
+type WithdrawParameter struct {
+	Currency    string  `json:"currency"`
+	Amount      float64 `json:"amount,string"`
+	Destination int     `json:"destination"` //提币到(2:OKCoin国际 3:OKEx 4:数字货币地址)
+	ToAddress   string  `json:"to_address"`
+	TradePwd    string  `json:"trade_pwd"`
+	Fee         string  `json:"fee"`
+}
+
+type DepositWithdrawHistory struct {
+	WithdrawalId string    `json:"withdrawal_id,omitempty"`
+	Currency     string    `json:"currency"`
+	Txid         string    `json:"txid"`
+	Amount       float64   `json:"amount,string"`
+	From         string    `json:"from,omitempty"`
+	To           string    `json:"to"`
+	Memo         string    `json:"memo,omitempty"`
+	Fee          string    `json:"fee"`
+	Status       int       `json:"status,string"`
+	Timestamp    time.Time `json:"timestamp"`
+}
+
+type PoloniexCurrency struct {
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	HumanType      string `json:"humanType"`
+	CurrencyType   string `json:"currencyType"`
+	TxFee          string `json:"txFee"`
+	MinConf        int    `json:"minConf"`
+	DepositAddress string `json:"depositAddress"`
+	Disabled       int    `json:"disabled"` //Designates whether (1) or not (0) deposits and withdrawals are disabled.
+	Frozen         int    `json:"frozen"`   //Designates whether (1) or not (0) trading for this currency is disabled for trading.
+	Blockchain     string `json:"blockchain"`
+	Delisted       int    `json:"delisted"`
+	IsGeofenced    int    `json:"isGeofenced"`
+}
+
+type OptionalParameter map[string]interface{}
+
+func (optional OptionalParameter) Optional(name string, value interface{}) OptionalParameter {
+	optional[name] = value
+	return optional
+}
+
+func (optional OptionalParameter) GetString(name string) string {
+	return fmt.Sprint(optional[name])
+}
+
+func (optional OptionalParameter) GetInt(name string) int {
+	return ToInt(optional[name])
+}
+
+func (optional OptionalParameter) GetInt64(name string) int64 {
+	return ToInt64(optional[name])
+}
+
+func (optional OptionalParameter) GetFloat64(name string) float64 {
+	return ToFloat64(optional[name])
+}
+
+func (optional OptionalParameter) GetTime(name string) *time.Time {
+	val := optional[name]
+	if val != nil {
+		t, ok := val.(time.Time)
+		if ok {
+			return &t
+		}
+	}
+	return nil
 }

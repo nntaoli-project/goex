@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/goex"
 )
 
 const (
@@ -33,7 +33,7 @@ const (
 var (
 	YCC     = goex.Currency{"YCC", "Yuan Chain New"}
 	BTC     = goex.Currency{"BTC", "Bitcoin"}
-	YCC_BTC = goex.CurrencyPair{YCC, BTC}
+	YCC_BTC = goex.CurrencyPair{CurrencyA: YCC, CurrencyB: BTC}
 )
 
 type Hitbtc struct {
@@ -214,11 +214,11 @@ func (hitbtc *Hitbtc) placeOrder(ty goex.TradeSide, amount, price string, curren
 	return hitbtc.toOrder(resp), nil
 }
 
-func (hitbtc *Hitbtc) LimitBuy(amount, price string, currency goex.CurrencyPair) (*goex.Order, error) {
+func (hitbtc *Hitbtc) LimitBuy(amount, price string, currency goex.CurrencyPair, opt ...goex.LimitOrderOptionalParameter) (*goex.Order, error) {
 	return hitbtc.placeOrder(goex.BUY, amount, price, currency)
 }
 
-func (hitbtc *Hitbtc) LimitSell(amount, price string, currency goex.CurrencyPair) (*goex.Order, error) {
+func (hitbtc *Hitbtc) LimitSell(amount, price string, currency goex.CurrencyPair, opt ...goex.LimitOrderOptionalParameter) (*goex.Order, error) {
 	return hitbtc.placeOrder(goex.SELL, amount, price, currency)
 }
 
@@ -291,9 +291,10 @@ func (hitbtc *Hitbtc) GetUnfinishOrders(currency goex.CurrencyPair) ([]goex.Orde
 
 // TODO
 // https://api.hitbtc.com/#orders-history
-func (hitbtc *Hitbtc) GetOrderHistorys(currency goex.CurrencyPair, currentPage, pageSize int) ([]goex.Order, error) {
+func (hitbtc *Hitbtc) GetOrderHistorys(currency goex.CurrencyPair, optional ...goex.OptionalParameter) ([]goex.Order, error) {
 	params := url.Values{}
 	params.Set("symbol", currency.ToSymbol(""))
+
 	resp := []map[string]interface{}{}
 	err := hitbtc.doRequest("GET", ORDER_URI+"?"+params.Encode(), &resp)
 	if err != nil {
@@ -395,7 +396,7 @@ func (hitbtc *Hitbtc) GetDepth(size int, currency goex.CurrencyPair) (*goex.Dept
 	return &goex.Depth{AskList: askList, BidList: bidList}, nil
 }
 
-func (hitbtc *Hitbtc) GetKlineRecords(currency goex.CurrencyPair, period, size, since int) ([]goex.Kline, error) {
+func (hitbtc *Hitbtc) GetKlineRecords(currency goex.CurrencyPair, period goex.KlinePeriod, size int, opt ...goex.OptionalParameter) ([]goex.Kline, error) {
 	panic("not implement")
 }
 
@@ -587,7 +588,7 @@ func parseStatus(s string) goex.TradeStatus {
 }
 
 func (hitbtc *Hitbtc) adaptCurrencyPair(pair goex.CurrencyPair) goex.CurrencyPair {
-	return pair.AdaptUsdtToUsd().AdaptBccToBch()
+	return pair.AdaptUsdtToUsd()
 }
 
 func (hitbtc *Hitbtc) adaptSymbolToCurrencyPair(pair string) goex.CurrencyPair {

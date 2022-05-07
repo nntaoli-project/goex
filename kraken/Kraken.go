@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"net/http"
 	"net/url"
 	"sort"
@@ -75,11 +75,11 @@ func (k *Kraken) placeOrder(orderType, side, amount, price string, pair Currency
 		Status:   ORDER_UNFINISH}, nil
 }
 
-func (k *Kraken) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (k *Kraken) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return k.placeOrder("limit", "buy", amount, price, currency)
 }
 
-func (k *Kraken) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (k *Kraken) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return k.placeOrder("limit", "sell", amount, price, currency)
 }
 
@@ -178,7 +178,7 @@ func (k *Kraken) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return orders, nil
 }
 
-func (k *Kraken) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (k *Kraken) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("")
 }
 
@@ -270,7 +270,7 @@ func (k *Kraken) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return &dep, nil
 }
 
-func (k *Kraken) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (k *Kraken) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]Kline, error) {
 	panic("")
 }
 

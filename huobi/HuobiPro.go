@@ -4,19 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
-	. "github.com/nntaoli-project/GoEx/internal/logger"
 	"math/big"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
+	. "github.com/nntaoli-project/goex/internal/logger"
 )
 
 var HBPOINT = NewCurrency("HBPOINT", "")
 
-var _INERNAL_KLINE_PERIOD_CONVERTER = map[int]string{
+var _INERNAL_KLINE_PERIOD_CONVERTER = map[KlinePeriod]string{
 	KLINE_PERIOD_1MIN:   "1min",
 	KLINE_PERIOD_5MIN:   "5min",
 	KLINE_PERIOD_15MIN:  "15min",
@@ -45,6 +46,7 @@ type HuoBiPro struct {
 	accountId  string
 	accessKey  string
 	secretKey  string
+	Symbols    map[string]HuoBiProSymbol
 	//ECDSAPrivateKey string
 }
 
@@ -53,6 +55,8 @@ type HuoBiProSymbol struct {
 	QuoteCurrency   string
 	PricePrecision  float64
 	AmountPrecision float64
+	MinAmount       float64
+	MinValue        float64
 	SymbolPartition string
 	Symbol          string
 }
@@ -61,6 +65,8 @@ func NewHuobiWithConfig(config *APIConfig) *HuoBiPro {
 	hbpro := new(HuoBiPro)
 	if config.Endpoint == "" {
 		hbpro.baseUrl = "https://api.huobi.pro"
+	} else {
+		hbpro.baseUrl = config.Endpoint
 	}
 	hbpro.httpClient = config.HttpClient
 	hbpro.accessKey = config.ApiKey
@@ -78,6 +84,11 @@ func NewHuobiWithConfig(config *APIConfig) *HuoBiPro {
 		}
 	}
 
+	hbpro.Symbols = make(map[string]HuoBiProSymbol, 100)
+	_, err := hbpro.GetCurrenciesPrecision()
+	if err != nil {
+		Log.Panic("GetCurrenciesPrecision Error=", err)
+	}
 	return hbpro
 }
 
@@ -99,10 +110,16 @@ func NewHuoBiProSpot(client *http.Client, apikey, secretkey string) *HuoBiPro {
 	accinfo, err := hb.GetAccountInfo(HB_SPOT_ACCOUNT)
 	if err != nil {
 		hb.accountId = ""
-		//panic(err)
+		panic(err)
 	} else {
 		hb.accountId = accinfo.Id
 		Log.Info("account state :", accinfo.State)
+	}
+
+	hb.Symbols = make(map[string]HuoBiProSymbol, 100)
+	_, err = hb.GetCurrenciesPrecision()
+	if err != nil {
+		Log.Panic("GetCurrenciesPrecision Error=", err)
 	}
 	return hb
 }
@@ -211,16 +228,19 @@ func (hbpro *HuoBiPro) GetAccount() (*Account, error) {
 }
 
 func (hbpro *HuoBiPro) placeOrder(amount, price string, pair CurrencyPair, orderType string) (string, error) {
+	symbol := hbpro.Symbols[pair.ToLower().ToSymbol("")]
+
 	path := "/v1/order/orders/place"
 	params := url.Values{}
 	params.Set("account-id", hbpro.accountId)
-	params.Set("amount", amount)
+	params.Set("client-order-id", GenerateOrderClientId(32))
+	params.Set("amount", FloatToString(ToFloat64(amount), int(symbol.AmountPrecision)))
 	params.Set("symbol", pair.AdaptUsdToUsdt().ToLower().ToSymbol(""))
 	params.Set("type", orderType)
 
 	switch orderType {
 	case "buy-limit", "sell-limit":
-		params.Set("price", price)
+		params.Set("price", FloatToString(ToFloat64(price), int(symbol.PricePrecision)))
 	}
 
 	hbpro.buildPostForm("POST", path, &params)
@@ -244,8 +264,21 @@ func (hbpro *HuoBiPro) placeOrder(amount, price string, pair CurrencyPair, order
 	return respmap["data"].(string), nil
 }
 
-func (hbpro *HuoBiPro) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
-	orderId, err := hbpro.placeOrder(amount, price, currency, "buy-limit")
+func (hbpro *HuoBiPro) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	orderTy := "buy-limit"
+	if len(opt) > 0 {
+		switch opt[0] {
+		case PostOnly:
+			orderTy = "buy-limit-maker"
+		case Ioc:
+			orderTy = "buy-ioc"
+		case Fok:
+			orderTy = "buy-limit-fok"
+		default:
+			Log.Error("limit order optional parameter error ,opt= ", opt[0])
+		}
+	}
+	orderId, err := hbpro.placeOrder(amount, price, currency, orderTy)
 	if err != nil {
 		return nil, err
 	}
@@ -258,8 +291,21 @@ func (hbpro *HuoBiPro) LimitBuy(amount, price string, currency CurrencyPair) (*O
 		Side:     BUY}, nil
 }
 
-func (hbpro *HuoBiPro) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
-	orderId, err := hbpro.placeOrder(amount, price, currency, "sell-limit")
+func (hbpro *HuoBiPro) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
+	orderTy := "sell-limit"
+	if len(opt) > 0 {
+		switch opt[0] {
+		case PostOnly:
+			orderTy = "sell-limit-maker"
+		case Ioc:
+			orderTy = "sell-ioc"
+		case Fok:
+			orderTy = "sell-limit-fok"
+		default:
+			Log.Error("limit order optional parameter error ,opt= ", opt[0])
+		}
+	}
+	orderId, err := hbpro.placeOrder(amount, price, currency, orderTy)
 	if err != nil {
 		return nil, err
 	}
@@ -302,6 +348,7 @@ func (hbpro *HuoBiPro) MarketSell(amount, price string, currency CurrencyPair) (
 
 func (hbpro *HuoBiPro) parseOrder(ordmap map[string]interface{}) Order {
 	ord := Order{
+		Cid:        fmt.Sprint(ordmap["client-order-id"]),
 		OrderID:    ToInt(ordmap["id"]),
 		OrderID2:   fmt.Sprint(ToInt(ordmap["id"])),
 		Amount:     ToFloat64(ordmap["amount"]),
@@ -364,12 +411,9 @@ func (hbpro *HuoBiPro) GetOneOrder(orderId string, currency CurrencyPair) (*Orde
 }
 
 func (hbpro *HuoBiPro) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
-	return hbpro.getOrders(queryOrdersParams{
-		pair:   currency,
-		states: "pre-submitted,submitted,partial-filled",
-		size:   100,
-		//direct:""
-	})
+	return hbpro.getOrders(currency, OptionalParameter{}.
+		Optional("states", "pre-submitted,submitted,partial-filled").
+		Optional("size", "100"))
 }
 
 func (hbpro *HuoBiPro) CancelOrder(orderId string, currency CurrencyPair) (bool, error) {
@@ -395,13 +439,14 @@ func (hbpro *HuoBiPro) CancelOrder(orderId string, currency CurrencyPair) (bool,
 	return true, nil
 }
 
-func (hbpro *HuoBiPro) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
-	return hbpro.getOrders(queryOrdersParams{
-		pair:   currency,
-		size:   pageSize,
-		states: "partial-canceled,filled",
-		direct: "next",
-	})
+func (hbpro *HuoBiPro) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
+	var optionals []OptionalParameter
+	optionals = append(optionals, OptionalParameter{}.
+		Optional("states", "canceled,partial-canceled,filled").
+		Optional("size", "100").
+		Optional("direct", "next"))
+	optionals = append(optionals, optional...)
+	return hbpro.getOrders(currency, optionals...)
 }
 
 type queryOrdersParams struct {
@@ -415,20 +460,12 @@ type queryOrdersParams struct {
 	pair CurrencyPair
 }
 
-func (hbpro *HuoBiPro) getOrders(queryparams queryOrdersParams) ([]Order, error) {
+func (hbpro *HuoBiPro) getOrders(pair CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	path := "/v1/order/orders"
 	params := url.Values{}
-	params.Set("symbol", strings.ToLower(queryparams.pair.AdaptUsdToUsdt().ToSymbol("")))
-	params.Set("states", queryparams.states)
-
-	if queryparams.direct != "" {
-		params.Set("direct", queryparams.direct)
-	}
-
-	if queryparams.size > 0 {
-		params.Set("size", fmt.Sprint(queryparams.size))
-	}
-
+	params.Set("symbol", strings.ToLower(pair.AdaptUsdToUsdt().ToSymbol("")))
+	MergeOptionalParameter(&params, optional...)
+	Log.Info(params)
 	hbpro.buildPostForm("GET", path, &params)
 	respmap, err := HttpGet(hbpro.httpClient, fmt.Sprintf("%s%s?%s", hbpro.baseUrl, path, params.Encode()))
 	if err != nil {
@@ -444,7 +481,7 @@ func (hbpro *HuoBiPro) getOrders(queryparams queryOrdersParams) ([]Order, error)
 	for _, v := range datamap {
 		ordmap := v.(map[string]interface{})
 		ord := hbpro.parseOrder(ordmap)
-		ord.Currency = queryparams.pair
+		ord.Currency = pair
 		orders = append(orders, ord)
 	}
 
@@ -522,7 +559,7 @@ func (hbpro *HuoBiPro) GetDepth(size int, currency CurrencyPair) (*Depth, error)
 }
 
 //倒序
-func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
 	url := hbpro.baseUrl + "/market/history/kline?period=%s&size=%d&symbol=%s"
 	symbol := strings.ToLower(currency.AdaptUsdToUsdt().ToSymbol(""))
 	periodS, isOk := _INERNAL_KLINE_PERIOD_CONVERTER[period]
@@ -549,15 +586,13 @@ func (hbpro *HuoBiPro) GetKlineRecords(currency CurrencyPair, period, size, sinc
 			Close:     ToFloat64(item["close"]),
 			High:      ToFloat64(item["high"]),
 			Low:       ToFloat64(item["low"]),
-			Vol:       ToFloat64(item["vol"]),
+			Vol:       ToFloat64(item["amount"]),
 			Timestamp: int64(ToUint64(item["id"]))})
 	}
 
 	return klines, nil
 }
 
-//非个人，整个交易所的交易记录
-//https://github.com/huobiapi/API_Docs/wiki/REST_api_reference#get-markettrade-获取-trade-detail-数据
 func (hbpro *HuoBiPro) GetTrades(currencyPair CurrencyPair, since int64) ([]Trade, error) {
 	var (
 		trades []Trade
@@ -715,6 +750,7 @@ func (hbpro *HuoBiPro) GetCurrenciesPrecision() ([]HuoBiProSymbol, error) {
 	if !ok {
 		return nil, errors.New("response format error")
 	}
+
 	var Symbols []HuoBiProSymbol
 	for _, v := range data {
 		_sym := v.(map[string]interface{})
@@ -723,9 +759,12 @@ func (hbpro *HuoBiPro) GetCurrenciesPrecision() ([]HuoBiProSymbol, error) {
 		sym.QuoteCurrency = _sym["quote-currency"].(string)
 		sym.PricePrecision = _sym["price-precision"].(float64)
 		sym.AmountPrecision = _sym["amount-precision"].(float64)
+		sym.MinAmount = _sym["min-order-amt"].(float64)
+		sym.MinValue = _sym["min-order-value"].(float64)
 		sym.SymbolPartition = _sym["symbol-partition"].(string)
 		sym.Symbol = _sym["symbol"].(string)
 		Symbols = append(Symbols, sym)
+		hbpro.Symbols[sym.Symbol] = sym
 	}
 	//fmt.Println(Symbols)
 	return Symbols, nil

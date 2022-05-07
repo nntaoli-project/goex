@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
+	. "github.com/nntaoli-project/goex"
 	"log"
 	"net/http"
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -59,11 +60,11 @@ func (bit *Bithumb) placeOrder(side, amount, price string, pair CurrencyPair) (*
 		Status:   ORDER_UNFINISH}, nil
 }
 
-func (bit *Bithumb) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bit *Bithumb) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bit.placeOrder("bid", amount, price, currency)
 }
 
-func (bit *Bithumb) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bit *Bithumb) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bit.placeOrder("ask", amount, price, currency)
 }
 
@@ -199,7 +200,7 @@ func (bit *Bithumb) GetUnfinishOrders(currency CurrencyPair) ([]Order, error) {
 	return orders, nil
 }
 
-func (bit *Bithumb) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (bit *Bithumb) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 
@@ -212,36 +213,17 @@ func (bit *Bithumb) GetAccount() (*Account, error) {
 	datamap := retmap["data"].(map[string]interface{})
 	acc := new(Account)
 	acc.SubAccounts = make(map[Currency]SubAccount)
-	acc.SubAccounts[LTC] = SubAccount{
-		Currency:     LTC,
-		Amount:       ToFloat64(datamap["available_ltc"]),
-		ForzenAmount: ToFloat64(datamap["in_use_ltc"]),
-		LoanAmount:   0}
-	acc.SubAccounts[BTC] = SubAccount{
-		Currency:     BTC,
-		Amount:       ToFloat64(datamap["available_btc"]),
-		ForzenAmount: ToFloat64(datamap["in_use_etc"]),
-		LoanAmount:   0}
-	acc.SubAccounts[ETH] = SubAccount{
-		Currency:     ETH,
-		Amount:       ToFloat64(datamap["available_eth"]),
-		ForzenAmount: ToFloat64(datamap["in_use_eth"]),
-		LoanAmount:   0}
-	acc.SubAccounts[ETC] = SubAccount{
-		Currency:     ETC,
-		Amount:       ToFloat64(datamap["available_etc"]),
-		ForzenAmount: ToFloat64(datamap["in_use_etc"]),
-		LoanAmount:   0}
-	acc.SubAccounts[BCH] = SubAccount{
-		Currency:     BCH,
-		Amount:       ToFloat64(datamap["available_bch"]),
-		ForzenAmount: ToFloat64(datamap["in_use_bch"]),
-		LoanAmount:   0}
-	acc.SubAccounts[KRW] = SubAccount{
-		Currency:     KRW,
-		Amount:       ToFloat64(datamap["available_krw"]),
-		ForzenAmount: ToFloat64(datamap["in_use_krw"]),
-		LoanAmount:   0}
+	for key := range datamap {
+		if strings.HasPrefix(key, "available_") {
+			t := strings.Split(key, "_")
+			currency := NewCurrency(strings.ToUpper(t[len(t)-1]), "")
+			acc.SubAccounts[currency] = SubAccount{
+				Currency: currency,
+				Amount: ToFloat64(datamap[key]),
+				ForzenAmount: ToFloat64(datamap[fmt.Sprintf("in_use_%s", strings.ToLower(currency.String()))]),
+				LoanAmount: 0}
+		}
+	}
 	//log.Println(datamap)
 	acc.Exchange = bit.GetExchangeName()
 	return acc, nil
@@ -335,7 +317,7 @@ func (bit *Bithumb) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	return dep, nil
 }
 
-func (bit *Bithumb) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
+func (bit *Bithumb) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]Kline, error) {
 	panic("not implement")
 }
 

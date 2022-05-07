@@ -4,19 +4,38 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
-	"log"
 	"net/http"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 var (
 	BASE_URL = "https://www.bitstamp.net/api/"
 )
+
+var _INTERNAL_KLINE_PERIOD_CONVERTER = map[KlinePeriod]string{
+	KLINE_PERIOD_1MIN:  "60",
+	KLINE_PERIOD_3MIN:  "180",
+	KLINE_PERIOD_5MIN:  "300",
+	KLINE_PERIOD_15MIN: "900",
+	KLINE_PERIOD_30MIN: "1800",
+	KLINE_PERIOD_60MIN: "3600",
+	KLINE_PERIOD_1H:    "3600",
+	KLINE_PERIOD_2H:    "7200",
+	KLINE_PERIOD_4H:    "14400",
+	KLINE_PERIOD_6H:    "21600",
+	// KLINE_PERIOD_8H:     "28800", // Not supported
+	KLINE_PERIOD_12H:  "43200",
+	KLINE_PERIOD_1DAY: "86400",
+	KLINE_PERIOD_3DAY: "259200",
+	// KLINE_PERIOD_1WEEK:  "604800", //Not supported
+	// KLINE_PERIOD_1MONTH: "1M", // Not supported
+}
 
 type Bitstamp struct {
 	client *http.Client
@@ -37,7 +56,6 @@ func (bitstamp *Bitstamp) buildPostForm(params *url.Values) {
 	params.Set("signature", strings.ToUpper(sign))
 	params.Set("nonce", fmt.Sprintf("%d", nonce))
 	params.Set("key", bitstamp.accessKey)
-	//log.Println(params.Encode())
 }
 
 func (bitstamp *Bitstamp) GetAccount() (*Account, error) {
@@ -46,15 +64,12 @@ func (bitstamp *Bitstamp) GetAccount() (*Account, error) {
 	bitstamp.buildPostForm(&params)
 	resp, err := HttpPostForm(bitstamp.client, urlStr, params)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
-	//log.Println(string(resp))
 
 	var respmap map[string]interface{}
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
@@ -102,6 +117,21 @@ func (bitstamp *Bitstamp) GetAccount() (*Account, error) {
 		Amount:       ToFloat64(respmap["bch_available"]),
 		ForzenAmount: ToFloat64(respmap["bch_reserved"]),
 		LoanAmount:   0}
+	acc.SubAccounts[GBP] = SubAccount{
+		Currency:     GBP,
+		Amount:       ToFloat64(respmap["gbp_available"]),
+		ForzenAmount: ToFloat64(respmap["gbp_reserved"]),
+		LoanAmount:   0}
+	acc.SubAccounts[PAX] = SubAccount{
+		Currency:     PAX,
+		Amount:       ToFloat64(respmap["pax_available"]),
+		ForzenAmount: ToFloat64(respmap["pax_reserved"]),
+		LoanAmount:   0}
+	acc.SubAccounts[XLM] = SubAccount{
+		Currency:     XLM,
+		Amount:       ToFloat64(respmap["xlm_available"]),
+		ForzenAmount: ToFloat64(respmap["xlm_reserved"]),
+		LoanAmount:   0}
 	return &acc, nil
 }
 
@@ -121,7 +151,6 @@ func (bitstamp *Bitstamp) placeOrder(side string, pair CurrencyPair, amount, pri
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		log.Println(string(resp))
 		return nil, err
 	}
 
@@ -165,11 +194,11 @@ func (bitstamp *Bitstamp) placeMarketOrder(side string, pair CurrencyPair, amoun
 	return bitstamp.placeOrder(side, pair, amount, "", urlStr)
 }
 
-func (bitstamp *Bitstamp) LimitBuy(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bitstamp *Bitstamp) LimitBuy(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bitstamp.placeLimitOrder("buy", currency, amount, price)
 }
 
-func (bitstamp *Bitstamp) LimitSell(amount, price string, currency CurrencyPair) (*Order, error) {
+func (bitstamp *Bitstamp) LimitSell(amount, price string, currency CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bitstamp.placeLimitOrder("sell", currency, amount, price)
 }
 
@@ -220,7 +249,6 @@ func (bitstamp *Bitstamp) GetOneOrder(orderId string, currency CurrencyPair) (*O
 	respmap := make(map[string]interface{})
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		log.Println(resp)
 		return nil, err
 	}
 
@@ -290,10 +318,8 @@ func (bitstamp *Bitstamp) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 	respmap := make([]interface{}, 1)
 	err = json.Unmarshal(resp, &respmap)
 	if err != nil {
-		log.Println(string(resp))
 		return nil, err
 	}
-	//log.Println(respmap)
 	orders := make([]Order, 0)
 	for _, v := range respmap {
 		ord := v.(map[string]interface{})
@@ -318,7 +344,7 @@ func (bitstamp *Bitstamp) GetUnfinishOrders(currency CurrencyPair) ([]Order, err
 	return orders, nil
 }
 
-func (bitstamp *Bitstamp) GetOrderHistorys(currency CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (bitstamp *Bitstamp) GetOrderHistorys(currency CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 
@@ -330,7 +356,6 @@ func (bitstamp *Bitstamp) GetTicker(currency CurrencyPair) (*Ticker, error) {
 	if err != nil {
 		return nil, err
 	}
-	//log.Println(respmap)
 	timestamp, _ := strconv.ParseUint(respmap["timestamp"].(string), 10, 64)
 	return &Ticker{
 		Pair: currency,
@@ -345,10 +370,8 @@ func (bitstamp *Bitstamp) GetTicker(currency CurrencyPair) (*Ticker, error) {
 
 func (bitstamp *Bitstamp) GetDepth(size int, currency CurrencyPair) (*Depth, error) {
 	urlStr := BASE_URL + "v2/order_book/" + strings.ToLower(currency.ToSymbol(""))
-	//println(urlStr)
 	respmap, err := HttpGet(bitstamp.client, urlStr)
 	if err != nil {
-		log.Println("err")
 		return nil, err
 	}
 
@@ -356,7 +379,6 @@ func (bitstamp *Bitstamp) GetDepth(size int, currency CurrencyPair) (*Depth, err
 	bids, isok1 := respmap["bids"].([]interface{})
 	asks, isok2 := respmap["asks"].([]interface{})
 	if !isok1 || !isok2 {
-		log.Println(respmap)
 		return nil, errors.New("Get Depth Error.")
 	}
 
@@ -386,8 +408,53 @@ func (bitstamp *Bitstamp) GetDepth(size int, currency CurrencyPair) (*Depth, err
 	return dep, nil
 }
 
-func (bitstamp *Bitstamp) GetKlineRecords(currency CurrencyPair, period, size, since int) ([]Kline, error) {
-	panic("not implement")
+func (bitstamp *Bitstamp) GetKlineRecords(currency CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
+
+	params := url.Values{}
+	params.Set("step", _INTERNAL_KLINE_PERIOD_CONVERTER[period])
+	params.Set("limit", fmt.Sprintf("%d", size))
+	MergeOptionalParameter(&params, optional...)
+
+	urlStr := BASE_URL + "v2/ohlc/" + strings.ToLower(currency.ToSymbol("")) + "?" + params.Encode()
+
+	fmt.Println(urlStr)
+
+	type ohlcResp struct {
+		Data struct {
+			Pair string `json:"pair"`
+			Ohlc []struct {
+				High      string `json:"high"`
+				Timestamp string `json:"timestamp"`
+				Volume    string `json:"volume"`
+				Low       string `json:"low"`
+				Close     string `json:"close"`
+				Open      string `json:"open"`
+			} `json:ohlc`
+		} `json:"data"`
+	}
+
+	resp := ohlcResp{}
+	err := HttpGet4(bitstamp.client, urlStr, nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	var klineRecords []Kline
+
+	for _, _record := range resp.Data.Ohlc {
+		r := Kline{Pair: currency}
+		r.Timestamp, _ = strconv.ParseInt(_record.Timestamp, 10, 64) //to unix timestramp
+		r.Open = ToFloat64(_record.Open)
+		r.High = ToFloat64(_record.High)
+		r.Low = ToFloat64(_record.Low)
+		r.Close = ToFloat64(_record.Close)
+		r.Vol = ToFloat64(_record.Volume)
+
+		klineRecords = append(klineRecords, r)
+	}
+
+	return klineRecords, nil
+
 }
 
 ////非个人，整个交易所的交易记录

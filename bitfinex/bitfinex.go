@@ -3,13 +3,13 @@ package bitfinex
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/GoEx"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 type Bitfinex struct {
@@ -19,7 +19,9 @@ type Bitfinex struct {
 }
 
 const (
-	BASE_URL = "https://api.bitfinex.com/v1"
+	baseURL  string = "https://api.bitfinex.com"
+	apiURLV1 string = baseURL + "/v1"
+	apiURLV2 string = baseURL + "/v2"
 )
 
 func New(client *http.Client, accessKey, secretKey string) *Bitfinex {
@@ -34,14 +36,14 @@ func (bfx *Bitfinex) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 	//pubticker
 	currencyPair = bfx.adaptCurrencyPair(currencyPair)
 
-	apiUrl := fmt.Sprintf("%s/pubticker/%s", BASE_URL, strings.ToLower(currencyPair.ToSymbol("")))
+	apiUrl := fmt.Sprintf("%s/pubticker/%s", apiURLV1, strings.ToLower(currencyPair.ToSymbol("")))
 	resp, err := HttpGet(bfx.httpClient, apiUrl)
 	if err != nil {
 		return nil, err
 	}
 
 	if resp["error"] != nil {
-		return nil, errors.New(resp["error"].(string))
+		return nil, fmt.Errorf("%s", resp["error"])
 	}
 
 	//fmt.Println(resp)
@@ -58,12 +60,11 @@ func (bfx *Bitfinex) GetTicker(currencyPair CurrencyPair) (*Ticker, error) {
 }
 
 func (bfx *Bitfinex) GetDepth(size int, currencyPair CurrencyPair) (*Depth, error) {
-	apiUrl := fmt.Sprintf("%s/book/%s?limit_bids=%d&limit_asks=%d", BASE_URL, bfx.currencyPairToSymbol(currencyPair), size, size)
+	apiUrl := fmt.Sprintf("%s/book/%s?limit_bids=%d&limit_asks=%d", apiURLV1, bfx.currencyPairToSymbol(currencyPair), size, size)
 	resp, err := HttpGet(bfx.httpClient, apiUrl)
 	if err != nil {
 		return nil, err
 	}
-	println("resp:", resp)
 	bids := resp["bids"].([]interface{})
 	asks := resp["asks"].([]interface{})
 
@@ -88,8 +89,36 @@ func (bfx *Bitfinex) GetDepth(size int, currencyPair CurrencyPair) (*Depth, erro
 	return depth, nil
 }
 
-func (bfx *Bitfinex) GetKlineRecords(currencyPair CurrencyPair, period, size, since int) ([]Kline, error) {
-	panic("not implement")
+func (bfx *Bitfinex) GetKlineRecords(currencyPair CurrencyPair, period KlinePeriod, size int, optional ...OptionalParameter) ([]Kline, error) {
+	symbol := convertPairToBitfinexSymbol("t", currencyPair)
+	if size == 0 {
+		size = 100
+	}
+
+	periodStr, ok := klinePeriods[period]
+	if !ok {
+		return nil, fmt.Errorf("invalid period")
+	}
+	apiURL := fmt.Sprintf("%s/candles/trade:%s:%s/hist?limit=%d", apiURLV2, periodStr, symbol, size)
+
+	respRaw, err := NewHttpRequest(bfx.httpClient, "GET", apiURL, "", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var candles []Kline
+
+	var resp [][]interface{}
+	if err := json.Unmarshal(respRaw, &resp); err != nil {
+		return nil, fmt.Errorf("Failed to unmarshal kline response: %v", err)
+	}
+
+	for _, r := range resp {
+		k := klineFromRaw(currencyPair, r)
+		candles = append(candles, *k)
+	}
+
+	return candles, nil
 }
 
 //非个人，整个交易所的交易记录
@@ -104,7 +133,6 @@ func (bfx *Bitfinex) GetWalletBalances() (map[string]*Account, error) {
 	if err != nil {
 		return nil, err
 	}
-	//log.Println(respmap)
 
 	walletmap := make(map[string]*Account, 1)
 
@@ -179,27 +207,24 @@ func (bfx *Bitfinex) placeOrder(orderType, side, amount, price string, pair Curr
 
 	switch side {
 	case "buy":
-		if orderType == "limit" || orderType == "exchange limit" {
-			order.Side = BUY
-		} else {
+		order.Side = BUY
+		if strings.Contains(orderType, "market") {
 			order.Side = BUY_MARKET
 		}
 	case "sell":
-		if orderType == "limit" || orderType == "exchange limit" {
-			order.Side = SELL
-		} else {
+		order.Side = SELL
+		if strings.Contains(orderType, "market") {
 			order.Side = SELL_MARKET
 		}
-
 	}
 	return order, nil
 }
 
-func (bfx *Bitfinex) LimitBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (bfx *Bitfinex) LimitBuy(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bfx.placeOrder("exchange limit", "buy", amount, price, currencyPair)
 }
 
-func (bfx *Bitfinex) LimitSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+func (bfx *Bitfinex) LimitSell(amount, price string, currencyPair CurrencyPair, opt ...LimitOrderOptionalParameter) (*Order, error) {
 	return bfx.placeOrder("exchange limit", "sell", amount, price, currencyPair)
 }
 
@@ -209,6 +234,14 @@ func (bfx *Bitfinex) MarketBuy(amount, price string, currencyPair CurrencyPair) 
 
 func (bfx *Bitfinex) MarketSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
 	return bfx.placeOrder("exchange market", "sell", amount, price, currencyPair)
+}
+
+func (bfx *Bitfinex) StopBuy(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+	return bfx.placeOrder("exchange stop", "buy", amount, price, currencyPair)
+}
+
+func (bfx *Bitfinex) StopSell(amount, price string, currencyPair CurrencyPair) (*Order, error) {
+	return bfx.placeOrder("exchange stop", "sell", amount, price, currencyPair)
 }
 
 func (bfx *Bitfinex) CancelOrder(orderId string, currencyPair CurrencyPair) (bool, error) {
@@ -223,7 +256,7 @@ func (bfx *Bitfinex) CancelOrder(orderId string, currencyPair CurrencyPair) (boo
 
 func (bfx *Bitfinex) toOrder(respmap map[string]interface{}) *Order {
 	order := new(Order)
-	order.Currency = bfx.symbolToCurrencyPair(respmap["symbol"].(string))
+	order.Currency = symbolToCurrencyPair(respmap["symbol"].(string))
 	order.OrderID = ToInt(respmap["id"])
 	order.OrderID2 = fmt.Sprint(ToInt(respmap["id"]))
 	order.Amount = ToFloat64(respmap["original_amount"])
@@ -276,7 +309,7 @@ func (bfx *Bitfinex) GetUnfinishOrders(currencyPair CurrencyPair) ([]Order, erro
 	return orders, nil
 }
 
-func (bfx *Bitfinex) GetOrderHistorys(currencyPair CurrencyPair, currentPage, pageSize int) ([]Order, error) {
+func (bfx *Bitfinex) GetOrderHistorys(currencyPair CurrencyPair, optional ...OptionalParameter) ([]Order, error) {
 	panic("not implement")
 }
 
@@ -285,20 +318,14 @@ func (bfx *Bitfinex) doAuthenticatedRequest(method, path string, payload map[str
 	payload["request"] = "/v1/" + path
 	payload["nonce"] = fmt.Sprintf("%d.2", nonce)
 
-	//for k, v := range params {
-	//	payload[k] = v[0]
-	//}
-
 	p, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
-	//println(string(p))
 	encoded := base64.StdEncoding.EncodeToString(p)
 	sign, _ := GetParamHmacSha384Sign(bfx.secretKey, encoded)
-	//log.Println(BASE_URL + "/" + path)
 
-	resp, err := NewHttpRequest(bfx.httpClient, method, BASE_URL+"/"+path, "", map[string]string{
+	resp, err := NewHttpRequest(bfx.httpClient, method, apiURLV1+"/"+path, "", map[string]string{
 		"Content-Type":    "application/json",
 		"Accept":          "application/json",
 		"X-BFX-APIKEY":    bfx.accessKey,
@@ -315,12 +342,6 @@ func (bfx *Bitfinex) doAuthenticatedRequest(method, path string, payload map[str
 
 func (bfx *Bitfinex) currencyPairToSymbol(currencyPair CurrencyPair) string {
 	return strings.ToUpper(currencyPair.ToSymbol(""))
-}
-
-func (bfx *Bitfinex) symbolToCurrencyPair(symbol string) CurrencyPair {
-	currencyA := strings.ToUpper(symbol[0:3])
-	currencyB := strings.ToUpper(symbol[3:])
-	return NewCurrencyPair(NewCurrency(currencyA, ""), NewCurrency(currencyB, ""))
 }
 
 func (bfx *Bitfinex) adaptTimestamp(timestamp string) int {
@@ -356,4 +377,46 @@ func (bfx *Bitfinex) adaptCurrencyPair(pair CurrencyPair) CurrencyPair {
 	}
 
 	return NewCurrencyPair(currencyA, currencyB)
+}
+
+func symbolToCurrencyPair(symbol string) CurrencyPair {
+	currencyA := strings.ToUpper(symbol[0:3])
+	currencyB := strings.ToUpper(symbol[3:])
+	return NewCurrencyPair(NewCurrency(currencyA, ""), NewCurrency(currencyB, ""))
+}
+
+var klinePeriods = map[KlinePeriod]string{
+	KLINE_PERIOD_1MIN:   "1m",
+	KLINE_PERIOD_5MIN:   "5m",
+	KLINE_PERIOD_15MIN:  "15m",
+	KLINE_PERIOD_30MIN:  "30m",
+	KLINE_PERIOD_60MIN:  "1h",
+	KLINE_PERIOD_3H:     "3h",
+	KLINE_PERIOD_6H:     "6h",
+	KLINE_PERIOD_12H:    "12h",
+	KLINE_PERIOD_1DAY:   "1D",
+	KLINE_PERIOD_1WEEK:  "7D",
+	KLINE_PERIOD_1MONTH: "1M",
+}
+
+func klineFromRaw(pair CurrencyPair, raw []interface{}) *Kline {
+	return &Kline{
+		Pair:      pair,
+		Timestamp: ToInt64(raw[0]),
+		Open:      ToFloat64(raw[1]),
+		Close:     ToFloat64(raw[2]),
+		High:      ToFloat64(raw[3]),
+		Low:       ToFloat64(raw[4]),
+		Vol:       ToFloat64(raw[5]),
+	}
+}
+
+func convertPairToBitfinexSymbol(prefix string, pair CurrencyPair) string {
+	symbol := pair.ToSymbol("")
+	return prefix + symbol
+}
+
+func convertKeyToPair(key string) CurrencyPair {
+	split := strings.Split(key, ":")
+	return symbolToCurrencyPair(split[2][1:])
 }

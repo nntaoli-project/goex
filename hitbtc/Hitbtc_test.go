@@ -1,7 +1,7 @@
 package hitbtc
 
 import (
-	"github.com/nntaoli-project/GoEx"
+	"github.com/nntaoli-project/goex"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
@@ -31,7 +31,7 @@ func TestHitbtc_adaptSymbolToCurrencyPair(t *testing.T) {
 }
 
 func TestGetTicker(t *testing.T) {
-	res, err := htb.GetTicker(goex.BCC_USD)
+	res, err := htb.GetTicker(goex.BCH_USD)
 	require := require.New(t)
 	require.Nil(err)
 	t.Log(res)
@@ -87,7 +87,7 @@ func TestGetOneOrder(t *testing.T) {
 }
 
 func TestGetOrders(t *testing.T) {
-	res, err := htb.GetOrderHistorys(YCC_BTC, 1, 10)
+	res, err := htb.GetOrderHistorys(YCC_BTC)
 	require := require.New(t)
 	require.Nil(err)
 	t.Log(res)

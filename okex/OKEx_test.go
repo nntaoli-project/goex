@@ -1,12 +1,13 @@
 package okex
 
 import (
-	"github.com/nntaoli-project/GoEx"
-	"github.com/nntaoli-project/GoEx/internal/logger"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
+	"github.com/stretchr/testify/assert"
 )
 
 func init() {
@@ -15,20 +16,8 @@ func init() {
 
 //
 var config2 = &goex.APIConfig{
-	Endpoint: "https://www.okex.me",
-	//HttpClient: &http.Client{
-	//	Transport: &http.Transport{
-	//		Proxy: func(req *http.Request) (*url.URL, error) {
-	//			return &url.URL{
-	//				Scheme: "socks5",
-	//				Host:   "127.0.0.1:1080"}, nil
-	//		},
-	//	},
-	//}, //需要代理的这样配置
-	HttpClient:    http.DefaultClient,
-	ApiKey:        "",
-	ApiSecretKey:  "",
-	ApiPassphrase: "",
+	Endpoint:   "https://www.okex.me",
+	HttpClient: http.DefaultClient,
 }
 
 var okex = NewOKEx(config2) //线上请用APIBuilder构建
@@ -77,7 +66,7 @@ func TestOKExSpot_CancelOrder(t *testing.T) {
 }
 
 func TestOKExSpot_GetOneOrder(t *testing.T) {
-	t.Log(okex.OKExSpot.GetOneOrder("42152275c599444aa8ec1d33bd8003fb", goex.BTC_USD))
+	t.Log(okex.OKExSpot.GetOneOrder("5502594029936640", goex.BTC_USD))
 }
 
 func TestOKExSpot_GetUnfinishOrders(t *testing.T) {
@@ -149,7 +138,7 @@ func TestOKExFuture_GetRate(t *testing.T) {
 
 func TestOKExFuture_GetKlineRecords(t *testing.T) {
 	since := time.Now().Add(-24 * time.Hour).Unix()
-	kline, err := okex.OKExFuture.GetKlineRecords(goex.QUARTER_CONTRACT, goex.BTC_USD, goex.KLINE_PERIOD_4H, 0, int(since))
+	kline, err := okex.OKExFuture.GetKlineRecords(goex.QUARTER_CONTRACT, goex.BTC_USD, goex.KLINE_PERIOD_4H, 10, goex.OptionalParameter{"since": since})
 	assert.Nil(t, err)
 	for _, k := range kline {
 		t.Logf("%+v", k.Kline)
@@ -160,25 +149,25 @@ func TestOKExWallet_GetAccount(t *testing.T) {
 	t.Log(okex.OKExWallet.GetAccount())
 }
 
-func TestOKExWallet_Transfer(t *testing.T) {
-	t.Log(okex.OKExWallet.Transfer(TransferParameter{
-		Currency:     goex.EOS.Symbol,
-		From:         SPOT,
-		To:           SPOT_MARGIN,
-		Amount:       20,
-		InstrumentId: goex.EOS_USDT.ToLower().ToSymbol("-")}))
-}
-
-func TestOKExWallet_Withdrawal(t *testing.T) {
-	t.Log(okex.OKExWallet.Withdrawal(WithdrawParameter{
-		Currency:    goex.EOS.Symbol,
-		Amount:      100,
-		Destination: 2,
-		ToAddress:   "",
-		TradePwd:    "",
-		Fee:         "0.01",
-	}))
-}
+//func TestOKExWallet_Transfer(t *testing.T) {
+//	t.Log(okex.OKExWallet.Transfer(TransferParameter{
+//		Currency:     goex.EOS.Symbol,
+//		From:         SPOT,
+//		To:           SPOT_MARGIN,
+//		Amount:       20,
+//		InstrumentId: goex.EOS_USDT.ToLower().ToSymbol("-")}))
+//}
+//
+//func TestOKExWallet_Withdrawal(t *testing.T) {
+//	t.Log(okex.OKExWallet.Withdrawal(WithdrawParameter{
+//		Currency:    goex.EOS.Symbol,
+//		Amount:      100,
+//		Destination: 2,
+//		ToAddress:   "",
+//		TradePwd:    "",
+//		Fee:         "0.01",
+//	}))
+//}
 
 func TestOKExWallet_GetDepositAddress(t *testing.T) {
 	t.Log(okex.OKExWallet.GetDepositAddress(goex.BTC))
@@ -193,7 +182,7 @@ func TestOKExWallet_GetDepositHistory(t *testing.T) {
 }
 
 func TestOKExWallet_GetWithDrawalHistory(t *testing.T) {
-	t.Log(okex.OKExWallet.GetWithDrawalHistory(&goex.XRP))
+	//t.Log(okex.OKExWallet.GetWithDrawalHistory(&goex.XRP))
 }
 
 func TestOKExMargin_GetMarginAccount(t *testing.T) {
@@ -238,4 +227,17 @@ func TestOKExMargin_CancelOrder(t *testing.T) {
 
 func TestOKExMargin_GetOneOrder(t *testing.T) {
 	t.Log(okex.OKExMargin.GetOneOrder("3174778420532224", goex.EOS_USDT))
+}
+
+func TestOKExSpot_GetCurrenciesPrecision(t *testing.T) {
+	t.Log(okex.OKExSpot.GetCurrenciesPrecision())
+}
+
+func TestOKExSpot_GetOrderHistorys(t *testing.T) {
+	orders, err := okex.OKExSpot.GetOrderHistorys(goex.NewCurrencyPair2("DASH_USDT"))
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+	t.Log(len(orders))
 }
