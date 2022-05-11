@@ -3,13 +3,14 @@ package binance
 import (
 	json2 "encoding/json"
 	"fmt"
-	"github.com/nntaoli-project/goex"
-	"github.com/nntaoli-project/goex/internal/logger"
 	"os"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 )
 
 type req struct {
@@ -46,7 +47,7 @@ func NewSpotWs() *SpotWs {
 	logger.Debugf("proxy url: %s", os.Getenv("HTTPS_PROXY"))
 
 	spotWs.wsBuilder = goex.NewWsBuilder().
-		WsUrl("wss://stream.binance.com:9443/stream?streams=depth/miniTicker/ticker/trade").
+		WsUrl(TESTNET_SPOT_STREAM_BASE_URL + "?streams=depth/miniTicker/ticker/trade").
 		ProxyUrl(os.Getenv("HTTPS_PROXY")).
 		ProtoHandleFunc(spotWs.handle).AutoReconnect()
 
@@ -103,8 +104,20 @@ func (s *SpotWs) SubscribeTicker(pair goex.CurrencyPair) error {
 	})
 }
 
+// TODO: test
 func (s *SpotWs) SubscribeTrade(pair goex.CurrencyPair) error {
-	panic("implement me")
+
+	defer func() {
+		s.reqId++
+	}()
+
+	s.connect()
+
+	return s.c.Subscribe(req{
+		Method: "SUBSCRIBE",
+		Params: []string{pair.ToLower().ToSymbol("") + "@aggTrade"},
+		Id:     s.reqId,
+	})
 }
 
 func (s *SpotWs) handle(data []byte) error {
@@ -121,6 +134,10 @@ func (s *SpotWs) handle(data []byte) error {
 
 	if strings.HasSuffix(r.Stream, "@ticker") {
 		return s.tickerHandle(r.Data, adaptStreamToCurrencyPair(r.Stream))
+	}
+
+	if strings.HasSuffix(r.Stream, "@aggTrade") {
+		return s.tradeHandle(r.Data, adaptStreamToCurrencyPair(r.Stream))
 	}
 
 	logger.Warn("unknown ws response:", string(data))
@@ -187,6 +204,34 @@ func (s *SpotWs) tickerHandle(data json2.RawMessage, pair goex.CurrencyPair) err
 	ticker.Date = goex.ToUint64(tickerData["E"])
 
 	s.tickerCallFn(&ticker)
+
+	return nil
+}
+
+func (s *SpotWs) tradeHandle(data json2.RawMessage, pair goex.CurrencyPair) error {
+
+	var (
+		tradeData = make(map[string]interface{}, 4)
+		trade     goex.Trade
+	)
+
+	err := json2.Unmarshal(data, &tradeData)
+	if err != nil {
+		logger.Errorf("unmarshal ticker response data error [%s] , data = %s", err, string(data))
+		return err
+	}
+
+	trade.Pair = pair                             //Symbol
+	trade.Tid = goex.ToInt64(tradeData["a"])      // Aggregate trade ID
+	trade.Date = goex.ToInt64(tradeData["E"])     // Event time
+	trade.Amount = goex.ToFloat64(tradeData["q"]) // Quantity
+	trade.Price = goex.ToFloat64(tradeData["p"])  // Price
+
+	if tradeData["m"].(bool) {
+		trade.Type = goex.BUY_MARKET
+	} else {
+		trade.Type = goex.SELL_MARKET
+	}
 
 	return nil
 }
