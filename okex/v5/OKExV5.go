@@ -305,14 +305,13 @@ func (ok *OKExV5) CreateOrder(param *CreateOrderParam) (*OrderSummaryV5, error) 
 	}
 
 	if response.Code != 0 {
-		msg := response.Msg
-		if msg == "" {
-			if len(response.Data) > 0 {
-				msg = fmt.Sprintf("code:%d, scode:%s, smsg:%s", response.Code, response.Data[0].SCode, response.Data[0].SMsg)
-			} else {
-				msg = fmt.Sprintf("code:%d", response.Code)
-			}
+		msg := ""
+		if len(response.Data) > 0 {
+			msg = fmt.Sprintf("code:%d, scode:%s, smsg:%s", response.Code, response.Data[0].SCode, response.Data[0].SMsg)
+		} else {
+			msg = fmt.Sprintf("code:%d", response.Code)
 		}
+
 		return nil, fmt.Errorf("CreateOrder error:%s", msg)
 	}
 	return &response.Data[0], nil
@@ -355,6 +354,41 @@ func (ok *OKExV5) CancelOrderV5(instId, ordId, clOrdId string) (*OrderSummaryV5,
 			}
 		}
 		return nil, fmt.Errorf("CancelOrderV5 error:%s", msg)
+	}
+	return &response.Data[0], nil
+}
+
+func (ok *OKExV5) ClosePositions(instId, mgnMode, posSide string) (*OrderSummaryV5, error) {
+	reqBody := make(map[string]interface{})
+	reqBody["instId"] = instId
+	reqBody["mgnMode"] = mgnMode
+	reqBody["posSide"] = posSide
+
+	type OrderResponse struct {
+		Code int              `json:"code,string"`
+		Msg  string           `json:"msg"`
+		Data []OrderSummaryV5 `json:"data"`
+	}
+	var response OrderResponse
+
+	uri := "/api/v5/trade/close-position"
+
+	jsonStr, _, _ := ok.BuildRequestBody(reqBody)
+	err := ok.DoAuthorRequest(http.MethodPost, uri, jsonStr, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.Code != 0 {
+		msg := response.Msg
+		if msg == "" {
+			if len(response.Data) > 0 {
+				msg = fmt.Sprintf("code:%d, scode:%s, smsg:%s", response.Code, response.Data[0].SCode, response.Data[0].SMsg)
+			} else {
+				msg = fmt.Sprintf("code:%d", response.Code)
+			}
+		}
+		return nil, fmt.Errorf("ClosePositions error:%s", msg)
 	}
 	return &response.Data[0], nil
 }
