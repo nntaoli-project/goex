@@ -1,8 +1,3 @@
-<div align="center">
-<img width="409" heigth="205" src="https://upload-images.jianshu.io/upload_images/6760989-dec7dc747846880e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt="goex">
-<img width="198" height="205" src="https://upload-images.jianshu.io/upload_images/6760989-81f29f7a5dbd9bb6.jpg" >
-</div>
-
 ![build](https://github.com/WymA/goex/actions/workflows/go.yml/badge.svg?branch=dev)
 
 ### goex目标
