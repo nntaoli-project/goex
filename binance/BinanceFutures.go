@@ -276,6 +276,10 @@ func (bs *BinanceFutures) GetFutureUserinfo(currencyPair ...CurrencyPair) (*Futu
 }
 
 func (bs *BinanceFutures) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error) {
+	return bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice)
+}
+
+func (bs *BinanceFutures) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, opt ...LimitOrderOptionalParameter) (string, error) {
 	apiPath := "order"
 	symbol, err := bs.adaptToSymbol(currencyPair, contractType)
 	if err != nil {
@@ -299,8 +303,14 @@ func (bs *BinanceFutures) PlaceFutureOrder(currencyPair CurrencyPair, contractTy
 	switch openType {
 	case OPEN_BUY, CLOSE_SELL:
 		param.Set("side", "BUY")
+		if len(opt) > 0 && opt[0] == Futures_Twoway_Position_Mode {
+			param.Set("positionSide", "LONG")
+		}
 	case OPEN_SELL, CLOSE_BUY:
 		param.Set("side", "SELL")
+		if len(opt) > 0 && opt[0] == Futures_Twoway_Position_Mode {
+			param.Set("positionSide", "SHORT")
+		}
 	}
 
 	bs.base.buildParamsSigned(&param)
@@ -332,7 +342,7 @@ func (bs *BinanceFutures) PlaceFutureOrder(currencyPair CurrencyPair, contractTy
 }
 
 func (bs *BinanceFutures) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
-	orderId, err := bs.PlaceFutureOrder(currencyPair, contractType, price, amount, openType, 0, 10)
+	orderId, err := bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, opt...)
 	return &FutureOrder{
 		OrderID2:     orderId,
 		Currency:     currencyPair,
@@ -344,7 +354,7 @@ func (bs *BinanceFutures) LimitFuturesOrder(currencyPair CurrencyPair, contractT
 }
 
 func (bs *BinanceFutures) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
-	orderId, err := bs.PlaceFutureOrder(currencyPair, contractType, "", amount, openType, 1, 10)
+	orderId, err := bs.PlaceFutureOrder2(currencyPair, contractType, "", amount, openType, 1, 10)
 	return &FutureOrder{
 		OrderID2:     orderId,
 		Currency:     currencyPair,
