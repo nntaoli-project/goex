@@ -193,4 +193,5 @@ const (
 	PostOnly LimitOrderOptionalParameter = iota + 1
 	Ioc
 	Fok
+	Futures_Twoway_Position_Mode //币安双向持仓模式
 )

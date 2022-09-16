@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	. "github.com/nntaoli-project/goex"
 )
 
 const (
@@ -309,13 +310,13 @@ func (bs *BinanceSwap) Transfer(currency Currency, transferType int, amount floa
 }
 
 func (bs *BinanceSwap) PlaceFutureOrder(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (string, error) {
-	fOrder, err := bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice, leverRate)
+	fOrder, err := bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, matchPrice)
 	return fOrder.OrderID2, err
 }
 
-func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, leverRate float64) (*FutureOrder, error) {
+func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType, price, amount string, openType, matchPrice int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
 	if contractType == SWAP_CONTRACT {
-		orderId, err := bs.f.PlaceFutureOrder(currencyPair.AdaptUsdtToUsd(), contractType, price, amount, openType, matchPrice, leverRate)
+		orderId, err := bs.f.PlaceFutureOrder2(currencyPair.AdaptUsdtToUsd(), contractType, price, amount, openType, matchPrice, opt...)
 		return &FutureOrder{
 			OrderID2:     orderId,
 			Price:        ToFloat64(price),
@@ -323,7 +324,7 @@ func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType
 			Status:       ORDER_UNFINISH,
 			Currency:     currencyPair,
 			OType:        openType,
-			LeverRate:    leverRate,
+			LeverRate:    0,
 			ContractName: contractType,
 		}, err
 	}
@@ -338,7 +339,7 @@ func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType
 		Price:        ToFloat64(price),
 		Amount:       ToFloat64(amount),
 		OrderType:    openType,
-		LeverRate:    leverRate,
+		LeverRate:    0,
 		ContractName: contractType,
 	}
 
@@ -352,9 +353,16 @@ func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType
 	switch openType {
 	case OPEN_BUY, CLOSE_SELL:
 		params.Set("side", "BUY")
+		if len(opt) > 0 && opt[0] == Futures_Twoway_Position_Mode {
+			params.Set("positionSide", "LONG")
+		}
 	case OPEN_SELL, CLOSE_BUY:
 		params.Set("side", "SELL")
+		if len(opt) > 0 && opt[0] == Futures_Twoway_Position_Mode {
+			params.Set("positionSide", "SHORT")
+		}
 	}
+
 	if matchPrice == 0 {
 		params.Set("type", "LIMIT")
 		params.Set("price", price)
@@ -364,6 +372,7 @@ func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType
 	}
 
 	bs.buildParamsSigned(&params)
+
 	resp, err := HttpPostForm2(bs.httpClient, path, params,
 		map[string]string{"X-MBX-APIKEY": bs.accessKey})
 	if err != nil {
@@ -386,11 +395,11 @@ func (bs *BinanceSwap) PlaceFutureOrder2(currencyPair CurrencyPair, contractType
 }
 
 func (bs *BinanceSwap) LimitFuturesOrder(currencyPair CurrencyPair, contractType, price, amount string, openType int, opt ...LimitOrderOptionalParameter) (*FutureOrder, error) {
-	return bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, 10)
+	return bs.PlaceFutureOrder2(currencyPair, contractType, price, amount, openType, 0, opt...)
 }
 
 func (bs *BinanceSwap) MarketFuturesOrder(currencyPair CurrencyPair, contractType, amount string, openType int) (*FutureOrder, error) {
-	return bs.PlaceFutureOrder2(currencyPair, contractType, "0", amount, openType, 1, 10)
+	return bs.PlaceFutureOrder2(currencyPair, contractType, "0", amount, openType, 1)
 }
 
 func (bs *BinanceSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType, orderId string) (bool, error) {
@@ -406,7 +415,12 @@ func (bs *BinanceSwap) FutureCancelOrder(currencyPair CurrencyPair, contractType
 	path := bs.apiV1 + ORDER_URI
 	params := url.Values{}
 	params.Set("symbol", bs.adaptCurrencyPair(currencyPair).ToSymbol(""))
-	params.Set("orderId", orderId)
+
+	if strings.HasPrefix(orderId, "goex") { //goex default clientOrderId Features
+		params.Set("origClientOrderId", orderId)
+	} else {
+		params.Set("orderId", orderId)
+	}
 
 	bs.buildParamsSigned(&params)
 

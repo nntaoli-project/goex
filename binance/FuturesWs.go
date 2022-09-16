@@ -2,9 +2,6 @@ package binance
 
 import (
 	"encoding/json"
-	"errors"
-	"github.com/nntaoli-project/goex"
-	"github.com/nntaoli-project/goex/internal/logger"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,6 +9,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/nntaoli-project/goex"
+	"github.com/nntaoli-project/goex/internal/logger"
 )
 
 type FuturesWs struct {
@@ -59,13 +59,13 @@ func NewFuturesWs() *FuturesWs {
 
 func (s *FuturesWs) connectUsdtFutures() {
 	s.fOnce.Do(func() {
-		s.f = s.wsBuilder.WsUrl("wss://fstream.binance.com/ws").Build()
+		s.f = s.wsBuilder.WsUrl(TESTNET_FUTURE_USD_WS_BASE_URL).Build()
 	})
 }
 
 func (s *FuturesWs) connectFutures() {
 	s.dOnce.Do(func() {
-		s.d = s.wsBuilder.WsUrl("wss://dstream.binance.com/ws").Build()
+		s.d = s.wsBuilder.WsUrl(TESTNET_FUTURE_COIN_WS_BASE_URL).Build()
 	})
 }
 
@@ -84,12 +84,14 @@ func (s *FuturesWs) TradeCallback(f func(trade *goex.Trade, contract string)) {
 func (s *FuturesWs) SubscribeDepth(pair goex.CurrencyPair, contractType string) error {
 	switch contractType {
 	case goex.SWAP_USDT_CONTRACT:
+		s.connectUsdtFutures()
 		return s.f.Subscribe(req{
 			Method: "SUBSCRIBE",
 			Params: []string{pair.AdaptUsdToUsdt().ToLower().ToSymbol("") + "@depth10@100ms"},
 			Id:     1,
 		})
 	default:
+		s.connectFutures()
 		sym, _ := s.base.adaptToSymbol(pair.AdaptUsdtToUsd(), contractType)
 		return s.d.Subscribe(req{
 			Method: "SUBSCRIBE",
@@ -97,7 +99,6 @@ func (s *FuturesWs) SubscribeDepth(pair goex.CurrencyPair, contractType string) 
 			Id:     2,
 		})
 	}
-	return errors.New("contract is error")
 }
 
 func (s *FuturesWs) SubscribeTicker(pair goex.CurrencyPair, contractType string) error {
@@ -118,11 +119,26 @@ func (s *FuturesWs) SubscribeTicker(pair goex.CurrencyPair, contractType string)
 			Id:     2,
 		})
 	}
-	return errors.New("contract is error")
 }
 
 func (s *FuturesWs) SubscribeTrade(pair goex.CurrencyPair, contractType string) error {
-	panic("implement me")
+	switch contractType {
+	case goex.SWAP_USDT_CONTRACT:
+		s.connectUsdtFutures()
+		return s.f.Subscribe(req{
+			Method: "SUBSCRIBE",
+			Params: []string{pair.AdaptUsdToUsdt().ToLower().ToSymbol("") + "@aggTrade"},
+			Id:     1,
+		})
+	default:
+		s.connectFutures()
+		sym, _ := s.base.adaptToSymbol(pair.AdaptUsdtToUsd(), contractType)
+		return s.d.Subscribe(req{
+			Method: "SUBSCRIBE",
+			Params: []string{strings.ToLower(sym) + "@aggTrade"},
+			Id:     1,
+		})
+	}
 }
 
 func (s *FuturesWs) handle(data []byte) error {
@@ -151,6 +167,13 @@ func (s *FuturesWs) handle(data []byte) error {
 
 	if e, ok := m["e"].(string); ok && e == "24hrTicker" {
 		s.tickerCallFn(s.tickerHandle(m))
+		return nil
+	}
+
+	if e, ok := m["e"].(string); ok && e == "aggTrade" {
+
+		contractType := m["s"].(string)
+		s.tradeCalFn(s.tradeHandle(m), contractType)
 		return nil
 	}
 
@@ -203,4 +226,26 @@ func (s *FuturesWs) tickerHandle(m map[string]interface{}) *goex.FutureTicker {
 	ticker.Vol = goex.ToFloat64(m["v"])
 
 	return &ticker
+}
+
+func (s *FuturesWs) tradeHandle(m map[string]interface{}) *goex.Trade {
+	var trade goex.Trade
+
+	symbol, ok := m["s"].(string) // Symbol
+	if ok {
+		trade.Pair = adaptSymbolToCurrencyPair(symbol) //usdt swap
+	}
+
+	trade.Tid = goex.ToInt64(m["a"])      // Aggregate trade ID
+	trade.Date = goex.ToInt64(m["E"])     // Event time
+	trade.Amount = goex.ToFloat64(m["q"]) // Quantity
+	trade.Price = goex.ToFloat64(m["p"])  // Price
+
+	if m["m"].(bool) {
+		trade.Type = goex.BUY_MARKET
+	} else {
+		trade.Type = goex.SELL_MARKET
+	}
+
+	return &trade
 }

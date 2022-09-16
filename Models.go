@@ -263,6 +263,21 @@ type DepositWithdrawHistory struct {
 	Timestamp    time.Time `json:"timestamp"`
 }
 
+type PoloniexCurrency struct {
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	HumanType      string `json:"humanType"`
+	CurrencyType   string `json:"currencyType"`
+	TxFee          string `json:"txFee"`
+	MinConf        int    `json:"minConf"`
+	DepositAddress string `json:"depositAddress"`
+	Disabled       int    `json:"disabled"` //Designates whether (1) or not (0) deposits and withdrawals are disabled.
+	Frozen         int    `json:"frozen"`   //Designates whether (1) or not (0) trading for this currency is disabled for trading.
+	Blockchain     string `json:"blockchain"`
+	Delisted       int    `json:"delisted"`
+	IsGeofenced    int    `json:"isGeofenced"`
+}
+
 type OptionalParameter map[string]interface{}
 
 func (optional OptionalParameter) Optional(name string, value interface{}) OptionalParameter {
@@ -287,7 +302,7 @@ func (optional OptionalParameter) GetFloat64(name string) float64 {
 }
 
 func (optional OptionalParameter) GetTime(name string) *time.Time {
-	val := optional["name"]
+	val := optional[name]
 	if val != nil {
 		t, ok := val.(time.Time)
 		if ok {

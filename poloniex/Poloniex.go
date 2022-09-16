@@ -20,6 +20,7 @@ const (
 	TRADE_API      = BASE_URL + "tradingApi"
 	PUBLIC_URL     = BASE_URL + "public"
 	TICKER_API     = "?command=returnTicker"
+	CURRENCIES_API = "?command=returnCurrencies"
 	ORDER_BOOK_API = "?command=returnOrderBook&currencyPair=%s&depth=%d"
 )
 
@@ -512,4 +513,34 @@ func (poloniex *Poloniex) MarketBuy(amount, price string, currency CurrencyPair)
 
 func (poloniex *Poloniex) MarketSell(amount, price string, currency CurrencyPair) (*Order, error) {
 	panic("unsupport the market order")
+}
+
+func (poloniex *Poloniex) GetAllCurrencies() (map[string]*PoloniexCurrency, error) {
+	respmap, err := HttpGet(poloniex.client, PUBLIC_URL+CURRENCIES_API)
+
+	if err != nil || respmap["error"] != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	result := map[string]*PoloniexCurrency{}
+	for k, v := range respmap {
+		currencyMap := v.(map[string]interface{})
+		poloniexCurrency := new(PoloniexCurrency)
+		poloniexCurrency.ID = int(currencyMap["id"].(float64))
+		poloniexCurrency.Name, _ = currencyMap["name"].(string)
+		poloniexCurrency.TxFee, _ = currencyMap["txFee"].(string)
+		poloniexCurrency.MinConf = int(currencyMap["minConf"].(float64))
+		poloniexCurrency.DepositAddress, _ = currencyMap["depositAddress"].(string)
+		poloniexCurrency.Disabled = int(currencyMap["disabled"].(float64))
+		poloniexCurrency.Delisted = int(currencyMap["delisted"].(float64))
+		poloniexCurrency.Frozen = int(currencyMap["frozen"].(float64))
+		poloniexCurrency.HumanType, _ = currencyMap["humanType"].(string)
+		poloniexCurrency.CurrencyType, _ = currencyMap["currencyType"].(string)
+		poloniexCurrency.Blockchain, _ = currencyMap["blockchain"].(string)
+		poloniexCurrency.IsGeofenced = int(currencyMap["isGeofenced"].(float64))
+
+		result[k] = poloniexCurrency
+	}
+	return result, nil
 }
