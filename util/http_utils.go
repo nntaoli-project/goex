@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/nntaoli-project/goex/v2"
 	"github.com/nntaoli-project/goex/v2/internal/config"
 	"github.com/nntaoli-project/goex/v2/internal/logger"
 	"github.com/valyala/fasthttp"
@@ -26,15 +27,16 @@ var (
 func setupFastHttpClient() {
 	if fastHttpClient == nil {
 		logger.Log.Info("[http utils] init fast http client")
+		httpTimeout := config.C.HttpConf.Timeout
 		fastHttpClient = &fasthttp.Client{
 			Name:               "goex-http-utils",
 			MaxConnsPerHost:    512,
-			MaxConnWaitTimeout: 4 * config.GetHttpTimeout(),
-			WriteTimeout:       config.GetHttpTimeout(),
-			ReadTimeout:        config.GetHttpTimeout(),
+			MaxConnWaitTimeout: 4 * httpTimeout,
+			WriteTimeout:       httpTimeout,
+			ReadTimeout:        httpTimeout,
 		}
 
-		proxyUrl := config.GetHttpProxy()
+		proxyUrl := config.C.HttpConf.Proxy
 		if proxyUrl != nil && socksDialer == nil {
 			if proxyUrl.Scheme != "socks5" {
 				logger.Log.Error("[http utils] fasthttp only support the socks5 proxy")
@@ -67,7 +69,7 @@ func doHttpRequestWithFasthttp(reqMethod, reqUrl, postData string, headers map[s
 	req.SetRequestURI(reqUrl)
 	req.SetBodyString(postData)
 
-	err := fastHttpClient.DoTimeout(req, resp, config.GetHttpTimeout())
+	err := fastHttpClient.DoTimeout(req, resp, config.C.HttpConf.Timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -82,9 +84,9 @@ func doHttpRequestWithFasthttp(reqMethod, reqUrl, postData string, headers map[s
 func setupDefaultHttpClient() {
 	if defaultHttpClient == nil {
 		logger.Log.Info("[http utils] init default http client")
-		httpTimeout := config.GetHttpTimeout()
+		httpTimeout := config.C.HttpConf.Timeout
 		defaultHttpClient = &http.Client{
-			Timeout: config.GetHttpTimeout(),
+			Timeout: httpTimeout,
 			Transport: &http.Transport{
 				IdleConnTimeout:       2 * httpTimeout,
 				ResponseHeaderTimeout: httpTimeout,
@@ -92,7 +94,7 @@ func setupDefaultHttpClient() {
 			},
 		}
 
-		proxyUrl := config.GetHttpProxy()
+		proxyUrl := config.C.HttpConf.Proxy
 		if proxyUrl != nil {
 			logger.Log.Info("[http utils] proxy=", proxyUrl.String())
 			defaultHttpClient.Transport.(*http.Transport).Proxy = func(r *http.Request) (*url.URL, error) {
@@ -106,13 +108,13 @@ func DoHttpRequest(reqType string, reqUrl string, postData string, requstHeaders
 	logger.Log.Debugf("[%s] request url: %s", reqType, reqUrl)
 
 	lib := os.Getenv("HTTP_LIB")
-	if lib == config.Lib_FastHttpClient || config.GetHttpLib() == config.Lib_FastHttpClient {
+	if lib == goex.HttpLib_FastHttpClient || config.C.HttpConf.Lib == goex.HttpLib_FastHttpClient {
 		return doHttpRequestWithFasthttp(reqType, reqUrl, postData, requstHeaders)
 	}
 
 	setupDefaultHttpClient()
 
-	reqTimeoutCtx, _ := context.WithTimeout(context.TODO(), config.GetHttpTimeout())
+	reqTimeoutCtx, _ := context.WithTimeout(context.TODO(), config.C.HttpConf.Timeout)
 	req, _ := http.NewRequestWithContext(reqTimeoutCtx, reqType, reqUrl, strings.NewReader(postData))
 	if req.Header.Get("User-Agent") == "" {
 		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36")
