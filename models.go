@@ -4,6 +4,14 @@ import (
 	"time"
 )
 
+// OptionParameter 可选参数
+type OptionParameter struct {
+	Key   string
+	Value string
+}
+
+type KlinePeriod int
+
 type CurrencyPair struct {
 	Symbol         string
 	Market         string
