@@ -22,15 +22,15 @@ type FuturesCurrencyPair struct {
 }
 
 type Ticker struct {
-	Pair     CurrencyPair `json:"pair"`
-	Last     float64      `json:"l"`
-	Buy      float64      `json:"b"`
-	Sell     float64      `json:"s"`
-	High     float64      `json:"h"`
-	Low      float64      `json:"lw"`
-	Vol      float64      `json:"v"`
-	DateTime uint64       `json:"t"`
-	Origin   []byte       `json:"origin"`
+	Pair      CurrencyPair `json:"pair"`
+	Last      float64      `json:"l"`
+	Buy       float64      `json:"b"`
+	Sell      float64      `json:"s"`
+	High      float64      `json:"h"`
+	Low       float64      `json:"lw"`
+	Vol       float64      `json:"v"`
+	Timestamp int64        `json:"t"`
+	Origin    []byte       `json:"origin"`
 }
 
 type DepthItem struct {
