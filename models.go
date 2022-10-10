@@ -13,13 +13,13 @@ type OptionParameter struct {
 type KlinePeriod int
 
 type CurrencyPair struct {
-	Symbol         string
-	Market         string
-	PricePrecision int //价格小数点位数
-	QtyPrecision   int //数量小数点位数
-	MinQty         float64
-	MaxQty         float64
-	MarketQty      float64
+	Symbol         string  `json:"symbol"`
+	Market         string  `json:"market"`
+	PricePrecision int     `json:"price_precision"` //价格小数点位数
+	QtyPrecision   int     `json:"qty_precision"`   //数量小数点位数
+	MinQty         float64 `json:"min_qty"`
+	MaxQty         float64 `json:"max_qty"`
+	MarketQty      float64 `json:"market_qty"`
 }
 
 type FuturesCurrencyPair struct {
@@ -76,4 +76,19 @@ type Kline struct {
 	High      float64      `json:"h"`
 	Low       float64      `json:"l"`
 	Vol       float64      `json:"v"`
+}
+
+type Order struct {
+	Pair        CurrencyPair `json:"pair"`
+	Id          string       `json:"id"`   //订单ID
+	CId         string       `json:"c_id"` //客户端自定义ID
+	Side        int          //交易方向: sell,buy
+	Status      int          `json:"status"`     //状态
+	OrderType   int          `json:"order_type"` //类型: limit , market , ...
+	Price       float64      `json:"price"`
+	Qty         float64      `json:"qty"`
+	ExecutedQty float64      `json:"executed_qty"`
+	PriceAvg    float64      `json:"price_avg"`
+	Timestamp   int64        `json:"t"`
+	Origin      []byte       `json:"origin"`
 }
