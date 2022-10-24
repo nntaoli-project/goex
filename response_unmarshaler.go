@@ -1,13 +1,13 @@
 package goex
 
-type Unmarshal interface {
-	Unmarshal([]byte, interface{}) error
+type ResponseUnmarshaler interface {
+	UnmarshalResponse([]byte, interface{}) error
 }
 
-type UnmarshalTicker interface {
+type TickerUnmarshaler interface {
 	UnmarshalTicker([]byte) (*Ticker, error)
 }
 
-type UnmarshalDepth interface {
+type DepthUnmarshaler interface {
 	UnmarshalDepth([]byte) (*Depth, error)
 }
