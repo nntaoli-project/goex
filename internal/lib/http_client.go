@@ -44,8 +44,6 @@ func (cli *DefaultHttpClient) init() {
 }
 
 func (cli *DefaultHttpClient) DoRequest(method, rqUrl string, params *url.Values, headers map[string]string) (data []byte, err error) {
-	logger.Log.Debugf("[http utils] [%s] request url: %s", method, rqUrl)
-
 	reqBody := ""
 	if params != nil {
 		if method == http.MethodGet {
@@ -54,6 +52,8 @@ func (cli *DefaultHttpClient) DoRequest(method, rqUrl string, params *url.Values
 			reqBody = params.Encode()
 		}
 	}
+
+	logger.Log.Debugf("[http utils] [%s] request url: %s", method, rqUrl)
 
 	reqTimeoutCtx, _ := context.WithTimeout(context.TODO(), config.C.HttpConf.Timeout)
 	req, _ := http.NewRequestWithContext(reqTimeoutCtx, method, rqUrl, strings.NewReader(reqBody))
@@ -82,7 +82,7 @@ func (cli *DefaultHttpClient) DoRequest(method, rqUrl string, params *url.Values
 	}
 
 	if resp.StatusCode != 200 {
-		return nil, errors.New(resp.Status)
+		return bodyData, errors.New(resp.Status)
 	}
 
 	return bodyData, nil
