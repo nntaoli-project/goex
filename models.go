@@ -37,6 +37,7 @@ type Ticker struct {
 	High      float64      `json:"h"`
 	Low       float64      `json:"lw"`
 	Vol       float64      `json:"v"`
+	Percent   float64      `json:"percent"`
 	Timestamp int64        `json:"t"`
 	Origin    []byte       `json:"origin"`
 }
