@@ -20,7 +20,7 @@ const (
 	getSwapContractInfoApiPath = "/swap-ex/v1/swap_contract_info"
 	tickerApiPath              = "/swap-ex/market/detail/merged"
 	marketApiPath              = "/swap-ex/market/depth"
-	klineApiPath               = "/swap-api/market/history/kline"
+	klineApiPath               = "/swap-ex/market/history/kline"
 	accountApiPath             = "/swap-api/v1/swap_account_info"
 	placeOrderApiPath          = "/swap-api/v1/swap_order"
 	getPositionApiPath         = "/swap-api/v1/swap_position_info"
@@ -476,7 +476,50 @@ func (swap *HbdmSwap) GetContractValue(currencyPair CurrencyPair) (float64, erro
 }
 
 func (swap *HbdmSwap) GetKlineRecords(contractType string, currency CurrencyPair, period KlinePeriod, size int, opt ...OptionalParameter) ([]FutureKline, error) {
-	panic("not implement")
+	klineType := AdaptKlinePeriodForOKEx(int(period))
+	contractCode := currency.ToSymbol("-")
+	apiUrl := fmt.Sprintf("%s%s?contract_code=%s&period=%s&size=%d", swap.c.Endpoint, klineApiPath, contractCode, klineType, size)
+	responseBody, err := HttpGet5(swap.base.config.HttpClient, apiUrl, map[string]string{})
+	if err != nil {
+		return nil, err
+	}
+	logger.Debugf("response body: %s", string(responseBody))
+
+	var ret struct {
+		BaseResponse
+		Data []struct {
+			Id     int64   `json:"id"`
+			Amount float64 `json:"amount"`
+			Close  float64 `json:"close"`
+			High   float64 `json:"high"`
+			Low    float64 `json:"low"`
+			Open   float64 `json:"open"`
+			Vol    float64 `json:"vol"`
+		} `json:"data"`
+	}
+
+	err = json.Unmarshal(responseBody, &ret)
+	if err != nil {
+		logger.Errorf("[hbdm-swap] err=%s", err.Error())
+		return nil, err
+	}
+
+	var lines []FutureKline
+	for i := len(ret.Data) - 1; i >= 0; i-- {
+		d := ret.Data[i]
+		lines = append(lines, FutureKline{
+			Kline: &Kline{
+				Pair:      currency,
+				Vol:       d.Vol,
+				Open:      d.Open,
+				Close:     d.Close,
+				High:      d.High,
+				Low:       d.Low,
+				Timestamp: d.Id},
+			Vol2: d.Vol})
+	}
+
+	return lines, err
 }
 
 func (swap *HbdmSwap) GetTrades(contractType string, currencyPair CurrencyPair, since int64) ([]Trade, error) {
