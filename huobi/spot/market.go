@@ -9,8 +9,7 @@ import (
 )
 
 func (s spotImpl) GetName() string {
-	//TODO implement me
-	panic("implement me")
+	return "huobi.com"
 }
 
 func (s spotImpl) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter) (*Depth, error) {
