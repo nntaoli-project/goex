@@ -13,8 +13,9 @@ type OptionParameter struct {
 type KlinePeriod int
 
 type CurrencyPair struct {
-	Symbol         string  `json:"symbol"`
-	Market         string  `json:"market"`
+	Symbol         string  `json:"symbol"`          //交易对
+	BaseSymbol     string  `json:"base_symbol"`     //币种
+	MarketSymbol   string  `json:"market"`          //交易市场
 	PricePrecision int     `json:"price_precision"` //价格小数点位数
 	QtyPrecision   int     `json:"qty_precision"`   //数量小数点位数
 	MinQty         float64 `json:"min_qty"`

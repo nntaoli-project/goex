@@ -5,7 +5,6 @@ import (
 	"fmt"
 	. "github.com/nntaoli-project/goex/v2"
 	"net/url"
-	"strings"
 )
 
 func (s spotImpl) GetName() string {
@@ -20,7 +19,7 @@ func (s spotImpl) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter)
 func (s spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker, error) {
 	cli := GetHttpCli()
 	params := url.Values{}
-	params.Set("symbol", fmt.Sprintf("%s%s", strings.ToLower(pair.Symbol), strings.ToLower(pair.Market)))
+	params.Set("symbol", pair.Symbol)
 
 	data, err := cli.DoRequest("GET", s.defaultUriOpts.Endpoint+s.defaultUriOpts.TickerUri, &params, nil)
 	if err != nil {

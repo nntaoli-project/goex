@@ -19,7 +19,7 @@ func (s *spotImpl) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter
 
 func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker, error) {
 	params := url.Values{}
-	params.Set("instId", fmt.Sprintf("%s-%s", pair.Symbol, pair.Market))
+	params.Set("instId", pair.Symbol)
 
 	data, err := s.doNoAuthRequest("GET", s.defaultUriOpts.Endpoint+s.defaultUriOpts.TickerUri, &params, nil)
 	if err != nil {

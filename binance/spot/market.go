@@ -19,7 +19,7 @@ func (s *spotImpl) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter
 func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker, error) {
 	cli := GetHttpCli()
 	params := url.Values{}
-	params.Set("symbol", fmt.Sprintf("%s%s", pair.Symbol, pair.Market))
+	params.Set("symbol", pair.Symbol)
 
 	if len(opt) > 0 {
 		for _, p := range opt {
