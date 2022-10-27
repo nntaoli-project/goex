@@ -77,15 +77,16 @@ type Kline struct {
 	High      float64      `json:"h"`
 	Low       float64      `json:"l"`
 	Vol       float64      `json:"v"`
+	Origin    []byte       `json:"-"`
 }
 
 type Order struct {
 	Pair        CurrencyPair `json:"pair"`
-	Id          string       `json:"id"`   //订单ID
-	CId         string       `json:"c_id"` //客户端自定义ID
-	Side        int          //交易方向: sell,buy
-	Status      int          `json:"status"`     //状态
-	OrderType   int          `json:"order_type"` //类型: limit , market , ...
+	Id          string       `json:"id"`       //订单ID
+	CId         string       `json:"c_id"`     //客户端自定义ID
+	Side        OrderSide    `json:"side"`     //交易方向: sell,buy
+	OrderTy     OrderType    `json:"order_ty"` //类型: limit , market , ...
+	Status      int          `json:"status"`   //状态
 	Price       float64      `json:"price"`
 	Qty         float64      `json:"qty"`
 	ExecutedQty float64      `json:"executed_qty"`
@@ -93,3 +94,36 @@ type Order struct {
 	Timestamp   int64        `json:"t"`
 	Origin      []byte       `json:"origin"`
 }
+
+type OrderType struct {
+	Code int
+	Type string
+}
+
+func (ty OrderType) String() string {
+	return ty.Type
+}
+
+var (
+	OrderType_Limit    = OrderType{Code: 1, Type: "limit"}
+	OrderType_Market   = OrderType{Code: 2, Type: "market"}
+	OrderType_opponent = OrderType{Code: 3, Type: "opponent"}
+)
+
+type OrderSide struct {
+	Code int
+	Type string
+}
+
+func (s OrderSide) String() string {
+	return s.Type
+}
+
+var (
+	Spot_Buy          = OrderSide{Type: "buy", Code: 1}
+	Spot_Sell         = OrderSide{Type: "sell", Code: 2}
+	Futures_OpenBuy   = OrderSide{Type: "open_buy", Code: 1}
+	Futures_OpenSell  = OrderSide{Type: "open_sell", Code: 2}
+	Futures_CloseBuy  = OrderSide{Type: "close_buy", Code: 3}
+	Futures_CloseSell = OrderSide{Type: "close_sell", Code: 4}
+)
