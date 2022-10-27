@@ -10,7 +10,7 @@ type OptionParameter struct {
 	Value string
 }
 
-type KlinePeriod int
+type KlinePeriod string
 
 type CurrencyPair struct {
 	Symbol         string  `json:"symbol"`          //交易对
@@ -21,6 +21,10 @@ type CurrencyPair struct {
 	MinQty         float64 `json:"min_qty"`
 	MaxQty         float64 `json:"max_qty"`
 	MarketQty      float64 `json:"market_qty"`
+}
+
+func (pair CurrencyPair) String() string {
+	return pair.Symbol
 }
 
 type FuturesCurrencyPair struct {
