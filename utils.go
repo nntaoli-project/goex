@@ -50,6 +50,6 @@ func GenerateOrderClientId(size int) string {
 
 func MergeOptionParams(params *url.Values, opts ...OptionParameter) {
 	for _, opt := range opts {
-		params.Add(opt.Key, opt.Value)
+		params.Set(opt.Key, opt.Value)
 	}
 }
