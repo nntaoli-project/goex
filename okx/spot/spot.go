@@ -9,35 +9,44 @@ var (
 )
 
 type Spot struct {
-	defaultUriOpts    *UriOptions
-	tickerUnmarshaler TickerUnmarshaler
-	depthUnmarshaler  DepthUnmarshaler
+	unmarshalerOpts UnmarshalerOptions
 }
 
 type spotImpl struct {
 	*Spot
+	uriOpts UriOptions
 }
 
-func New() *Spot {
-	s := &Spot{}
-	s.defaultUriOpts = &UriOptions{
-		Endpoint:  "https://www.okex.com",
-		TickerUri: "/api/v5/market/ticker",
-		DepthUri:  "/api/v5/market/books",
+func New(opts ...UnmarshalerOption) *Spot {
+	unmarshaler := new(RespUnmarshaler)
+
+	s := &Spot{
+		unmarshalerOpts: UnmarshalerOptions{
+			ResponseUnmarshaler: unmarshaler.UnmarshalResponse,
+			TickerUnmarshaler:   unmarshaler.UnmarshalTicker,
+			DepthUnmarshaler:    unmarshaler.UnmarshalDepth,
+		},
 	}
+
+	for _, opt := range opts {
+		opt(&s.unmarshalerOpts)
+	}
+
 	return s
 }
 
 func (s *Spot) NewMarketApi(opts ...UriOption) IMarketRest {
-	for _, opt := range opts {
-		opt(s.defaultUriOpts)
-	}
-
-	unmarshaler := new(RespUnmarshaler)
-	s.tickerUnmarshaler = unmarshaler
-	s.depthUnmarshaler = unmarshaler
-
 	imp := new(spotImpl)
 	imp.Spot = s
+	imp.uriOpts = UriOptions{
+		Endpoint:  "https://www.okex.com",
+		TickerUri: "/api/v5/market/ticker",
+		DepthUri:  "/api/v5/market/books",
+	}
+
+	for _, opt := range opts {
+		opt(&imp.uriOpts)
+	}
+
 	return imp
 }

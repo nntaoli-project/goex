@@ -1,13 +1,71 @@
 package goex
 
-type ResponseUnmarshaler interface {
-	UnmarshalResponse([]byte, interface{}) error
+type ResponseUnmarshaler func([]byte, interface{}) error
+type GetTickerResponseUnmarshaler func([]byte) (*Ticker, error)
+type GetDepthResponseUnmarshaler func([]byte) (*Depth, error)
+type GetKlineResponseUnmarshaler func([]byte) ([]Kline, error)
+type CreateOrderResponseUnmarshaler func([]byte) (Order, error)
+type GetOrderInfoResponseUnmarshaler func([]byte) (Order, error)
+type GetPendingOrdersResponseUnmarshaler func([]byte) ([]Order, error)
+type CancelOrderResponseUnmarshaler func([]byte) error
+
+type UnmarshalerOptions struct {
+	ResponseUnmarshaler                 ResponseUnmarshaler
+	TickerUnmarshaler                   GetTickerResponseUnmarshaler
+	DepthUnmarshaler                    GetDepthResponseUnmarshaler
+	KlineUnmarshaler                    GetKlineResponseUnmarshaler
+	CreateOrderResponseUnmarshaler      CreateOrderResponseUnmarshaler
+	GetOrderInfoResponseUnmarshaler     GetOrderInfoResponseUnmarshaler
+	GetPendingOrdersResponseUnmarshaler GetPendingOrdersResponseUnmarshaler
+	CancelOrderResponseUnmarshaler      CancelOrderResponseUnmarshaler
 }
 
-type TickerUnmarshaler interface {
-	UnmarshalTicker([]byte) (*Ticker, error)
+type UnmarshalerOption func(options *UnmarshalerOptions)
+
+func WithResponseUnmarshaler(unmarshaler ResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.ResponseUnmarshaler = unmarshaler
+	}
 }
 
-type DepthUnmarshaler interface {
-	UnmarshalDepth([]byte) (*Depth, error)
+func WithTickerUnmarshaler(unmarshaler GetTickerResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.TickerUnmarshaler = unmarshaler
+	}
+}
+
+func WithDepthUnmarshaler(unmarshaler GetDepthResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.DepthUnmarshaler = unmarshaler
+	}
+}
+
+func WithKlineUnmarshaler(unmarshaler GetKlineResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.KlineUnmarshaler = unmarshaler
+	}
+}
+
+func WithGetOrderInfoResponseUnmarshaler(unmarshaler GetOrderInfoResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.GetOrderInfoResponseUnmarshaler = unmarshaler
+	}
+}
+
+func WithCreateOrderResponseUnmarshaler(unmarshaler CreateOrderResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.CreateOrderResponseUnmarshaler = unmarshaler
+	}
+}
+
+func WithGetPendingOrdersResponseUnmarshaler(unmarshaler GetPendingOrdersResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.GetPendingOrdersResponseUnmarshaler = unmarshaler
+	}
+}
+
+func WithCancelOrderResponseUnmarshaler(unmarshaler CancelOrderResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.CancelOrderResponseUnmarshaler = unmarshaler
+	}
 }

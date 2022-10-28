@@ -9,40 +9,39 @@ var (
 )
 
 type Spot struct {
-	defaultUriOpts    *UriOptions
-	tickerUnmarshaler TickerUnmarshaler
-	depthUnmarshaler  DepthUnmarshaler
+	unmarshalerOpts UnmarshalerOptions
 }
 
 type spotImpl struct {
 	*Spot
+	uriOpts UriOptions
 }
 
-func New() *Spot {
-	s := &Spot{}
-	s.defaultUriOpts = &UriOptions{
-		Endpoint:            "https://api.binance.com",
-		TickerUri:           "/api/v3/ticker/24hr",
-		DepthUri:            "/api/v3/depth",
-		KlineUri:            "/api/v3/klines",
-		GetOrderUri:         "",
-		GetPendingOrdersUri: "",
-		CancelOrderUri:      "",
-		NewOrderUri:         "",
+func New(options ...UnmarshalerOption) *Spot {
+	unmarshaler := new(RespUnmarshaler)
+	s := &Spot{
+		unmarshalerOpts: UnmarshalerOptions{
+			TickerUnmarshaler: unmarshaler.UnmarshalTicker,
+			DepthUnmarshaler:  unmarshaler.UnmarshalDepth,
+		},
+	}
+	for _, opt := range options {
+		opt(&s.unmarshalerOpts)
 	}
 	return s
 }
 
 func (s *Spot) NewMarketApi(opts ...UriOption) IMarketRest {
-	for _, opt := range opts {
-		opt(s.defaultUriOpts)
-	}
-
-	unmarshaler := new(RespUnmarshaler)
-	s.tickerUnmarshaler = unmarshaler
-	s.depthUnmarshaler = unmarshaler
-
 	imp := new(spotImpl)
 	imp.Spot = s
+	imp.uriOpts = UriOptions{
+		Endpoint:  "https://api.binance.com",
+		TickerUri: "/api/v3/ticker/24hr",
+		DepthUri:  "/api/v3/depth",
+		KlineUri:  "/api/v3/klines",
+	}
+	for _, opt := range opts {
+		opt(&imp.uriOpts)
+	}
 	return imp
 }

@@ -30,12 +30,12 @@ func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker
 		}
 	}
 
-	data, err := cli.DoRequest("GET", s.defaultUriOpts.Endpoint+s.defaultUriOpts.TickerUri, &params, nil)
+	data, err := cli.DoRequest("GET", s.uriOpts.Endpoint+s.uriOpts.TickerUri, &params, nil)
 	if err != nil {
 		return nil, fmt.Errorf("%w%s", err, errors.New(string(data)))
 	}
 
-	tk, err := s.tickerUnmarshaler.UnmarshalTicker(data)
+	tk, err := s.unmarshalerOpts.TickerUnmarshaler(data)
 	if err != nil {
 		return nil, err
 	}

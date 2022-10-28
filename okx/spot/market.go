@@ -21,12 +21,12 @@ func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker
 	params := url.Values{}
 	params.Set("instId", pair.Symbol)
 
-	data, err := s.doNoAuthRequest("GET", s.defaultUriOpts.Endpoint+s.defaultUriOpts.TickerUri, &params, nil)
+	data, err := s.doNoAuthRequest("GET", s.uriOpts.Endpoint+s.uriOpts.TickerUri, &params, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	tk, err := s.tickerUnmarshaler.UnmarshalTicker(data)
+	tk, err := s.unmarshalerOpts.TickerUnmarshaler(data)
 	if err != nil {
 		return nil, err
 	}
