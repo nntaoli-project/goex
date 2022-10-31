@@ -43,16 +43,7 @@ func (cli *DefaultHttpClient) init() {
 	}
 }
 
-func (cli *DefaultHttpClient) DoRequest(method, rqUrl string, params *url.Values, headers map[string]string) (data []byte, err error) {
-	reqBody := ""
-	if params != nil {
-		if method == http.MethodGet {
-			rqUrl = fmt.Sprintf("%s?%s", rqUrl, params.Encode())
-		} else {
-			reqBody = params.Encode()
-		}
-	}
-
+func (cli *DefaultHttpClient) DoRequest(method, rqUrl string, reqBody string, headers map[string]string) (data []byte, err error) {
 	logger.Log.Debugf("[http utils] [%s] request url: %s", method, rqUrl)
 
 	reqTimeoutCtx, _ := context.WithTimeout(context.TODO(), config.C.HttpConf.Timeout)

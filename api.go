@@ -5,7 +5,7 @@ import (
 )
 
 type IHttpClient interface {
-	DoRequest(method, rqUrl string, params *url.Values, headers map[string]string) (data []byte, err error)
+	DoRequest(method, rqUrl string, reqBody string, headers map[string]string) (data []byte, err error)
 }
 
 // IMarketRest 行情接口，不需要授权

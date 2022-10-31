@@ -1,20 +1,22 @@
 package spot
 
 import (
+	"encoding/json"
 	"github.com/buger/jsonparser"
 	. "github.com/nntaoli-project/goex/v2"
 	"github.com/spf13/cast"
 )
 
-type RespUnmarshaler struct {
+func UnmarshalResponse(data []byte, i interface{}) error {
+	return json.Unmarshal(data, i)
 }
 
-func (r RespUnmarshaler) UnmarshalDepth(data []byte) (*Depth, error) {
+func UnmarshalDepth(data []byte) (*Depth, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r RespUnmarshaler) UnmarshalTicker(data []byte) (*Ticker, error) {
+func UnmarshalTicker(data []byte) (*Ticker, error) {
 	var (
 		tk   = new(Ticker)
 		open float64
@@ -34,6 +36,20 @@ func (r RespUnmarshaler) UnmarshalTicker(data []byte) (*Ticker, error) {
 			tk.Vol = cast.ToFloat64(string(value))
 		case "open":
 			open = cast.ToFloat64(string(value))
+		case "bid":
+			var bids []float64
+			err := UnmarshalResponse(value, &bids)
+			if err != nil {
+				return err
+			}
+			tk.Buy = bids[0]
+		case "ask":
+			var asks []float64
+			err := UnmarshalResponse(value, &asks)
+			if err != nil {
+				return err
+			}
+			tk.Sell = asks[0]
 		}
 		return nil
 	})

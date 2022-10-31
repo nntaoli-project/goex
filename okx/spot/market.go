@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex/v2"
+	"net/http"
 	"net/url"
 )
 
@@ -44,7 +45,11 @@ func (s *spotImpl) GetKline(pair CurrencyPair, period KlinePeriod, opt ...Option
 }
 
 func (s *spotImpl) doNoAuthRequest(method, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {
-	responseData, err := GetHttpCli().DoRequest(method, reqUrl, params, headers)
+	if method == http.MethodGet {
+		reqUrl += "?" + params.Encode()
+	}
+
+	responseData, err := GetHttpCli().DoRequest(method, reqUrl, "", headers)
 	if err != nil {
 		return nil, fmt.Errorf("%w%s", err, errors.New(string(responseData)))
 	}

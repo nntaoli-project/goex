@@ -8,6 +8,12 @@ var (
 	currencyPaircacheMap = make(map[string]*CurrencyPair, 6)
 )
 
+type BaseResponse struct {
+	Status  string `json:"status"`
+	ErrCode int    `json:"err_code"`
+	ErrMsg  string `json:"err_msg"`
+}
+
 type Spot struct {
 	unmarshalerOpts UnmarshalerOptions
 }
@@ -18,12 +24,11 @@ type spotImpl struct {
 }
 
 func New(opts ...UnmarshalerOption) *Spot {
-	unmarshaler := new(RespUnmarshaler)
 	s := &Spot{
 		unmarshalerOpts: UnmarshalerOptions{
-			ResponseUnmarshaler: nil,
-			TickerUnmarshaler:   unmarshaler.UnmarshalTicker,
-			DepthUnmarshaler:    unmarshaler.UnmarshalDepth,
+			ResponseUnmarshaler: UnmarshalResponse,
+			TickerUnmarshaler:   UnmarshalTicker,
+			DepthUnmarshaler:    UnmarshalDepth,
 		},
 	}
 	for _, opt := range opts {

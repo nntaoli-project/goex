@@ -4,24 +4,22 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex/v2"
+	"net/http"
 	"net/url"
 )
 
-func (s spotImpl) GetName() string {
+func (s *spotImpl) GetName() string {
 	return "huobi.com"
 }
 
-func (s spotImpl) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter) (*Depth, error) {
+func (s *spotImpl) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter) (*Depth, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker, error) {
-	cli := GetHttpCli()
-	params := url.Values{}
-	params.Set("symbol", pair.Symbol)
-
-	data, err := cli.DoRequest("GET", s.uriOpts.Endpoint+s.uriOpts.TickerUri, &params, nil)
+func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker, error) {
+	data, err := s.doNoAuthRequest(http.MethodGet,
+		fmt.Sprintf("%s%s?symbol=%s", s.uriOpts.Endpoint, s.uriOpts.TickerUri, pair.Symbol), nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("%w%s", err, errors.New(string(data)))
 	}
@@ -37,7 +35,31 @@ func (s spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker,
 	return tk, err
 }
 
-func (s spotImpl) GetKline(pair CurrencyPair, period KlinePeriod, opt ...OptionParameter) ([]Kline, error) {
+func (s *spotImpl) GetKline(pair CurrencyPair, period KlinePeriod, opt ...OptionParameter) ([]Kline, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (s *spotImpl) doNoAuthRequest(method, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {
+	if method == http.MethodGet && params != nil {
+		reqUrl += "?" + params.Encode()
+	}
+
+	responseData, err := GetHttpCli().DoRequest(method, reqUrl, "", headers)
+	if err != nil {
+		return nil, fmt.Errorf("%w%s", err, errors.New(string(responseData)))
+	}
+
+	var resp BaseResponse
+
+	err = s.unmarshalerOpts.ResponseUnmarshaler(responseData, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Status != "ok" {
+		return nil, errors.New(string(responseData))
+	}
+
+	return responseData, nil
 }

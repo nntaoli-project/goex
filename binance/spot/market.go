@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex/v2"
+	"net/http"
 	"net/url"
 )
 
@@ -17,7 +18,6 @@ func (s *spotImpl) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter
 }
 
 func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker, error) {
-	cli := GetHttpCli()
 	params := url.Values{}
 	params.Set("symbol", pair.Symbol)
 
@@ -30,7 +30,7 @@ func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker
 		}
 	}
 
-	data, err := cli.DoRequest("GET", s.uriOpts.Endpoint+s.uriOpts.TickerUri, &params, nil)
+	data, err := s.doNoAuthRequest(http.MethodGet, fmt.Sprintf("%s%s", s.uriOpts.Endpoint, s.uriOpts.TickerUri), &params, nil)
 	if err != nil {
 		return nil, fmt.Errorf("%w%s", err, errors.New(string(data)))
 	}
@@ -50,4 +50,21 @@ func (s *spotImpl) GetKline(pair CurrencyPair, period KlinePeriod, opt ...Option
 	//TODO implement me
 
 	panic("implement me")
+}
+
+func (s *spotImpl) doNoAuthRequest(method, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {
+	var reqBody string
+
+	if method == http.MethodGet {
+		reqUrl += "?" + params.Encode()
+	} else {
+		reqBody = params.Encode()
+	}
+
+	responseData, err := GetHttpCli().DoRequest(method, reqUrl, reqBody, headers)
+	if err != nil {
+		return nil, fmt.Errorf("%w%s", err, errors.New(string(responseData)))
+	}
+
+	return responseData, err
 }
