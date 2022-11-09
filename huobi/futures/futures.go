@@ -22,15 +22,21 @@ func NewUSDTFutures(uriOpts ...UriOption) *USDTFutures {
 			TickerUri:           "/linear-swap-ex/market/detail/merged",
 			DepthUri:            "/linear-swap-ex/market/depth",
 			KlineUri:            "/linear-swap-ex/market/history/kline",
-			GetOrderUri:         "/linear-swap-api/v1/swap_cross_order_detail",
+			GetOrderUri:         "/linear-swap-api/v1/swap_cross_order_info",
 			GetPendingOrdersUri: "/linear-swap-api/v1/swap_cross_openorders",
+			GetHistoryOrdersUri: "/linear-swap-api/v3/swap_cross_hisorders",
 			CancelOrderUri:      "/linear-swap-api/v1/swap_cross_cancel",
 			NewOrderUri:         "/linear-swap-api/v1/swap_cross_order",
 		},
 		unmarshalerOpts: UnmarshalerOptions{
-			ResponseUnmarshaler: UnmarshalResponse,
-			KlineUnmarshaler:    UnmarshalKline,
-			TickerUnmarshaler:   UnmarshalTicker,
+			ResponseUnmarshaler:                 UnmarshalResponse,
+			KlineUnmarshaler:                    UnmarshalKline,
+			TickerUnmarshaler:                   UnmarshalTicker,
+			CancelOrderResponseUnmarshaler:      UnmarshalCancelOrderResponse,
+			CreateOrderResponseUnmarshaler:      UnmarshalCreateOrderResponse,
+			GetOrderInfoResponseUnmarshaler:     UnmarshalGetOrderInfoResponse,
+			GetPendingOrdersResponseUnmarshaler: UnmarshalGetPendingOrdersResponse,
+			GetHistoryOrdersResponseUnmarshaler: UnmarshalGetHistoryOrdersResponse,
 		},
 	}
 
@@ -47,15 +53,15 @@ func (f *USDTFutures) WithUnmarshalerOptions(opts ...UnmarshalerOption) {
 	}
 }
 
-//func (f *USDTFutures) NewCrossUdtFuturesTrade(key, secret string) ITradeRest {
-//	return &usdtFuturesTrade{
-//		USDTFutures: f,
-//		apiOpts: ApiOptions{
-//			Key:    key,
-//			Secret: secret,
-//		},
-//	}
-//}
+func (f *USDTFutures) NewCrossUdtFuturesTrade(key, secret string) ITradeRest {
+	return &usdtFuturesTrade{
+		USDTFutures: f,
+		apiOpts: ApiOptions{
+			Key:    key,
+			Secret: secret,
+		},
+	}
+}
 
 func (f *USDTFutures) NewUsdtFuturesMarket() IMarketRest {
 	return &usdtFuturesMarket{USDTFutures: f}
