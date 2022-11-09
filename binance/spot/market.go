@@ -47,10 +47,20 @@ func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker
 	return tk, err
 }
 
-func (s *spotImpl) GetKline(pair CurrencyPair, period KlinePeriod, opt ...OptionParameter) ([]Kline, error) {
-	//TODO implement me
+func (s *spotImpl) GetKline(pair CurrencyPair, period KlinePeriod, opts ...OptionParameter) ([]Kline, error) {
+	params := url.Values{}
+	params.Set("limit", "1000")
+	params.Set("symbol", pair.Symbol)
+	params.Set("interval", adapterKlinePeriod(period))
+	MergeOptionParams(&params, opts...)
 
-	panic("implement me")
+	reqUrl := fmt.Sprintf("%s%s", s.uriOpts.Endpoint, s.uriOpts.KlineUri)
+	respBody, err := s.doNoAuthRequest(http.MethodGet, reqUrl, &params, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.unmarshalerOpts.KlineUnmarshaler(respBody)
 }
 
 func (s *spotImpl) doNoAuthRequest(method, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {

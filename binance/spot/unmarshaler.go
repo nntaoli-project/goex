@@ -54,6 +54,43 @@ func (u *RespUnmarshaler) UnmarshalGetTickerResponse(data []byte) (*Ticker, erro
 
 }
 
+func (u *RespUnmarshaler) UnmarshalGetKlineResponse(data []byte) ([]Kline, error) {
+	var (
+		err    error
+		klines []Kline
+	)
+
+	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		var (
+			i = 0
+			k Kline
+		)
+		_, err = jsonparser.ArrayEach(value, func(val []byte, dataType jsonparser.ValueType, offset int, err error) {
+			switch i {
+			case 0:
+				k.Timestamp, _ = jsonparser.ParseInt(val)
+			case 1:
+				k.Open = cast.ToFloat64(string(val))
+			case 2:
+				k.High = cast.ToFloat64(string(val))
+			case 3:
+				k.Low = cast.ToFloat64(string(val))
+			case 4:
+				k.Close = cast.ToFloat64(string(val))
+			case 5:
+				//ignore
+			case 6:
+				k.Vol = cast.ToFloat64(string(val))
+			}
+			i += 1
+		})
+		k.Origin = value
+		klines = append(klines, k)
+	})
+
+	return klines, err
+}
+
 func (u *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
 	return json.Unmarshal(data, res)
 }

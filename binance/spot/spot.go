@@ -30,6 +30,7 @@ func New(opts ...UriOption) *Spot {
 			ResponseUnmarshaler: unmarshaler.UnmarshalResponse,
 			TickerUnmarshaler:   unmarshaler.UnmarshalGetTickerResponse,
 			DepthUnmarshaler:    unmarshaler.UnmarshalGetDepthResponse,
+			KlineUnmarshaler:    unmarshaler.UnmarshalGetKlineResponse,
 		},
 	}
 	for _, opt := range opts {
