@@ -23,6 +23,8 @@ type ITradeRest interface {
 	//CreateOrders(orders []Order, opt ...OptionParameter) ([]Order, error)
 	GetOrderInfo(pair CurrencyPair, id string, opt ...OptionParameter) (*Order, error)
 	GetPendingOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, error)
+	// GetHistoryOrders 获取历史委托订单列表
+	GetHistoryOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, error)
 	CancelOrder(pair CurrencyPair, id string, opt ...OptionParameter) error
 	//CancelOrders(pair *CurrencyPair, id []string, opt ...OptionParameter) error
 	DoAuthRequest(method, reqUrl string, params *url.Values, header map[string]string) ([]byte, error)

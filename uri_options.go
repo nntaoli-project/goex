@@ -7,6 +7,7 @@ type UriOptions struct {
 	KlineUri            string
 	GetOrderUri         string
 	GetPendingOrdersUri string
+	GetHistoryOrdersUri string
 	CancelOrderUri      string
 	NewOrderUri         string
 }
@@ -58,5 +59,11 @@ func WithCancelOrderUri(uri string) UriOption {
 func WithNewOrderUri(uri string) UriOption {
 	return func(c *UriOptions) {
 		c.NewOrderUri = uri
+	}
+}
+
+func WithGetHistoryOrdersUri(uri string) UriOption {
+	return func(c *UriOptions) {
+		c.GetHistoryOrdersUri = uri
 	}
 }
