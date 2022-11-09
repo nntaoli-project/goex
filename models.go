@@ -91,13 +91,31 @@ type Order struct {
 	CId         string       `json:"c_id"`     //客户端自定义ID
 	Side        OrderSide    `json:"side"`     //交易方向: sell,buy
 	OrderTy     OrderType    `json:"order_ty"` //类型: limit , market , ...
-	Status      int          `json:"status"`   //状态
+	Status      OrderStatus  `json:"status"`   //状态
 	Price       float64      `json:"price"`
 	Qty         float64      `json:"qty"`
 	ExecutedQty float64      `json:"executed_qty"`
 	PriceAvg    float64      `json:"price_avg"`
-	Timestamp   int64        `json:"t"`
-	Origin      []byte       `json:"origin"`
+	Fee         float64      `json:"fee"`
+	CreatedAt   int64        `json:"created_at"`
+	CanceledAt  int64        `json:"canceled_at"`
+	Origin      []byte       `json:"-"`
+}
+
+type OrderStatus int
+
+func (s OrderStatus) String() string {
+	switch s {
+	case 1:
+		return "pending"
+	case 2:
+		return "finished"
+	case 3:
+		return "canceled"
+	case 4:
+		return "part-finished"
+	}
+	return "unknown-status"
 }
 
 type OrderType struct {
