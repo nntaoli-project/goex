@@ -11,12 +11,12 @@ import (
 type RespUnmarshaler struct {
 }
 
-func (u *RespUnmarshaler) UnmarshalDepth(data []byte) (*Depth, error) {
+func (u *RespUnmarshaler) UnmarshalGetDepthResponse(data []byte) (*Depth, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u *RespUnmarshaler) UnmarshalTicker(data []byte) (*Ticker, error) {
+func (u *RespUnmarshaler) UnmarshalGetTickerResponse(data []byte) (*Ticker, error) {
 	var tk = &Ticker{}
 
 	if data[0] != '{' || data[len(data)-1] != '}' {

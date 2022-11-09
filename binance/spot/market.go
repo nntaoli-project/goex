@@ -30,7 +30,8 @@ func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker
 		}
 	}
 
-	data, err := s.doNoAuthRequest(http.MethodGet, fmt.Sprintf("%s%s", s.uriOpts.Endpoint, s.uriOpts.TickerUri), &params, nil)
+	data, err := s.doNoAuthRequest(http.MethodGet,
+		fmt.Sprintf("%s%s", s.uriOpts.Endpoint, s.uriOpts.TickerUri), &params, nil)
 	if err != nil {
 		return nil, fmt.Errorf("%w%s", err, errors.New(string(data)))
 	}
