@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex/v2"
+	"github.com/nntaoli-project/goex/v2/internal/logger"
 	"net/http"
 	"net/url"
 )
@@ -12,9 +13,19 @@ func (s *spotImpl) GetName() string {
 	return "binance.com"
 }
 
-func (s *spotImpl) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter) (*Depth, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *spotImpl) GetDepth(pair CurrencyPair, size int, opts ...OptionParameter) (*Depth, error) {
+	params := url.Values{}
+	params.Set("symbol", pair.Symbol)
+	params.Set("limit", fmt.Sprint(size))
+	MergeOptionParams(&params, opts...)
+
+	reqUrl := fmt.Sprintf("%s%s", s.uriOpts.Endpoint, s.uriOpts.DepthUri)
+	data, err := s.doNoAuthRequest(http.MethodGet, reqUrl, &params, nil)
+	if err != nil {
+		return nil, err
+	}
+	logger.Debugf("[GetDepth] %s", string(data))
+	return s.unmarshalerOpts.DepthUnmarshaler(data)
 }
 
 func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker, error) {

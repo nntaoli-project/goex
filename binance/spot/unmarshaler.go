@@ -12,8 +12,38 @@ type RespUnmarshaler struct {
 }
 
 func (u *RespUnmarshaler) UnmarshalGetDepthResponse(data []byte) (*Depth, error) {
-	//TODO implement me
-	panic("implement me")
+	var (
+		err error
+		dep Depth
+	)
+
+	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		var item []string
+		err = json.Unmarshal(value, &item)
+		if err != nil {
+			logger.Errorf("[UnmarshalGetDepthResponse] err=%s", err.Error())
+			return
+		}
+		dep.Bids = append(dep.Bids, DepthItem{
+			Price:  cast.ToFloat64(item[0]),
+			Amount: cast.ToFloat64(item[1]),
+		})
+	}, "bids")
+
+	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		var item []string
+		err = json.Unmarshal(value, &item)
+		if err != nil {
+			logger.Errorf("[UnmarshalGetDepthResponse] err=%s", err.Error())
+			return
+		}
+		dep.Asks = append(dep.Asks, DepthItem{
+			Price:  cast.ToFloat64(item[0]),
+			Amount: cast.ToFloat64(item[1]),
+		})
+	}, "asks")
+
+	return &dep, err
 }
 
 func (u *RespUnmarshaler) UnmarshalGetTickerResponse(data []byte) (*Ticker, error) {
