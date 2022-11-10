@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex/v2"
+	"github.com/nntaoli-project/goex/v2/internal/logger"
 	"net/http"
 	"net/url"
 )
@@ -53,6 +54,7 @@ func (s *spotImpl) doNoAuthRequest(method, reqUrl string, params *url.Values, he
 	if err != nil {
 		return nil, fmt.Errorf("%w%s", err, errors.New(string(responseData)))
 	}
+	logger.Debugf("[doNoAuthRequest] response body: %s", string(responseData))
 
 	var resp struct {
 		Code int             `json:"code,string"`

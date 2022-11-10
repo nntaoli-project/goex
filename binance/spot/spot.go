@@ -11,6 +11,8 @@ var (
 type Spot struct {
 	unmarshalerOpts UnmarshalerOptions
 	uriOpts         UriOptions
+
+	marketApi IMarketRest
 }
 
 type spotImpl struct {
@@ -36,6 +38,7 @@ func New(opts ...UriOption) *Spot {
 	for _, opt := range opts {
 		opt(&s.uriOpts)
 	}
+	s.marketApi = &spotImpl{Spot: s}
 	return s
 }
 
@@ -46,8 +49,6 @@ func (s *Spot) WithUnmarshalerOptions(opts ...UnmarshalerOption) *Spot {
 	return s
 }
 
-func (s *Spot) NewMarketApi() IMarketRest {
-	imp := new(spotImpl)
-	imp.Spot = s
-	return imp
+func (s *Spot) MarketApi() IMarketRest {
+	return s.marketApi
 }

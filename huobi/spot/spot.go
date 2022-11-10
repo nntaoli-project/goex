@@ -15,37 +15,51 @@ type BaseResponse struct {
 }
 
 type Spot struct {
+	uriOpts         UriOptions
 	unmarshalerOpts UnmarshalerOptions
+	marketApi       IMarketRest
 }
 
 type spotImpl struct {
 	*Spot
-	uriOpts UriOptions
 }
 
-func New(opts ...UnmarshalerOption) *Spot {
+func New(opts ...UriOption) *Spot {
 	s := &Spot{
+		uriOpts: UriOptions{
+			Endpoint:            "https://api.huobi.pro",
+			TickerUri:           "/market/detail/merged",
+			DepthUri:            "",
+			KlineUri:            "",
+			GetOrderUri:         "",
+			GetPendingOrdersUri: "",
+			GetHistoryOrdersUri: "",
+			CancelOrderUri:      "",
+			NewOrderUri:         "",
+		},
 		unmarshalerOpts: UnmarshalerOptions{
 			ResponseUnmarshaler: UnmarshalResponse,
 			TickerUnmarshaler:   UnmarshalTicker,
 			DepthUnmarshaler:    UnmarshalDepth,
 		},
 	}
+
+	for _, opt := range opts {
+		opt(&s.uriOpts)
+	}
+
+	s.marketApi = &spotImpl{Spot: s}
+
+	return s
+}
+
+func (s *Spot) WithUnmarshalerOptions(opts ...UnmarshalerOption) *Spot {
 	for _, opt := range opts {
 		opt(&s.unmarshalerOpts)
 	}
 	return s
 }
 
-func (s *Spot) NewMarketApi(opts ...UriOption) IMarketRest {
-	imp := new(spotImpl)
-	imp.Spot = s
-	imp.uriOpts = UriOptions{
-		Endpoint:  "https://api.huobi.pro",
-		TickerUri: "/market/detail/merged",
-	}
-	for _, opt := range opts {
-		opt(&imp.uriOpts)
-	}
-	return imp
+func (s *Spot) MarketApi() IMarketRest {
+	return s.marketApi
 }
