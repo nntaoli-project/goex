@@ -62,7 +62,7 @@ func (s *spotImpl) GetKline(pair CurrencyPair, period KlinePeriod, opts ...Optio
 	params := url.Values{}
 	params.Set("limit", "1000")
 	params.Set("symbol", pair.Symbol)
-	params.Set("interval", adapterKlinePeriod(period))
+	params.Set("interval", adaptKlinePeriod(period))
 	MergeOptionParams(&params, opts...)
 
 	reqUrl := fmt.Sprintf("%s%s", s.uriOpts.Endpoint, s.uriOpts.KlineUri)

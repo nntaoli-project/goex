@@ -121,6 +121,78 @@ func (u *RespUnmarshaler) UnmarshalGetKlineResponse(data []byte) ([]Kline, error
 	return klines, err
 }
 
+func (u *RespUnmarshaler) UnmarshalCreateOrderResponse(data []byte) (*Order, error) {
+	var ord = new(Order)
+	err := jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		switch string(key) {
+		case "orderId":
+			ord.Id = cast.ToString(string(value))
+		case "clientOrderId":
+			ord.CId = cast.ToString(string(value))
+		case "transactTime":
+			ord.CreatedAt = cast.ToInt64(string(value))
+		case "executedQty":
+			ord.ExecutedQty = cast.ToFloat64(string(value))
+		case "status":
+			ord.Status = adaptOrderStatus(string(value))
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ord, nil
+}
+
+func (u *RespUnmarshaler) UnmarshalGetPendingOrdersResponse(data []byte) ([]Order, error) {
+	var (
+		orders []Order
+		err    error
+	)
+	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		ord, err := u.unmarshalOrderResponse(value)
+		if err != nil {
+			logger.Warnf("[UnmarshalGetPendingOrdersResponse] err=%s", err.Error())
+			return
+		}
+		orders = append(orders, ord)
+	})
+	return orders, err
+}
+
+func (u *RespUnmarshaler) unmarshalOrderResponse(data []byte) (ord Order, err error) {
+	err = jsonparser.ObjectEach(data, func(key []byte, val []byte, dataType jsonparser.ValueType, offset int) error {
+		valStr := string(val)
+		switch string(key) {
+		case "orderId":
+			ord.Id = valStr
+		case "clientOrderId":
+			ord.CId = valStr
+		case "price":
+			ord.Price = cast.ToFloat64(valStr)
+		case "origQty":
+			ord.Qty = cast.ToFloat64(valStr)
+		case "executeQty":
+			ord.ExecutedQty = cast.ToFloat64(valStr)
+		case "time":
+			ord.CanceledAt = cast.ToInt64(valStr)
+		case "status":
+			ord.Status = adaptOrderStatus(valStr)
+		case "side":
+			ord.Side = adaptOrderOrigSide(valStr)
+		case "type":
+			ord.OrderTy = adaptOrderOrigType(valStr)
+		}
+		return nil
+	})
+	ord.Origin = data
+	return
+}
+
+func (u *RespUnmarshaler) UnmarshalCancelOrderResponse(data []byte) error {
+	return nil
+}
+
 func (u *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
 	return json.Unmarshal(data, res)
 }
