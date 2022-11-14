@@ -8,6 +8,7 @@ const (
 	Kline_60min             = "60min"
 	Kline_1h                = "1h"
 	Kline_4h                = "4h"
+	Kline_6h                = "6h"
 	Kline_1day              = "1day"
 	Kline_1week             = "1week"
 )
