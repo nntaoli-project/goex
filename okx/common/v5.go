@@ -19,16 +19,19 @@ type BaseResp struct {
 
 func New() *V5 {
 	unmarshaler := new(RespUnmarshaler)
+
 	f := &V5{
 		uriOpts: UriOptions{
 			Endpoint:  "https://www.okx.com",
 			KlineUri:  "/api/v5/market/candles",
 			TickerUri: "/api/v5/market/ticker",
+			DepthUri:  "/api/v5/market/books",
 		},
 		unmarshalOpts: UnmarshalerOptions{
 			ResponseUnmarshaler: unmarshaler.UnmarshalResponse,
 			KlineUnmarshaler:    unmarshaler.UnmarshalGetKlineResponse,
 			TickerUnmarshaler:   unmarshaler.UnmarshalTicker,
+			DepthUnmarshaler:    unmarshaler.UnmarshalDepth,
 		},
 	}
 	f.marketApi = &Market{f}

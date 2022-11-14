@@ -6,17 +6,57 @@ import (
 	. "github.com/nntaoli-project/goex/v2"
 	"github.com/nntaoli-project/goex/v2/internal/logger"
 	"github.com/spf13/cast"
+	"time"
 )
 
 type RespUnmarshaler struct {
 }
 
-func (u *RespUnmarshaler) UnmarshalDepth(data []byte) (*Depth, error) {
-	//TODO implement me
-	panic("implement me")
+func (un *RespUnmarshaler) UnmarshalDepth(data []byte) (*Depth, error) {
+	var (
+		dep Depth
+		err error
+	)
+
+	err = jsonparser.ObjectEach(data[1:len(data)-1],
+		func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+			switch string(key) {
+			case "ts":
+				dep.UTime = time.UnixMilli(cast.ToInt64(string(value)))
+			case "asks":
+				items, _ := un.unmarshalDepthItem(value)
+				dep.Asks = items
+			case "bids":
+				items, _ := un.unmarshalDepthItem(value)
+				dep.Bids = items
+			}
+			return nil
+		})
+
+	return &dep, err
 }
 
-func (u *RespUnmarshaler) UnmarshalTicker(data []byte) (*Ticker, error) {
+func (un *RespUnmarshaler) unmarshalDepthItem(data []byte) (DepthItems, error) {
+	var items DepthItems
+	_, err := jsonparser.ArrayEach(data, func(asksItemData []byte, dataType jsonparser.ValueType, offset int, err error) {
+		item := DepthItem{}
+		i := 0
+		_, err = jsonparser.ArrayEach(asksItemData, func(itemVal []byte, dataType jsonparser.ValueType, offset int, err error) {
+			valStr := string(itemVal)
+			switch i {
+			case 0:
+				item.Price = cast.ToFloat64(valStr)
+			case 1:
+				item.Amount = cast.ToFloat64(valStr)
+			}
+			i += 1
+		})
+		items = append(items, item)
+	})
+	return items, err
+}
+
+func (un *RespUnmarshaler) UnmarshalTicker(data []byte) (*Ticker, error) {
 	var tk = &Ticker{}
 
 	var open float64
@@ -55,7 +95,7 @@ func (u *RespUnmarshaler) UnmarshalTicker(data []byte) (*Ticker, error) {
 	return tk, nil
 }
 
-func (u *RespUnmarshaler) UnmarshalGetKlineResponse(data []byte) ([]Kline, error) {
+func (un *RespUnmarshaler) UnmarshalGetKlineResponse(data []byte) ([]Kline, error) {
 	var klines []Kline
 	_, err := jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		var (
@@ -86,6 +126,6 @@ func (u *RespUnmarshaler) UnmarshalGetKlineResponse(data []byte) ([]Kline, error
 	return klines, err
 }
 
-func (u *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
+func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
 	return json.Unmarshal(data, res)
 }

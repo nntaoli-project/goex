@@ -16,9 +16,26 @@ func (m *Market) GetName() string {
 	return "okx.com"
 }
 
-func (m *Market) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter) (*Depth, error) {
-	//TODO implement me
-	panic("implement me")
+func (m *Market) GetDepth(pair CurrencyPair, size int, opt ...OptionParameter) (*Depth, error) {
+	params := url.Values{}
+	params.Set("instId", pair.Symbol)
+	params.Set("sz", fmt.Sprint(size))
+	MergeOptionParams(&params, opt...)
+
+	data, err := m.DoNoAuthRequest("GET", m.uriOpts.Endpoint+m.uriOpts.DepthUri, &params)
+	if err != nil {
+		return nil, err
+	}
+
+	dep, err := m.unmarshalOpts.DepthUnmarshaler(data)
+	if err != nil {
+		return nil, err
+	}
+
+	dep.Pair = pair
+	//dep.Origin = data
+
+	return dep, err
 }
 
 func (m *Market) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker, error) {
