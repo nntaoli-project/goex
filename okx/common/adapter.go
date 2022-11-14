@@ -26,3 +26,23 @@ func AdaptKlinePeriodToSymbol(period goex.KlinePeriod) string {
 		return string(period)
 	}
 }
+
+func adaptOrderSideToSym(s goex.OrderSide) string {
+	switch s {
+	case goex.Spot_Buy:
+		return "buy"
+	case goex.Spot_Sell:
+		return "sell"
+	}
+	return ""
+}
+
+func adaptOrderTypeToSym(ty goex.OrderType) string {
+	switch ty {
+	case goex.OrderType_Limit:
+		return "limit"
+	case goex.OrderType_Market:
+		return "market"
+	}
+	return string(ty.String())
+}

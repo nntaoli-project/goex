@@ -22,16 +22,18 @@ func New() *V5 {
 
 	f := &V5{
 		uriOpts: UriOptions{
-			Endpoint:  "https://www.okx.com",
-			KlineUri:  "/api/v5/market/candles",
-			TickerUri: "/api/v5/market/ticker",
-			DepthUri:  "/api/v5/market/books",
+			Endpoint:    "https://www.okx.com",
+			KlineUri:    "/api/v5/market/candles",
+			TickerUri:   "/api/v5/market/ticker",
+			DepthUri:    "/api/v5/market/books",
+			NewOrderUri: "/api/v5/trade/order",
 		},
 		unmarshalOpts: UnmarshalerOptions{
-			ResponseUnmarshaler: unmarshaler.UnmarshalResponse,
-			KlineUnmarshaler:    unmarshaler.UnmarshalGetKlineResponse,
-			TickerUnmarshaler:   unmarshaler.UnmarshalTicker,
-			DepthUnmarshaler:    unmarshaler.UnmarshalDepth,
+			ResponseUnmarshaler:            unmarshaler.UnmarshalResponse,
+			KlineUnmarshaler:               unmarshaler.UnmarshalGetKlineResponse,
+			TickerUnmarshaler:              unmarshaler.UnmarshalTicker,
+			DepthUnmarshaler:               unmarshaler.UnmarshalDepth,
+			CreateOrderResponseUnmarshaler: unmarshaler.UnmarshalCreateOrderResponse,
 		},
 	}
 	f.marketApi = &Market{f}
@@ -54,4 +56,10 @@ func (f *V5) WithUnmarshalOption(opts ...UnmarshalerOption) *V5 {
 
 func (f *V5) MarketApi() IMarketRest {
 	return f.marketApi
+}
+
+func (f *V5) NewTradeApi(opts ...ApiOption) ITradeRest {
+	api := newtrade(opts...)
+	api.V5 = f
+	return api
 }

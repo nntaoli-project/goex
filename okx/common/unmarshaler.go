@@ -126,6 +126,21 @@ func (un *RespUnmarshaler) UnmarshalGetKlineResponse(data []byte) ([]Kline, erro
 	return klines, err
 }
 
+func (u *RespUnmarshaler) UnmarshalCreateOrderResponse(data []byte) (*Order, error) {
+	var ord = new(Order)
+	err := jsonparser.ObjectEach(data[1:len(data)-1], func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		valStr := string(value)
+		switch string(key) {
+		case "ordId":
+			ord.Id = valStr
+		case "clOrdId":
+			ord.CId = valStr
+		}
+		return nil
+	})
+	return ord, err
+}
+
 func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
 	return json.Unmarshal(data, res)
 }
