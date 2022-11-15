@@ -9,6 +9,7 @@ type GetOrderInfoResponseUnmarshaler func([]byte) (*Order, error)
 type GetPendingOrdersResponseUnmarshaler func([]byte) ([]Order, error)
 type CancelOrderResponseUnmarshaler func([]byte) error
 type GetHistoryOrdersResponseUnmarshaler func([]byte) ([]Order, error)
+type GetAccountResponseUnmarshaler func([]byte) (map[string]Account, error)
 
 type UnmarshalerOptions struct {
 	ResponseUnmarshaler                 ResponseUnmarshaler
@@ -20,6 +21,7 @@ type UnmarshalerOptions struct {
 	GetPendingOrdersResponseUnmarshaler GetPendingOrdersResponseUnmarshaler
 	GetHistoryOrdersResponseUnmarshaler GetHistoryOrdersResponseUnmarshaler
 	CancelOrderResponseUnmarshaler      CancelOrderResponseUnmarshaler
+	GetAccountResponseUnmarshaler       GetAccountResponseUnmarshaler
 }
 
 type UnmarshalerOption func(options *UnmarshalerOptions)
@@ -75,5 +77,11 @@ func WithCancelOrderResponseUnmarshaler(unmarshaler CancelOrderResponseUnmarshal
 func WithGetHistoryOrdersResponseUnmarshaler(unmarshaler GetHistoryOrdersResponseUnmarshaler) UnmarshalerOption {
 	return func(options *UnmarshalerOptions) {
 		options.GetHistoryOrdersResponseUnmarshaler = unmarshaler
+	}
+}
+
+func WithGetAccountResponseUnmarshaler(unmarshaler GetAccountResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.GetAccountResponseUnmarshaler = unmarshaler
 	}
 }

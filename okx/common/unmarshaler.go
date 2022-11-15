@@ -206,6 +206,36 @@ func (un *RespUnmarshaler) UnmarshalGetOrderInfoResponse(data []byte) (ord *Orde
 	return
 }
 
+func (un *RespUnmarshaler) UnmarshalGetAccountResponse(data []byte) (map[string]Account, error) {
+	var accMap = make(map[string]Account, 2)
+
+	_, err := jsonparser.ArrayEach(data[1:len(data)-1], func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		var acc Account
+		err = jsonparser.ObjectEach(value, func(key []byte, accData []byte, dataType jsonparser.ValueType, offset int) error {
+			valStr := string(accData)
+			switch string(key) {
+			case "ccy":
+				acc.Coin = valStr
+			case "availEq":
+				acc.AvailableBalance = cast.ToFloat64(valStr)
+			case "eq":
+				acc.Balance = cast.ToFloat64(valStr)
+			case "frozenBal":
+				acc.FrozenBalance = cast.ToFloat64(valStr)
+			}
+			return err
+		})
+		
+		if err != nil {
+			return
+		}
+
+		accMap[acc.Coin] = acc
+	}, "details")
+
+	return accMap, err
+}
+
 func (un *RespUnmarshaler) UnmarshalCancelOrderResponse(data []byte) error {
 	sCodeData, _, _, err := jsonparser.Get(data[1:len(data)-1], "sCode")
 	if err != nil {

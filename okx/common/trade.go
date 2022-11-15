@@ -1,7 +1,6 @@
 package common
 
 import (
-	"errors"
 	"fmt"
 	"github.com/nntaoli-project/goex/v2"
 	"github.com/nntaoli-project/goex/v2/internal/logger"
@@ -113,50 +112,7 @@ func (t *Trade) CancelOrder(pair goex.CurrencyPair, id string, opt ...goex.Optio
 }
 
 func (t *Trade) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {
-	var (
-		reqBodyStr string
-		reqUri     string
-	)
-
-	if http.MethodGet == httpMethod {
-		reqUrl += "?" + params.Encode()
-	}
-
-	if http.MethodPost == httpMethod {
-		reqBody, _ := goex.ValuesToJson(*params)
-		reqBodyStr = string(reqBody)
-	}
-
-	_url, _ := url.Parse(reqUrl)
-	reqUri = _url.RequestURI()
-	signStr, timestamp := SignParams(httpMethod, reqUri, t.apiOpts.Secret, reqBodyStr)
-	logger.Debugf("[DoAuthRequest] sign base64: %s, timestamp: %s", signStr, timestamp)
-
-	headers = map[string]string{
-		"Content-Type": "application/json; charset=UTF-8",
-		//"Accept":               "application/json",
-		"OK-ACCESS-KEY":        t.apiOpts.Key,
-		"OK-ACCESS-PASSPHRASE": t.apiOpts.Passphrase,
-		"OK-ACCESS-SIGN":       signStr,
-		"OK-ACCESS-TIMESTAMP":  timestamp}
-
-	respBody, err := goex.GetHttpCli().DoRequest(httpMethod, reqUrl, reqBodyStr, headers)
-	if err != nil {
-		return respBody, err
-	}
-	logger.Debugf("[DoAuthRequest] response body: %s", string(respBody))
-
-	var baseResp BaseResp
-	err = t.unmarshalOpts.ResponseUnmarshaler(respBody, &baseResp)
-	if err != nil {
-		return respBody, err
-	}
-
-	if baseResp.Code != 0 {
-		return baseResp.Data, errors.New(baseResp.Msg)
-	}
-
-	return baseResp.Data, nil
+	return t.V5.DoAuthRequest(httpMethod, reqUrl, params, t.apiOpts, headers)
 }
 
 func NewTrade(opts ...goex.ApiOption) *Trade {

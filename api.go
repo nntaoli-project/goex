@@ -30,6 +30,12 @@ type ITradeRest interface {
 	DoAuthRequest(method, reqUrl string, params *url.Values, header map[string]string) ([]byte, error)
 }
 
+// IAccount
+// 获取账户资产相关的
+type IAccount interface {
+	GetAccount(coin string) (map[string]Account, error)
+}
+
 // IWallet 获取资产信息，划转资金等操作
 type IWallet interface {
 }

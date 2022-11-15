@@ -136,3 +136,10 @@ var (
 	Futures_CloseBuy  OrderSide = "futures_close_buy"
 	Futures_CloseSell OrderSide = "futures_close_sell"
 )
+
+type Account struct {
+	Coin             string
+	Balance          float64
+	AvailableBalance float64
+	FrozenBalance    float64
+}
