@@ -46,3 +46,43 @@ func adaptOrderTypeToSym(ty goex.OrderType) string {
 	}
 	return string(ty.String())
 }
+
+func adaptSymToOrderSide(side, posSide string) goex.OrderSide {
+	switch side {
+	case "buy":
+		if posSide == "net" { //现货
+			return goex.Spot_Buy
+		}
+	case "sell":
+		if posSide == "net" {
+			return goex.Spot_Sell
+		}
+	}
+	return goex.OrderSide{Code: -1}
+}
+
+func adaptSymToOrderTy(st string) goex.OrderType {
+	switch st {
+	case "limit":
+		return goex.OrderType_Limit
+	case "market":
+		return goex.OrderType_Market
+	default:
+		return goex.OrderType{Code: 0, Type: st}
+	}
+}
+
+func adaptSymToOrderStatus(st string) goex.OrderStatus {
+	switch st {
+	case "live":
+		return goex.OrderStatus_Pending
+	case "filled":
+		return goex.OrderStatus_Finished
+	case "canceled":
+		return goex.OrderStatus_Canceled
+	case "partially_filled":
+		return goex.OrderStatus_PartFinished
+	default:
+		return goex.OrderStatus(-1)
+	}
+}

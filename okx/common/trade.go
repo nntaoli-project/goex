@@ -25,6 +25,10 @@ func (t *Trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*go
 	params.Set("ordType", adaptOrderTypeToSym(order.OrderTy))
 	params.Set("px", goex.FloatToString(order.Price, order.Pair.PricePrecision))
 	params.Set("sz", goex.FloatToString(order.Qty, order.Pair.QtyPrecision))
+
+	if order.CId != "" {
+		params.Set("clOrdId", order.CId)
+	}
 	goex.MergeOptionParams(&params, opts...)
 
 	data, err := t.DoAuthRequest(http.MethodPost, reqUrl, &params, nil)
@@ -49,13 +53,38 @@ func (t *Trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*go
 }
 
 func (t *Trade) GetOrderInfo(pair goex.CurrencyPair, id string, opt ...goex.OptionParameter) (*goex.Order, error) {
-	//TODO implement me
-	panic("implement me")
+	reqUrl := fmt.Sprintf("%s%s", t.uriOpts.Endpoint, t.uriOpts.GetOrderUri)
+	params := url.Values{}
+	params.Set("instId", pair.Symbol)
+	params.Set("ordId", id)
+
+	data, err := t.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	ord, err := t.unmarshalOpts.GetOrderInfoResponseUnmarshaler(data[1 : len(data)-1])
+	if err != nil {
+		return nil, err
+	}
+
+	ord.Pair = pair
+	ord.Origin = data
+
+	return ord, nil
 }
 
 func (t *Trade) GetPendingOrders(pair goex.CurrencyPair, opt ...goex.OptionParameter) ([]goex.Order, error) {
-	//TODO implement me
-	panic("implement me")
+	reqUrl := fmt.Sprintf("%s%s", t.uriOpts.Endpoint, t.uriOpts.GetPendingOrdersUri)
+	params := url.Values{}
+	params.Set("instId", pair.Symbol)
+
+	data, err := t.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.unmarshalOpts.GetPendingOrdersResponseUnmarshaler(data)
 }
 
 func (t *Trade) GetHistoryOrders(pair goex.CurrencyPair, opt ...goex.OptionParameter) ([]goex.Order, error) {
@@ -64,15 +93,38 @@ func (t *Trade) GetHistoryOrders(pair goex.CurrencyPair, opt ...goex.OptionParam
 }
 
 func (t *Trade) CancelOrder(pair goex.CurrencyPair, id string, opt ...goex.OptionParameter) error {
-	//TODO implement me
-	panic("implement me")
+	reqUrl := fmt.Sprintf("%s%s", t.uriOpts.Endpoint, t.uriOpts.CancelOrderUri)
+	params := url.Values{}
+	params.Set("instId", pair.Symbol)
+	params.Set("ordId", id)
+	goex.MergeOptionParams(&params, opt...)
+
+	data, err := t.DoAuthRequest(http.MethodPost, reqUrl, &params, nil)
+	if data != nil && len(data) > 0 {
+		return t.unmarshalOpts.CancelOrderResponseUnmarshaler(data)
+	}
+
+	return err
 }
 
 func (t *Trade) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {
-	reqBody, _ := goex.ValuesToJson(*params)
-	reqBodyStr := string(reqBody)
+	var (
+		reqBodyStr string
+		reqUri     string
+	)
+
+	if http.MethodGet == httpMethod {
+		reqUrl += "?" + params.Encode()
+	}
+
+	if http.MethodPost == httpMethod {
+		reqBody, _ := goex.ValuesToJson(*params)
+		reqBodyStr = string(reqBody)
+	}
+
 	_url, _ := url.Parse(reqUrl)
-	signStr, timestamp := SignParams(httpMethod, _url.RequestURI(), t.apiOpts.Secret, reqBodyStr)
+	reqUri = _url.RequestURI()
+	signStr, timestamp := SignParams(httpMethod, reqUri, t.apiOpts.Secret, reqBodyStr)
 	logger.Debugf("[DoAuthRequest] sign base64: %s, timestamp: %s", signStr, timestamp)
 
 	headers = map[string]string{
@@ -87,6 +139,7 @@ func (t *Trade) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, hea
 	if err != nil {
 		return respBody, err
 	}
+	logger.Debugf("[DoAuthRequest] response body: %s", string(respBody))
 
 	var baseResp BaseResp
 	err = t.unmarshalOpts.ResponseUnmarshaler(respBody, &baseResp)
@@ -95,7 +148,7 @@ func (t *Trade) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, hea
 	}
 
 	if baseResp.Code != 0 {
-		return nil, errors.New(baseResp.Msg)
+		return baseResp.Data, errors.New(baseResp.Msg)
 	}
 
 	return baseResp.Data, nil

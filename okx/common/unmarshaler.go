@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/buger/jsonparser"
 	. "github.com/nntaoli-project/goex/v2"
 	"github.com/nntaoli-project/goex/v2/internal/logger"
@@ -126,7 +127,7 @@ func (un *RespUnmarshaler) UnmarshalGetKlineResponse(data []byte) ([]Kline, erro
 	return klines, err
 }
 
-func (u *RespUnmarshaler) UnmarshalCreateOrderResponse(data []byte) (*Order, error) {
+func (un *RespUnmarshaler) UnmarshalCreateOrderResponse(data []byte) (*Order, error) {
 	var ord = new(Order)
 	err := jsonparser.ObjectEach(data[1:len(data)-1], func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		valStr := string(value)
@@ -139,6 +140,83 @@ func (u *RespUnmarshaler) UnmarshalCreateOrderResponse(data []byte) (*Order, err
 		return nil
 	})
 	return ord, err
+}
+
+func (un *RespUnmarshaler) UnmarshalGetPendingOrdersResponse(data []byte) ([]Order, error) {
+	var (
+		orders []Order
+		err    error
+	)
+
+	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		ord, err := un.UnmarshalGetOrderInfoResponse(value)
+		if err != nil {
+			return
+		}
+		orders = append(orders, *ord)
+	})
+
+	return orders, err
+}
+
+func (un *RespUnmarshaler) UnmarshalGetOrderInfoResponse(data []byte) (ord *Order, err error) {
+	var side, posSize string
+	var utime int64
+	ord = new(Order)
+
+	err = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		valStr := string(value)
+		switch string(key) {
+		case "ordId":
+			ord.Id = valStr
+		case "px":
+			ord.Price = cast.ToFloat64(valStr)
+		case "sz":
+			ord.Qty = cast.ToFloat64(valStr)
+		case "cTime":
+			ord.CreatedAt = cast.ToInt64(valStr)
+		case "avgPx":
+			ord.PriceAvg = cast.ToFloat64(valStr)
+		case "accFillSz":
+			ord.ExecutedQty = cast.ToFloat64(valStr)
+		case "fee":
+			ord.Fee = cast.ToFloat64(valStr)
+		case "clOrdId":
+			ord.CId = valStr
+		case "side":
+			side = valStr
+		case "posSize":
+			posSize = valStr
+		case "ordType":
+			ord.OrderTy = adaptSymToOrderTy(valStr)
+		case "state":
+			ord.Status = adaptSymToOrderStatus(valStr)
+		case "uTime":
+			utime = cast.ToInt64(valStr)
+		}
+		return nil
+	})
+
+	ord.Origin = data
+	ord.Side = adaptSymToOrderSide(side, posSize)
+	if ord.Status == OrderStatus_Canceled {
+		ord.CanceledAt = utime
+	}
+
+	return
+}
+
+func (un *RespUnmarshaler) UnmarshalCancelOrderResponse(data []byte) error {
+	sCodeData, _, _, err := jsonparser.Get(data[1:len(data)-1], "sCode")
+	if err != nil {
+		return err
+	}
+
+	if cast.ToInt64(string(sCodeData)) == 0 {
+		return nil
+	}
+
+	return errors.New(string(data))
 }
 
 func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
