@@ -4,22 +4,22 @@ import (
 	"errors"
 	"fmt"
 	"github.com/nntaoli-project/goex/v2"
-	"log"
+	"github.com/nntaoli-project/goex/v2/internal/logger"
 	"net/http"
 	"net/url"
 )
 
-type trade struct {
+type Trade struct {
 	*V5
 	apiOpts goex.ApiOptions
 }
 
-func (t *trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*goex.Order, error) {
+func (t *Trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*goex.Order, error) {
 	reqUrl := fmt.Sprintf("%s%s", t.uriOpts.Endpoint, t.uriOpts.NewOrderUri)
 	params := url.Values{}
 
 	params.Set("instId", order.Pair.Symbol)
-	params.Set("tdMode", "cash")
+	//params.Set("tdMode", "cash")
 	params.Set("side", adaptOrderSideToSym(order.Side))
 	//params.Set("posSide", "")
 	params.Set("ordType", adaptOrderTypeToSym(order.OrderTy))
@@ -29,7 +29,7 @@ func (t *trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*go
 
 	data, err := t.DoAuthRequest(http.MethodPost, reqUrl, &params, nil)
 	if err != nil {
-		log.Println(string(data))
+		logger.Errorf("[CreateOrder] err=%s, response=%s", err.Error(), string(data))
 		return nil, err
 	}
 
@@ -48,31 +48,33 @@ func (t *trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*go
 	return ord, err
 }
 
-func (t *trade) GetOrderInfo(pair goex.CurrencyPair, id string, opt ...goex.OptionParameter) (*goex.Order, error) {
+func (t *Trade) GetOrderInfo(pair goex.CurrencyPair, id string, opt ...goex.OptionParameter) (*goex.Order, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (t *trade) GetPendingOrders(pair goex.CurrencyPair, opt ...goex.OptionParameter) ([]goex.Order, error) {
+func (t *Trade) GetPendingOrders(pair goex.CurrencyPair, opt ...goex.OptionParameter) ([]goex.Order, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (t *trade) GetHistoryOrders(pair goex.CurrencyPair, opt ...goex.OptionParameter) ([]goex.Order, error) {
+func (t *Trade) GetHistoryOrders(pair goex.CurrencyPair, opt ...goex.OptionParameter) ([]goex.Order, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (t *trade) CancelOrder(pair goex.CurrencyPair, id string, opt ...goex.OptionParameter) error {
+func (t *Trade) CancelOrder(pair goex.CurrencyPair, id string, opt ...goex.OptionParameter) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (t *trade) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {
+func (t *Trade) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {
 	reqBody, _ := goex.ValuesToJson(*params)
 	reqBodyStr := string(reqBody)
 	_url, _ := url.Parse(reqUrl)
 	signStr, timestamp := SignParams(httpMethod, _url.RequestURI(), t.apiOpts.Secret, reqBodyStr)
+	logger.Debugf("[DoAuthRequest] sign base64: %s, timestamp: %s", signStr, timestamp)
+
 	headers = map[string]string{
 		"Content-Type": "application/json; charset=UTF-8",
 		//"Accept":               "application/json",
@@ -80,6 +82,7 @@ func (t *trade) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, hea
 		"OK-ACCESS-PASSPHRASE": t.apiOpts.Passphrase,
 		"OK-ACCESS-SIGN":       signStr,
 		"OK-ACCESS-TIMESTAMP":  timestamp}
+
 	respBody, err := goex.GetHttpCli().DoRequest(httpMethod, reqUrl, reqBodyStr, headers)
 	if err != nil {
 		return respBody, err
@@ -98,8 +101,8 @@ func (t *trade) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, hea
 	return baseResp.Data, nil
 }
 
-func newtrade(opts ...goex.ApiOption) *trade {
-	var api = new(trade)
+func NewTrade(opts ...goex.ApiOption) *Trade {
+	var api = new(Trade)
 	for _, opt := range opts {
 		opt(&api.apiOpts)
 	}

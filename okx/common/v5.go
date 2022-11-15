@@ -59,7 +59,7 @@ func (f *V5) MarketApi() IMarketRest {
 }
 
 func (f *V5) NewTradeApi(opts ...ApiOption) ITradeRest {
-	api := newtrade(opts...)
+	api := NewTrade(opts...)
 	api.V5 = f
 	return api
 }

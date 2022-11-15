@@ -21,3 +21,9 @@ func New() *Spot {
 func (s *Spot) MarketApi() IMarketRest {
 	return s.V5.MarketApi()
 }
+
+func (s *Spot) NewTradeApi(apiOpts ...ApiOption) ITradeRest {
+	imp := newSpotTradeImp(apiOpts...)
+	imp.V5 = s.V5
+	return imp
+}
