@@ -160,7 +160,7 @@ func (un *RespUnmarshaler) UnmarshalGetPendingOrdersResponse(data []byte) ([]Ord
 }
 
 func (un *RespUnmarshaler) UnmarshalGetOrderInfoResponse(data []byte) (ord *Order, err error) {
-	var side, posSize string
+	var side, posSide string
 	var utime int64
 	ord = new(Order)
 
@@ -185,8 +185,8 @@ func (un *RespUnmarshaler) UnmarshalGetOrderInfoResponse(data []byte) (ord *Orde
 			ord.CId = valStr
 		case "side":
 			side = valStr
-		case "posSize":
-			posSize = valStr
+		case "posSide":
+			posSide = valStr
 		case "ordType":
 			ord.OrderTy = adaptSymToOrderTy(valStr)
 		case "state":
@@ -198,7 +198,7 @@ func (un *RespUnmarshaler) UnmarshalGetOrderInfoResponse(data []byte) (ord *Orde
 	})
 
 	ord.Origin = data
-	ord.Side = adaptSymToOrderSide(side, posSize)
+	ord.Side = adaptSymToOrderSide(side, posSide)
 	if ord.Status == OrderStatus_Canceled {
 		ord.CanceledAt = utime
 	}

@@ -20,11 +20,16 @@ func (t *Trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*go
 
 	params.Set("instId", order.Pair.Symbol)
 	//params.Set("tdMode", "cash")
-	params.Set("side", adaptOrderSideToSym(order.Side))
 	//params.Set("posSide", "")
 	params.Set("ordType", adaptOrderTypeToSym(order.OrderTy))
 	params.Set("px", goex.FloatToString(order.Price, order.Pair.PricePrecision))
 	params.Set("sz", goex.FloatToString(order.Qty, order.Pair.QtyPrecision))
+
+	side, posSide := adaptOrderSideToSym(order.Side)
+	params.Set("side", side)
+	if posSide != "" {
+		params.Set("posSide", posSide)
+	}
 
 	if order.CId != "" {
 		params.Set("clOrdId", order.CId)

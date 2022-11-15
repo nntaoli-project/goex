@@ -27,14 +27,22 @@ func AdaptKlinePeriodToSymbol(period goex.KlinePeriod) string {
 	}
 }
 
-func adaptOrderSideToSym(s goex.OrderSide) string {
+func adaptOrderSideToSym(s goex.OrderSide) (side, posSide string) {
 	switch s {
 	case goex.Spot_Buy:
-		return "buy"
+		return "buy", ""
 	case goex.Spot_Sell:
-		return "sell"
+		return "sell", ""
+	case goex.Futures_OpenBuy:
+		return "buy", "long"
+	case goex.Futures_OpenSell:
+		return "sell", "short"
+	case goex.Futures_CloseBuy:
+		return "sell", "long"
+	case goex.Futures_CloseSell:
+		return "buy", "short"
 	}
-	return ""
+	return "", ""
 }
 
 func adaptOrderTypeToSym(ty goex.OrderType) string {
@@ -48,14 +56,23 @@ func adaptOrderTypeToSym(ty goex.OrderType) string {
 }
 
 func adaptSymToOrderSide(side, posSide string) goex.OrderSide {
-	switch side {
-	case "buy":
-		if posSide == "net" { //现货
+	if side == "buy" {
+		switch posSide {
+		case "net":
 			return goex.Spot_Buy
+		case "long":
+			return goex.Futures_OpenBuy
+		case "short":
+			return goex.Futures_CloseSell
 		}
-	case "sell":
-		if posSide == "net" {
+	} else if side == "sell" {
+		switch posSide { //现货
+		case "net":
 			return goex.Spot_Sell
+		case "long":
+			return goex.Futures_CloseBuy
+		case "short":
+			return goex.Futures_OpenSell
 		}
 	}
 	return goex.OrderSide{Code: -1}

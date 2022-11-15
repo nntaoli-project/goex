@@ -16,3 +16,15 @@ func NewFutures() *Futures {
 func (f *Futures) MarketApi() IMarketRest {
 	return f.V5.MarketApi()
 }
+
+func (f *Futures) NewCrossFuturesTradeApi(apiOpt ...ApiOption) ITradeRest {
+	ft := newFCrossTrade(apiOpt...)
+	ft.V5 = f.V5
+	return ft
+}
+
+func (f *Futures) NewIsolatedFuturesTradeApi(apiOpt ...ApiOption) ITradeRest {
+	ft := newFIsolatedTrade(apiOpt...)
+	ft.V5 = f.V5
+	return ft
+}
