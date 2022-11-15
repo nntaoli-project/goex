@@ -118,35 +118,21 @@ func (s OrderStatus) String() string {
 	return "unknown-status"
 }
 
-type OrderType struct {
-	Code int
-	Type string
-}
-
-func (ty OrderType) String() string {
-	return ty.Type
-}
+type OrderType string
 
 var (
-	OrderType_Limit    = OrderType{Code: 1, Type: "limit"}
-	OrderType_Market   = OrderType{Code: 2, Type: "market"}
-	OrderType_opponent = OrderType{Code: 3, Type: "opponent"}
+	OrderType_Limit    OrderType = "limit"
+	OrderType_Market   OrderType = "market"
+	OrderType_opponent OrderType = "opponent"
 )
 
-type OrderSide struct {
-	Code int
-	Type string
-}
-
-func (s OrderSide) String() string {
-	return s.Type
-}
+type OrderSide string
 
 var (
-	Spot_Buy          = OrderSide{Type: "buy", Code: 1}
-	Spot_Sell         = OrderSide{Type: "sell", Code: 2}
-	Futures_OpenBuy   = OrderSide{Type: "open_buy", Code: 1}
-	Futures_OpenSell  = OrderSide{Type: "open_sell", Code: 2}
-	Futures_CloseBuy  = OrderSide{Type: "close_buy", Code: 3}
-	Futures_CloseSell = OrderSide{Type: "close_sell", Code: 4}
+	Spot_Buy          OrderSide = "buy"
+	Spot_Sell         OrderSide = "sell"
+	Futures_OpenBuy   OrderSide = "futures_open_buy"
+	Futures_OpenSell  OrderSide = "futures_open_sell"
+	Futures_CloseBuy  OrderSide = "futures_close_buy"
+	Futures_CloseSell OrderSide = "futures_close_sell"
 )

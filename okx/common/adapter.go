@@ -52,7 +52,7 @@ func adaptOrderTypeToSym(ty goex.OrderType) string {
 	case goex.OrderType_Market:
 		return "market"
 	}
-	return string(ty.String())
+	return string(ty)
 }
 
 func adaptSymToOrderSide(side, posSide string) goex.OrderSide {
@@ -75,7 +75,7 @@ func adaptSymToOrderSide(side, posSide string) goex.OrderSide {
 			return goex.Futures_OpenSell
 		}
 	}
-	return goex.OrderSide{Code: -1}
+	return goex.OrderSide("unknown")
 }
 
 func adaptSymToOrderTy(st string) goex.OrderType {
@@ -85,7 +85,7 @@ func adaptSymToOrderTy(st string) goex.OrderType {
 	case "market":
 		return goex.OrderType_Market
 	default:
-		return goex.OrderType{Code: 0, Type: st}
+		return goex.OrderType(st)
 	}
 }
 

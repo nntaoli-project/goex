@@ -32,9 +32,9 @@ func adaptOrderSide(s goex.OrderSide) string {
 	case goex.Spot_Sell:
 		return "SELL"
 	default:
-		logger.Warnf("[adapt side] order side:%+v error", s)
+		logger.Warnf("[adapt side] order side:%s error", s)
 	}
-	return s.String()
+	return string(s)
 }
 
 func adaptOrderType(ty goex.OrderType) string {
@@ -46,7 +46,7 @@ func adaptOrderType(ty goex.OrderType) string {
 	default:
 		logger.Warnf("[adapt order type] order typ unknown")
 	}
-	return ty.String()
+	return string(ty)
 }
 
 func adaptOrderStatus(st string) goex.OrderStatus {
@@ -72,10 +72,7 @@ func adaptOrderOrigSide(side string) goex.OrderSide {
 	default:
 		logger.Warnf("[adaptOrderOrigSide] unknown order origin side: %s", side)
 	}
-	return goex.OrderSide{
-		Code: -1,
-		Type: side,
-	}
+	return goex.OrderSide(side)
 }
 
 func adaptOrderOrigType(ty string) goex.OrderType {
@@ -85,10 +82,7 @@ func adaptOrderOrigType(ty string) goex.OrderType {
 	case "MARKET":
 		return goex.OrderType_Market
 	default:
-		return goex.OrderType{
-			Code: -1,
-			Type: ty,
-		}
+		return goex.OrderType(ty)
 	}
 }
 

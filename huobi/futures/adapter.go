@@ -32,7 +32,7 @@ func AdaptOffsetDirectionToOrderSide(offset, direction string) OrderSide {
 		return Futures_CloseBuy
 	}
 
-	return OrderSide{}
+	return OrderSide("unknown")
 }
 
 func AdaptKlinePeriod(period KlinePeriod) string {
