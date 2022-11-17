@@ -64,6 +64,8 @@ func (m *Market) GetKline(pair CurrencyPair, period KlinePeriod, opt ...OptionPa
 	param.Set("instId", pair.Symbol)
 	param.Set("bar", AdaptKlinePeriodToSymbol(period))
 	param.Set("limit", "100")
+	MergeOptionParams(&param, opt...)
+
 	data, err := m.DoNoAuthRequest(http.MethodGet, reqUrl, &param)
 	if err != nil {
 		return nil, err

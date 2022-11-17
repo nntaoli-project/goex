@@ -36,7 +36,7 @@ func (f *usdtFuturesTrade) CreateOrder(order Order, opts ...OptionParameter) (*O
 	params.Set("client_order_id", order.CId)
 	params.Set("price", FloatToString(order.Price, order.Pair.PricePrecision))
 	params.Set("volume", FloatToString(order.Qty, order.Pair.QtyPrecision))
-	params.Set("order_price_type", order.OrderTy.Type)
+	params.Set("order_price_type", string(order.OrderTy))
 
 	direction, offset := AdaptSideToDirectionAndOffset(order.Side)
 	params.Set("direction", direction)
