@@ -143,3 +143,14 @@ type Account struct {
 	AvailableBalance float64
 	FrozenBalance    float64
 }
+
+type FuturesPosition struct {
+	PosSide  OrderSide //开仓方向
+	Qty      float64   // 持仓数量
+	AvailQty float64   //可平仓数量
+	AvgPx    float64   //开仓均价
+	LiqPx    float64   // 爆仓价格
+	Upl      float64   //盈亏
+	UplRatio float64   // 盈亏率
+	Lever    float64   //杠杆倍数
+}

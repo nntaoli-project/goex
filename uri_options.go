@@ -11,6 +11,7 @@ type UriOptions struct {
 	CancelOrderUri      string
 	NewOrderUri         string
 	GetAccountUri       string
+	GetPositionsUri     string
 }
 
 type UriOption func(*UriOptions)
@@ -72,5 +73,11 @@ func WithGetHistoryOrdersUri(uri string) UriOption {
 func WithGetAccountUri(uri string) UriOption {
 	return func(c *UriOptions) {
 		c.GetAccountUri = uri
+	}
+}
+
+func WithGetPositionsUri(uri string) UriOption {
+	return func(c *UriOptions) {
+		c.GetPositionsUri = uri
 	}
 }

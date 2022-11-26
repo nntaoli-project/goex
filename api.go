@@ -30,6 +30,10 @@ type ITradeRest interface {
 	DoAuthRequest(method, reqUrl string, params *url.Values, header map[string]string) ([]byte, error)
 }
 
+type IFuturesPosition interface {
+	GetPositions(pair CurrencyPair, opts ...OptionParameter) ([]FuturesPosition, error)
+}
+
 // IAccount
 // 获取账户资产相关的
 type IAccount interface {
