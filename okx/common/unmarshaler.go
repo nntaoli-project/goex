@@ -225,7 +225,7 @@ func (un *RespUnmarshaler) UnmarshalGetAccountResponse(data []byte) (map[string]
 			}
 			return err
 		})
-		
+
 		if err != nil {
 			return
 		}
@@ -247,6 +247,45 @@ func (un *RespUnmarshaler) UnmarshalCancelOrderResponse(data []byte) error {
 	}
 
 	return errors.New(string(data))
+}
+
+func (un *RespUnmarshaler) UnmarshalGetPositionsResponse(data []byte) ([]FuturesPosition, error) {
+	var (
+		positions []FuturesPosition
+		err       error
+	)
+
+	_, err = jsonparser.ArrayEach(data, func(posData []byte, dataType jsonparser.ValueType, offset int, err error) {
+		var pos FuturesPosition
+		err = jsonparser.ObjectEach(posData, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+			valStr := string(value)
+			switch string(key) {
+			case "availPos":
+				pos.AvailQty = cast.ToFloat64(valStr)
+			case "avgPx":
+				pos.AvgPx = cast.ToFloat64(valStr)
+			case "pos":
+				pos.Qty = cast.ToFloat64(valStr)
+			case "posSide":
+				if valStr == "long" {
+					pos.PosSide = Futures_OpenBuy
+				}
+				if valStr == "short" {
+					pos.PosSide = Futures_OpenSell
+				}
+			case "upl":
+				pos.Upl = cast.ToFloat64(valStr)
+			case "uplRatio":
+				pos.UplRatio = cast.ToFloat64(valStr)
+			case "lever":
+				pos.Lever = cast.ToFloat64(valStr)
+			}
+			return nil
+		})
+		positions = append(positions, pos)
+	})
+
+	return positions, err
 }
 
 func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
