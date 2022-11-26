@@ -154,3 +154,13 @@ type FuturesPosition struct {
 	UplRatio float64   // 盈亏率
 	Lever    float64   //杠杆倍数
 }
+
+type FuturesAccount struct {
+	Coin      string  //币种
+	Eq        float64 //总权益
+	AvailEq   float64
+	FrozenBal float64
+	MgnRatio  float64
+	Upl       float64
+	RiskRate  float64
+}

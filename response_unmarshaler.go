@@ -11,19 +11,21 @@ type CancelOrderResponseUnmarshaler func([]byte) error
 type GetHistoryOrdersResponseUnmarshaler func([]byte) ([]Order, error)
 type GetAccountResponseUnmarshaler func([]byte) (map[string]Account, error)
 type GetPositionsResponseUnmarshaler func([]byte) ([]FuturesPosition, error)
+type GetFuturesAccountResponseUnmarshaler func([]byte) (map[string]FuturesAccount, error)
 
 type UnmarshalerOptions struct {
-	ResponseUnmarshaler                 ResponseUnmarshaler
-	TickerUnmarshaler                   GetTickerResponseUnmarshaler
-	DepthUnmarshaler                    GetDepthResponseUnmarshaler
-	KlineUnmarshaler                    GetKlineResponseUnmarshaler
-	CreateOrderResponseUnmarshaler      CreateOrderResponseUnmarshaler
-	GetOrderInfoResponseUnmarshaler     GetOrderInfoResponseUnmarshaler
-	GetPendingOrdersResponseUnmarshaler GetPendingOrdersResponseUnmarshaler
-	GetHistoryOrdersResponseUnmarshaler GetHistoryOrdersResponseUnmarshaler
-	CancelOrderResponseUnmarshaler      CancelOrderResponseUnmarshaler
-	GetAccountResponseUnmarshaler       GetAccountResponseUnmarshaler
-	GetPositionsResponseUnmarshaler     GetPositionsResponseUnmarshaler
+	ResponseUnmarshaler                  ResponseUnmarshaler
+	TickerUnmarshaler                    GetTickerResponseUnmarshaler
+	DepthUnmarshaler                     GetDepthResponseUnmarshaler
+	KlineUnmarshaler                     GetKlineResponseUnmarshaler
+	CreateOrderResponseUnmarshaler       CreateOrderResponseUnmarshaler
+	GetOrderInfoResponseUnmarshaler      GetOrderInfoResponseUnmarshaler
+	GetPendingOrdersResponseUnmarshaler  GetPendingOrdersResponseUnmarshaler
+	GetHistoryOrdersResponseUnmarshaler  GetHistoryOrdersResponseUnmarshaler
+	CancelOrderResponseUnmarshaler       CancelOrderResponseUnmarshaler
+	GetAccountResponseUnmarshaler        GetAccountResponseUnmarshaler
+	GetPositionsResponseUnmarshaler      GetPositionsResponseUnmarshaler
+	GetFuturesAccountResponseUnmarshaler GetFuturesAccountResponseUnmarshaler
 }
 
 type UnmarshalerOption func(options *UnmarshalerOptions)
@@ -90,5 +92,11 @@ func WithGetAccountResponseUnmarshaler(unmarshaler GetAccountResponseUnmarshaler
 func WithGetPositionsResponseUnmarshaler(unmarshaler GetPositionsResponseUnmarshaler) UnmarshalerOption {
 	return func(options *UnmarshalerOptions) {
 		options.GetPositionsResponseUnmarshaler = unmarshaler
+	}
+}
+
+func WithGetFuturesAccountResponseUnmarshaler(unmarshaler GetFuturesAccountResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.GetFuturesAccountResponseUnmarshaler = unmarshaler
 	}
 }
