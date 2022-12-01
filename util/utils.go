@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 )
 
 //FloatToString 保留的小数点位数,去除末尾多余的0(StripTrailingZeros)
@@ -21,17 +20,17 @@ func FloatToString(v float64, n int) string {
 	return strconv.FormatFloat(cast.ToFloat64(ret), 'f', -1, 64) //StripTrailingZeros
 }
 
-// IsoTime
-// Get iso format time
-// eg: 2018-03-16T18:02:48.284Z
-
-func IsoTime() string {
-	utcTime := time.Now().UTC()
-	iso := utcTime.String()
-	isoBytes := []byte(iso)
-	iso = string(isoBytes[:10]) + "T" + string(isoBytes[11:23]) + "Z"
-	return iso
-}
+//// IsoTime
+//// Get iso format time
+//// eg: 2018-03-16T18:02:48.284Z
+//
+//func IsoTime() string {
+//	utcTime := time.Now().UTC()
+//	iso := utcTime.String()
+//	isoBytes := []byte(iso)
+//	iso = string(isoBytes[:10]) + "T" + string(isoBytes[11:23]) + "Z"
+//	return iso
+//}
 
 func ValuesToJson(v url.Values) ([]byte, error) {
 	paramMap := make(map[string]interface{})
