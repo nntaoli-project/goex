@@ -1,4 +1,4 @@
-package goex
+package options
 
 type ApiOptions struct {
 	Key        string

@@ -1,17 +1,19 @@
-package goex
+package options
+
+import "github.com/nntaoli-project/goex/v2/model"
 
 type ResponseUnmarshaler func([]byte, interface{}) error
-type GetTickerResponseUnmarshaler func([]byte) (*Ticker, error)
-type GetDepthResponseUnmarshaler func([]byte) (*Depth, error)
-type GetKlineResponseUnmarshaler func([]byte) ([]Kline, error)
-type CreateOrderResponseUnmarshaler func([]byte) (*Order, error)
-type GetOrderInfoResponseUnmarshaler func([]byte) (*Order, error)
-type GetPendingOrdersResponseUnmarshaler func([]byte) ([]Order, error)
+type GetTickerResponseUnmarshaler func([]byte) (*model.Ticker, error)
+type GetDepthResponseUnmarshaler func([]byte) (*model.Depth, error)
+type GetKlineResponseUnmarshaler func([]byte) ([]model.Kline, error)
+type CreateOrderResponseUnmarshaler func([]byte) (*model.Order, error)
+type GetOrderInfoResponseUnmarshaler func([]byte) (*model.Order, error)
+type GetPendingOrdersResponseUnmarshaler func([]byte) ([]model.Order, error)
 type CancelOrderResponseUnmarshaler func([]byte) error
-type GetHistoryOrdersResponseUnmarshaler func([]byte) ([]Order, error)
-type GetAccountResponseUnmarshaler func([]byte) (map[string]Account, error)
-type GetPositionsResponseUnmarshaler func([]byte) ([]FuturesPosition, error)
-type GetFuturesAccountResponseUnmarshaler func([]byte) (map[string]FuturesAccount, error)
+type GetHistoryOrdersResponseUnmarshaler func([]byte) ([]model.Order, error)
+type GetAccountResponseUnmarshaler func([]byte) (map[string]model.Account, error)
+type GetPositionsResponseUnmarshaler func([]byte) ([]model.FuturesPosition, error)
+type GetFuturesAccountResponseUnmarshaler func([]byte) (map[string]model.FuturesAccount, error)
 
 type UnmarshalerOptions struct {
 	ResponseUnmarshaler                  ResponseUnmarshaler

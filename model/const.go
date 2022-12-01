@@ -1,4 +1,4 @@
-package goex
+package model
 
 const (
 	Kline_1min  KlinePeriod = "1min"

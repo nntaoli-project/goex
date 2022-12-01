@@ -2,8 +2,9 @@ package futures
 
 import (
 	"errors"
-	. "github.com/nntaoli-project/goex/v2"
+	. "github.com/nntaoli-project/goex/v2/model"
 	"github.com/nntaoli-project/goex/v2/okx/common"
+	. "github.com/nntaoli-project/goex/v2/options"
 )
 
 type fIsolatedTrade struct {

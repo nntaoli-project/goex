@@ -1,6 +1,9 @@
 package futures
 
-import . "github.com/nntaoli-project/goex/v2"
+import (
+	. "github.com/nntaoli-project/goex/v2"
+	. "github.com/nntaoli-project/goex/v2/options"
+)
 
 type Futures struct {
 }

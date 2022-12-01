@@ -6,7 +6,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"github.com/google/uuid"
-	"github.com/nntaoli-project/goex/v2"
+	"github.com/nntaoli-project/goex/v2/model"
 	"github.com/spf13/cast"
 	"io/ioutil"
 	"net/url"
@@ -61,7 +61,7 @@ func GenerateOrderClientId(size int) string {
 	return "goex-" + uuidStr[0:size-5]
 }
 
-func MergeOptionParams(params *url.Values, opts ...goex.OptionParameter) {
+func MergeOptionParams(params *url.Values, opts ...model.OptionParameter) {
 	for _, opt := range opts {
 		params.Set(opt.Key, opt.Value)
 	}

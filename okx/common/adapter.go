@@ -1,105 +1,107 @@
 package common
 
-import "github.com/nntaoli-project/goex/v2"
+import (
+	"github.com/nntaoli-project/goex/v2/model"
+)
 
-func AdaptKlinePeriodToSymbol(period goex.KlinePeriod) string {
+func AdaptKlinePeriodToSymbol(period model.KlinePeriod) string {
 	switch period {
-	case goex.Kline_1min:
+	case model.Kline_1min:
 		return "1m"
-	case goex.Kline_5min:
+	case model.Kline_5min:
 		return "5m"
-	case goex.Kline_15min:
+	case model.Kline_15min:
 		return "15m"
-	case goex.Kline_30min:
+	case model.Kline_30min:
 		return "30m"
-	case goex.Kline_60min, goex.Kline_1h:
+	case model.Kline_60min, model.Kline_1h:
 		return "1H"
-	case goex.Kline_4h:
+	case model.Kline_4h:
 		return "4H"
-	case goex.Kline_6h:
+	case model.Kline_6h:
 		return "6H"
-	case goex.Kline_1day:
+	case model.Kline_1day:
 		return "1D"
-	case goex.Kline_1week:
+	case model.Kline_1week:
 		return "1W"
 	default:
 		return string(period)
 	}
 }
 
-func adaptOrderSideToSym(s goex.OrderSide) (side, posSide string) {
+func adaptOrderSideToSym(s model.OrderSide) (side, posSide string) {
 	switch s {
-	case goex.Spot_Buy:
+	case model.Spot_Buy:
 		return "buy", ""
-	case goex.Spot_Sell:
+	case model.Spot_Sell:
 		return "sell", ""
-	case goex.Futures_OpenBuy:
+	case model.Futures_OpenBuy:
 		return "buy", "long"
-	case goex.Futures_OpenSell:
+	case model.Futures_OpenSell:
 		return "sell", "short"
-	case goex.Futures_CloseBuy:
+	case model.Futures_CloseBuy:
 		return "sell", "long"
-	case goex.Futures_CloseSell:
+	case model.Futures_CloseSell:
 		return "buy", "short"
 	}
 	return "", ""
 }
 
-func adaptOrderTypeToSym(ty goex.OrderType) string {
+func adaptOrderTypeToSym(ty model.OrderType) string {
 	switch ty {
-	case goex.OrderType_Limit:
+	case model.OrderType_Limit:
 		return "limit"
-	case goex.OrderType_Market:
+	case model.OrderType_Market:
 		return "market"
 	}
 	return string(ty)
 }
 
-func adaptSymToOrderSide(side, posSide string) goex.OrderSide {
+func adaptSymToOrderSide(side, posSide string) model.OrderSide {
 	if side == "buy" {
 		switch posSide {
 		case "net":
-			return goex.Spot_Buy
+			return model.Spot_Buy
 		case "long":
-			return goex.Futures_OpenBuy
+			return model.Futures_OpenBuy
 		case "short":
-			return goex.Futures_CloseSell
+			return model.Futures_CloseSell
 		}
 	} else if side == "sell" {
 		switch posSide { //现货
 		case "net":
-			return goex.Spot_Sell
+			return model.Spot_Sell
 		case "long":
-			return goex.Futures_CloseBuy
+			return model.Futures_CloseBuy
 		case "short":
-			return goex.Futures_OpenSell
+			return model.Futures_OpenSell
 		}
 	}
-	return goex.OrderSide("unknown")
+	return model.OrderSide("unknown")
 }
 
-func adaptSymToOrderTy(st string) goex.OrderType {
+func adaptSymToOrderTy(st string) model.OrderType {
 	switch st {
 	case "limit":
-		return goex.OrderType_Limit
+		return model.OrderType_Limit
 	case "market":
-		return goex.OrderType_Market
+		return model.OrderType_Market
 	default:
-		return goex.OrderType(st)
+		return model.OrderType(st)
 	}
 }
 
-func adaptSymToOrderStatus(st string) goex.OrderStatus {
+func adaptSymToOrderStatus(st string) model.OrderStatus {
 	switch st {
 	case "live":
-		return goex.OrderStatus_Pending
+		return model.OrderStatus_Pending
 	case "filled":
-		return goex.OrderStatus_Finished
+		return model.OrderStatus_Finished
 	case "canceled":
-		return goex.OrderStatus_Canceled
+		return model.OrderStatus_Canceled
 	case "partially_filled":
-		return goex.OrderStatus_PartFinished
+		return model.OrderStatus_PartFinished
 	default:
-		return goex.OrderStatus(-1)
+		return model.OrderStatus(-1)
 	}
 }

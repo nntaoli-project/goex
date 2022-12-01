@@ -5,6 +5,7 @@ import (
 	. "github.com/nntaoli-project/goex/v2"
 	"github.com/nntaoli-project/goex/v2/binance/common"
 	"github.com/nntaoli-project/goex/v2/internal/logger"
+	. "github.com/nntaoli-project/goex/v2/model"
 	. "github.com/nntaoli-project/goex/v2/util"
 	"net/http"
 	"net/url"

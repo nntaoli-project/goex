@@ -1,4 +1,4 @@
-package goex
+package options
 
 type UriOptions struct {
 	Endpoint            string

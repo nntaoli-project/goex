@@ -2,8 +2,9 @@ package common
 
 import (
 	"fmt"
-	"github.com/nntaoli-project/goex/v2"
 	"github.com/nntaoli-project/goex/v2/internal/logger"
+	"github.com/nntaoli-project/goex/v2/model"
+	"github.com/nntaoli-project/goex/v2/options"
 	"github.com/nntaoli-project/goex/v2/util"
 	"net/http"
 	"net/url"
@@ -11,10 +12,10 @@ import (
 
 type Trade struct {
 	*V5
-	apiOpts goex.ApiOptions
+	apiOpts options.ApiOptions
 }
 
-func (t *Trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*goex.Order, error) {
+func (t *Trade) CreateOrder(order model.Order, opts ...model.OptionParameter) (*model.Order, error) {
 	reqUrl := fmt.Sprintf("%s%s", t.uriOpts.Endpoint, t.uriOpts.NewOrderUri)
 	params := url.Values{}
 
@@ -52,12 +53,12 @@ func (t *Trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*go
 	ord.Qty = order.Qty
 	ord.Side = order.Side
 	ord.OrderTy = order.OrderTy
-	ord.Status = goex.OrderStatus_Pending
+	ord.Status = model.OrderStatus_Pending
 
 	return ord, err
 }
 
-func (t *Trade) GetOrderInfo(pair goex.CurrencyPair, id string, opt ...goex.OptionParameter) (*goex.Order, error) {
+func (t *Trade) GetOrderInfo(pair model.CurrencyPair, id string, opt ...model.OptionParameter) (*model.Order, error) {
 	reqUrl := fmt.Sprintf("%s%s", t.uriOpts.Endpoint, t.uriOpts.GetOrderUri)
 	params := url.Values{}
 	params.Set("instId", pair.Symbol)
@@ -79,7 +80,7 @@ func (t *Trade) GetOrderInfo(pair goex.CurrencyPair, id string, opt ...goex.Opti
 	return ord, nil
 }
 
-func (t *Trade) GetPendingOrders(pair goex.CurrencyPair, opt ...goex.OptionParameter) ([]goex.Order, error) {
+func (t *Trade) GetPendingOrders(pair model.CurrencyPair, opt ...model.OptionParameter) ([]model.Order, error) {
 	reqUrl := fmt.Sprintf("%s%s", t.uriOpts.Endpoint, t.uriOpts.GetPendingOrdersUri)
 	params := url.Values{}
 	params.Set("instId", pair.Symbol)
@@ -92,12 +93,12 @@ func (t *Trade) GetPendingOrders(pair goex.CurrencyPair, opt ...goex.OptionParam
 	return t.unmarshalOpts.GetPendingOrdersResponseUnmarshaler(data)
 }
 
-func (t *Trade) GetHistoryOrders(pair goex.CurrencyPair, opt ...goex.OptionParameter) ([]goex.Order, error) {
+func (t *Trade) GetHistoryOrders(pair model.CurrencyPair, opt ...model.OptionParameter) ([]model.Order, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (t *Trade) CancelOrder(pair goex.CurrencyPair, id string, opt ...goex.OptionParameter) error {
+func (t *Trade) CancelOrder(pair model.CurrencyPair, id string, opt ...model.OptionParameter) error {
 	reqUrl := fmt.Sprintf("%s%s", t.uriOpts.Endpoint, t.uriOpts.CancelOrderUri)
 	params := url.Values{}
 	params.Set("instId", pair.Symbol)
@@ -116,7 +117,7 @@ func (t *Trade) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, hea
 	return t.V5.DoAuthRequest(httpMethod, reqUrl, params, t.apiOpts, headers)
 }
 
-func NewTrade(opts ...goex.ApiOption) *Trade {
+func NewTrade(opts ...options.ApiOption) *Trade {
 	var api = new(Trade)
 	for _, opt := range opts {
 		opt(&api.apiOpts)

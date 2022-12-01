@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	"github.com/nntaoli-project/goex/v2"
+	"github.com/nntaoli-project/goex/v2/util"
 	"net/url"
 	"time"
 )
@@ -12,6 +12,6 @@ func SignParams(params *url.Values, secret string) {
 	params.Set("timestamp", fmt.Sprint(timestamp))
 	//params.Set("recvWindow", "60000")
 	payload := params.Encode()
-	sign, _ := goex.HmacSHA256Sign(secret, payload)
+	sign, _ := util.HmacSHA256Sign(secret, payload)
 	params.Set("signature", sign)
 }

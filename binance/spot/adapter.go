@@ -1,35 +1,35 @@
 package spot
 
 import (
-	"github.com/nntaoli-project/goex/v2"
 	"github.com/nntaoli-project/goex/v2/internal/logger"
+	"github.com/nntaoli-project/goex/v2/model"
 )
 
-func adaptKlinePeriod(period goex.KlinePeriod) string {
+func adaptKlinePeriod(period model.KlinePeriod) string {
 	switch period {
-	case goex.Kline_1min:
+	case model.Kline_1min:
 		return "1m"
-	case goex.Kline_5min:
+	case model.Kline_5min:
 		return "5m"
-	case goex.Kline_15min:
+	case model.Kline_15min:
 		return "15m"
-	case goex.Kline_30min:
+	case model.Kline_30min:
 		return "30m"
-	case goex.Kline_1h, goex.Kline_60min:
+	case model.Kline_1h, model.Kline_60min:
 		return "1h"
-	case goex.Kline_1day:
+	case model.Kline_1day:
 		return "1d"
-	case goex.Kline_1week:
+	case model.Kline_1week:
 		return "1w"
 	}
 	return string(period)
 }
 
-func adaptOrderSide(s goex.OrderSide) string {
+func adaptOrderSide(s model.OrderSide) string {
 	switch s {
-	case goex.Spot_Buy:
+	case model.Spot_Buy:
 		return "BUY"
-	case goex.Spot_Sell:
+	case model.Spot_Sell:
 		return "SELL"
 	default:
 		logger.Warnf("[adapt side] order side:%s error", s)
@@ -37,11 +37,11 @@ func adaptOrderSide(s goex.OrderSide) string {
 	return string(s)
 }
 
-func adaptOrderType(ty goex.OrderType) string {
+func adaptOrderType(ty model.OrderType) string {
 	switch ty {
-	case goex.OrderType_Limit:
+	case model.OrderType_Limit:
 		return "LIMIT"
-	case goex.OrderType_Market:
+	case model.OrderType_Market:
 		return "MARKET"
 	default:
 		logger.Warnf("[adapt order type] order typ unknown")
@@ -49,54 +49,54 @@ func adaptOrderType(ty goex.OrderType) string {
 	return string(ty)
 }
 
-func adaptOrderStatus(st string) goex.OrderStatus {
+func adaptOrderStatus(st string) model.OrderStatus {
 	switch st {
 	case "NEW":
-		return goex.OrderStatus_Pending
+		return model.OrderStatus_Pending
 	case "FILLED":
-		return goex.OrderStatus_Finished
+		return model.OrderStatus_Finished
 	case "CANCELED":
-		return goex.OrderStatus_Canceled
+		return model.OrderStatus_Canceled
 	case "PARTIALLY_FILLED":
-		return goex.OrderStatus_PartFinished
+		return model.OrderStatus_PartFinished
 	}
-	return goex.OrderStatus(-1)
+	return model.OrderStatus(-1)
 }
 
-func adaptOrderOrigSide(side string) goex.OrderSide {
+func adaptOrderOrigSide(side string) model.OrderSide {
 	switch side {
 	case "BUY":
-		return goex.Spot_Buy
+		return model.Spot_Buy
 	case "SELL":
-		return goex.Spot_Sell
+		return model.Spot_Sell
 	default:
 		logger.Warnf("[adaptOrderOrigSide] unknown order origin side: %s", side)
 	}
-	return goex.OrderSide(side)
+	return model.OrderSide(side)
 }
 
-func adaptOrderOrigType(ty string) goex.OrderType {
+func adaptOrderOrigType(ty string) model.OrderType {
 	switch ty {
 	case "LIMIT":
-		return goex.OrderType_Limit
+		return model.OrderType_Limit
 	case "MARKET":
-		return goex.OrderType_Market
+		return model.OrderType_Market
 	default:
-		return goex.OrderType(ty)
+		return model.OrderType(ty)
 	}
 }
 
-func adaptOrderOrigStatus(st string) goex.OrderStatus {
+func adaptOrderOrigStatus(st string) model.OrderStatus {
 	switch st {
 	case "NEW":
-		return goex.OrderStatus_Pending
+		return model.OrderStatus_Pending
 	case "FILLED":
-		return goex.OrderStatus_Finished
+		return model.OrderStatus_Finished
 	case "CANCELED":
-		return goex.OrderStatus_Canceled
+		return model.OrderStatus_Canceled
 	case "PARTIALLY_FILLED":
-		return goex.OrderStatus_PartFinished
+		return model.OrderStatus_PartFinished
 	default:
-		return goex.OrderStatus(-1)
+		return model.OrderStatus(-1)
 	}
 }
