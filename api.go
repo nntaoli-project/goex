@@ -18,7 +18,7 @@ type IMarketRest interface {
 
 // ITradeRest 交易相关的接口
 type ITradeRest interface {
-	CreateOrder(order Order, opt ...OptionParameter) (*Order, error) //创建订单
+	CreateOrder(pair CurrencyPair, qty, price float64, side OrderSide, orderTy OrderType, opt ...OptionParameter) (*Order, error) //创建订单
 	//CreateOrders 批量创建订单,考虑中，是否有意义
 	//CreateOrders(orders []Order, opt ...OptionParameter) ([]Order, error)
 	GetOrderInfo(pair CurrencyPair, id string, opt ...OptionParameter) (*Order, error)

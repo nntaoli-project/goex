@@ -9,14 +9,14 @@ import (
 	"net/url"
 )
 
-func (s *spotImpl) CreateOrder(order Order, opt ...OptionParameter) (*Order, error) {
+func (s *spotImpl) CreateOrder(pair CurrencyPair, qty, price float64, side OrderSide, orderTy OrderType, opt ...OptionParameter) (*Order, error) {
 	var params = url.Values{}
-	params.Set("symbol", order.Pair.Symbol)
-	params.Set("side", adaptOrderSide(order.Side))
-	params.Set("type", adaptOrderType(order.OrderTy))
+	params.Set("symbol", pair.Symbol)
+	params.Set("side", adaptOrderSide(side))
+	params.Set("type", adaptOrderType(orderTy))
 	params.Set("timeInForce", "GTC")
-	params.Set("quantity", FloatToString(order.Qty, order.Pair.QtyPrecision))
-	params.Set("price", FloatToString(order.Price, order.Pair.PricePrecision))
+	params.Set("quantity", FloatToString(qty, pair.QtyPrecision))
+	params.Set("price", FloatToString(price, pair.PricePrecision))
 	params.Set("newOrderRespType", "ACK")
 
 	MergeOptionParams(&params, opt...)
@@ -32,6 +32,7 @@ func (s *spotImpl) CreateOrder(order Order, opt ...OptionParameter) (*Order, err
 		return nil, err
 	}
 
+	order := new(Order)
 	ord.Pair = order.Pair
 	ord.Price = order.Price
 	ord.Qty = order.Qty

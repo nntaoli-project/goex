@@ -4,7 +4,10 @@ goex项目是为了统一并标准化各个数字资产交易平台的接口而�
 
 ### 示例
 
-```go
+```
+    import (
+        "github.com/nntaoli-projects/goex/v2"
+    )
     goex.SetHttpTimeout(5)
     //goex.SetHttpProxy("socks5://127.0.0.1:2220")
     goex.SetupDefaultLibs()  //must need call

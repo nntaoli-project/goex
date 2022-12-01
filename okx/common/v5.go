@@ -12,7 +12,7 @@ import (
 type V5 struct {
 	uriOpts       UriOptions
 	unmarshalOpts UnmarshalerOptions
-	marketApi     IMarketRest
+	marketApi     *Market
 }
 
 type BaseResp struct {
@@ -116,17 +116,17 @@ func (f *V5) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, apiOpt
 	return baseResp.Data, nil
 }
 
-func (f *V5) MarketApi() IMarketRest {
+func (f *V5) MarketApi() *Market {
 	return f.marketApi
 }
 
-func (f *V5) NewTradeApi(opts ...ApiOption) ITradeRest {
+func (f *V5) NewTradeApi(opts ...ApiOption) *Trade {
 	api := NewTrade(opts...)
 	api.V5 = f
 	return api
 }
 
-func (f *V5) NewAccountApi(opts ...ApiOption) IAccount {
+func (f *V5) NewAccountApi(opts ...ApiOption) *AccountApi {
 	var apiOpts ApiOptions
 	for _, opt := range opts {
 		opt(&apiOpts)

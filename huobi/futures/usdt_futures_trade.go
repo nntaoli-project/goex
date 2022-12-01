@@ -30,15 +30,14 @@ type usdtFuturesTrade struct {
 	apiOpts ApiOptions
 }
 
-func (f *usdtFuturesTrade) CreateOrder(order Order, opts ...OptionParameter) (*Order, error) {
+func (f *usdtFuturesTrade) CreateOrder(pair CurrencyPair, qty, price float64, side OrderSide, orderTy OrderType, opts ...OptionParameter) (*Order, error) {
 	params := url.Values{}
-	params.Set("contract_code", order.Pair.Symbol)
-	params.Set("client_order_id", order.CId)
-	params.Set("price", FloatToString(order.Price, order.Pair.PricePrecision))
-	params.Set("volume", FloatToString(order.Qty, order.Pair.QtyPrecision))
-	params.Set("order_price_type", string(order.OrderTy))
+	params.Set("contract_code", pair.Symbol)
+	params.Set("price", FloatToString(price, pair.PricePrecision))
+	params.Set("volume", FloatToString(qty, pair.QtyPrecision))
+	params.Set("order_price_type", string(orderTy))
 
-	direction, offset := AdaptSideToDirectionAndOffset(order.Side)
+	direction, offset := AdaptSideToDirectionAndOffset(side)
 	params.Set("direction", direction)
 	params.Set("offset", offset)
 
