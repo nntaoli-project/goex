@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	. "github.com/nntaoli-project/goex/v2"
+	. "github.com/nntaoli-project/goex/v2/util"
 	"net/http"
 	"net/url"
 )

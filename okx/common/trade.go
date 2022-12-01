@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/nntaoli-project/goex/v2"
 	"github.com/nntaoli-project/goex/v2/internal/logger"
+	"github.com/nntaoli-project/goex/v2/util"
 	"net/http"
 	"net/url"
 )
@@ -21,8 +22,8 @@ func (t *Trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*go
 	//params.Set("tdMode", "cash")
 	//params.Set("posSide", "")
 	params.Set("ordType", adaptOrderTypeToSym(order.OrderTy))
-	params.Set("px", goex.FloatToString(order.Price, order.Pair.PricePrecision))
-	params.Set("sz", goex.FloatToString(order.Qty, order.Pair.QtyPrecision))
+	params.Set("px", util.FloatToString(order.Price, order.Pair.PricePrecision))
+	params.Set("sz", util.FloatToString(order.Qty, order.Pair.QtyPrecision))
 
 	side, posSide := adaptOrderSideToSym(order.Side)
 	params.Set("side", side)
@@ -33,7 +34,7 @@ func (t *Trade) CreateOrder(order goex.Order, opts ...goex.OptionParameter) (*go
 	if order.CId != "" {
 		params.Set("clOrdId", order.CId)
 	}
-	goex.MergeOptionParams(&params, opts...)
+	util.MergeOptionParams(&params, opts...)
 
 	data, err := t.DoAuthRequest(http.MethodPost, reqUrl, &params, nil)
 	if err != nil {
@@ -101,7 +102,7 @@ func (t *Trade) CancelOrder(pair goex.CurrencyPair, id string, opt ...goex.Optio
 	params := url.Values{}
 	params.Set("instId", pair.Symbol)
 	params.Set("ordId", id)
-	goex.MergeOptionParams(&params, opt...)
+	util.MergeOptionParams(&params, opt...)
 
 	data, err := t.DoAuthRequest(http.MethodPost, reqUrl, &params, nil)
 	if data != nil && len(data) > 0 {
