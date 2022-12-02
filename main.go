@@ -3,7 +3,7 @@ package goex
 import (
 	"github.com/nntaoli-project/goex/v2/internal/config"
 	"github.com/nntaoli-project/goex/v2/internal/lib"
-	"github.com/nntaoli-project/goex/v2/internal/logger"
+	"github.com/nntaoli-project/goex/v2/logger"
 	"net/url"
 	"time"
 )
@@ -35,6 +35,6 @@ func SetupDefaultLibs() {
 	SetHttpCli(lib.NewDefaultHttpClient())
 }
 
-func SetDebugLogger() {
-	logger.Log.SetLevel(logger.DEBUG)
+func SetLoggerLevel(l logger.LogLevel) {
+	logger.SetLevel(l)
 }

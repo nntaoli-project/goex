@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/nntaoli-project/goex/v2/internal/config"
-	"github.com/nntaoli-project/goex/v2/internal/logger"
+	"github.com/nntaoli-project/goex/v2/logger"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -24,7 +24,7 @@ func NewDefaultHttpClient() *DefaultHttpClient {
 }
 
 func (cli *DefaultHttpClient) init() {
-	logger.Log.Info("[http utils] setup lib http cli")
+	logger.Info("[http utils] setup lib http cli")
 
 	httpTimeout := config.C.HttpConf.Timeout
 	cli.cli = &http.Client{
@@ -36,7 +36,7 @@ func (cli *DefaultHttpClient) init() {
 
 	proxyUrl := config.C.HttpConf.Proxy
 	if proxyUrl != nil {
-		logger.Log.Info("[http utils] proxy=", proxyUrl.String())
+		logger.Info("[http utils] proxy=", proxyUrl.String())
 		cli.cli.Transport.(*http.Transport).Proxy = func(r *http.Request) (*url.URL, error) {
 			return proxyUrl, nil
 		}
@@ -44,7 +44,7 @@ func (cli *DefaultHttpClient) init() {
 }
 
 func (cli *DefaultHttpClient) DoRequest(method, rqUrl string, reqBody string, headers map[string]string) (data []byte, err error) {
-	logger.Log.Debugf("[http utils] [%s] request url: %s", method, rqUrl)
+	logger.Debugf("[http utils] [%s] request url: %s", method, rqUrl)
 
 	reqTimeoutCtx, _ := context.WithTimeout(context.TODO(), config.C.HttpConf.Timeout)
 	req, _ := http.NewRequestWithContext(reqTimeoutCtx, method, rqUrl, strings.NewReader(reqBody))
@@ -63,7 +63,7 @@ func (cli *DefaultHttpClient) DoRequest(method, rqUrl string, reqBody string, he
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			logger.Log.Error("[http utils] close response body error:", err.Error())
+			logger.Error("[http utils] close response body error:", err.Error())
 		}
 	}(resp.Body)
 
