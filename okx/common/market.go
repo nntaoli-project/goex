@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	. "github.com/nntaoli-project/goex/v2"
+	. "github.com/nntaoli-project/goex/v2/httpcli"
 	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/model"
 	. "github.com/nntaoli-project/goex/v2/util"
@@ -81,7 +81,7 @@ func (m *Market) DoNoAuthRequest(httpMethod, reqUrl string, params *url.Values) 
 		reqUrl += "?" + params.Encode()
 	}
 
-	data, err := GetHttpCli().DoRequest(httpMethod, reqUrl, reqBody, nil)
+	data, err := HttpCli.DoRequest(httpMethod, reqUrl, reqBody, nil)
 	if err != nil {
 		return data, err
 	}

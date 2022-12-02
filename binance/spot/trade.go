@@ -2,8 +2,8 @@ package spot
 
 import (
 	"fmt"
-	. "github.com/nntaoli-project/goex/v2"
 	"github.com/nntaoli-project/goex/v2/binance/common"
+	. "github.com/nntaoli-project/goex/v2/httpcli"
 	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/model"
 	. "github.com/nntaoli-project/goex/v2/util"
@@ -91,7 +91,7 @@ func (s *spotImpl) DoAuthRequest(method, reqUrl string, params *url.Values, head
 	//if http.MethodGet == method {
 	reqUrl += "?" + params.Encode()
 	//}
-	respBody, err := GetHttpCli().DoRequest(method, reqUrl, "", header)
+	respBody, err := HttpCli.DoRequest(method, reqUrl, "", header)
 	logger.Debugf("[DoAuthRequest] response body: %s", string(respBody))
 	return respBody, err
 }

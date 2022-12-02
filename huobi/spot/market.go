@@ -3,7 +3,7 @@ package spot
 import (
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex/v2"
+	. "github.com/nntaoli-project/goex/v2/httpcli"
 	. "github.com/nntaoli-project/goex/v2/model"
 	"net/http"
 	"net/url"
@@ -46,7 +46,7 @@ func (s *spotImpl) doNoAuthRequest(method, reqUrl string, params *url.Values, he
 		reqUrl += "?" + params.Encode()
 	}
 
-	responseData, err := GetHttpCli().DoRequest(method, reqUrl, "", headers)
+	responseData, err := HttpCli.DoRequest(method, reqUrl, "", headers)
 	if err != nil {
 		return nil, fmt.Errorf("%w%s", err, errors.New(string(responseData)))
 	}

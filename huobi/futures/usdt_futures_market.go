@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex/v2"
+	. "github.com/nntaoli-project/goex/v2/httpcli"
 	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/model"
 	. "github.com/nntaoli-project/goex/v2/util"
@@ -21,12 +21,11 @@ func (f *usdtFuturesMarket) GetName() string {
 }
 
 func (f *usdtFuturesMarket) DoNoAuthRequest(method, reqUrl string, params *url.Values) ([]byte, error) {
-	cli := GetHttpCli()
 	if method == http.MethodGet {
 		reqUrl += "?" + params.Encode()
 	}
 
-	respBodyData, err := cli.DoRequest(method, reqUrl, "", map[string]string{
+	respBodyData, err := HttpCli.DoRequest(method, reqUrl, "", map[string]string{
 		"Content-Type": "application/json",
 	})
 

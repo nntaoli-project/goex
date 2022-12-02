@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/nntaoli-project/goex/v2"
+	. "github.com/nntaoli-project/goex/v2/httpcli"
 	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/model"
 	. "github.com/nntaoli-project/goex/v2/options"
@@ -179,7 +179,7 @@ func (f *usdtFuturesTrade) DoAuthRequest(method, reqUrl string, params *url.Valu
 	reqBody, _ := ValuesToJson(*params)
 	logger.Debugf("request body: %s", string(reqBody))
 
-	respBodyData, err := GetHttpCli().DoRequest(method, reqUrl+"?"+signParams.Encode(), string(reqBody), header)
+	respBodyData, err := HttpCli.DoRequest(method, reqUrl+"?"+signParams.Encode(), string(reqBody), header)
 
 	if err != nil {
 		return nil, err

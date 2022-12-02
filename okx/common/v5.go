@@ -3,7 +3,7 @@ package common
 import (
 	"encoding/json"
 	"errors"
-	. "github.com/nntaoli-project/goex/v2"
+	. "github.com/nntaoli-project/goex/v2/httpcli"
 	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/options"
 	. "github.com/nntaoli-project/goex/v2/util"
@@ -99,7 +99,7 @@ func (f *V5) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, apiOpt
 		"OK-ACCESS-SIGN":       signStr,
 		"OK-ACCESS-TIMESTAMP":  timestamp}
 
-	respBody, err := GetHttpCli().DoRequest(httpMethod, reqUrl, reqBodyStr, headers)
+	respBody, err := HttpCli.DoRequest(httpMethod, reqUrl, reqBodyStr, headers)
 	if err != nil {
 		return respBody, err
 	}
