@@ -6,12 +6,29 @@ goex项目是为了统一并标准化各个数字资产交易平台的接口而�
 ### 示例
 
 ```go
-    import (
-        "github.com/nntaoli-projects/goex/v2"
-    )
-    goex.SetHttpTimeout(5)
-    //goex.SetHttpProxy("socks5://127.0.0.1:2220")
-    goex.SetupDefaultLibs()  //must need call
-    marketApi := binance.Spot.MarketApi()
-    tk,err := marketApi.GetTicker(goex.CurrencyPair{Symbol: "btcusdt"})
+package main
+
+import (
+	. "github.com/nntaoli-project/goex/v2/model"
+	"github.com/nntaoli-project/goex/v2"
+	"github.com/nntaoli-project/goex/v2/huobi"
+	"github.com/nntaoli-project/goex/v2/logger"
+)
+
+func main() {
+	logger.SetLevel(logger.DEBUG)
+	goex.DefaultHttpCli.SetTimeout(15)
+	goex.DefaultHttpCli.SetProxy("socks5://127.0.0.1:2220")
+
+	baSpot := huobi.Spot.MarketApi()
+	ticker, err := baSpot.GetTicker(CurrencyPair{Symbol: "btcusdt"})
+
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+
+	logger.Infof("%+v", ticker)
+}
+
 ```
