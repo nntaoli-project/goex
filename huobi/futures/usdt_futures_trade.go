@@ -179,7 +179,7 @@ func (f *usdtFuturesTrade) DoAuthRequest(method, reqUrl string, params *url.Valu
 	reqBody, _ := ValuesToJson(*params)
 	logger.Debugf("request body: %s", string(reqBody))
 
-	respBodyData, err := HttpCli.DoRequest(method, reqUrl+"?"+signParams.Encode(), string(reqBody), header)
+	respBodyData, err := Cli.DoRequest(method, reqUrl+"?"+signParams.Encode(), string(reqBody), header)
 
 	if err != nil {
 		return nil, err

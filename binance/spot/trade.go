@@ -91,7 +91,7 @@ func (s *spotImpl) DoAuthRequest(method, reqUrl string, params *url.Values, head
 	//if http.MethodGet == method {
 	reqUrl += "?" + params.Encode()
 	//}
-	respBody, err := HttpCli.DoRequest(method, reqUrl, "", header)
+	respBody, err := Cli.DoRequest(method, reqUrl, "", header)
 	logger.Debugf("[DoAuthRequest] response body: %s", string(respBody))
 	return respBody, err
 }

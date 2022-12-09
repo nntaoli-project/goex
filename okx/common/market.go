@@ -81,7 +81,7 @@ func (m *Market) DoNoAuthRequest(httpMethod, reqUrl string, params *url.Values) 
 		reqUrl += "?" + params.Encode()
 	}
 
-	data, err := HttpCli.DoRequest(httpMethod, reqUrl, reqBody, nil)
+	data, err := Cli.DoRequest(httpMethod, reqUrl, reqBody, nil)
 	if err != nil {
 		return data, err
 	}

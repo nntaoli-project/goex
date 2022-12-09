@@ -46,7 +46,7 @@ func (s *spotImpl) doNoAuthRequest(method, reqUrl string, params *url.Values, he
 		reqUrl += "?" + params.Encode()
 	}
 
-	responseData, err := HttpCli.DoRequest(method, reqUrl, "", headers)
+	responseData, err := Cli.DoRequest(method, reqUrl, "", headers)
 	if err != nil {
 		return nil, fmt.Errorf("%w%s", err, errors.New(string(responseData)))
 	}

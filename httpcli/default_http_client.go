@@ -13,10 +13,10 @@ import (
 	"time"
 )
 
-var HttpCli *DefaultHttpClient
+var Cli IHttpClient
 
 func init() {
-	HttpCli = NewDefaultHttpClient()
+	Cli = NewDefaultHttpClient()
 }
 
 type DefaultHttpClient struct {

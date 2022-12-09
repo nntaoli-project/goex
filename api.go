@@ -5,10 +5,6 @@ import (
 	"net/url"
 )
 
-type IHttpClient interface {
-	DoRequest(method, rqUrl string, reqBody string, headers map[string]string) (data []byte, err error)
-}
-
 // IMarketRest 行情接口，不需要授权
 type IMarketRest interface {
 	GetName() string //获取交易所名字/域名

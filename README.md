@@ -9,26 +9,23 @@
 package main
 
 import (
-	. "github.com/nntaoli-project/goex/v2/model"
 	"github.com/nntaoli-project/goex/v2"
-	"github.com/nntaoli-project/goex/v2/huobi"
+	"github.com/nntaoli-project/goex/v2/binance"
 	"github.com/nntaoli-project/goex/v2/logger"
+	. "github.com/nntaoli-project/goex/v2/model"
 )
 
 func main() {
 	logger.SetLevel(logger.DEBUG)
 	goex.DefaultHttpCli.SetTimeout(15)
 	goex.DefaultHttpCli.SetProxy("socks5://127.0.0.1:2220")
-
-	baSpot := huobi.Spot.MarketApi()
-	ticker, err := baSpot.GetTicker(CurrencyPair{Symbol: "btcusdt"})
-
+	
+	baSpot := binance.Spot.MarketApi()
+	ticker, err := baSpot.GetTicker(CurrencyPair{Symbol: "BTCUSDT"})
 	if err != nil {
 		logger.Error(err)
 		return
 	}
-
 	logger.Infof("%+v", ticker)
 }
-
 ```

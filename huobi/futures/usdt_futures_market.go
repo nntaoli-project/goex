@@ -25,7 +25,7 @@ func (f *usdtFuturesMarket) DoNoAuthRequest(method, reqUrl string, params *url.V
 		reqUrl += "?" + params.Encode()
 	}
 
-	respBodyData, err := HttpCli.DoRequest(method, reqUrl, "", map[string]string{
+	respBodyData, err := Cli.DoRequest(method, reqUrl, "", map[string]string{
 		"Content-Type": "application/json",
 	})
 

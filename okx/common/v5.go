@@ -99,7 +99,7 @@ func (f *V5) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, apiOpt
 		"OK-ACCESS-SIGN":       signStr,
 		"OK-ACCESS-TIMESTAMP":  timestamp}
 
-	respBody, err := HttpCli.DoRequest(httpMethod, reqUrl, reqBodyStr, headers)
+	respBody, err := Cli.DoRequest(httpMethod, reqUrl, reqBodyStr, headers)
 	if err != nil {
 		return respBody, err
 	}
