@@ -82,6 +82,7 @@ func (f *V5) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, apiOpt
 	}
 
 	if http.MethodPost == httpMethod {
+		params.Set("tag", "86d4a3bf87bcBCDE")
 		reqBody, _ := ValuesToJson(*params)
 		reqBodyStr = string(reqBody)
 	}
