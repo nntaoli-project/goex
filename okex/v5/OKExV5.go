@@ -289,6 +289,8 @@ func (ok *OKExV5) CreateOrder(param *CreateOrderParam) (*OrderSummaryV5, error) 
 		reqBody["reduceOnly"] = param.ReduceOnly
 	}
 
+	reqBody["tag"] = "86d4a3bf87bcBCDE"
+
 	type OrderResponse struct {
 		Code int              `json:"code,string"`
 		Msg  string           `json:"msg"`
