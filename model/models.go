@@ -4,13 +4,31 @@ import (
 	"time"
 )
 
+type OrderType string
+type OrderSide string
+type KlinePeriod string
+
+type OrderStatus int
+
+func (s OrderStatus) String() string {
+	switch s {
+	case 1:
+		return "pending"
+	case 2:
+		return "finished"
+	case 3:
+		return "canceled"
+	case 4:
+		return "part-finished"
+	}
+	return "unknown-status"
+}
+
 // OptionParameter 可选参数
 type OptionParameter struct {
 	Key   string
 	Value string
 }
-
-type KlinePeriod string
 
 type CurrencyPair struct {
 	Symbol         string  `json:"symbol"`          //交易对
@@ -101,41 +119,6 @@ type Order struct {
 	CanceledAt  int64        `json:"canceled_at"`
 	Origin      []byte       `json:"-"`
 }
-
-type OrderStatus int
-
-func (s OrderStatus) String() string {
-	switch s {
-	case 1:
-		return "pending"
-	case 2:
-		return "finished"
-	case 3:
-		return "canceled"
-	case 4:
-		return "part-finished"
-	}
-	return "unknown-status"
-}
-
-type OrderType string
-
-var (
-	OrderType_Limit    OrderType = "limit"
-	OrderType_Market   OrderType = "market"
-	OrderType_opponent OrderType = "opponent"
-)
-
-type OrderSide string
-
-var (
-	Spot_Buy          OrderSide = "buy"
-	Spot_Sell         OrderSide = "sell"
-	Futures_OpenBuy   OrderSide = "futures_open_buy"
-	Futures_OpenSell  OrderSide = "futures_open_sell"
-	Futures_CloseBuy  OrderSide = "futures_close_buy"
-	Futures_CloseSell OrderSide = "futures_close_sell"
-)
 
 type Account struct {
 	Coin             string

@@ -20,3 +20,18 @@ const (
 	OrderStatus_PartFinished             = 4
 	OrderStatus_Canceling                = 5
 )
+
+const (
+	Spot_Buy          OrderSide = "buy"
+	Spot_Sell         OrderSide = "sell"
+	Futures_OpenBuy   OrderSide = "futures_open_buy"
+	Futures_OpenSell  OrderSide = "futures_open_sell"
+	Futures_CloseBuy  OrderSide = "futures_close_buy"
+	Futures_CloseSell OrderSide = "futures_close_sell"
+)
+
+const (
+	OrderType_Limit    OrderType = "limit"
+	OrderType_Market   OrderType = "market"
+	OrderType_opponent OrderType = "opponent"
+)
