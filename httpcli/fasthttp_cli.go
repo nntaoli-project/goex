@@ -14,7 +14,7 @@ type FastHttpCli struct {
 	timeout time.Duration
 }
 
-func NewHttpCli() *FastHttpCli {
+func NewFastHttpCli() *FastHttpCli {
 	cli := &fasthttp.Client{
 		Name:                "github.com/nntaoli-project/goex/v2/",
 		MaxConnsPerHost:     512,
