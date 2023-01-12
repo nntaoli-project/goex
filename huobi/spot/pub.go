@@ -9,46 +9,45 @@ import (
 	"net/url"
 )
 
-func (s *spotImpl) GetName() string {
+func (s *Spot) GetName() string {
 	return "huobi.com"
 }
 
-func (s *spotImpl) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter) (*Depth, error) {
+func (s *Spot) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter) (*Depth, []byte, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *spotImpl) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker, error) {
-	data, err := s.doNoAuthRequest(http.MethodGet,
+func (s *Spot) GetTicker(pair CurrencyPair, opt ...OptionParameter) (*Ticker, []byte, error) {
+	data, err := s.DoNoAuthRequest(http.MethodGet,
 		fmt.Sprintf("%s%s?symbol=%s", s.uriOpts.Endpoint, s.uriOpts.TickerUri, pair.Symbol), nil, nil)
 	if err != nil {
-		return nil, fmt.Errorf("%w%s", err, errors.New(string(data)))
+		return nil, data, fmt.Errorf("%w%s", err, errors.New(string(data)))
 	}
 
 	tk, err := s.unmarshalerOpts.TickerUnmarshaler(data)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 
 	tk.Pair = pair
-	tk.Origin = data
 
-	return tk, err
+	return tk, data, err
 }
 
-func (s *spotImpl) GetKline(pair CurrencyPair, period KlinePeriod, opt ...OptionParameter) ([]Kline, error) {
+func (s *Spot) GetKline(pair CurrencyPair, period KlinePeriod, opt ...OptionParameter) ([]Kline, []byte, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *spotImpl) doNoAuthRequest(method, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {
+func (s *Spot) DoNoAuthRequest(method, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {
 	if method == http.MethodGet && params != nil {
 		reqUrl += "?" + params.Encode()
 	}
 
 	responseData, err := Cli.DoRequest(method, reqUrl, "", headers)
 	if err != nil {
-		return nil, fmt.Errorf("%w%s", err, errors.New(string(responseData)))
+		return responseData, fmt.Errorf("%w%s", err, errors.New(string(responseData)))
 	}
 
 	var resp BaseResponse

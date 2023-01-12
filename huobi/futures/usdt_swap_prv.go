@@ -6,13 +6,13 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex/v2/httpcli"
+	"github.com/nntaoli-project/goex/v2/huobi/common"
 	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/model"
-	. "github.com/nntaoli-project/goex/v2/options"
+	"github.com/nntaoli-project/goex/v2/options"
 	. "github.com/nntaoli-project/goex/v2/util"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 type BaseResponse struct {
@@ -28,12 +28,20 @@ type TradeBaseResponse struct {
 	Data json.RawMessage `json:"data"`
 }
 
-type usdtFuturesTrade struct {
-	*USDTFutures
-	apiOpts ApiOptions
+type USDTSwapPrvApi struct {
+	*USDTSwap
+	apiOpts options.ApiOptions
 }
 
-func (f *usdtFuturesTrade) CreateOrder(pair CurrencyPair, qty, price float64, side OrderSide, orderTy OrderType, opts ...OptionParameter) (*Order, error) {
+func NewUSDTSwapPrvApi(apiOpts ...options.ApiOption) *USDTSwapPrvApi {
+	f := &USDTSwapPrvApi{}
+	for _, opt := range apiOpts {
+		opt(&f.apiOpts)
+	}
+	return f
+}
+
+func (f *USDTSwapPrvApi) CreateOrder(pair CurrencyPair, qty, price float64, side OrderSide, orderTy OrderType, opts ...OptionParameter) (*Order, []byte, error) {
 	params := url.Values{}
 	params.Set("contract_code", pair.Symbol)
 	params.Set("price", FloatToString(price, pair.PricePrecision))
@@ -54,22 +62,22 @@ func (f *usdtFuturesTrade) CreateOrder(pair CurrencyPair, qty, price float64, si
 	data, err := f.DoAuthRequest(http.MethodPost,
 		fmt.Sprintf("%s%s", f.uriOpts.Endpoint, f.uriOpts.NewOrderUri), &params, nil)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 
 	logger.Debugf("[create order] response data=%s", string(data))
 
 	ord, err := f.unmarshalerOpts.CreateOrderResponseUnmarshaler(data)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 
 	ord.Status = OrderStatus_Pending
 
-	return ord, nil
+	return ord, data, nil
 }
 
-func (f *usdtFuturesTrade) GetOrderInfo(pair CurrencyPair, id string, opts ...OptionParameter) (*Order, error) {
+func (f *USDTSwapPrvApi) GetOrderInfo(pair CurrencyPair, id string, opts ...OptionParameter) (*Order, []byte, error) {
 	params := url.Values{}
 	params.Set("contract_code", pair.Symbol)
 
@@ -81,37 +89,38 @@ func (f *usdtFuturesTrade) GetOrderInfo(pair CurrencyPair, id string, opts ...Op
 
 	data, err := f.DoAuthRequest(http.MethodPost, fmt.Sprintf("%s%s", f.uriOpts.Endpoint, f.uriOpts.GetOrderUri), &params, nil)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 
 	logger.Debugf("[GetOrderInfo] %s", string(data))
 	if data == nil || len(data) == 0 ||
 		bytes.Compare(data, []byte{110, 117, 108, 108}) == 0 {
-		return nil, nil
+		return nil, data, nil
 	}
 
 	order, err := f.unmarshalerOpts.GetOrderInfoResponseUnmarshaler(data)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 	order.Pair = pair
-	return order, nil
+	return order, data, nil
 }
 
-func (f *usdtFuturesTrade) GetPendingOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, error) {
+func (f *USDTSwapPrvApi) GetPendingOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, []byte, error) {
 	params := url.Values{}
 	params.Set("contract_code", pair.Symbol)
 	params.Set("page_size", "50")
 	data, err := f.DoAuthRequest(http.MethodPost,
 		fmt.Sprintf("%s%s", f.uriOpts.Endpoint, f.uriOpts.GetPendingOrdersUri), &params, nil)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 	logger.Debugf("[GetPendingOrders] %s", string(data))
-	return f.unmarshalerOpts.GetPendingOrdersResponseUnmarshaler(data)
+	orders, err := f.unmarshalerOpts.GetPendingOrdersResponseUnmarshaler(data)
+	return orders, data, err
 }
 
-func (f *usdtFuturesTrade) GetHistoryOrders(pair CurrencyPair, opts ...OptionParameter) ([]Order, error) {
+func (f *USDTSwapPrvApi) GetHistoryOrders(pair CurrencyPair, opts ...OptionParameter) ([]Order, []byte, error) {
 	params := url.Values{}
 	params.Set("contract", pair.Symbol)
 	params.Set("trade_type", "0")
@@ -122,13 +131,14 @@ func (f *usdtFuturesTrade) GetHistoryOrders(pair CurrencyPair, opts ...OptionPar
 	data, err := f.DoAuthRequest(http.MethodPost,
 		fmt.Sprintf("%s%s", f.uriOpts.Endpoint, f.uriOpts.GetHistoryOrdersUri), &params, nil)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 	logger.Debugf("[GetHistoryOrders] %s", string(data))
-	return f.unmarshalerOpts.GetHistoryOrdersResponseUnmarshaler(data)
+	orders, err := f.unmarshalerOpts.GetHistoryOrdersResponseUnmarshaler(data)
+	return orders, data, err
 }
 
-func (f *usdtFuturesTrade) CancelOrder(pair CurrencyPair, id string, opt ...OptionParameter) error {
+func (f *USDTSwapPrvApi) CancelOrder(pair CurrencyPair, id string, opt ...OptionParameter) ([]byte, error) {
 	params := url.Values{}
 	params.Set("order_id", id)
 	params.Set("contract_code", pair.Symbol)
@@ -141,35 +151,30 @@ func (f *usdtFuturesTrade) CancelOrder(pair CurrencyPair, id string, opt ...Opti
 
 	data, err := f.DoAuthRequest(http.MethodPost, fmt.Sprintf("%s%s", f.uriOpts.Endpoint, f.uriOpts.CancelOrderUri), &params, nil)
 	if err != nil {
-		return err
+		return data, err
 	}
 
-	return f.unmarshalerOpts.CancelOrderResponseUnmarshaler(data)
+	return data, f.unmarshalerOpts.CancelOrderResponseUnmarshaler(data)
 }
 
-func (f *usdtFuturesTrade) CancelOrders(pair *CurrencyPair, id []string, opt ...OptionParameter) error {
+func (f *USDTSwapPrvApi) CancelOrders(pair *CurrencyPair, id []string, opt ...OptionParameter) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (f *usdtFuturesTrade) DoAuthRequest(method, reqUrl string, params *url.Values, header map[string]string) ([]byte, error) {
+func (f *USDTSwapPrvApi) GetFuturesAccount(coin string) (acc map[string]FuturesAccount, responseBody []byte, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (f *USDTSwapPrvApi) GetPositions(pair CurrencyPair, opts ...OptionParameter) (positions []FuturesPosition, responseBody []byte, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (f *USDTSwapPrvApi) DoAuthRequest(method, reqUrl string, params *url.Values, header map[string]string) ([]byte, error) {
 	///////////////////// 参数签名 ////////////////////////
-	signParams := url.Values{}
-	signParams.Set("AccessKeyId", f.apiOpts.Key)
-	signParams.Set("SignatureMethod", "HmacSHA256")
-	signParams.Set("SignatureVersion", "2")
-	signParams.Set("Timestamp", time.Now().UTC().Format("2006-01-02T15:04:05"))
-
-	reqURL, _ := url.Parse(reqUrl)
-	path := reqURL.RequestURI()
-	domain := reqURL.Hostname()
-
-	payload := fmt.Sprintf("%s\n%s\n%s\n%s", method, domain, path, signParams.Encode())
-	sign, _ := HmacSHA256Base64Sign(f.apiOpts.Secret, payload)
-
-	signParams.Set("Signature", sign)
-	logger.Debugf("[DoAuthRequest] params=%s", signParams.Encode())
-	///////////////////签名结束////////////////////
+	signParams := common.DoSignParam(method, reqUrl, f.apiOpts)
 
 	if header == nil {
 		header = make(map[string]string, 1)

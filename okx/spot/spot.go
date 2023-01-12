@@ -1,10 +1,9 @@
 package spot
 
 import (
-	. "github.com/nntaoli-project/goex/v2"
 	. "github.com/nntaoli-project/goex/v2/model"
 	"github.com/nntaoli-project/goex/v2/okx/common"
-	. "github.com/nntaoli-project/goex/v2/options"
+	"github.com/nntaoli-project/goex/v2/options"
 )
 
 var (
@@ -12,7 +11,7 @@ var (
 )
 
 type Spot struct {
-	*common.V5
+	*common.OKxV5
 }
 
 func New() *Spot {
@@ -20,12 +19,9 @@ func New() *Spot {
 	return &Spot{v5}
 }
 
-func (s *Spot) MarketApi() IMarketRest {
-	return s.V5.MarketApi()
-}
-
-func (s *Spot) NewTradeApi(apiOpts ...ApiOption) ITradeRest {
-	imp := newSpotTradeImp(apiOpts...)
-	imp.V5 = s.V5
-	return imp
+func (s *Spot) NewPrvApi(apiOps ...options.ApiOption) *PrvApi {
+	prv := new(PrvApi)
+	prv.Prv = s.OKxV5.NewPrvApi(apiOps...)
+	prv.Prv.OKxV5 = s.OKxV5
+	return prv
 }

@@ -1,7 +1,6 @@
 package spot
 
 import (
-	. "github.com/nntaoli-project/goex/v2"
 	. "github.com/nntaoli-project/goex/v2/model"
 	. "github.com/nntaoli-project/goex/v2/options"
 )
@@ -19,14 +18,9 @@ type BaseResponse struct {
 type Spot struct {
 	uriOpts         UriOptions
 	unmarshalerOpts UnmarshalerOptions
-	marketApi       IMarketRest
 }
 
-type spotImpl struct {
-	*Spot
-}
-
-func New(opts ...UriOption) *Spot {
+func New() *Spot {
 	s := &Spot{
 		uriOpts: UriOptions{
 			Endpoint:            "https://api.huobi.pro",
@@ -46,12 +40,6 @@ func New(opts ...UriOption) *Spot {
 		},
 	}
 
-	for _, opt := range opts {
-		opt(&s.uriOpts)
-	}
-
-	s.marketApi = &spotImpl{Spot: s}
-
 	return s
 }
 
@@ -62,6 +50,9 @@ func (s *Spot) WithUnmarshalerOptions(opts ...UnmarshalerOption) *Spot {
 	return s
 }
 
-func (s *Spot) MarketApi() IMarketRest {
-	return s.marketApi
+func (s *Spot) WithUriOptions(opts ...UriOption) *Spot {
+	for _, opt := range opts {
+		opt(&s.uriOpts)
+	}
+	return s
 }

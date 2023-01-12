@@ -197,7 +197,6 @@ func (un *RespUnmarshaler) UnmarshalGetOrderInfoResponse(data []byte) (ord *Orde
 		return nil
 	})
 
-	ord.Origin = data
 	ord.Side = adaptSymToOrderSide(side, posSide)
 	if ord.Status == OrderStatus_Canceled {
 		ord.CanceledAt = utime

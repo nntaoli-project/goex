@@ -12,15 +12,11 @@ import (
 	"net/url"
 )
 
-type usdtFuturesMarket struct {
-	*USDTFutures
-}
-
-func (f *usdtFuturesMarket) GetName() string {
+func (f *USDTSwap) GetName() string {
 	return "hbdm.com"
 }
 
-func (f *usdtFuturesMarket) DoNoAuthRequest(method, reqUrl string, params *url.Values) ([]byte, error) {
+func (f *USDTSwap) DoNoAuthRequest(method, reqUrl string, params *url.Values) ([]byte, error) {
 	if method == http.MethodGet {
 		reqUrl += "?" + params.Encode()
 	}
@@ -30,7 +26,7 @@ func (f *usdtFuturesMarket) DoNoAuthRequest(method, reqUrl string, params *url.V
 	})
 
 	if err != nil {
-		return nil, err
+		return respBodyData, err
 	}
 
 	var baseResp BaseResponse
@@ -41,18 +37,18 @@ func (f *usdtFuturesMarket) DoNoAuthRequest(method, reqUrl string, params *url.V
 	}
 
 	if baseResp.Status != "ok" {
-		return nil, errors.New(string(respBodyData))
+		return respBodyData, errors.New(string(respBodyData))
 	}
 
 	return respBodyData, nil
 }
 
-func (f *usdtFuturesMarket) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter) (*Depth, error) {
+func (f *USDTSwap) GetDepth(pair CurrencyPair, limit int, opt ...OptionParameter) (*Depth, []byte, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (f *usdtFuturesMarket) GetTicker(pair CurrencyPair, opts ...OptionParameter) (*Ticker, error) {
+func (f *USDTSwap) GetTicker(pair CurrencyPair, opts ...OptionParameter) (*Ticker, []byte, error) {
 	params := url.Values{}
 	params.Set("contract_code", pair.Symbol)
 	MergeOptionParams(&params, opts...)
@@ -60,21 +56,20 @@ func (f *usdtFuturesMarket) GetTicker(pair CurrencyPair, opts ...OptionParameter
 	data, err := f.DoNoAuthRequest(http.MethodGet,
 		fmt.Sprintf("%s%s", f.uriOpts.Endpoint, f.uriOpts.TickerUri), &params)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 
 	tk, err := f.unmarshalerOpts.TickerUnmarshaler(data)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 
 	tk.Pair = pair
-	tk.Origin = data
 
-	return tk, nil
+	return tk, data, nil
 }
 
-func (f *usdtFuturesMarket) GetKline(pair CurrencyPair, period KlinePeriod, opts ...OptionParameter) ([]Kline, error) {
+func (f *USDTSwap) GetKline(pair CurrencyPair, period KlinePeriod, opts ...OptionParameter) ([]Kline, []byte, error) {
 	params := url.Values{}
 	params.Set("contract_code", pair.Symbol)
 	params.Set("period", AdaptKlinePeriod(period))
@@ -87,18 +82,18 @@ func (f *usdtFuturesMarket) GetKline(pair CurrencyPair, period KlinePeriod, opts
 
 	data, err := f.DoNoAuthRequest(http.MethodGet, fmt.Sprintf("%s%s", f.uriOpts.Endpoint, f.uriOpts.KlineUri), &params)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 	logger.Debugf("[GetKline] data=%s", string(data))
 
 	klines, err := f.unmarshalerOpts.KlineUnmarshaler(data)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 
 	for i, _ := range klines {
 		klines[i].Pair = pair
 	}
 
-	return klines, err
+	return klines, data, err
 }

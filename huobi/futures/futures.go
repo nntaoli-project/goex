@@ -1,25 +1,26 @@
 package futures
 
 import (
-	. "github.com/nntaoli-project/goex/v2"
 	. "github.com/nntaoli-project/goex/v2/options"
 )
 
 type Futures struct {
+	USDTSwapFutures *USDTSwap
 }
 
-type USDTFutures struct {
+type USDTSwap struct {
 	uriOpts         UriOptions
-	apiOpts         ApiOptions
 	unmarshalerOpts UnmarshalerOptions
 }
 
 func New() *Futures {
-	return &Futures{}
+	return &Futures{
+		USDTSwapFutures: NewUSDTSwap(),
+	}
 }
 
-func NewUSDTFutures(uriOpts ...UriOption) *USDTFutures {
-	f := &USDTFutures{
+func NewUSDTSwap() *USDTSwap {
+	f := &USDTSwap{
 		uriOpts: UriOptions{
 			Endpoint:            "https://api.hbdm.com",
 			TickerUri:           "/linear-swap-ex/market/detail/merged",
@@ -42,30 +43,25 @@ func NewUSDTFutures(uriOpts ...UriOption) *USDTFutures {
 			GetHistoryOrdersResponseUnmarshaler: UnmarshalGetHistoryOrdersResponse,
 		},
 	}
-
-	for _, opt := range uriOpts {
-		opt(&f.uriOpts)
-	}
-
 	return f
 }
 
-func (f *USDTFutures) WithUnmarshalerOptions(opts ...UnmarshalerOption) {
+func (f *USDTSwap) WithUnmarshalerOptions(opts ...UnmarshalerOption) *USDTSwap {
 	for _, opt := range opts {
 		opt(&f.unmarshalerOpts)
 	}
+	return f
 }
 
-func (f *USDTFutures) NewCrossUdtFuturesTrade(key, secret string) ITradeRest {
-	return &usdtFuturesTrade{
-		USDTFutures: f,
-		apiOpts: ApiOptions{
-			Key:    key,
-			Secret: secret,
-		},
+func (f *USDTSwap) WithUriOptions(uriOpts ...UriOption) *USDTSwap {
+	for _, opt := range uriOpts {
+		opt(&f.uriOpts)
 	}
+	return f
 }
 
-func (f *USDTFutures) NewUsdtFuturesMarket() IMarketRest {
-	return &usdtFuturesMarket{USDTFutures: f}
+func (f *USDTSwap) NewUSDTSwapPrvApi(apiOpts ...ApiOption) *USDTSwapPrvApi {
+	prv := NewUSDTSwapPrvApi(apiOpts...)
+	prv.USDTSwap = f
+	return prv
 }

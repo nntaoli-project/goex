@@ -38,7 +38,7 @@ func (cli *FastHttpCli) SetProxy(proxy string) error {
 }
 
 func (cli *FastHttpCli) DoRequest(method, rqUrl string, reqBody string, headers map[string]string) (data []byte, err error) {
-	logger.Info("[fast http cli] use fasthttp client")
+	//logger.Info("[fast http cli] use fasthttp client")
 	logger.Debug("[fast http cli]  req url:", rqUrl)
 
 	req := fasthttp.AcquireRequest()

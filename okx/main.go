@@ -5,7 +5,14 @@ import (
 	"github.com/nntaoli-project/goex/v2/okx/spot"
 )
 
-var (
-	Spot    = spot.New()
-	Futures = futures.NewFutures()
-)
+type OKx struct {
+	Spot    *spot.Spot
+	Futures *futures.Futures
+}
+
+func New() *OKx {
+	return &OKx{
+		Spot:    spot.New(),
+		Futures: futures.New(),
+	}
+}

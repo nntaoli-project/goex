@@ -20,7 +20,6 @@ func UnmarshalKline(data []byte) ([]Kline, error) {
 	}
 	_, err = jsonparser.ArrayEach(klineData, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		var kline Kline
-		kline.Origin = value
 		err = jsonparser.ObjectEach(value, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 			switch string(key) {
 			case "id":
@@ -134,7 +133,6 @@ func UnmarshalGetPendingOrdersResponse(data []byte) ([]Order, error) {
 		if err != nil {
 			return
 		}
-		ord.Origin = value
 		pendingOrders = append(pendingOrders, *ord)
 	})
 
@@ -182,7 +180,6 @@ func unmarshalOrderResponse(data []byte) (*Order, error) {
 	}
 
 	order.Side = AdaptOffsetDirectionToOrderSide(orderOffset, direction)
-	order.Origin = data
 
 	return order, nil
 }

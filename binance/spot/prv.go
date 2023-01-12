@@ -6,12 +6,31 @@ import (
 	. "github.com/nntaoli-project/goex/v2/httpcli"
 	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/model"
+	"github.com/nntaoli-project/goex/v2/options"
 	. "github.com/nntaoli-project/goex/v2/util"
 	"net/http"
 	"net/url"
 )
 
-func (s *spotImpl) CreateOrder(pair CurrencyPair, qty, price float64, side OrderSide, orderTy OrderType, opt ...OptionParameter) (*Order, error) {
+type PrvApi struct {
+	*Spot
+	apiOpts options.ApiOptions
+}
+
+func NewPrvApi(apiOpts ...options.ApiOption) *PrvApi {
+	s := new(PrvApi)
+	for _, opt := range apiOpts {
+		opt(&s.apiOpts)
+	}
+	return s
+}
+
+func (s *PrvApi) GetAccount(coin string) (map[string]Account, []byte, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *PrvApi) CreateOrder(pair CurrencyPair, qty, price float64, side OrderSide, orderTy OrderType, opt ...OptionParameter) (*Order, []byte, error) {
 	var params = url.Values{}
 	params.Set("symbol", pair.Symbol)
 	params.Set("side", adaptOrderSide(side))
@@ -24,14 +43,14 @@ func (s *spotImpl) CreateOrder(pair CurrencyPair, qty, price float64, side Order
 	MergeOptionParams(&params, opt...)
 
 	data, err := s.DoAuthRequest(http.MethodPost,
-		fmt.Sprintf("%s%s", s.uriOpts.Endpoint, s.uriOpts.NewOrderUri), &params, nil)
+		fmt.Sprintf("%s%s", s.UriOpts.Endpoint, s.UriOpts.NewOrderUri), &params, nil)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 
-	ord, err := s.unmarshalerOpts.CreateOrderResponseUnmarshaler(data)
+	ord, err := s.UnmarshalerOpts.CreateOrderResponseUnmarshaler(data)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
 
 	order := new(Order)
@@ -41,48 +60,48 @@ func (s *spotImpl) CreateOrder(pair CurrencyPair, qty, price float64, side Order
 	ord.Status = OrderStatus_Pending
 	ord.Side = order.Side
 	ord.OrderTy = order.OrderTy
-	ord.Origin = data
 
-	return ord, nil
+	return ord, data, nil
 }
 
-func (s *spotImpl) GetOrderInfo(pair CurrencyPair, id string, opt ...OptionParameter) (*Order, error) {
+func (s *PrvApi) GetOrderInfo(pair CurrencyPair, id string, opt ...OptionParameter) (*Order, []byte, error) {
 	panic("")
 }
 
-func (s *spotImpl) GetPendingOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, error) {
+func (s *PrvApi) GetPendingOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, []byte, error) {
 	var params = url.Values{}
 	params.Set("symbol", pair.Symbol)
 	MergeOptionParams(&params, opt...)
 	data, err := s.DoAuthRequest(http.MethodGet,
-		fmt.Sprintf("%s%s", s.uriOpts.Endpoint, s.uriOpts.GetPendingOrdersUri),
+		fmt.Sprintf("%s%s", s.UriOpts.Endpoint, s.UriOpts.GetPendingOrdersUri),
 		&params, nil)
 	if err != nil {
-		return nil, err
+		return nil, data, err
 	}
-	return s.unmarshalerOpts.GetPendingOrdersResponseUnmarshaler(data)
+	orders, err := s.UnmarshalerOpts.GetPendingOrdersResponseUnmarshaler(data)
+	return orders, data, err
 }
 
-func (s *spotImpl) GetHistoryOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, error) {
+func (s *PrvApi) GetHistoryOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, []byte, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *spotImpl) CancelOrder(pair CurrencyPair, id string, opt ...OptionParameter) error {
+func (s *PrvApi) CancelOrder(pair CurrencyPair, id string, opt ...OptionParameter) ([]byte, error) {
 	var params = url.Values{}
 	params.Set("symbol", pair.Symbol)
 	if id != "" {
 		params.Set("orderId", id)
 	}
 	MergeOptionParams(&params, opt...)
-	data, err := s.DoAuthRequest(http.MethodDelete, fmt.Sprintf("%s%s", s.uriOpts.Endpoint, s.uriOpts.CancelOrderUri), &params, nil)
+	data, err := s.DoAuthRequest(http.MethodDelete, fmt.Sprintf("%s%s", s.UriOpts.Endpoint, s.UriOpts.CancelOrderUri), &params, nil)
 	if err != nil {
-		return err
+		return data, err
 	}
-	return s.unmarshalerOpts.CancelOrderResponseUnmarshaler(data)
+	return data, s.UnmarshalerOpts.CancelOrderResponseUnmarshaler(data)
 }
 
-func (s *spotImpl) DoAuthRequest(method, reqUrl string, params *url.Values, header map[string]string) ([]byte, error) {
+func (s *PrvApi) DoAuthRequest(method, reqUrl string, params *url.Values, header map[string]string) ([]byte, error) {
 	if header == nil {
 		header = make(map[string]string, 2)
 	}

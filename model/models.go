@@ -62,7 +62,6 @@ type Ticker struct {
 	Vol       float64      `json:"v"`
 	Percent   float64      `json:"percent"`
 	Timestamp int64        `json:"t"`
-	Origin    []byte       `json:"origin"`
 }
 
 type DepthItem struct {
@@ -85,11 +84,10 @@ func (dr DepthItems) Less(i, j int) bool {
 }
 
 type Depth struct {
-	Pair   CurrencyPair `json:"pair"`
-	UTime  time.Time    `json:"ut"`
-	Asks   DepthItems   `json:"asks"`
-	Bids   DepthItems   `json:"bids"`
-	Origin []byte       `json:"origin"`
+	Pair  CurrencyPair `json:"pair"`
+	UTime time.Time    `json:"ut"`
+	Asks  DepthItems   `json:"asks"`
+	Bids  DepthItems   `json:"bids"`
 }
 
 type Kline struct {
@@ -100,7 +98,6 @@ type Kline struct {
 	High      float64      `json:"h"`
 	Low       float64      `json:"l"`
 	Vol       float64      `json:"v"`
-	Origin    []byte       `json:"-"`
 }
 
 type Order struct {
@@ -117,7 +114,6 @@ type Order struct {
 	Fee         float64      `json:"fee"`
 	CreatedAt   int64        `json:"created_at"`
 	CanceledAt  int64        `json:"canceled_at"`
-	Origin      []byte       `json:"-"`
 }
 
 type Account struct {

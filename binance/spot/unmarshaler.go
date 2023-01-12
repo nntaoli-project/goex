@@ -114,7 +114,6 @@ func (u *RespUnmarshaler) UnmarshalGetKlineResponse(data []byte) ([]Kline, error
 			}
 			i += 1
 		})
-		k.Origin = value
 		klines = append(klines, k)
 	})
 
@@ -185,7 +184,6 @@ func (u *RespUnmarshaler) unmarshalOrderResponse(data []byte) (ord Order, err er
 		}
 		return nil
 	})
-	ord.Origin = data
 	return
 }
 

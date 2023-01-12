@@ -5,7 +5,14 @@ import (
 	"github.com/nntaoli-project/goex/v2/huobi/spot"
 )
 
-var (
-	Spot    = spot.New()
-	Futures = futures.NewUSDTFutures()
-)
+type HuoBi struct {
+	Spot    *spot.Spot
+	Futures *futures.Futures
+}
+
+func New() *HuoBi {
+	return &HuoBi{
+		Spot:    spot.New(),
+		Futures: futures.New(),
+	}
+}

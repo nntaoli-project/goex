@@ -1,7 +1,6 @@
 package spot
 
 import (
-	. "github.com/nntaoli-project/goex/v2"
 	. "github.com/nntaoli-project/goex/v2/model"
 	. "github.com/nntaoli-project/goex/v2/options"
 )
@@ -11,21 +10,14 @@ var (
 )
 
 type Spot struct {
-	unmarshalerOpts UnmarshalerOptions
-	uriOpts         UriOptions
-
-	marketApi IMarketRest
+	UnmarshalerOpts UnmarshalerOptions
+	UriOpts         UriOptions
 }
 
-type spotImpl struct {
-	*Spot
-	apiOpts ApiOptions
-}
-
-func New(opts ...UriOption) *Spot {
+func New() *Spot {
 	unmarshaler := new(RespUnmarshaler)
 	s := &Spot{
-		uriOpts: UriOptions{
+		UriOpts: UriOptions{
 			Endpoint:            "https://api.binance.com",
 			TickerUri:           "/api/v3/ticker/24hr",
 			DepthUri:            "/api/v3/depth",
@@ -36,7 +28,7 @@ func New(opts ...UriOption) *Spot {
 			GetOrderUri:         "/api/v3/order",
 			GetHistoryOrdersUri: "/api/v3/allOrders",
 		},
-		unmarshalerOpts: UnmarshalerOptions{
+		UnmarshalerOpts: UnmarshalerOptions{
 			ResponseUnmarshaler:                 unmarshaler.UnmarshalResponse,
 			TickerUnmarshaler:                   unmarshaler.UnmarshalGetTickerResponse,
 			DepthUnmarshaler:                    unmarshaler.UnmarshalGetDepthResponse,
@@ -46,24 +38,24 @@ func New(opts ...UriOption) *Spot {
 			CancelOrderResponseUnmarshaler:      unmarshaler.UnmarshalCancelOrderResponse,
 		},
 	}
-	for _, opt := range opts {
-		opt(&s.uriOpts)
-	}
-	s.marketApi = &spotImpl{Spot: s}
 	return s
+}
+
+func (s *Spot) WithUriOption(uriOpts ...UriOption) {
+	for _, opt := range uriOpts {
+		opt(&s.UriOpts)
+	}
 }
 
 func (s *Spot) WithUnmarshalerOptions(opts ...UnmarshalerOption) *Spot {
 	for _, opt := range opts {
-		opt(&s.unmarshalerOpts)
+		opt(&s.UnmarshalerOpts)
 	}
 	return s
 }
 
-func (s *Spot) MarketApi() IMarketRest {
-	return s.marketApi
-}
-
-func (s *Spot) NewTradeApi(apiKey, apiSecret string) ITradeRest {
-	return &spotImpl{Spot: s, apiOpts: ApiOptions{Key: apiKey, Secret: apiSecret}}
+func (s *Spot) NewPrvApi(apiOpts ...ApiOption) *PrvApi {
+	prv := NewPrvApi(apiOpts...)
+	prv.Spot = s
+	return prv
 }

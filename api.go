@@ -2,41 +2,43 @@ package goex
 
 import (
 	"github.com/nntaoli-project/goex/v2/model"
-	"net/url"
 )
 
-// IMarketRest 行情接口，不需要授权
-type IMarketRest interface {
+// IPubRest 公共接口，不需要授权调用
+type IPubRest interface {
 	GetName() string //获取交易所名字/域名
-	GetDepth(pair model.CurrencyPair, limit int, opt ...model.OptionParameter) (*model.Depth, error)
-	GetTicker(pair model.CurrencyPair, opt ...model.OptionParameter) (*model.Ticker, error)
-	GetKline(pair model.CurrencyPair, period model.KlinePeriod, opt ...model.OptionParameter) ([]model.Kline, error)
+	GetDepth(pair model.CurrencyPair, limit int, opt ...model.OptionParameter) (depth *model.Depth, responseBody []byte, err error)
+	GetTicker(pair model.CurrencyPair, opt ...model.OptionParameter) (ticker *model.Ticker, responseBody []byte, err error)
+	GetKline(pair model.CurrencyPair, period model.KlinePeriod, opt ...model.OptionParameter) (klines []model.Kline, responseBody []byte, err error)
 }
 
-// ITradeRest 交易相关的接口
-type ITradeRest interface {
-	CreateOrder(pair model.CurrencyPair, qty, price float64, side model.OrderSide, orderTy model.OrderType, opt ...model.OptionParameter) (*model.Order, error) //创建订单
-	//CreateOrders 批量创建订单,考虑中，是否有意义
-	//CreateOrders(orders []Order, opt ...OptionParameter) ([]Order, error)
-	GetOrderInfo(pair model.CurrencyPair, id string, opt ...model.OptionParameter) (*model.Order, error)
-	GetPendingOrders(pair model.CurrencyPair, opt ...model.OptionParameter) ([]model.Order, error)
-	// GetHistoryOrders 获取历史委托订单列表
-	GetHistoryOrders(pair model.CurrencyPair, opt ...model.OptionParameter) ([]model.Order, error)
-	CancelOrder(pair model.CurrencyPair, id string, opt ...model.OptionParameter) error
-	//CancelOrders(pair *CurrencyPair, id []string, opt ...OptionParameter) error
-	DoAuthRequest(method, reqUrl string, params *url.Values, header map[string]string) ([]byte, error)
+// IPrvRest 私有接口，需要授权调用
+type IPrvRest interface {
+	//CreateOrder
+	//@returns
+	//  order        包含订单ID信息
+	//  responseBody 交易所接口返回的原始字节数据
+	//  err          错误
+	CreateOrder(pair model.CurrencyPair, qty, price float64, side model.OrderSide, orderTy model.OrderType, opt ...model.OptionParameter) (order *model.Order, responseBody []byte, err error)
+	GetOrderInfo(pair model.CurrencyPair, id string, opt ...model.OptionParameter) (order *model.Order, responseBody []byte, err error)
+	GetPendingOrders(pair model.CurrencyPair, opt ...model.OptionParameter) (orders []model.Order, responseBody []byte, err error)
+	GetHistoryOrders(pair model.CurrencyPair, opt ...model.OptionParameter) (orders []model.Order, responseBody []byte, err error)
+	CancelOrder(pair model.CurrencyPair, id string, opt ...model.OptionParameter) (responseBody []byte, err error)
 }
 
-type IFuturesPosition interface {
-	GetPositions(pair model.CurrencyPair, opts ...model.OptionParameter) ([]model.FuturesPosition, error)
+type ISpotPrvRest interface {
+	IPrvRest
+	GetAccount(coin string) (map[string]model.Account, []byte, error)
 }
 
-// IAccount
-// 获取账户资产相关的
-type IAccount interface {
-	GetAccount(coin string) (map[string]model.Account, error)
-}
-
-// IWallet 获取资产信息，划转资金等操作
-type IWallet interface {
+// IFuturesPrvRest 合约接口
+type IFuturesPrvRest interface {
+	IPrvRest
+	GetFuturesAccount(coin string) (acc map[string]model.FuturesAccount, responseBody []byte, err error)
+	//GetPositions 获取持仓数据
+	//@returns
+	//	positions    仓位数据
+	//  responseBody 交易所接口返回的原始字节数据
+	//  err          错误
+	GetPositions(pair model.CurrencyPair, opts ...model.OptionParameter) (positions []model.FuturesPosition, responseBody []byte, err error)
 }

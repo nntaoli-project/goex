@@ -2,19 +2,12 @@ package common
 
 import (
 	"encoding/json"
-	"errors"
-	. "github.com/nntaoli-project/goex/v2/httpcli"
-	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/options"
-	. "github.com/nntaoli-project/goex/v2/util"
-	"net/http"
-	"net/url"
 )
 
-type V5 struct {
-	uriOpts       UriOptions
-	unmarshalOpts UnmarshalerOptions
-	marketApi     *Market
+type OKxV5 struct {
+	UriOpts       UriOptions
+	UnmarshalOpts UnmarshalerOptions
 }
 
 type BaseResp struct {
@@ -23,11 +16,11 @@ type BaseResp struct {
 	Data json.RawMessage `json:"data"`
 }
 
-func New() *V5 {
+func New() *OKxV5 {
 	unmarshaler := new(RespUnmarshaler)
 
-	f := &V5{
-		uriOpts: UriOptions{
+	f := &OKxV5{
+		UriOpts: UriOptions{
 			Endpoint:            "https://www.okx.com",
 			KlineUri:            "/api/v5/market/candles",
 			TickerUri:           "/api/v5/market/ticker",
@@ -39,7 +32,7 @@ func New() *V5 {
 			GetAccountUri:       "/api/v5/account/balance",
 			GetPositionsUri:     "/api/v5/account/positions",
 		},
-		unmarshalOpts: UnmarshalerOptions{
+		UnmarshalOpts: UnmarshalerOptions{
 			ResponseUnmarshaler:                  unmarshaler.UnmarshalResponse,
 			KlineUnmarshaler:                     unmarshaler.UnmarshalGetKlineResponse,
 			TickerUnmarshaler:                    unmarshaler.UnmarshalTicker,
@@ -53,90 +46,25 @@ func New() *V5 {
 			GetFuturesAccountResponseUnmarshaler: unmarshaler.UnmarshalGetFuturesAccountResponse,
 		},
 	}
-	f.marketApi = &Market{f}
 	return f
 }
 
-func (f *V5) WithUriOption(opts ...UriOption) *V5 {
+func (okx *OKxV5) WithUriOption(opts ...UriOption) *OKxV5 {
 	for _, opt := range opts {
-		opt(&f.uriOpts)
+		opt(&okx.UriOpts)
 	}
-	return f
+	return okx
 }
 
-func (f *V5) WithUnmarshalOption(opts ...UnmarshalerOption) *V5 {
+func (okx *OKxV5) WithUnmarshalOption(opts ...UnmarshalerOption) *OKxV5 {
 	for _, opt := range opts {
-		opt(&f.unmarshalOpts)
+		opt(&okx.UnmarshalOpts)
 	}
-	return f
+	return okx
 }
 
-func (f *V5) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, apiOpts ApiOptions, headers map[string]string) ([]byte, error) {
-	var (
-		reqBodyStr string
-		reqUri     string
-	)
-
-	if http.MethodGet == httpMethod {
-		reqUrl += "?" + params.Encode()
-	}
-
-	if http.MethodPost == httpMethod {
-		params.Set("tag", "86d4a3bf87bcBCDE")
-		reqBody, _ := ValuesToJson(*params)
-		reqBodyStr = string(reqBody)
-	}
-
-	_url, _ := url.Parse(reqUrl)
-	reqUri = _url.RequestURI()
-	signStr, timestamp := SignParams(httpMethod, reqUri, apiOpts.Secret, reqBodyStr)
-	logger.Debugf("[DoAuthRequest] sign base64: %s, timestamp: %s", signStr, timestamp)
-
-	headers = map[string]string{
-		"Content-Type": "application/json; charset=UTF-8",
-		//"Accept":               "application/json",
-		"OK-ACCESS-KEY":        apiOpts.Key,
-		"OK-ACCESS-PASSPHRASE": apiOpts.Passphrase,
-		"OK-ACCESS-SIGN":       signStr,
-		"OK-ACCESS-TIMESTAMP":  timestamp}
-
-	respBody, err := Cli.DoRequest(httpMethod, reqUrl, reqBodyStr, headers)
-	if err != nil {
-		return respBody, err
-	}
-	logger.Debugf("[DoAuthRequest] response body: %s", string(respBody))
-
-	var baseResp BaseResp
-	err = f.unmarshalOpts.ResponseUnmarshaler(respBody, &baseResp)
-	if err != nil {
-		return respBody, err
-	}
-
-	if baseResp.Code != 0 {
-		return baseResp.Data, errors.New(baseResp.Msg)
-	}
-
-	return baseResp.Data, nil
-}
-
-func (f *V5) MarketApi() *Market {
-	return f.marketApi
-}
-
-func (f *V5) NewTradeApi(opts ...ApiOption) *Trade {
-	api := NewTrade(opts...)
-	api.V5 = f
-	return api
-}
-
-func (f *V5) NewAccountApi(opts ...ApiOption) *AccountApi {
-	var apiOpts ApiOptions
-	for _, opt := range opts {
-		opt(&apiOpts)
-	}
-
-	api := NewAccountApi(apiOpts)
-	api.V5 = f
-
+func (okx *OKxV5) NewPrvApi(opts ...ApiOption) *Prv {
+	api := NewPrvApi(opts...)
+	api.OKxV5 = okx
 	return api
 }

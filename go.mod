@@ -7,6 +7,14 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/nntaoli/go-tools v0.0.0-20221201051842-679aa56bfd2a
 	github.com/spf13/cast v1.5.0
+	github.com/valyala/fasthttp v1.44.0
 )
 
-require github.com/google/go-cmp v0.5.8 // indirect
+require (
+	github.com/andybalholm/brotli v1.0.4 // indirect
+	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c // indirect
+	golang.org/x/text v0.3.7 // indirect
+)
