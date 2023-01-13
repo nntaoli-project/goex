@@ -35,3 +35,38 @@ const (
 	OrderType_Market   OrderType = "market"
 	OrderType_opponent OrderType = "opponent"
 )
+
+//coin const list
+const (
+	USDT  = "USDT"
+	USDC  = "USDC"
+	BTC   = "BTC"
+	LTC   = "LTC"
+	ETH   = "ETH"
+	OKB   = "OKB"
+	OKT   = "OKT"
+	BNB   = "BNB"
+	UNI   = "UNI"
+	HT    = "HT"
+	FIL   = "FIL"
+	ADA   = "ADA"
+	BSV   = "BSV"
+	BCH   = "BCH"
+	DOT   = "DOT"
+	STORJ = "STORJ"
+	EOS   = "EOS"
+	ENJ   = "ENJ"
+	SOL   = "SOL"
+	SHIB  = "SHIB"
+	AAVE  = "AAVE"
+	FLOW  = "FLOW"
+	ENS   = "ENS"
+	DCR   = "DCR"
+	ATOM  = "ATOM"
+)
+
+//exchange name const list
+const (
+	OKX     = "okx.com"
+	BINANCE = "binance.com"
+)
