@@ -40,6 +40,10 @@ func (s *Spot) GetKline(pair CurrencyPair, period KlinePeriod, opt ...OptionPara
 	panic("implement me")
 }
 
+func (s *Spot) GetExchangeInfo() (map[string]CurrencyPair, []byte, error) {
+	panic("not implement")
+}
+
 func (s *Spot) DoNoAuthRequest(method, reqUrl string, params *url.Values, headers map[string]string) ([]byte, error) {
 	if method == http.MethodGet && params != nil {
 		reqUrl += "?" + params.Encode()

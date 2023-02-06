@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/buger/jsonparser"
 	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/model"
@@ -319,6 +320,66 @@ func (un *RespUnmarshaler) UnmarshalGetPositionsResponse(data []byte) ([]Futures
 	})
 
 	return positions, err
+}
+
+func (un *RespUnmarshaler) UnmarshalGetExchangeInfoResponse(data []byte) (map[string]CurrencyPair, error) {
+	var (
+		err             error
+		currencyPairMap = make(map[string]CurrencyPair, 20)
+	)
+
+	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		var (
+			currencyPair CurrencyPair
+			instTy       string
+			ctValCcy     string
+			settleCcy    string
+		)
+
+		err = jsonparser.ObjectEach(value, func(key []byte, val []byte, dataType jsonparser.ValueType, offset int) error {
+			valStr := string(val)
+			switch string(key) {
+			case "instType":
+				instTy = valStr
+			case "instId":
+				currencyPair.Symbol = valStr
+			case "minSz":
+				currencyPair.MinQty = cast.ToFloat64(valStr)
+			case "tickSz":
+				currencyPair.PricePrecision = AdaptQtyOrPricePrecision(valStr)
+			case "lotSz":
+				currencyPair.QtyPrecision = AdaptQtyOrPricePrecision(valStr)
+			case "baseCcy":
+				currencyPair.BaseSymbol = valStr
+			case "quoteCcy":
+				currencyPair.QuoteSymbol = valStr
+			case "ctValCcy":
+				ctValCcy = valStr
+			case "settleCcy":
+				settleCcy = valStr
+			case "alias":
+				currencyPair.ContractAlias = valStr
+			case "expTime":
+				currencyPair.ContractDeliveryDate = cast.ToInt64(valStr)
+			}
+			return nil
+		})
+
+		if instTy == "SWAP" {
+			currencyPair.BaseSymbol = ctValCcy
+			currencyPair.QuoteSymbol = settleCcy
+		}
+
+		if instTy == "FUTURES" {
+			currencyPair.BaseSymbol = settleCcy
+			currencyPair.QuoteSymbol = ctValCcy
+		}
+
+		k := fmt.Sprintf("%s%s%s", currencyPair.BaseSymbol, currencyPair.QuoteSymbol, currencyPair.ContractAlias)
+		currencyPairMap[k] = currencyPair
+	})
+
+	return currencyPairMap, err
 }
 
 func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {

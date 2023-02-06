@@ -31,26 +31,28 @@ type OptionParameter struct {
 }
 
 type CurrencyPair struct {
-	Symbol         string  `json:"symbol"`          //交易对
-	BaseSymbol     string  `json:"base_symbol"`     //币种
-	MarketSymbol   string  `json:"market"`          //交易市场
-	PricePrecision int     `json:"price_precision"` //价格小数点位数
-	QtyPrecision   int     `json:"qty_precision"`   //数量小数点位数
-	MinQty         float64 `json:"min_qty"`
-	MaxQty         float64 `json:"max_qty"`
-	MarketQty      float64 `json:"market_qty"`
+	Symbol               string  `json:"symbol"`          //交易对
+	BaseSymbol           string  `json:"base_symbol"`     //币种
+	QuoteSymbol          string  `json:"quote_symbol"`    //交易区：usdt/usdc/btc ...
+	PricePrecision       int     `json:"price_precision"` //价格小数点位数
+	QtyPrecision         int     `json:"qty_precision"`   //数量小数点位数
+	MinQty               float64 `json:"min_qty"`
+	MaxQty               float64 `json:"max_qty"`
+	MarketQty            float64 `json:"market_qty"`
+	ContractAlias        string  `json:"contract_alias"`         //交割合约alias
+	ContractDeliveryDate int64   `json:"contract_delivery_date"` //合约交割日期
 }
 
-func (pair CurrencyPair) String() string {
-	return pair.Symbol
-}
+//func (pair CurrencyPair) String() string {
+//	return pair.Symbol
+//}
 
-type FuturesCurrencyPair struct {
-	CurrencyPair
-	DeliveryDate int64   //结算日期
-	OnboardDate  int64   //上线日期
-	MarginAsset  float64 //保证金资产
-}
+//type FuturesCurrencyPair struct {
+//	CurrencyPair
+//	DeliveryDate int64   //结算日期
+//	OnboardDate  int64   //上线日期
+//	MarginAsset  float64 //保证金资产
+//}
 
 type Ticker struct {
 	Pair      CurrencyPair `json:"pair"`

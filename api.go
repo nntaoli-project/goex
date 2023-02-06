@@ -10,6 +10,7 @@ type IPubRest interface {
 	GetDepth(pair model.CurrencyPair, limit int, opt ...model.OptionParameter) (depth *model.Depth, responseBody []byte, err error)
 	GetTicker(pair model.CurrencyPair, opt ...model.OptionParameter) (ticker *model.Ticker, responseBody []byte, err error)
 	GetKline(pair model.CurrencyPair, period model.KlinePeriod, opt ...model.OptionParameter) (klines []model.Kline, responseBody []byte, err error)
+	GetExchangeInfo() (map[string]model.CurrencyPair, []byte, error)
 }
 
 // IPrvRest 私有接口，需要授权调用

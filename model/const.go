@@ -38,6 +38,7 @@ const (
 
 //coin const list
 const (
+	USD   = "USD"
 	USDT  = "USDT"
 	USDC  = "USDC"
 	BTC   = "BTC"
@@ -63,6 +64,7 @@ const (
 	ENS   = "ENS"
 	DCR   = "DCR"
 	ATOM  = "ATOM"
+	TRX   = "TRX"
 )
 
 //exchange name const list

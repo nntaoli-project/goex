@@ -14,6 +14,7 @@ type GetHistoryOrdersResponseUnmarshaler func([]byte) ([]model.Order, error)
 type GetAccountResponseUnmarshaler func([]byte) (map[string]model.Account, error)
 type GetPositionsResponseUnmarshaler func([]byte) ([]model.FuturesPosition, error)
 type GetFuturesAccountResponseUnmarshaler func([]byte) (map[string]model.FuturesAccount, error)
+type GetExchangeInfoResponseUnmarshaler func([]byte) (map[string]model.CurrencyPair, error)
 
 type UnmarshalerOptions struct {
 	ResponseUnmarshaler                  ResponseUnmarshaler
@@ -28,6 +29,7 @@ type UnmarshalerOptions struct {
 	GetAccountResponseUnmarshaler        GetAccountResponseUnmarshaler
 	GetPositionsResponseUnmarshaler      GetPositionsResponseUnmarshaler
 	GetFuturesAccountResponseUnmarshaler GetFuturesAccountResponseUnmarshaler
+	GetExchangeInfoResponseUnmarshaler   GetExchangeInfoResponseUnmarshaler
 }
 
 type UnmarshalerOption func(options *UnmarshalerOptions)
@@ -100,5 +102,11 @@ func WithGetPositionsResponseUnmarshaler(unmarshaler GetPositionsResponseUnmarsh
 func WithGetFuturesAccountResponseUnmarshaler(unmarshaler GetFuturesAccountResponseUnmarshaler) UnmarshalerOption {
 	return func(options *UnmarshalerOptions) {
 		options.GetFuturesAccountResponseUnmarshaler = unmarshaler
+	}
+}
+
+func WithGetExchangeInfoResponseUnmarshaler(unmarshaler GetExchangeInfoResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.GetExchangeInfoResponseUnmarshaler = unmarshaler
 	}
 }

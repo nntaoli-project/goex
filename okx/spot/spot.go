@@ -6,17 +6,15 @@ import (
 	"github.com/nntaoli-project/goex/v2/options"
 )
 
-var (
-	currencyPaircacheMap = make(map[string]*CurrencyPair, 6)
-)
-
 type Spot struct {
 	*common.OKxV5
+	currencyPairM map[string]CurrencyPair
 }
 
 func New() *Spot {
 	v5 := common.New()
-	return &Spot{v5}
+	currencyPairCacheMap := make(map[string]CurrencyPair, 64)
+	return &Spot{v5, currencyPairCacheMap}
 }
 
 func (s *Spot) NewPrvApi(apiOps ...options.ApiOption) *PrvApi {

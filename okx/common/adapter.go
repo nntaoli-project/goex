@@ -105,3 +105,10 @@ func adaptSymToOrderStatus(st string) model.OrderStatus {
 		return model.OrderStatus(-1)
 	}
 }
+
+func AdaptQtyOrPricePrecision(sz string) int {
+	if sz == "1" {
+		return 0
+	}
+	return len(sz) - 2
+}

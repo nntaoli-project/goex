@@ -31,6 +31,7 @@ func New() *OKxV5 {
 			CancelOrderUri:      "/api/v5/trade/cancel-order",
 			GetAccountUri:       "/api/v5/account/balance",
 			GetPositionsUri:     "/api/v5/account/positions",
+			GetExchangeInfoUri:  "/api/v5/public/instruments",
 		},
 		UnmarshalOpts: UnmarshalerOptions{
 			ResponseUnmarshaler:                  unmarshaler.UnmarshalResponse,
@@ -44,8 +45,10 @@ func New() *OKxV5 {
 			GetAccountResponseUnmarshaler:        unmarshaler.UnmarshalGetAccountResponse,
 			GetPositionsResponseUnmarshaler:      unmarshaler.UnmarshalGetPositionsResponse,
 			GetFuturesAccountResponseUnmarshaler: unmarshaler.UnmarshalGetFuturesAccountResponse,
+			GetExchangeInfoResponseUnmarshaler:   unmarshaler.UnmarshalGetExchangeInfoResponse,
 		},
 	}
+
 	return f
 }
 

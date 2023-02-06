@@ -70,6 +70,22 @@ func (okx *OKxV5) GetKline(pair CurrencyPair, period KlinePeriod, opt ...OptionP
 	return klines, responseBody, err
 }
 
+func (okx *OKxV5) GetExchangeInfo(instType string, opt ...OptionParameter) (map[string]CurrencyPair, []byte, error) {
+	reqUrl := fmt.Sprintf("%s%s", okx.UriOpts.Endpoint, okx.UriOpts.GetExchangeInfoUri)
+	param := url.Values{}
+	param.Set("instType", instType)
+	MergeOptionParams(&param, opt...)
+
+	data, responseBody, err := okx.DoNoAuthRequest(http.MethodGet, reqUrl, &param)
+	if err != nil {
+		return nil, responseBody, err
+	}
+
+	currencyPairMap, err := okx.UnmarshalOpts.GetExchangeInfoResponseUnmarshaler(data)
+
+	return currencyPairMap, responseBody, err
+}
+
 func (okx *OKxV5) DoNoAuthRequest(httpMethod, reqUrl string, params *url.Values) ([]byte, []byte, error) {
 	reqBody := ""
 	if http.MethodGet == httpMethod {
