@@ -11,7 +11,7 @@
 
 ### example
 
-```
+```golang
 package main
 
 import (
@@ -24,16 +24,21 @@ import (
 
 func main() {
 	logger.SetLevel(logger.DEBUG)                             //设置日志输出级别
-	goexv2.DefaultHttpCli.SetProxy("socks5://127.0.0.1:1080") //socks代理
+	//goexv2.DefaultHttpCli.SetProxy("socks5://127.0.0.1:1080") //socks代理
 	goexv2.DefaultHttpCli.SetTimeout(5)                       // 5 second
-
+    
+    _,_,err := goexv2.OKx.Spot.GetExchangeInfo() //必须调用，获取交易对交易规范数据
+    if err != nil {
+		panic(err)
+    }
+    
+    btcUSDTCurrencyPair := goexv2.OKx.Spot.NewCurrencyPair(model.BTC, model.USDT)
 	//共有api调用
-	log.Println(goexv2.OKx.Spot.GetTicker(model.CurrencyPair{Symbol: "BTC-USDT"}))
-	log.Println(goexv2.OKx.Futures.GetTicker(model.CurrencyPair{Symbol: "BTC-USDT-SWAP"}))
+	log.Println(goexv2.OKx.Spot.GetTicker(btcUSDTCurrencyPair))
 
 	//私有API调用
 	okxPrvApi := goexv2.OKx.Spot.NewPrvApi(options.WithApiKey(""), options.WithApiSecretKey(""), options.WithPassphrase(""))
-	order, _, err := okxPrvApi.CreateOrder(model.CurrencyPair{Symbol: "BTC-USDT"}, 0.01, 18000, model.Spot_Buy, model.OrderType_Limit)
+	order, _, err := okxPrvApi.CreateOrder(btcUSDTCurrencyPair, 0.01, 18000, model.Spot_Buy, model.OrderType_Limit)
 	log.Println(err)
 	log.Println(order)
 }
