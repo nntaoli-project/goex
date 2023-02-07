@@ -11,6 +11,12 @@ type IPubRest interface {
 	GetTicker(pair model.CurrencyPair, opt ...model.OptionParameter) (ticker *model.Ticker, responseBody []byte, err error)
 	GetKline(pair model.CurrencyPair, period model.KlinePeriod, opt ...model.OptionParameter) (klines []model.Kline, responseBody []byte, err error)
 	GetExchangeInfo() (map[string]model.CurrencyPair, []byte, error)
+	// NewCurrencyPair 同时支持现货和期货
+	//@parameter
+	//  - bashSym
+	//  - quoteSym
+	//	- opts 交割合约的时候传入contract alias name: this_week,next_week, quarter ...
+	NewCurrencyPair(baseSym, quoteSym string, opts ...model.OptionParameter) (model.CurrencyPair, error)
 }
 
 // IPrvRest 私有接口，需要授权调用

@@ -1,6 +1,7 @@
 package futures
 
 import (
+	"errors"
 	"github.com/nntaoli-project/goex/v2/model"
 	"github.com/nntaoli-project/goex/v2/okx/common"
 	"github.com/nntaoli-project/goex/v2/options"
@@ -24,8 +25,12 @@ func (f *Swap) GetExchangeInfo() (map[string]model.CurrencyPair, []byte, error) 
 	return m, b, er
 }
 
-func (f *Swap) NewCurrencyPair(baseSym, quoteSym string) model.CurrencyPair {
-	return f.currencyPairM[baseSym+quoteSym]
+func (f *Swap) NewCurrencyPair(baseSym, quoteSym string, opts ...model.OptionParameter) (model.CurrencyPair, error) {
+	currencyPair := f.currencyPairM[baseSym+quoteSym]
+	if currencyPair.Symbol == "" {
+		return currencyPair, errors.New("not found currency pair")
+	}
+	return currencyPair, nil
 }
 
 func (f *Swap) NewPrvApi(apiOpts ...options.ApiOption) *PrvApi {

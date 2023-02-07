@@ -1,6 +1,7 @@
 package futures
 
 import (
+	"errors"
 	"github.com/nntaoli-project/goex/v2/model"
 	"github.com/nntaoli-project/goex/v2/okx/common"
 	"github.com/nntaoli-project/goex/v2/options"
@@ -26,6 +27,14 @@ func (f *Futures) GetExchangeInfo() (map[string]model.CurrencyPair, []byte, erro
 	return m, b, er
 }
 
-func (f *Futures) NewCurrencyPair(baseSym, quoteSym, contractAlias string) model.CurrencyPair {
-	return f.currencyPairM[baseSym+quoteSym+contractAlias]
+func (f *Futures) NewCurrencyPair(baseSym, quoteSym string, opts ...model.OptionParameter) (model.CurrencyPair, error) {
+	if len(opts) >= 1 && opts[0].Key == "contractAlias" {
+		contractAlias := opts[0].Value
+		currencyPair := f.currencyPairM[baseSym+quoteSym+contractAlias]
+		if currencyPair.Symbol != "" {
+			return currencyPair, nil
+		}
+		return currencyPair, errors.New("not found currency pair")
+	}
+	return model.CurrencyPair{}, errors.New("please input contract alias option parameter")
 }
