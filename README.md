@@ -31,8 +31,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	btcUSDTCurrencyPair := goexv2.OKx.Spot.NewCurrencyPair(model.BTC, model.USDT)//建议这样构建CurrencyPair
-	
+	btcUSDTCurrencyPair, err := goexv2.OKx.Spot.NewCurrencyPair(model.BTC, model.USDT)//建议这样构建CurrencyPair
+	if err != nil {
+		panic(err)
+	}
+		
 	//共有api调用
 	log.Println(goexv2.OKx.Spot.GetTicker(btcUSDTCurrencyPair))
 
