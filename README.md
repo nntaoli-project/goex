@@ -52,3 +52,6 @@ func main() {
 }
 ```
 
+### Thanks
+<a href="https://www.jetbrains.com/?from=goex"><img src="https://account.jetbrains.com/static/images/jetbrains-logo-inv.svg" height="120" alt="JetBrains"/></a>
+
