@@ -37,34 +37,98 @@ const (
 )
 
 //coin const list
+//a-z排序
 const (
-	USD   = "USD"
-	USDT  = "USDT"
-	USDC  = "USDC"
-	BTC   = "BTC"
-	LTC   = "LTC"
-	ETH   = "ETH"
-	OKB   = "OKB"
-	OKT   = "OKT"
-	BNB   = "BNB"
-	UNI   = "UNI"
-	HT    = "HT"
-	FIL   = "FIL"
-	ADA   = "ADA"
-	BSV   = "BSV"
-	BCH   = "BCH"
-	DOT   = "DOT"
+	ADA  = "ADA"
+	ATOM = "ATOM"
+	AAVE = "AAVE"
+	ALGO = "ALGO"
+	AR   = "AR"
+
+	BTC  = "BTC"
+	BNB  = "BNB"
+	BSV  = "BSV"
+	BCH  = "BCH"
+	BUSD = "BUSD"
+
+	CEL = "CEL"
+	CRV = "CRV"
+
+	DAI  = "DAI"
+	DCR  = "DCR"
+	DOT  = "DOT"
+	DOGE = "DOGE"
+	DASH = "DASH"
+	DYDX = "DYDX"
+
+	ETH  = "ETH"
+	ETHW = "ETHW"
+	ETC  = "ETC"
+	EOS  = "EOS"
+	ENJ  = "ENJ"
+	ENS  = "ENS"
+
+	FLOW = "FLOW"
+	FIL  = "FIL"
+	FLM  = "FLM"
+
+	GALA = "GALA"
+	GAS  = "GAS"
+
+	HT = "HT"
+
+	IOTA = "IOTA"
+
+	KSM = "KSM"
+
+	LTC = "LTC"
+	LDO = "LDO"
+
+	MINA = "MINA"
+
+	NEO  = "NEO"
+	NEAR = "NEAR"
+
+	OP  = "OP"
+	OKB = "OKB"
+	OKT = "OKT"
+
+	PLG  = "PLG"
+	PERP = "PERP"
+
+	QTUM = "QTUM"
+
+	RACA = "RACA"
+	RVN  = "RVN"
+
 	STORJ = "STORJ"
-	EOS   = "EOS"
-	ENJ   = "ENJ"
 	SOL   = "SOL"
 	SHIB  = "SHIB"
-	AAVE  = "AAVE"
-	FLOW  = "FLOW"
-	ENS   = "ENS"
-	DCR   = "DCR"
-	ATOM  = "ATOM"
+	SC    = "SC"
+	SAND  = "SAND"
+	SUSHI = "SUSHI"
+
 	TRX   = "TRX"
+	TRADE = "TRADE"
+
+	USD  = "USD"
+	USDT = "USDT"
+	USDC = "USDC"
+	UNI  = "UNI"
+
+	VELO = "VELO"
+
+	WBTC  = "WBTC"
+	WAVES = "WAVES"
+
+	XRP = "XRP"
+	XTZ = "XTZ"
+
+	YFI  = "YFI"
+	YFII = "YFII"
+
+	ZEC  = "ZEC"
+	ZYRO = "ZYRO"
 )
 
 //exchange name const list
