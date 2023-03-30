@@ -60,21 +60,21 @@ func adaptOrderTypeToSym(ty model.OrderType) string {
 func adaptSymToOrderSide(side, posSide string) model.OrderSide {
 	if side == "buy" {
 		switch posSide {
-		case "net":
-			return model.Spot_Buy
 		case "long":
 			return model.Futures_OpenBuy
 		case "short":
 			return model.Futures_CloseSell
+		default:
+			return model.Spot_Buy
 		}
 	} else if side == "sell" {
 		switch posSide { //现货
-		case "net":
-			return model.Spot_Sell
 		case "long":
 			return model.Futures_CloseBuy
 		case "short":
 			return model.Futures_OpenSell
+		default:
+			return model.Spot_Sell
 		}
 	}
 	return model.OrderSide("unknown")
