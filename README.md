@@ -1,15 +1,13 @@
 ### Introduction
-
-* 统一并标准化各个数字资产交易平台的接口
-* 某些功能组件做到可插拔化，方便开发者二次开发
+* Unified and standardize the interfaces of various cryptocurrency trading platforms.
 
 ![goex](goex_struct.png)
 
-### donate
+### Donate
 * [BTC] 1GoEXwVvXG7kNdQSFaUNF35A3izHojLGxP
 * [USDT-TRC20] TGoExC6xvzE4wSA9cYZnwcPaXEjibA5Vtc
 
-### example
+### Example
 
 ```golang
 package main
