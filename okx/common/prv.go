@@ -19,6 +19,18 @@ type Prv struct {
 	apiOpts options.ApiOptions
 }
 
+func (prv *Prv) GetAccount(coin string) (map[string]model.Account, []byte, error) {
+	reqUrl := fmt.Sprintf("%s%s", prv.UriOpts.Endpoint, prv.UriOpts.GetAccountUri)
+	params := url.Values{}
+	params.Set("ccy", coin)
+	data, responseBody, err := prv.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
+	if err != nil {
+		return nil, responseBody, err
+	}
+	acc, err := prv.UnmarshalOpts.GetAccountResponseUnmarshaler(data)
+	return acc, responseBody, err
+}
+
 func (prv *Prv) CreateOrder(pair model.CurrencyPair, qty, price float64, side model.OrderSide, orderTy model.OrderType, opts ...model.OptionParameter) (*model.Order, []byte, error) {
 	reqUrl := fmt.Sprintf("%s%s", prv.UriOpts.Endpoint, prv.UriOpts.NewOrderUri)
 	params := url.Values{}

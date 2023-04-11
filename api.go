@@ -21,6 +21,7 @@ type IPubRest interface {
 
 // IPrvRest 私有接口，需要授权调用
 type IPrvRest interface {
+	GetAccount(coin string) (map[string]model.Account, []byte, error)
 	//CreateOrder
 	//@returns
 	//  order        包含订单ID信息
@@ -35,7 +36,6 @@ type IPrvRest interface {
 
 type ISpotPrvRest interface {
 	IPrvRest
-	GetAccount(coin string) (map[string]model.Account, []byte, error)
 }
 
 // IFuturesPrvRest 合约接口
@@ -45,7 +45,7 @@ type IFuturesPrvRest interface {
 	//GetPositions 获取持仓数据
 	//@returns
 	//	positions    仓位数据
-	//  responseBody 交易所接口返回的原始字节数据
-	//  err          错误
+	//	responseBody 交易所接口返回的原始字节数据
+	//	err          错误
 	GetPositions(pair model.CurrencyPair, opts ...model.OptionParameter) (positions []model.FuturesPosition, responseBody []byte, err error)
 }
