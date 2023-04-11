@@ -4,7 +4,7 @@ import (
 	"github.com/nntaoli-project/goex/v2/model"
 )
 
-// IPubRest 公共接口，不需要授权调用
+// IPubRest is a public interface that does not require authorization."
 type IPubRest interface {
 	GetName() string //获取交易所名字/域名
 	GetDepth(pair model.CurrencyPair, limit int, opt ...model.OptionParameter) (depth *model.Depth, responseBody []byte, err error)
@@ -19,7 +19,7 @@ type IPubRest interface {
 	NewCurrencyPair(baseSym, quoteSym string, opts ...model.OptionParameter) (model.CurrencyPair, error)
 }
 
-// IPrvRest 私有接口，需要授权调用
+//IPrvRest is a private interface specification that requires authorization to call.
 type IPrvRest interface {
 	GetAccount(coin string) (map[string]model.Account, []byte, error)
 	//CreateOrder
@@ -38,7 +38,7 @@ type ISpotPrvRest interface {
 	IPrvRest
 }
 
-// IFuturesPrvRest 合约接口
+// IFuturesPrvRest includes some special interface implementations for futures supplement.
 type IFuturesPrvRest interface {
 	IPrvRest
 	GetFuturesAccount(coin string) (acc map[string]model.FuturesAccount, responseBody []byte, err error)
