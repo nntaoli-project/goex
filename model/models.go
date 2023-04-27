@@ -31,16 +31,16 @@ type OptionParameter struct {
 }
 
 type CurrencyPair struct {
-	Symbol               string  `json:"symbol"`          //交易对
-	BaseSymbol           string  `json:"base_symbol"`     //币种
-	QuoteSymbol          string  `json:"quote_symbol"`    //交易区：usdt/usdc/btc ...
-	PricePrecision       int     `json:"price_precision"` //价格小数点位数
-	QtyPrecision         int     `json:"qty_precision"`   //数量小数点位数
-	MinQty               float64 `json:"min_qty"`
-	MaxQty               float64 `json:"max_qty"`
-	MarketQty            float64 `json:"market_qty"`
-	ContractAlias        string  `json:"contract_alias"`         //交割合约alias
-	ContractDeliveryDate int64   `json:"contract_delivery_date"` //合约交割日期
+	Symbol               string  `json:"symbol,omitempty"`          //交易对
+	BaseSymbol           string  `json:"base_symbol,omitempty"`     //币种
+	QuoteSymbol          string  `json:"quote_symbol,omitempty"`    //交易区：usdt/usdc/btc ...
+	PricePrecision       int     `json:"price_precision,omitempty"` //价格小数点位数
+	QtyPrecision         int     `json:"qty_precision,omitempty"`   //数量小数点位数
+	MinQty               float64 `json:"min_qty,omitempty"`
+	MaxQty               float64 `json:"max_qty,omitempty"`
+	MarketQty            float64 `json:"market_qty,omitempty"`
+	ContractAlias        string  `json:"contract_alias,omitempty"`         //交割合约alias
+	ContractDeliveryDate int64   `json:"contract_delivery_date,omitempty"` //合约交割日期
 }
 
 //func (pair CurrencyPair) String() string {
@@ -103,45 +103,45 @@ type Kline struct {
 }
 
 type Order struct {
-	Pair        CurrencyPair `json:"pair"`
-	Id          string       `json:"id"`       //订单ID
-	CId         string       `json:"c_id"`     //客户端自定义ID
-	Side        OrderSide    `json:"side"`     //交易方向: sell,buy
-	OrderTy     OrderType    `json:"order_ty"` //类型: limit , market , ...
-	Status      OrderStatus  `json:"status"`   //状态
-	Price       float64      `json:"price"`
-	Qty         float64      `json:"qty"`
-	ExecutedQty float64      `json:"executed_qty"`
-	PriceAvg    float64      `json:"price_avg"`
-	Fee         float64      `json:"fee"`
-	CreatedAt   int64        `json:"created_at"`
-	CanceledAt  int64        `json:"canceled_at"`
+	Pair        CurrencyPair `json:"pair,omitempty"`
+	Id          string       `json:"id,omitempty"`       //订单ID
+	CId         string       `json:"c_id,omitempty"`     //客户端自定义ID
+	Side        OrderSide    `json:"side,omitempty"`     //交易方向: sell,buy
+	OrderTy     OrderType    `json:"order_ty,omitempty"` //类型: limit , market , ...
+	Status      OrderStatus  `json:"status,omitempty"`   //状态
+	Price       float64      `json:"price,omitempty"`
+	Qty         float64      `json:"qty,omitempty"`
+	ExecutedQty float64      `json:"executed_qty,omitempty"`
+	PriceAvg    float64      `json:"price_avg,omitempty"`
+	Fee         float64      `json:"fee,omitempty"`
+	CreatedAt   int64        `json:"created_at,omitempty"`
+	CanceledAt  int64        `json:"canceled_at,omitempty"`
 }
 
 type Account struct {
-	Coin             string
-	Balance          float64
-	AvailableBalance float64
-	FrozenBalance    float64
+	Coin             string  `json:",omitempty"`
+	Balance          float64 `json:"balance,omitempty"`
+	AvailableBalance float64 `json:"available_balance,omitempty"`
+	FrozenBalance    float64 `json:"frozen_balance,omitempty"`
 }
 
 type FuturesPosition struct {
-	PosSide  OrderSide //开仓方向
-	Qty      float64   // 持仓数量
-	AvailQty float64   //可平仓数量
-	AvgPx    float64   //开仓均价
-	LiqPx    float64   // 爆仓价格
-	Upl      float64   //盈亏
-	UplRatio float64   // 盈亏率
-	Lever    float64   //杠杆倍数
+	PosSide  OrderSide `json:"pos_side,omitempty"`  //开仓方向
+	Qty      float64   `json:"qty,omitempty"`       // 持仓数量
+	AvailQty float64   `json:"avail_qty,omitempty"` //可平仓数量
+	AvgPx    float64   `json:"avg_px,omitempty"`    //开仓均价
+	LiqPx    float64   `json:"liq_px,omitempty"`    // 爆仓价格
+	Upl      float64   `json:"upl,omitempty"`       //盈亏
+	UplRatio float64   `json:"upl_ratio,omitempty"` // 盈亏率
+	Lever    float64   `json:"lever,omitempty"`     //杠杆倍数
 }
 
 type FuturesAccount struct {
-	Coin      string  //币种
-	Eq        float64 //总权益
-	AvailEq   float64
-	FrozenBal float64
-	MgnRatio  float64
-	Upl       float64
-	RiskRate  float64
+	Coin      string  `json:"coin,omitempty"` //币种
+	Eq        float64 `json:"eq,omitempty"`   //总权益
+	AvailEq   float64 `json:"avail_eq,omitempty"`
+	FrozenBal float64 `json:"frozen_bal,omitempty"`
+	MgnRatio  float64 `json:"mgn_ratio,omitempty"`
+	Upl       float64 `json:"upl,omitempty"`
+	RiskRate  float64 `json:"risk_rate,omitempty"`
 }
