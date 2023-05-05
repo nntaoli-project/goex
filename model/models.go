@@ -39,6 +39,9 @@ type CurrencyPair struct {
 	MinQty               float64 `json:"min_qty,omitempty"`
 	MaxQty               float64 `json:"max_qty,omitempty"`
 	MarketQty            float64 `json:"market_qty,omitempty"`
+	ContractVal          float64 `json:"contract_val,omitempty"`           //1张合约价值
+	ContractValCurrency  string  `json:"contract_val_currency,omitempty"`  //合约面值计价币
+	SettlementCurrency   string  `json:"settlement_currency,omitempty"`    //结算币
 	ContractAlias        string  `json:"contract_alias,omitempty"`         //交割合约alias
 	ContractDeliveryDate int64   `json:"contract_delivery_date,omitempty"` //合约交割日期
 }

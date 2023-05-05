@@ -355,8 +355,12 @@ func (un *RespUnmarshaler) UnmarshalGetExchangeInfoResponse(data []byte) (map[st
 				currencyPair.QuoteSymbol = valStr
 			case "ctValCcy":
 				ctValCcy = valStr
+				currencyPair.ContractValCurrency = valStr
+			case "ctVal":
+				currencyPair.ContractVal = cast.ToFloat64(valStr)
 			case "settleCcy":
 				settleCcy = valStr
+				currencyPair.SettlementCurrency = valStr
 			case "alias":
 				currencyPair.ContractAlias = valStr
 			case "expTime":
@@ -370,6 +374,7 @@ func (un *RespUnmarshaler) UnmarshalGetExchangeInfoResponse(data []byte) (map[st
 			currencyPair.QuoteSymbol = settleCcy
 		}
 
+		//adapt
 		if instTy == "FUTURES" {
 			currencyPair.BaseSymbol = settleCcy
 			currencyPair.QuoteSymbol = ctValCcy

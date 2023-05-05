@@ -107,6 +107,7 @@ const (
 	SC    = "SC"
 	SAND  = "SAND"
 	SUSHI = "SUSHI"
+	SUI   = "SUI"
 
 	TRX   = "TRX"
 	TRADE = "TRADE"
