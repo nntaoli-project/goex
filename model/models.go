@@ -117,12 +117,14 @@ type Order struct {
 	ExecutedQty float64      `json:"executed_qty,omitempty"`
 	PriceAvg    float64      `json:"price_avg,omitempty"`
 	Fee         float64      `json:"fee,omitempty"`
+	FeeCcy      string       `json:"fee_ccy,omitempty"` //收取交易手续费币种
 	CreatedAt   int64        `json:"created_at,omitempty"`
+	FinishedAt  int64        `json:"finished_at,omitempty"` //订单完成时间
 	CanceledAt  int64        `json:"canceled_at,omitempty"`
 }
 
 type Account struct {
-	Coin             string  `json:",omitempty"`
+	Coin             string  `json:"coin,omitempty"`
 	Balance          float64 `json:"balance,omitempty"`
 	AvailableBalance float64 `json:"available_balance,omitempty"`
 	FrozenBalance    float64 `json:"frozen_balance,omitempty"`

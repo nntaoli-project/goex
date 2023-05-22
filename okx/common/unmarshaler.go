@@ -182,6 +182,8 @@ func (un *RespUnmarshaler) UnmarshalGetOrderInfoResponse(data []byte) (ord *Orde
 			ord.ExecutedQty = cast.ToFloat64(valStr)
 		case "fee":
 			ord.Fee = cast.ToFloat64(valStr)
+		case "feeCcy":
+			ord.FeeCcy = valStr
 		case "clOrdId":
 			ord.CId = valStr
 		case "side":
@@ -201,6 +203,13 @@ func (un *RespUnmarshaler) UnmarshalGetOrderInfoResponse(data []byte) (ord *Orde
 	ord.Side = adaptSymToOrderSide(side, posSide)
 	if ord.Status == OrderStatus_Canceled {
 		ord.CanceledAt = utime
+		if ord.ExecutedQty > 0 {
+			ord.FinishedAt = utime
+		}
+	}
+
+	if ord.Status == OrderStatus_Finished {
+		ord.FinishedAt = utime
 	}
 
 	return
