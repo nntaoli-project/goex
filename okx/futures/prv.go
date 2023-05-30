@@ -53,3 +53,11 @@ func (prv *PrvApi) GetPositions(pair model.CurrencyPair, opts ...model.OptionPar
 	positions, err := prv.OKxV5.UnmarshalOpts.GetPositionsResponseUnmarshaler(data)
 	return positions, responseBody, err
 }
+
+func (prv *PrvApi) GetHistoryOrders(pair model.CurrencyPair, opt ...model.OptionParameter) ([]model.Order, []byte, error) {
+	opt = append(opt, model.OptionParameter{
+		Key:   "instType",
+		Value: "SWAP",
+	})
+	return prv.Prv.GetHistoryOrders(pair, opt...)
+}

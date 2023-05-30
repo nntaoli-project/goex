@@ -24,3 +24,11 @@ func (api *PrvApi) CreateOrder(pair CurrencyPair, qty, price float64, side Order
 
 	return api.Prv.CreateOrder(pair, qty, price, side, orderTy, opts...)
 }
+
+func (api *PrvApi) GetHistoryOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, []byte, error) {
+	opt = append(opt, OptionParameter{
+		Key:   "instType",
+		Value: "SPOT",
+	})
+	return api.Prv.GetHistoryOrders(pair, opt...)
+}

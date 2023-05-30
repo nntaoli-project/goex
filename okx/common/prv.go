@@ -107,8 +107,20 @@ func (prv *Prv) GetPendingOrders(pair model.CurrencyPair, opt ...model.OptionPar
 }
 
 func (prv *Prv) GetHistoryOrders(pair model.CurrencyPair, opt ...model.OptionParameter) ([]model.Order, []byte, error) {
-	//TODO implement me
-	panic("implement me")
+	reqUrl := fmt.Sprintf("%s%s", prv.UriOpts.Endpoint, prv.UriOpts.GetHistoryOrdersUri)
+	params := url.Values{}
+	params.Set("instId", pair.Symbol)
+	params.Set("limit", "50")
+
+	util.MergeOptionParams(&params, opt...)
+
+	data, responseBody, err := prv.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
+	if err != nil {
+		return nil, responseBody, err
+	}
+
+	orders, err := prv.UnmarshalOpts.GetHistoryOrdersResponseUnmarshaler(data)
+	return orders, responseBody, err
 }
 
 func (prv *Prv) CancelOrder(pair model.CurrencyPair, id string, opt ...model.OptionParameter) ([]byte, error) {

@@ -160,6 +160,10 @@ func (un *RespUnmarshaler) UnmarshalGetPendingOrdersResponse(data []byte) ([]Ord
 	return orders, err
 }
 
+func (un *RespUnmarshaler) UnmarshalGetHistoryOrdersResponse(data []byte) ([]Order, error) {
+	return un.UnmarshalGetPendingOrdersResponse(data)
+}
+
 func (un *RespUnmarshaler) UnmarshalGetOrderInfoResponse(data []byte) (ord *Order, err error) {
 	var side, posSide string
 	var utime int64
