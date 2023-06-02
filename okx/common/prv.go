@@ -77,6 +77,8 @@ func (prv *Prv) GetOrderInfo(pair model.CurrencyPair, id string, opt ...model.Op
 	params.Set("instId", pair.Symbol)
 	params.Set("ordId", id)
 
+	util.MergeOptionParams(&params, opt...)
+
 	data, responseBody, err := prv.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
 	if err != nil {
 		return nil, responseBody, err
@@ -96,6 +98,8 @@ func (prv *Prv) GetPendingOrders(pair model.CurrencyPair, opt ...model.OptionPar
 	reqUrl := fmt.Sprintf("%s%s", prv.UriOpts.Endpoint, prv.UriOpts.GetPendingOrdersUri)
 	params := url.Values{}
 	params.Set("instId", pair.Symbol)
+
+	util.MergeOptionParams(&params, opt...)
 
 	data, responseBody, err := prv.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
 	if err != nil {
