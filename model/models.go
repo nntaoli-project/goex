@@ -131,14 +131,15 @@ type Account struct {
 }
 
 type FuturesPosition struct {
-	PosSide  OrderSide `json:"pos_side,omitempty"`  //开仓方向
-	Qty      float64   `json:"qty,omitempty"`       // 持仓数量
-	AvailQty float64   `json:"avail_qty,omitempty"` //可平仓数量
-	AvgPx    float64   `json:"avg_px,omitempty"`    //开仓均价
-	LiqPx    float64   `json:"liq_px,omitempty"`    // 爆仓价格
-	Upl      float64   `json:"upl,omitempty"`       //盈亏
-	UplRatio float64   `json:"upl_ratio,omitempty"` // 盈亏率
-	Lever    float64   `json:"lever,omitempty"`     //杠杆倍数
+	Pair     CurrencyPair `json:"pair,omitempty"`
+	PosSide  OrderSide    `json:"pos_side,omitempty"`  //开仓方向
+	Qty      float64      `json:"qty,omitempty"`       // 持仓数量
+	AvailQty float64      `json:"avail_qty,omitempty"` //可平仓数量
+	AvgPx    float64      `json:"avg_px,omitempty"`    //开仓均价
+	LiqPx    float64      `json:"liq_px,omitempty"`    // 爆仓价格
+	Upl      float64      `json:"upl,omitempty"`       //盈亏
+	UplRatio float64      `json:"upl_ratio,omitempty"` // 盈亏率
+	Lever    float64      `json:"lever,omitempty"`     //杠杆倍数
 }
 
 type FuturesAccount struct {
