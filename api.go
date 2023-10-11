@@ -7,6 +7,9 @@ import (
 // IPubRest is a public interface that does not require authorization."
 type IPubRest interface {
 	GetName() string //获取交易所名字/域名
+	// GetDepth
+	//    bids: 降序
+	//    asks: 升序
 	GetDepth(pair model.CurrencyPair, limit int, opt ...model.OptionParameter) (depth *model.Depth, responseBody []byte, err error)
 	GetTicker(pair model.CurrencyPair, opt ...model.OptionParameter) (ticker *model.Ticker, responseBody []byte, err error)
 	GetKline(pair model.CurrencyPair, period model.KlinePeriod, opt ...model.OptionParameter) (klines []model.Kline, responseBody []byte, err error)
