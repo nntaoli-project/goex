@@ -92,6 +92,9 @@ func (p *Prv) GetOrderInfo(pair CurrencyPair, id string, opt ...OptionParameter)
 func (p *Prv) GetPendingOrders(pair CurrencyPair, opt ...OptionParameter) (orders []Order, responseBody []byte, err error) {
 	param := &url.Values{}
 	param.Set("symbol", pair.Symbol)
+
+	util.MergeOptionParams(param, opt...)
+
 	data, err := p.DoAuthRequest(http.MethodGet, p.UriOpts.Endpoint+p.UriOpts.GetPendingOrdersUri, param, nil)
 	if err != nil {
 		return nil, data, err
@@ -113,6 +116,8 @@ func (p *Prv) GetHistoryOrders(pair CurrencyPair, opt ...OptionParameter) (order
 	param := &url.Values{}
 	param.Set("symbol", pair.Symbol)
 	param.Set("limit", "500")
+
+	util.MergeOptionParams(param, opt...)
 
 	data, err := p.DoAuthRequest(http.MethodGet, p.UriOpts.Endpoint+p.UriOpts.GetHistoryOrdersUri, param, nil)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	. "github.com/nntaoli-project/goex/v2/httpcli"
 	"github.com/nntaoli-project/goex/v2/logger"
 	"github.com/nntaoli-project/goex/v2/model"
+	"github.com/nntaoli-project/goex/v2/util"
 	"net/http"
 	"net/url"
 )
@@ -72,6 +73,8 @@ func (f *FApi) GetDepth(pair model.CurrencyPair, limit int, opt ...model.OptionP
 	params.Set("symbol", pair.Symbol)
 	params.Set("limit", fmt.Sprint(limit))
 
+	util.MergeOptionParams(&params, opt...)
+
 	data, responseBody, err := f.DoNoAuthRequest(http.MethodGet, f.UriOpts.Endpoint+f.UriOpts.DepthUri, &params)
 	if err != nil {
 		return nil, responseBody, err
@@ -93,6 +96,8 @@ func (f *FApi) GetKline(pair model.CurrencyPair, period model.KlinePeriod, opt .
 	param.Set("symbol", pair.Symbol)
 	param.Set("interval", common.AdaptKlinePeriodToSymbol(period))
 	param.Set("limit", "100")
+
+	util.MergeOptionParams(&param, opt...)
 
 	data, responseBody, err := f.DoNoAuthRequest(http.MethodGet, f.UriOpts.Endpoint+f.UriOpts.KlineUri, &param)
 	if err != nil {
