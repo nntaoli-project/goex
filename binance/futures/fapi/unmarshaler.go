@@ -256,7 +256,9 @@ func UnmarshalOrderResponse(data []byte) (ord model.Order, err error) {
 		case "executeQty":
 			ord.ExecutedQty = cast.ToFloat64(valStr)
 		case "time":
-			ord.CanceledAt = cast.ToInt64(valStr)
+			ord.CreatedAt = cast.ToInt64(valStr)
+		case "updateTime":
+			ord.FinishedAt = cast.ToInt64(valStr)
 		case "status":
 			ord.Status = common.AdaptStringToOrderStatus(valStr)
 		case "side":
@@ -268,6 +270,10 @@ func UnmarshalOrderResponse(data []byte) (ord model.Order, err error) {
 		}
 		return nil
 	})
+
+	if ord.Status == model.OrderStatus_Canceled {
+		ord.CanceledAt = ord.FinishedAt
+	}
 
 	ord.Side = common.AdaptStringToFuturesOrderSide(side, positionSide)
 
