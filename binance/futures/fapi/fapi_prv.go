@@ -17,7 +17,7 @@ type Prv struct {
 	apiOpts options.ApiOptions
 }
 
-func (p *Prv) GetAccount(currency string) (map[string]Account, []byte, error) {
+func (p *Prv) GetAccount(currency ...string) (map[string]Account, []byte, error) {
 	param := &url.Values{}
 	responseBody, err := p.DoAuthRequest(http.MethodGet, p.UriOpts.Endpoint+p.UriOpts.GetAccountUri, param, nil)
 	if err != nil {
@@ -183,6 +183,9 @@ func (p *Prv) GetPositions(pair CurrencyPair, opts ...OptionParameter) (position
 func (p *Prv) DoAuthRequest(method, reqUrl string, params *url.Values, header map[string]string) ([]byte, error) {
 	if header == nil {
 		header = make(map[string]string, 2)
+	}
+	if p.apiOpts.Simulated {
+		return nil, errors.New("Simulation trading is not supported yet")
 	}
 	header["X-MBX-APIKEY"] = p.apiOpts.Key
 	common.SignParams(params, p.apiOpts.Secret)

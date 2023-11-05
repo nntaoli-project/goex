@@ -19,10 +19,12 @@ type Prv struct {
 	apiOpts options.ApiOptions
 }
 
-func (prv *Prv) GetAccount(coin string) (map[string]model.Account, []byte, error) {
+func (prv *Prv) GetAccount(coinList ...string) (map[string]model.Account, []byte, error) {
 	reqUrl := fmt.Sprintf("%s%s", prv.UriOpts.Endpoint, prv.UriOpts.GetAccountUri)
 	params := url.Values{}
-	params.Set("ccy", coin)
+	if len(coinList) > 0 {
+		params.Set("ccy", strings.Join(coinList, ","))
+	}
 	data, responseBody, err := prv.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
 	if err != nil {
 		return nil, responseBody, err
@@ -155,7 +157,7 @@ func (prv *Prv) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, hea
 		reqUri     string
 	)
 
-	if http.MethodGet == httpMethod {
+	if http.MethodGet == httpMethod && params.Encode() != "" {
 		reqUrl += "?" + params.Encode()
 	}
 
@@ -177,6 +179,9 @@ func (prv *Prv) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, hea
 		"OK-ACCESS-PASSPHRASE": prv.apiOpts.Passphrase,
 		"OK-ACCESS-SIGN":       signStr,
 		"OK-ACCESS-TIMESTAMP":  timestamp}
+	if prv.apiOpts.Simulated {
+		headers["x-simulated-trading"] = "1"
+	}
 
 	respBody, err := httpcli.Cli.DoRequest(httpMethod, reqUrl, reqBodyStr, headers)
 	if err != nil {

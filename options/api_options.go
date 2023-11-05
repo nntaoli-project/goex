@@ -5,6 +5,7 @@ type ApiOptions struct {
 	Secret     string
 	Passphrase string
 	ClientId   string
+	Simulated  bool
 }
 
 type ApiOption func(options *ApiOptions)
@@ -30,5 +31,15 @@ func WithPassphrase(passphrase string) ApiOption {
 func WithClientId(clientId string) ApiOption {
 	return func(options *ApiOptions) {
 		options.ClientId = clientId
+	}
+}
+
+func WithSimulated(isSimulated ...bool) ApiOption {
+	return func(options *ApiOptions) {
+		if len(isSimulated) <= 0 {
+			options.Simulated = true
+		} else {
+			options.Simulated = isSimulated[0]
+		}
 	}
 }

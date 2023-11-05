@@ -1,6 +1,7 @@
 package spot
 
 import (
+	"errors"
 	"fmt"
 	"github.com/nntaoli-project/goex/v2/binance/common"
 	. "github.com/nntaoli-project/goex/v2/httpcli"
@@ -25,7 +26,7 @@ func NewPrvApi(apiOpts ...options.ApiOption) *PrvApi {
 	return s
 }
 
-func (s *PrvApi) GetAccount(coin string) (map[string]Account, []byte, error) {
+func (s *PrvApi) GetAccount(coinList ...string) (map[string]Account, []byte, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -104,6 +105,9 @@ func (s *PrvApi) CancelOrder(pair CurrencyPair, id string, opt ...OptionParamete
 func (s *PrvApi) DoAuthRequest(method, reqUrl string, params *url.Values, header map[string]string) ([]byte, error) {
 	if header == nil {
 		header = make(map[string]string, 2)
+	}
+	if s.apiOpts.Simulated {
+		return nil, errors.New("Simulation trading is not supported yet")
 	}
 	header["X-MBX-APIKEY"] = s.apiOpts.Key
 	common.SignParams(params, s.apiOpts.Secret)
