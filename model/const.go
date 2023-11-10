@@ -78,6 +78,7 @@ const (
 	HT = "HT"
 
 	IOTA = "IOTA"
+	IOST = "IOST"
 
 	KSM = "KSM"
 
@@ -85,16 +86,19 @@ const (
 	LDO = "LDO"
 
 	MINA = "MINA"
+	MEME = "MEME"
 
 	NEO  = "NEO"
 	NEAR = "NEAR"
 
-	OP  = "OP"
-	OKB = "OKB"
-	OKT = "OKT"
+	OP   = "OP"
+	OKB  = "OKB"
+	OKT  = "OKT"
+	ORDI = "ORDI"
 
 	PLG  = "PLG"
 	PERP = "PERP"
+	PEPE = "PEPE"
 
 	QTUM = "QTUM"
 
@@ -111,6 +115,7 @@ const (
 
 	TRX   = "TRX"
 	TRADE = "TRADE"
+	TRB   = "TRB"
 
 	USD  = "USD"
 	USDT = "USDT"
