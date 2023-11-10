@@ -115,9 +115,9 @@ func AdaptQtyOrPricePrecision(sz string) int {
 }
 
 func AdaptOrderClientIDOptionParameter(params *url.Values) {
-	cid := params.Get("OrderClientID")
+	cid := params.Get(model.Order_Client_ID__Opt_Key)
 	if cid != "" {
 		params.Set("clOrdId", cid) //clOrdId
-		params.Del("OrderClientID")
+		params.Del(model.Order_Client_ID__Opt_Key)
 	}
 }

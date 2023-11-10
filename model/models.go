@@ -32,7 +32,7 @@ type OptionParameter struct {
 
 func (OptionParameter) OrderClientID(cid string) OptionParameter {
 	return OptionParameter{
-		Key:   "OrderClientID", // 内部根据这个key值来做适配
+		Key:   Order_Client_ID__Opt_Key, // 内部根据Order_Client_ID__Opt_Key来做适配
 		Value: cid,
 	}
 }

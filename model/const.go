@@ -142,3 +142,7 @@ const (
 	OKX     = "okx.com"
 	BINANCE = "binance.com"
 )
+
+const (
+	Order_Client_ID__Opt_Key = "OrderClientID"
+)
