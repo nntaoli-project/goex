@@ -49,6 +49,7 @@ func (prv *Prv) CreateOrder(pair model.CurrencyPair, qty, price float64, side mo
 	}
 
 	util.MergeOptionParams(&params, opts...)
+	AdaptOrderClientIDOptionParameter(&params)
 
 	data, responseBody, err := prv.DoAuthRequest(http.MethodPost, reqUrl, &params, nil)
 	if err != nil {

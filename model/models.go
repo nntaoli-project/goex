@@ -24,10 +24,17 @@ func (s OrderStatus) String() string {
 	return "unknown-status"
 }
 
-// OptionParameter 可选参数
+// OptionParameter is api option parameter
 type OptionParameter struct {
 	Key   string
 	Value string
+}
+
+func (OptionParameter) OrderClientID(cid string) OptionParameter {
+	return OptionParameter{
+		Key:   "OrderClientID", // 内部根据这个key值来做适配
+		Value: cid,
+	}
 }
 
 type CurrencyPair struct {
