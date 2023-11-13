@@ -50,6 +50,14 @@ func main() {
 }
 ```
 
+###  设置订单的ClientID
+
+```
+ord, resp, err := okxPrvApi.CreateOrder(btcUSDTCurrencyPair, 0.01, 23000,
+		model.Spot_Buy, model.OrderType_Limit,
+		model.OptionParameter{}.OrderClientID("goex123027892")) //client id: goex123027892
+```
+
 ### Thanks
 <a href="https://www.jetbrains.com/?from=goex"><img src="https://account.jetbrains.com/static/images/jetbrains-logo-inv.svg" height="120" alt="JetBrains"/></a>
 
