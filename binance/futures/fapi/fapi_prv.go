@@ -48,7 +48,8 @@ func (p *Prv) CreateOrder(pair CurrencyPair, qty, price float64, side OrderSide,
 		param.Set("positionSide", "LONG")
 	}
 
-	util.MergeOptionParams(&param, opt...) //合并参数
+	util.MergeOptionParams(&param, opt...)           //合并参数
+	common.AdaptOrderClientIDOptionParameter(&param) //client id
 
 	responseBody, err = p.DoAuthRequest(http.MethodPost, p.UriOpts.Endpoint+p.UriOpts.NewOrderUri, &param, nil)
 	if err != nil {

@@ -41,6 +41,7 @@ func (s *PrvApi) CreateOrder(pair CurrencyPair, qty, price float64, side OrderSi
 	params.Set("newOrderRespType", "ACK")
 
 	MergeOptionParams(&params, opt...)
+	common.AdaptOrderClientIDOptionParameter(&params)
 
 	data, err := s.DoAuthRequest(http.MethodPost,
 		fmt.Sprintf("%s%s", s.UriOpts.Endpoint, s.UriOpts.NewOrderUri), &params, nil)

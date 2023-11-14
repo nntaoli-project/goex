@@ -3,6 +3,7 @@ package common
 import (
 	"github.com/nntaoli-project/goex/v2/logger"
 	"github.com/nntaoli-project/goex/v2/model"
+	"net/url"
 )
 
 func AdaptKlinePeriodToSymbol(period model.KlinePeriod) string {
@@ -93,5 +94,13 @@ func AdaptStringToOrderType(ty string) model.OrderType {
 		return model.OrderType_Market
 	default:
 		return model.OrderType(ty)
+	}
+}
+
+func AdaptOrderClientIDOptionParameter(params *url.Values) {
+	cid := params.Get(model.Order_Client_ID__Opt_Key)
+	if cid != "" {
+		params.Set("newClientOrderId", cid) //clOrdId
+		params.Del(model.Order_Client_ID__Opt_Key)
 	}
 }
