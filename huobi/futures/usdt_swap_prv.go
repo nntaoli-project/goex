@@ -94,7 +94,7 @@ func (f *USDTSwapPrvApi) GetOrderInfo(pair CurrencyPair, id string, opts ...Opti
 
 	logger.Debugf("[GetOrderInfo] %s", string(data))
 	if data == nil || len(data) == 0 ||
-		bytes.Compare(data, []byte{110, 117, 108, 108}) == 0 {
+		bytes.Equal(data, []byte{110, 117, 108, 108}) {
 		return nil, data, nil
 	}
 
