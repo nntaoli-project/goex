@@ -50,7 +50,7 @@ func main() {
 }
 ```
 
-###  设置订单的ClientID
+###  Filled The OrderClientID
 
 ```
 ord, resp, err := okxPrvApi.CreateOrder(btcUSDTCurrencyPair, 0.01, 23000,
