@@ -383,14 +383,21 @@ func (un *RespUnmarshaler) UnmarshalGetExchangeInfoResponse(data []byte) (map[st
 		})
 
 		if instTy == "SWAP" {
-			currencyPair.BaseSymbol = ctValCcy
-			currencyPair.QuoteSymbol = settleCcy
-		}
-
-		//adapt
-		if instTy == "FUTURES" {
-			currencyPair.BaseSymbol = settleCcy
-			currencyPair.QuoteSymbol = ctValCcy
+			if settleCcy == USDT {
+				currencyPair.BaseSymbol = ctValCcy
+				currencyPair.QuoteSymbol = USDT
+			} else {
+				currencyPair.BaseSymbol = settleCcy
+				currencyPair.QuoteSymbol = ctValCcy
+			}
+		} else if instTy == "FUTURES" {
+			if settleCcy == USDT {
+				currencyPair.BaseSymbol = ctValCcy
+				currencyPair.QuoteSymbol = USDT
+			} else {
+				currencyPair.BaseSymbol = settleCcy
+				currencyPair.QuoteSymbol = ctValCcy
+			}
 		}
 
 		k := fmt.Sprintf("%s%s%s", currencyPair.BaseSymbol, currencyPair.QuoteSymbol, currencyPair.ContractAlias)
