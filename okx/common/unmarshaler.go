@@ -407,6 +407,23 @@ func (un *RespUnmarshaler) UnmarshalGetExchangeInfoResponse(data []byte) (map[st
 	return currencyPairMap, err
 }
 
+func (un *RespUnmarshaler) UnmarshalGetFundingRateResponse(data []byte) (*FundingRate, error) {
+	var rate FundingRate
+	err := jsonparser.ObjectEach(data[1:len(data)-1], func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		switch string(key) {
+		case "fundingRate":
+			rate.Rate = cast.ToFloat64(string(value))
+		case "fundingTime":
+			rate.Tm = cast.ToInt64(string(value))
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &rate, nil
+}
+
 func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
 	return json.Unmarshal(data, res)
 }

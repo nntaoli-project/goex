@@ -33,6 +33,7 @@ func New() *OKxV5 {
 			GetAccountUri:       "/api/v5/account/balance",
 			GetPositionsUri:     "/api/v5/account/positions",
 			GetExchangeInfoUri:  "/api/v5/public/instruments",
+			GetFundingRateUri:   "/api/v5/public/funding-rate",
 		},
 		UnmarshalOpts: UnmarshalerOptions{
 			ResponseUnmarshaler:                  unmarshaler.UnmarshalResponse,
@@ -48,6 +49,7 @@ func New() *OKxV5 {
 			GetPositionsResponseUnmarshaler:      unmarshaler.UnmarshalGetPositionsResponse,
 			GetFuturesAccountResponseUnmarshaler: unmarshaler.UnmarshalGetFuturesAccountResponse,
 			GetExchangeInfoResponseUnmarshaler:   unmarshaler.UnmarshalGetExchangeInfoResponse,
+			GetFundingRateResponseUnmarshaler:    unmarshaler.UnmarshalGetFundingRateResponse,
 		},
 	}
 

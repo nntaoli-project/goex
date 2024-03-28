@@ -13,6 +13,7 @@ type UriOptions struct {
 	GetAccountUri       string
 	GetPositionsUri     string
 	GetExchangeInfoUri  string
+	GetFundingRateUri   string
 }
 
 type UriOption func(*UriOptions)
@@ -86,5 +87,11 @@ func WithGetPositionsUri(uri string) UriOption {
 func WithGetExchangeUri(uri string) UriOption {
 	return func(c *UriOptions) {
 		c.GetExchangeInfoUri = uri
+	}
+}
+
+func WithGetFundingRateUri(uri string) UriOption {
+	return func(c *UriOptions) {
+		c.GetFundingRateUri = uri
 	}
 }

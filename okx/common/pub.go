@@ -86,6 +86,22 @@ func (okx *OKxV5) GetExchangeInfo(instType string, opt ...OptionParameter) (map[
 	return currencyPairMap, responseBody, err
 }
 
+func (okx *OKxV5) GetFundingRate(pair CurrencyPair, opts ...OptionParameter) (rate *FundingRate, responseBody []byte, err error) {
+	reqUrl := fmt.Sprintf("%s%s", okx.UriOpts.Endpoint, okx.UriOpts.GetFundingRateUri)
+	param := url.Values{}
+	param.Set("instId", pair.Symbol)
+	MergeOptionParams(&param, opts...)
+	data, responseBody, err := okx.DoNoAuthRequest(http.MethodGet, reqUrl, &param)
+	if err != nil {
+		return nil, responseBody, err
+	}
+	rate, err = okx.UnmarshalOpts.GetFundingRateResponseUnmarshaler(data)
+	if rate != nil && err == nil {
+		rate.Symbol = pair.Symbol
+	}
+	return rate, nil, err
+}
+
 func (okx *OKxV5) DoNoAuthRequest(httpMethod, reqUrl string, params *url.Values) ([]byte, []byte, error) {
 	reqBody := ""
 	if http.MethodGet == httpMethod {

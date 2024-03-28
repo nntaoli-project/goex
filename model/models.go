@@ -158,3 +158,9 @@ type FuturesAccount struct {
 	Upl       float64 `json:"upl,omitempty"`
 	RiskRate  float64 `json:"risk_rate,omitempty"`
 }
+
+type FundingRate struct {
+	Symbol string  `json:"symbol"`
+	Rate   float64 `json:"rate"`
+	Tm     int64   `json:"tm"` //资金费收取时间
+}
