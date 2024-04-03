@@ -53,7 +53,7 @@ func (prv *Prv) CreateOrder(pair model.CurrencyPair, qty, price float64, side mo
 
 	data, responseBody, err := prv.DoAuthRequest(http.MethodPost, reqUrl, &params, nil)
 	if err != nil {
-		logger.Errorf("[CreateOrder] err=%s, response=%s", err.Error(), string(data))
+		logger.Errorf("[CreateOrder] response body =%s", string(responseBody))
 		return nil, responseBody, err
 	}
 
@@ -192,8 +192,17 @@ func (prv *Prv) DoAuthRequest(httpMethod, reqUrl string, params *url.Values, hea
 	}
 
 	if baseResp.Code != 0 {
+		var errData []ErrorResponseData
+		err = prv.OKxV5.UnmarshalOpts.ResponseUnmarshaler(baseResp.Data, &errData)
+		if err != nil {
+			logger.Errorf("unmarshal error data error: %s", err.Error())
+			return nil, respBody, errors.New(string(respBody))
+		}
+		if len(errData) > 0 {
+			return nil, respBody, errors.New(errData[0].SMsg)
+		}
 		return nil, respBody, errors.New(baseResp.Msg)
-	}
+	} // error response process
 
 	return baseResp.Data, respBody, nil
 }

@@ -16,6 +16,13 @@ type BaseResp struct {
 	Data json.RawMessage `json:"data"`
 }
 
+type ErrorResponseData struct {
+	OrdID   string `json:"ordId"`
+	ClOrdId string `json:"clOrdId"`
+	SCode   string `json:"sCode"`
+	SMsg    string `json:"sMsg"`
+}
+
 func New() *OKxV5 {
 	unmarshaler := new(RespUnmarshaler)
 
