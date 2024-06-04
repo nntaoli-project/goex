@@ -46,6 +46,7 @@ type IFuturesPubRest interface {
 	//GetFundingRate
 	//获取资金费率，仅适用于永续合约
 	GetFundingRate(pair model.CurrencyPair, opts ...model.OptionParameter) (rate *model.FundingRate, responseBody []byte, err error)
+	GetFundingRateHistory(pair model.CurrencyPair, limit int, opts ...model.OptionParameter) (rates []model.FundingRate, responseBody []byte, err error)
 }
 
 // IFuturesPrvRest includes some special interface implementations for futures supplement.

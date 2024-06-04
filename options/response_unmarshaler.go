@@ -16,22 +16,24 @@ type GetPositionsResponseUnmarshaler func([]byte) ([]model.FuturesPosition, erro
 type GetFuturesAccountResponseUnmarshaler func([]byte) (map[string]model.FuturesAccount, error)
 type GetExchangeInfoResponseUnmarshaler func([]byte) (map[string]model.CurrencyPair, error)
 type GetFundingRateResponseUnmarshaler func([]byte) (*model.FundingRate, error)
+type GetFundingRateHistoryResponseUnmarshaler func([]byte) ([]model.FundingRate, error)
 
 type UnmarshalerOptions struct {
-	ResponseUnmarshaler                  ResponseUnmarshaler
-	TickerUnmarshaler                    GetTickerResponseUnmarshaler
-	DepthUnmarshaler                     GetDepthResponseUnmarshaler
-	KlineUnmarshaler                     GetKlineResponseUnmarshaler
-	CreateOrderResponseUnmarshaler       CreateOrderResponseUnmarshaler
-	GetOrderInfoResponseUnmarshaler      GetOrderInfoResponseUnmarshaler
-	GetPendingOrdersResponseUnmarshaler  GetPendingOrdersResponseUnmarshaler
-	GetHistoryOrdersResponseUnmarshaler  GetHistoryOrdersResponseUnmarshaler
-	CancelOrderResponseUnmarshaler       CancelOrderResponseUnmarshaler
-	GetAccountResponseUnmarshaler        GetAccountResponseUnmarshaler
-	GetPositionsResponseUnmarshaler      GetPositionsResponseUnmarshaler
-	GetFuturesAccountResponseUnmarshaler GetFuturesAccountResponseUnmarshaler
-	GetExchangeInfoResponseUnmarshaler   GetExchangeInfoResponseUnmarshaler
-	GetFundingRateResponseUnmarshaler    GetFundingRateResponseUnmarshaler
+	ResponseUnmarshaler                      ResponseUnmarshaler
+	TickerUnmarshaler                        GetTickerResponseUnmarshaler
+	DepthUnmarshaler                         GetDepthResponseUnmarshaler
+	KlineUnmarshaler                         GetKlineResponseUnmarshaler
+	CreateOrderResponseUnmarshaler           CreateOrderResponseUnmarshaler
+	GetOrderInfoResponseUnmarshaler          GetOrderInfoResponseUnmarshaler
+	GetPendingOrdersResponseUnmarshaler      GetPendingOrdersResponseUnmarshaler
+	GetHistoryOrdersResponseUnmarshaler      GetHistoryOrdersResponseUnmarshaler
+	CancelOrderResponseUnmarshaler           CancelOrderResponseUnmarshaler
+	GetAccountResponseUnmarshaler            GetAccountResponseUnmarshaler
+	GetPositionsResponseUnmarshaler          GetPositionsResponseUnmarshaler
+	GetFuturesAccountResponseUnmarshaler     GetFuturesAccountResponseUnmarshaler
+	GetExchangeInfoResponseUnmarshaler       GetExchangeInfoResponseUnmarshaler
+	GetFundingRateResponseUnmarshaler        GetFundingRateResponseUnmarshaler
+	GetFundingRateHistoryResponseUnmarshaler GetFundingRateHistoryResponseUnmarshaler
 }
 
 type UnmarshalerOption func(options *UnmarshalerOptions)
@@ -116,5 +118,11 @@ func WithGetExchangeInfoResponseUnmarshaler(unmarshaler GetExchangeInfoResponseU
 func WithGetFundingRateResponseUnmarshaler(unmarshaler GetFundingRateResponseUnmarshaler) UnmarshalerOption {
 	return func(options *UnmarshalerOptions) {
 		options.GetFundingRateResponseUnmarshaler = unmarshaler
+	}
+}
+
+func WithGetFundingRateHistoryResponseUnmarshaler(unmarshaler GetFundingRateHistoryResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.GetFundingRateHistoryResponseUnmarshaler = unmarshaler
 	}
 }

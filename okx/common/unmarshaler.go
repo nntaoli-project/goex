@@ -424,6 +424,24 @@ func (un *RespUnmarshaler) UnmarshalGetFundingRateResponse(data []byte) (*Fundin
 	return &rate, nil
 }
 
+func (un *RespUnmarshaler) UnmarshalGetFundingRateHistoryResponse(data []byte) ([]FundingRate, error) {
+	var rates []FundingRate
+	_, err := jsonparser.ArrayEach(data, func(item []byte, dataType jsonparser.ValueType, offset int, err error) {
+		var rate FundingRate
+		err = jsonparser.ObjectEach(item, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+			switch string(key) {
+			case "fundingRate":
+				rate.Rate = cast.ToFloat64(string(value))
+			case "fundingTime":
+				rate.Tm = cast.ToInt64(string(value))
+			}
+			return nil
+		})
+		rates = append(rates, rate)
+	})
+	return rates, err
+}
+
 func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
 	return json.Unmarshal(data, res)
 }

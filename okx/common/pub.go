@@ -102,6 +102,20 @@ func (okx *OKxV5) GetFundingRate(pair CurrencyPair, opts ...OptionParameter) (ra
 	return rate, nil, err
 }
 
+func (okx *OKxV5) GetFundingRateHistory(pair CurrencyPair, limit int, opts ...OptionParameter) (rates []FundingRate, responseBody []byte, err error) {
+	reqUrl := fmt.Sprintf("%s%s", okx.UriOpts.Endpoint, okx.UriOpts.GetFundingRateHistoryUri)
+	param := url.Values{}
+	param.Set("instId", pair.Symbol)
+	param.Set("limit", fmt.Sprint(limit))
+	MergeOptionParams(&param, opts...)
+	data, responseBody, err := okx.DoNoAuthRequest(http.MethodGet, reqUrl, &param)
+	if err != nil {
+		return nil, responseBody, err
+	}
+	rates, err = okx.UnmarshalOpts.GetFundingRateHistoryResponseUnmarshaler(data)
+	return rates, nil, err
+}
+
 func (okx *OKxV5) DoNoAuthRequest(httpMethod, reqUrl string, params *url.Values) ([]byte, []byte, error) {
 	reqBody := ""
 	if http.MethodGet == httpMethod {
