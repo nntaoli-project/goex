@@ -64,5 +64,9 @@ func (cli *FastHttpCli) DoRequest(method, rqUrl string, reqBody string, headers 
 		return nil, errors.New(resp.String())
 	}
 
-	return resp.Body(), nil
+	// 拷贝响应的 body
+	responseBody := make([]byte, len(resp.Body()))
+	copy(responseBody, resp.Body())
+
+	return responseBody, nil
 }
