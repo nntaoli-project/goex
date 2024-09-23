@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/nntaoli-project/goex/v2/logger"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -75,8 +74,13 @@ func (cli *DefaultHttpClient) SetProxy(proxy string) error {
 func (cli *DefaultHttpClient) DoRequest(method, rqUrl string, reqBody string, headers map[string]string) (data []byte, err error) {
 	logger.Debugf("[DefaultHttpClient] [%s] request url: %s", method, rqUrl)
 
-	reqTimeoutCtx, _ := context.WithTimeout(context.TODO(), cli.timeout)
-	req, _ := http.NewRequestWithContext(reqTimeoutCtx, method, rqUrl, strings.NewReader(reqBody))
+	reqTimeoutCtx, cancelFn := context.WithTimeout(context.TODO(), cli.timeout)
+	defer cancelFn()
+
+	req, err := http.NewRequestWithContext(reqTimeoutCtx, method, rqUrl, strings.NewReader(reqBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new request: %w", err)
+	}
 
 	if headers != nil {
 		for k, v := range headers {
@@ -96,7 +100,7 @@ func (cli *DefaultHttpClient) DoRequest(method, rqUrl string, reqBody string, he
 		}
 	}(resp.Body)
 
-	bodyData, err := ioutil.ReadAll(resp.Body)
+	bodyData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response body error: %w", err)
 	}
