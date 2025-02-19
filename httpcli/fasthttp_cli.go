@@ -25,6 +25,10 @@ func NewFastHttpCli() *FastHttpCli {
 	return &FastHttpCli{fastHttpClient: cli, timeout: 10 * time.Second}
 }
 
+func (cli *FastHttpCli) SetHeaders(key, value string) {
+	gHeader[key] = value
+}
+
 func (cli *FastHttpCli) SetTimeout(sec int64) {
 	cli.timeout = time.Duration(sec) * time.Second
 	cli.fastHttpClient.WriteTimeout = cli.timeout
@@ -48,9 +52,16 @@ func (cli *FastHttpCli) DoRequest(method, rqUrl string, reqBody string, headers 
 		fasthttp.ReleaseResponse(resp)
 	}()
 
-	for k, v := range headers {
+	for k, v := range gHeader {
 		req.Header.Set(k, v)
 	}
+
+	if headers != nil {
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+	}
+
 	req.Header.SetMethod(method)
 	req.SetRequestURI(rqUrl)
 	req.SetBodyString(reqBody)

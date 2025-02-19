@@ -12,9 +12,13 @@ import (
 	"time"
 )
 
-var Cli IHttpClient
+var (
+	Cli     IHttpClient
+	gHeader map[string]string
+)
 
 func init() {
+	gHeader = make(map[string]string, 2)
 	Cli = NewDefaultHttpClient()
 }
 
@@ -44,6 +48,10 @@ func (cli *DefaultHttpClient) init() {
 			MaxIdleConns:          8,
 		},
 	}
+}
+
+func (cli *DefaultHttpClient) SetHeaders(key, value string) {
+	gHeader[key] = value
 }
 
 func (cli *DefaultHttpClient) SetTimeout(sec int64) {
@@ -82,9 +90,14 @@ func (cli *DefaultHttpClient) DoRequest(method, rqUrl string, reqBody string, he
 		return nil, fmt.Errorf("failed to create new request: %w", err)
 	}
 
+	//append global http header
+	for k, v := range gHeader {
+		req.Header.Set(k, v)
+	}
+
 	if headers != nil {
 		for k, v := range headers {
-			req.Header.Add(k, v)
+			req.Header.Set(k, v)
 		}
 	}
 
