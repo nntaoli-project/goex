@@ -51,10 +51,10 @@ func main() {
 ```
 
 ### FAQ
-#### okx simulated trading
+#### 1. okx simulated trading
 See ([issues/238](https://github.com/nntaoli-project/goex/issues/238))
 
-####  Filled The OrderClientID 
+#### 2. Filled The OrderClientID 
 
 ```
 ord, resp, err := okxPrvApi.CreateOrder(btcUSDTCurrencyPair, 0.01, 23000,
