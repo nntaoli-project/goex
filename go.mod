@@ -1,16 +1,21 @@
-module github.com/nntaoli-project/goex
+module github.com/nntaoli-project/goex/v2
 
-go 1.12
+go 1.18
 
 require (
-	github.com/Kucoin/kucoin-go-sdk v1.2.7
-	github.com/go-openapi/errors v0.19.4
-	github.com/google/uuid v1.3.0
-	github.com/gorilla/websocket v1.5.0
-	github.com/klauspost/compress v1.15.2 // indirect
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/nubo/jwt v0.0.0-20150918093313-da5b79c3bbaf
-	github.com/stretchr/testify v1.7.0
-	github.com/valyala/fasthttp v1.36.0
-	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
+	github.com/buger/jsonparser v1.1.1
+	github.com/google/uuid v1.3.1
+	github.com/nntaoli/go-tools v0.0.0-20231117134637-ffc092526634
+	github.com/spf13/cast v1.5.0
+	github.com/valyala/fasthttp v1.47.0
+)
+
+require (
+	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
+	github.com/rogpeppe/go-internal v1.8.0 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 )

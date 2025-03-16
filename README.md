@@ -1,65 +1,67 @@
-![build](https://github.com/WymA/goex/actions/workflows/go.yml/badge.svg?branch=dev)
+### Introduction
+* Unified and standardize the interfaces of various cryptocurrency trading platforms.
 
-### goex目标
+![goex](goex_struct.png)
 
-goex项目是为了统一并标准化各个数字资产交易平台的接口而设计，同一个策略可以随时切换到任意一个交易平台，而不需要更改任何代码。
+### Donate
+* [BTC] 1GoEXwVvXG7kNdQSFaUNF35A3izHojLGxP
+* [USDT-TRC20] TGoExC6xvzE4wSA9cYZnwcPaXEjibA5Vtc
 
-[English](https://github.com/nntaoli-project/goex/blob/dev/README_en.md)
+### Example
 
-### wiki文档
+```golang
+package main
 
-[文档](https://github.com/nntaoli-project/goex/wiki)
-
-### goex已支持交易所 `23+`
-
-| 交易所 | 行情接口 | 交易接口 | 版本号 |   
-| ---   | ---     | ---     | ---   |  
-| huobi.pro | Y | Y | 1 |   
-| hbdm.com | Y (REST / WS)| Y |  1 |  
-| okex.com (spot/future)| Y (REST / WS) | Y | 1 |  
-| okex.com (swap future) | Y | Y | 2 |
-| binance.com | Y | Y | 1 |  
-| kucoin.com | Y | Y | 1 |
-| bitstamp.net | Y | Y | 1 |  
-| bitfinex.com | Y | Y | 1 |  
-| zb.com | Y | Y | 1 |  
-| kraken.com | Y | Y | * |  
-| poloniex.com | Y | Y | * |   
-| big.one | Y | Y | 2\|3 | 
-| hitbtc.com | Y | Y | * |
-| coinex.com | Y | Y | 1 |
-| exx.com | Y | Y | 1 |
-| bithumb.com | Y | Y | * |
-| gate.io | Y | N | 1 |
-| bittrex.com | Y | N | 1.1 |
-
-### 安装goex库  
-> go get
-
-``` go get github.com/nntaoli-project/goex ```
-
->建议go mod 管理依赖
-``` 
-require (
-          github.com/nntaoli-project/goex latest
+import (
+	goexv2 "github.com/nntaoli-project/goex/v2"
+	"github.com/nntaoli-project/goex/v2/logger"
+	"github.com/nntaoli-project/goex/v2/model"
+	"github.com/nntaoli-project/goex/v2/options"
+	"log"
 )
+
+func main() {
+	logger.SetLevel(logger.DEBUG)                             //设置日志输出级别
+	//goexv2.DefaultHttpCli.SetProxy("socks5://127.0.0.1:1080") //socks代理
+	goexv2.DefaultHttpCli.SetTimeout(5)                       // 5 second
+
+	_, _, err := goexv2.OKx.Spot.GetExchangeInfo() //建议调用
+	if err != nil {
+		panic(err)
+	}
+	btcUSDTCurrencyPair, err := goexv2.OKx.Spot.NewCurrencyPair(model.BTC, model.USDT)//建议这样构建CurrencyPair
+	if err != nil {
+		panic(err)
+	}
+		
+	//共有api调用
+	log.Println(goexv2.OKx.Spot.GetTicker(btcUSDTCurrencyPair))
+
+	//私有API调用
+	okxPrvApi := goexv2.OKx.Spot.NewPrvApi(
+		options.WithApiKey(""), 
+		options.WithApiSecretKey(""), 
+		options.WithPassphrase(""))
+	
+	//创建订单
+	order, _, err := okxPrvApi.CreateOrder(btcUSDTCurrencyPair, 0.01, 18000, model.Spot_Buy, model.OrderType_Limit)
+	log.Println(err)
+	log.Println(order)
+}
 ```
 
-### 注意事项
+### FAQ
+#### 1. okx simulated trading
+See ([issues/238](https://github.com/nntaoli-project/goex/issues/238))
 
-1. 推荐使用GoLand开发。
-2. 推荐关闭自动格式化功能,代码请使用go fmt 格式化.
-3. 不建议对现已存在的文件进行重新格式化，这样会导致commit特别糟糕。
-4. 请用OrderID2这个字段代替OrderID
-5. 请不要使用deprecated关键字标注的方法和字段，后面版本可能随时删除的
------------------
+#### 2. Filled The OrderClientID 
 
-donate
------------------
-BTC: 1GoExWZop4JCJQkjb1UgtVGpjBKmP4DvG8
+```
+ord, resp, err := okxPrvApi.CreateOrder(btcUSDTCurrencyPair, 0.01, 23000,
+		model.Spot_Buy, model.OrderType_Limit,
+		model.OptionParameter{}.OrderClientID("goex123027892")) //client id: goex123027892
+```
 
-USDT(TRC20): TGoExC6xvzE4wSA9cYZnwcPaXEjibA5Vtc    
+### Thanks
+<a href="https://www.jetbrains.com/?from=goex"><img src="https://account.jetbrains.com/static/images/jetbrains-logo-inv.svg" height="120" alt="JetBrains"/></a>
 
-### 欢迎为作者付一碗面钱
-
-![微信](wx_pay.JPG) ![支付宝](IMG_1177.jpg)  
