@@ -17,8 +17,9 @@ type FastHttpCli struct {
 func NewFastHttpCli() *FastHttpCli {
 	cli := &fasthttp.Client{
 		Name:                "github.com/nntaoli-project/goex/v2/",
-		MaxConnsPerHost:     512,
-		MaxIdleConnDuration: 20 * time.Second,
+		MaxConnsPerHost:     1024,
+		MaxConnWaitTimeout:  5 * time.Second,
+		MaxIdleConnDuration: 30 * time.Second,
 		ReadTimeout:         10 * time.Second,
 		WriteTimeout:        10 * time.Second,
 	}
@@ -77,6 +78,7 @@ func (cli *FastHttpCli) DoRequest(method, rqUrl string, reqBody string, headers 
 
 	// 拷贝响应的 body
 	responseBody := make([]byte, len(resp.Body()))
+	
 	copy(responseBody, resp.Body())
 
 	return responseBody, nil

@@ -43,9 +43,10 @@ func (cli *DefaultHttpClient) init() {
 			IdleConnTimeout:       time.Minute,
 			TLSHandshakeTimeout:   cli.timeout,
 			ResponseHeaderTimeout: cli.timeout,
-			MaxConnsPerHost:       4,
-			MaxIdleConnsPerHost:   4,
-			MaxIdleConns:          8,
+			MaxConnsPerHost:       64,
+			MaxIdleConnsPerHost:   64,
+			MaxIdleConns:          128,
+			ForceAttemptHTTP2:     true,
 		},
 	}
 }
