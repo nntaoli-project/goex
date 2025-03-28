@@ -1,6 +1,6 @@
 module github.com/nntaoli-project/goex/v2
 
-go 1.18
+go 1.23.0
 
 require (
 	github.com/buger/jsonparser v1.1.1
@@ -16,6 +16,6 @@ require (
 	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	golang.org/x/net v0.36.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 )
