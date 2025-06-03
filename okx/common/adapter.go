@@ -121,3 +121,13 @@ func AdaptOrderClientIDOptionParameter(params *url.Values) {
 		params.Del(model.Order_Client_ID__Opt_Key)
 	}
 }
+
+func AdaptPositionMode(mode string) string {
+	switch mode {
+	case model.TWO_WAY_POSITION_MODE:
+		return "long_short_mode"
+	case model.ONE_WAY_POSITION_MODE:
+		return "net_mode"
+	}
+	return ""
+}

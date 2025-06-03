@@ -442,6 +442,10 @@ func (un *RespUnmarshaler) UnmarshalGetFundingRateHistoryResponse(data []byte) (
 	return rates, err
 }
 
+func (un *RespUnmarshaler) UnmarshalSetPositionModeResponse(data []byte) (string, error) {
+	return "", nil
+}
+
 func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
 	return json.Unmarshal(data, res)
 }

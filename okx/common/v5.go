@@ -42,6 +42,7 @@ func New() *OKxV5 {
 			GetExchangeInfoUri:       "/api/v5/public/instruments",
 			GetFundingRateUri:        "/api/v5/public/funding-rate",
 			GetFundingRateHistoryUri: "/api/v5/public/funding-rate-history",
+			SetPositionModeUri:       "/api/v5/account/set-position-mode",
 		},
 		UnmarshalOpts: UnmarshalerOptions{
 			ResponseUnmarshaler:                      unmarshaler.UnmarshalResponse,
@@ -59,6 +60,7 @@ func New() *OKxV5 {
 			GetExchangeInfoResponseUnmarshaler:       unmarshaler.UnmarshalGetExchangeInfoResponse,
 			GetFundingRateResponseUnmarshaler:        unmarshaler.UnmarshalGetFundingRateResponse,
 			GetFundingRateHistoryResponseUnmarshaler: unmarshaler.UnmarshalGetFundingRateHistoryResponse,
+			SetPositionModeResponseUnmarshaler:       unmarshaler.UnmarshalSetPositionModeResponse,
 		},
 	}
 

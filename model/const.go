@@ -36,8 +36,8 @@ const (
 	OrderType_opponent OrderType = "opponent"
 )
 
-//coin const list
-//a-z排序
+// coin const list
+// a-z排序
 const (
 	ADA  = "ADA"
 	ATOM = "ATOM"
@@ -137,7 +137,7 @@ const (
 	ZYRO = "ZYRO"
 )
 
-//exchange name const list
+// exchange name const list
 const (
 	OKX     = "okx.com"
 	BINANCE = "binance.com"
@@ -145,4 +145,9 @@ const (
 
 const (
 	Order_Client_ID__Opt_Key = "OrderClientID"
+)
+
+const (
+	TWO_WAY_POSITION_MODE = "TWO_WAY_POSITION_MODE"
+	ONE_WAY_POSITION_MODE = "ONE_WAY_POSITION_MODE"
 )

@@ -143,6 +143,25 @@ func (prv *Prv) CancelOrder(pair model.CurrencyPair, id string, opt ...model.Opt
 	return responseBody, err
 }
 
+func (prv *Prv) SetPositionMode(mode string, opt ...model.OptionParameter) ([]byte, error) {
+	reqUrl := fmt.Sprintf("%s%s", prv.UriOpts.Endpoint, prv.UriOpts.SetPositionModeUri)
+	params := url.Values{}
+	params.Set("posMode", AdaptPositionMode(mode))
+	util.MergeOptionParams(&params, opt...)
+
+	data, responseBody, err := prv.DoAuthRequest(http.MethodPost, reqUrl, &params, nil)
+	if err != nil {
+		return responseBody, err
+	}
+
+	if data != nil && len(data) > 0 {
+		_, err := prv.UnmarshalOpts.SetPositionModeResponseUnmarshaler(data)
+		return responseBody, err
+	}
+
+	return responseBody, err
+}
+
 func (prv *Prv) DoSignParam(httpMethod, apiUri, apiSecret, reqBody string) (signStr, timestamp string) {
 	timestamp = time.Now().UTC().Format("2006-01-02T15:04:05.000Z") //iso time style
 	payload := fmt.Sprintf("%s%s%s%s", timestamp, strings.ToUpper(httpMethod), apiUri, reqBody)

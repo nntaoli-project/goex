@@ -15,6 +15,7 @@ type UriOptions struct {
 	GetExchangeInfoUri       string
 	GetFundingRateUri        string
 	GetFundingRateHistoryUri string
+	SetPositionModeUri       string
 }
 
 type UriOption func(*UriOptions)
@@ -100,5 +101,11 @@ func WithGetFundingRateUri(uri string) UriOption {
 func WithGetFundingRateHistoryUri(uri string) UriOption {
 	return func(c *UriOptions) {
 		c.GetFundingRateHistoryUri = uri
+	}
+}
+
+func WithSetPositionModeUri(uri string) UriOption {
+	return func(c *UriOptions) {
+		c.SetPositionModeUri = uri
 	}
 }
