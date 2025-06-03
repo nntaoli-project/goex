@@ -12,6 +12,7 @@ var (
 type Spot struct {
 	UnmarshalerOpts UnmarshalerOptions
 	UriOpts         UriOptions
+	currencyPairM   map[string]CurrencyPair
 }
 
 func New() *Spot {
@@ -27,6 +28,7 @@ func New() *Spot {
 			CancelOrderUri:      "/api/v3/order",
 			GetOrderUri:         "/api/v3/order",
 			GetHistoryOrdersUri: "/api/v3/allOrders",
+			GetExchangeInfoUri:  "/api/v3/exchangeInfo",
 		},
 		UnmarshalerOpts: UnmarshalerOptions{
 			ResponseUnmarshaler:                 unmarshaler.UnmarshalResponse,
@@ -36,6 +38,7 @@ func New() *Spot {
 			CreateOrderResponseUnmarshaler:      unmarshaler.UnmarshalCreateOrderResponse,
 			GetPendingOrdersResponseUnmarshaler: unmarshaler.UnmarshalGetPendingOrdersResponse,
 			CancelOrderResponseUnmarshaler:      unmarshaler.UnmarshalCancelOrderResponse,
+			GetExchangeInfoResponseUnmarshaler:  unmarshaler.UnmarshalGetExchangeInfoResponse,
 		},
 	}
 	return s

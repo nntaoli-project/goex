@@ -2,10 +2,12 @@ package spot
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/buger/jsonparser"
 	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/model"
 	"github.com/spf13/cast"
+	"strings"
 )
 
 type RespUnmarshaler struct {
@@ -189,6 +191,76 @@ func (u *RespUnmarshaler) unmarshalOrderResponse(data []byte) (ord Order, err er
 
 func (u *RespUnmarshaler) UnmarshalCancelOrderResponse(data []byte) error {
 	return nil
+}
+
+func (u *RespUnmarshaler) UnmarshalGetExchangeInfoResponse(data []byte) (map[string]CurrencyPair, error) {
+	var (
+		err             error
+		currencyPairMap = make(map[string]CurrencyPair, 40)
+	)
+
+	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		var (
+			currencyPair CurrencyPair
+		)
+
+		err = jsonparser.ObjectEach(value, func(key []byte, val []byte, dataType jsonparser.ValueType, offset int) error {
+			valStr := string(val)
+			switch string(key) {
+			case "symbol":
+				currencyPair.Symbol = valStr
+			case "baseAsset":
+				currencyPair.BaseSymbol = valStr
+			case "quoteAsset":
+				currencyPair.QuoteSymbol = valStr
+
+			case "filters":
+				_, err = jsonparser.ArrayEach(val, func(filterData []byte, dataType jsonparser.ValueType, offset int, err error) {
+					filterType, _ := jsonparser.GetString(filterData, "filterType")
+					if filterType == "LOT_SIZE" {
+						var (
+							minQty []byte
+							maxQty []byte
+						)
+
+						minQty, _, _, err = jsonparser.Get(filterData, "minQty")
+						maxQty, _, _, err = jsonparser.Get(filterData, "maxQty")
+						currencyPair.MinQty = cast.ToFloat64(string(minQty))
+						currencyPair.MaxQty = cast.ToFloat64(string(maxQty))
+
+						stepSize, err := jsonparser.GetString(filterData, "stepSize")
+						if err == nil {
+							idx := strings.Index(stepSize, "1")
+							currencyPair.QtyPrecision = idx - 1
+						}
+					}
+
+					if filterType == "MARKET_LOT_SIZE" {
+
+					}
+
+					if filterType == "PRICE_FILTER" {
+						tickSize, _ := jsonparser.GetString(filterData, "tickSize")
+						idx := strings.Index(tickSize, "1")
+						currencyPair.PricePrecision = idx - 1
+					}
+
+					//if filterType == "MIN_NOTIONAL" {
+					//	currencyPair.MinQty, err = jsonparser.GetFloat(filterData, "notional")
+					//	if err != nil {
+					//		logger.Errorf("[UnmarshalGetExchangeInfoResponse] get notional error: %s", err.Error())
+					//	}
+					//}
+				})
+			}
+			return err
+		})
+
+		k := fmt.Sprintf("%s%s%s", currencyPair.BaseSymbol, currencyPair.QuoteSymbol, currencyPair.ContractAlias)
+		currencyPairMap[k] = currencyPair
+
+	}, "symbols")
+	return currencyPairMap, err
 }
 
 func (u *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
