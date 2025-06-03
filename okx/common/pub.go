@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"fmt"
 	. "github.com/nntaoli-project/goex/v2/httpcli"
 	"github.com/nntaoli-project/goex/v2/logger"
@@ -23,6 +24,10 @@ func (okx *OKxV5) GetDepth(pair CurrencyPair, size int, opt ...OptionParameter) 
 	data, responseBody, err := okx.DoNoAuthRequest("GET", okx.UriOpts.Endpoint+okx.UriOpts.DepthUri, &params)
 	if err != nil {
 		return nil, responseBody, err
+	}
+
+	if data == nil || len(data) == 0 {
+		return nil, responseBody, errors.New(string(responseBody))
 	}
 
 	dep, err := okx.UnmarshalOpts.DepthUnmarshaler(data)
@@ -139,5 +144,5 @@ func (okx *OKxV5) DoNoAuthRequest(httpMethod, reqUrl string, params *url.Values)
 	}
 
 	logger.Debugf("[DoNoAuthRequest] error=%s", baseResp.Msg)
-	return nil, responseBody, err
+	return nil, responseBody, errors.New(baseResp.Msg)
 }
