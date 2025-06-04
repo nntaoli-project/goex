@@ -162,6 +162,35 @@ func (prv *Prv) SetPositionMode(mode string, opt ...model.OptionParameter) ([]by
 	return responseBody, err
 }
 
+func (prv *Prv) SetLeverage(symbol, lever string, opts ...model.OptionParameter) ([]byte, error) {
+	reqUrl := fmt.Sprintf("%s%s", prv.UriOpts.Endpoint, prv.UriOpts.SetLeverageUri)
+	params := url.Values{}
+	params.Set("instId", symbol)
+	params.Set("lever", lever)
+	util.MergeOptionParams(&params, opts...)
+	data, responseBody, err := prv.DoAuthRequest(http.MethodPost, reqUrl, &params, nil)
+	if err != nil {
+		return responseBody, err
+	}
+	err = prv.UnmarshalOpts.SetLeverageResponseUnmarshaler(data)
+	return responseBody, err
+}
+
+func (prv *Prv) GetLeverage(symbol string, opts ...model.OptionParameter) (string, []byte, error) {
+	reqUrl := fmt.Sprintf("%s%s", prv.UriOpts.Endpoint, prv.UriOpts.GetLeverageUri)
+	params := url.Values{}
+	params.Set("instId", symbol)
+	util.MergeOptionParams(&params, opts...)
+
+	data, responseBody, err := prv.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
+	if err != nil {
+		return "", responseBody, err
+	}
+	
+	lever, err := prv.UnmarshalOpts.GetLeverageResponseUnmarshaler(data)
+	return lever, responseBody, err
+}
+
 func (prv *Prv) DoSignParam(httpMethod, apiUri, apiSecret, reqBody string) (signStr, timestamp string) {
 	timestamp = time.Now().UTC().Format("2006-01-02T15:04:05.000Z") //iso time style
 	payload := fmt.Sprintf("%s%s%s%s", timestamp, strings.ToUpper(httpMethod), apiUri, reqBody)

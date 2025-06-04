@@ -16,6 +16,8 @@ type UriOptions struct {
 	GetFundingRateUri        string
 	GetFundingRateHistoryUri string
 	SetPositionModeUri       string
+	SetLeverageUri           string
+	GetLeverageUri           string
 }
 
 type UriOption func(*UriOptions)
@@ -107,5 +109,17 @@ func WithGetFundingRateHistoryUri(uri string) UriOption {
 func WithSetPositionModeUri(uri string) UriOption {
 	return func(c *UriOptions) {
 		c.SetPositionModeUri = uri
+	}
+}
+
+func WithSetLeverageUri(uri string) UriOption {
+	return func(c *UriOptions) {
+		c.SetLeverageUri = uri
+	}
+}
+
+func WithGetLeverageUri(uri string) UriOption {
+	return func(c *UriOptions) {
+		c.GetLeverageUri = uri
 	}
 }

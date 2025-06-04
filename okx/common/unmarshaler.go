@@ -446,6 +446,22 @@ func (un *RespUnmarshaler) UnmarshalSetPositionModeResponse(data []byte) (string
 	return "", nil
 }
 
+func (un *RespUnmarshaler) UnmarshalSetLeverageResponse(data []byte) error {
+	return nil
+}
+
+func (un *RespUnmarshaler) UnmarshalGetLeverageResponse(data []byte) (string, error) {
+	//[ {
+	//  "ccy" : "BTC-USDT-SWAP",
+	//  "instId" : "BTC-USDT-SWAP",
+	//  "lever" : "5",
+	//  "mgnMode" : "cross",
+	//  "posSide" : "long"
+	//} ]
+
+	return jsonparser.GetString(data, "[0]", "lever")
+}
+
 func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
 	return json.Unmarshal(data, res)
 }

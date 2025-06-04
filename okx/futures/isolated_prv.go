@@ -25,3 +25,22 @@ func (f *IsolatedPrvApi) CreateOrder(pair CurrencyPair, qty, price float64, side
 
 	return f.Prv.CreateOrder(pair, qty, price, side, orderTy, opts...)
 }
+
+func (f *IsolatedPrvApi) SetLeverage(pair CurrencyPair, lever string, opts ...OptionParameter) ([]byte, error) {
+	opts = append(opts, OptionParameter{
+		Key:   "mgnMode",
+		Value: "isolated",
+	})
+	return f.Prv.SetLeverage(pair.Symbol, lever, opts...)
+}
+
+func (f *IsolatedPrvApi) GetLeverage(pair CurrencyPair, opts ...OptionParameter) (string, []byte, error) {
+	opts = append(opts, OptionParameter{
+		Key:   "mgnMode",
+		Value: "isolated",
+	}, OptionParameter{
+		Key:   "posSide",
+		Value: "long",
+	})
+	return f.Prv.GetLeverage(pair.Symbol, opts...)
+}

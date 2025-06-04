@@ -25,3 +25,19 @@ func (f *CrossPrvApi) CreateOrder(pair CurrencyPair, qty, price float64, side Or
 
 	return f.Prv.CreateOrder(pair, qty, price, side, orderTy, opts...)
 }
+
+func (f *CrossPrvApi) SetLeverage(pair CurrencyPair, lever string, opts ...OptionParameter) ([]byte, error) {
+	opts = append(opts, OptionParameter{
+		Key:   "mgnMode",
+		Value: "cross",
+	})
+	return f.Prv.SetLeverage(pair.Symbol, lever, opts...)
+}
+
+func (f *CrossPrvApi) GetLeverage(pair CurrencyPair, opts ...OptionParameter) (string, []byte, error) {
+	opts = append(opts, OptionParameter{
+		Key:   "mgnMode",
+		Value: "cross",
+	})
+	return f.Prv.GetLeverage(pair.Symbol, opts...)
+}

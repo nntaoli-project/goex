@@ -18,6 +18,8 @@ type GetExchangeInfoResponseUnmarshaler func([]byte) (map[string]model.CurrencyP
 type GetFundingRateResponseUnmarshaler func([]byte) (*model.FundingRate, error)
 type GetFundingRateHistoryResponseUnmarshaler func([]byte) ([]model.FundingRate, error)
 type SetPositionModeResponseUnmarshaler func([]byte) (string, error)
+type SetLeverageResponseUnmarshaler func([]byte) error
+type GetLeverageResponseUnmarshaler func([]byte) (string, error)
 
 type UnmarshalerOptions struct {
 	ResponseUnmarshaler                      ResponseUnmarshaler
@@ -36,6 +38,8 @@ type UnmarshalerOptions struct {
 	GetFundingRateResponseUnmarshaler        GetFundingRateResponseUnmarshaler
 	GetFundingRateHistoryResponseUnmarshaler GetFundingRateHistoryResponseUnmarshaler
 	SetPositionModeResponseUnmarshaler       SetPositionModeResponseUnmarshaler
+	SetLeverageResponseUnmarshaler           SetLeverageResponseUnmarshaler
+	GetLeverageResponseUnmarshaler           GetLeverageResponseUnmarshaler
 }
 
 type UnmarshalerOption func(options *UnmarshalerOptions)
@@ -132,5 +136,17 @@ func WithGetFundingRateHistoryResponseUnmarshaler(unmarshaler GetFundingRateHist
 func WithSetPositionModeResponseUnmarshaler(unmarshaler SetPositionModeResponseUnmarshaler) UnmarshalerOption {
 	return func(options *UnmarshalerOptions) {
 		options.SetPositionModeResponseUnmarshaler = unmarshaler
+	}
+}
+
+func WithSetLeveragerResponseUnmarshaler(unmarshaler SetLeverageResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.SetLeverageResponseUnmarshaler = unmarshaler
+	}
+}
+
+func WithSetLeverageResponseUnmarshaler(unmarshaler SetLeverageResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.SetLeverageResponseUnmarshaler = unmarshaler
 	}
 }
