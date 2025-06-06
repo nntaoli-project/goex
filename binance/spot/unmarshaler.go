@@ -162,6 +162,10 @@ func (u *RespUnmarshaler) UnmarshalGetPendingOrdersResponse(data []byte) ([]Orde
 	return orders, err
 }
 
+func (u *RespUnmarshaler) UnmarshalGetHistoryOrdersResponse(data []byte) ([]Order, error) {
+	return u.UnmarshalGetPendingOrdersResponse(data)
+}
+
 func (u *RespUnmarshaler) UnmarshalGetAccountResponse(data []byte) (map[string]Account, error) {
 	var accounts = make(map[string]Account, 6)
 	_, err := jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -232,6 +236,7 @@ func (u *RespUnmarshaler) unmarshalOrderResponse(data []byte) (*Order, error) {
 	if tradedAmount > 0 && ord.ExecutedQty > 0 {
 		ord.PriceAvg = tradedAmount / ord.ExecutedQty
 	}
+
 	if ord.Status == OrderStatus_Canceled {
 		ord.CanceledAt = tm
 	} else if ord.Status == OrderStatus_Finished {

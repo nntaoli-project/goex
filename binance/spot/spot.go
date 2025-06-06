@@ -39,6 +39,7 @@ func New() *Spot {
 			CreateOrderResponseUnmarshaler:      unmarshaler.UnmarshalCreateOrderResponse,
 			GetPendingOrdersResponseUnmarshaler: unmarshaler.UnmarshalGetPendingOrdersResponse,
 			GetOrderInfoResponseUnmarshaler:     unmarshaler.unmarshalOrderResponse,
+			GetHistoryOrdersResponseUnmarshaler: unmarshaler.UnmarshalGetHistoryOrdersResponse,
 			CancelOrderResponseUnmarshaler:      unmarshaler.UnmarshalCancelOrderResponse,
 			GetExchangeInfoResponseUnmarshaler:  unmarshaler.UnmarshalGetExchangeInfoResponse,
 			GetAccountResponseUnmarshaler:       unmarshaler.UnmarshalGetAccountResponse,

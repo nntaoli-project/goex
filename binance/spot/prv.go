@@ -109,8 +109,17 @@ func (s *PrvApi) GetPendingOrders(pair CurrencyPair, opt ...OptionParameter) ([]
 }
 
 func (s *PrvApi) GetHistoryOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, []byte, error) {
-	//TODO implement me
-	panic("implement me")
+	params := url.Values{}
+	params.Set("symbol", pair.Symbol)
+	params.Set("limit", "100")
+	MergeOptionParams(&params, opt...)
+	reqUrl := fmt.Sprintf("%s%s", s.UriOpts.Endpoint, s.UriOpts.GetHistoryOrdersUri)
+	data, err := s.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
+	if err != nil {
+		return nil, data, err
+	}
+	orders, err := s.UnmarshalerOpts.GetHistoryOrdersResponseUnmarshaler(data)
+	return orders, data, err
 }
 
 func (s *PrvApi) CancelOrder(pair CurrencyPair, id string, opt ...OptionParameter) ([]byte, error) {
