@@ -156,13 +156,16 @@ func (u *RespUnmarshaler) UnmarshalGetPendingOrdersResponse(data []byte) ([]Orde
 			logger.Warnf("[UnmarshalGetPendingOrdersResponse] err=%s", err.Error())
 			return
 		}
-		orders = append(orders, ord)
+		orders = append(orders, *ord)
 	})
 	return orders, err
 }
 
-func (u *RespUnmarshaler) unmarshalOrderResponse(data []byte) (ord Order, err error) {
-	err = jsonparser.ObjectEach(data, func(key []byte, val []byte, dataType jsonparser.ValueType, offset int) error {
+func (u *RespUnmarshaler) unmarshalOrderResponse(data []byte) (*Order, error) {
+	ord := new(Order)
+	tm := int64(0)
+	tradedAmount := float64(0)
+	err := jsonparser.ObjectEach(data, func(key []byte, val []byte, dataType jsonparser.ValueType, offset int) error {
 		valStr := string(val)
 		switch string(key) {
 		case "orderId":
@@ -173,10 +176,14 @@ func (u *RespUnmarshaler) unmarshalOrderResponse(data []byte) (ord Order, err er
 			ord.Price = cast.ToFloat64(valStr)
 		case "origQty":
 			ord.Qty = cast.ToFloat64(valStr)
-		case "executeQty":
+		case "executedQty":
 			ord.ExecutedQty = cast.ToFloat64(valStr)
+		case "cummulativeQuoteQty":
+			tradedAmount = cast.ToFloat64(valStr)
 		case "time":
-			ord.CanceledAt = cast.ToInt64(valStr)
+			ord.CreatedAt = cast.ToInt64(valStr)
+		case "updateTime":
+			tm = cast.ToInt64(valStr)
 		case "status":
 			ord.Status = adaptOrderStatus(valStr)
 		case "side":
@@ -186,7 +193,17 @@ func (u *RespUnmarshaler) unmarshalOrderResponse(data []byte) (ord Order, err er
 		}
 		return nil
 	})
-	return
+	//计算均价
+	if tradedAmount > 0 && ord.ExecutedQty > 0 {
+		ord.PriceAvg = tradedAmount / ord.ExecutedQty
+	}
+	if ord.Status == OrderStatus_Canceled {
+		ord.CanceledAt = tm
+	} else if ord.Status == OrderStatus_Finished {
+		ord.FinishedAt = tm
+	}
+
+	return ord, err
 }
 
 func (u *RespUnmarshaler) UnmarshalCancelOrderResponse(data []byte) error {

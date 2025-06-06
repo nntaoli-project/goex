@@ -29,6 +29,7 @@ func New() *Spot {
 			GetOrderUri:         "/api/v3/order",
 			GetHistoryOrdersUri: "/api/v3/allOrders",
 			GetExchangeInfoUri:  "/api/v3/exchangeInfo",
+			GetAccountUri:       "/api/v3/account",
 		},
 		UnmarshalerOpts: UnmarshalerOptions{
 			ResponseUnmarshaler:                 unmarshaler.UnmarshalResponse,
@@ -37,6 +38,7 @@ func New() *Spot {
 			KlineUnmarshaler:                    unmarshaler.UnmarshalGetKlineResponse,
 			CreateOrderResponseUnmarshaler:      unmarshaler.UnmarshalCreateOrderResponse,
 			GetPendingOrdersResponseUnmarshaler: unmarshaler.UnmarshalGetPendingOrdersResponse,
+			GetOrderInfoResponseUnmarshaler:     unmarshaler.unmarshalOrderResponse,
 			CancelOrderResponseUnmarshaler:      unmarshaler.UnmarshalCancelOrderResponse,
 			GetExchangeInfoResponseUnmarshaler:  unmarshaler.UnmarshalGetExchangeInfoResponse,
 		},

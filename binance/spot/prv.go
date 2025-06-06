@@ -54,28 +54,46 @@ func (s *PrvApi) CreateOrder(pair CurrencyPair, qty, price float64, side OrderSi
 		return nil, data, err
 	}
 
-	order := new(Order)
-	ord.Pair = order.Pair
-	ord.Price = order.Price
-	ord.Qty = order.Qty
+	ord.Pair = pair
+	ord.Price = price
+	ord.Qty = qty
 	ord.Status = OrderStatus_Pending
-	ord.Side = order.Side
-	ord.OrderTy = order.OrderTy
+	ord.Side = side
+	ord.OrderTy = orderTy
 
 	return ord, data, nil
 }
 
 func (s *PrvApi) GetOrderInfo(pair CurrencyPair, id string, opt ...OptionParameter) (*Order, []byte, error) {
-	panic("")
+	reqUrl := fmt.Sprintf("%s%s", s.UriOpts.Endpoint, s.UriOpts.GetOrderUri)
+	params := url.Values{}
+	params.Set("symbol", pair.Symbol)
+
+	if id != "" {
+		params.Set("orderId", id)
+	}
+
+	MergeOptionParams(&params, opt...)
+	adaptClientOrderId(&params)
+
+	resp, err := s.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	ord, err := s.UnmarshalerOpts.GetOrderInfoResponseUnmarshaler(resp)
+	if ord != nil {
+		ord.Pair = pair
+	}
+
+	return ord, resp, err
 }
 
 func (s *PrvApi) GetPendingOrders(pair CurrencyPair, opt ...OptionParameter) ([]Order, []byte, error) {
 	var params = url.Values{}
 	params.Set("symbol", pair.Symbol)
 	MergeOptionParams(&params, opt...)
-	data, err := s.DoAuthRequest(http.MethodGet,
-		fmt.Sprintf("%s%s", s.UriOpts.Endpoint, s.UriOpts.GetPendingOrdersUri),
-		&params, nil)
+	data, err := s.DoAuthRequest(http.MethodGet, fmt.Sprintf("%s%s", s.UriOpts.Endpoint, s.UriOpts.GetPendingOrdersUri), &params, nil)
 	if err != nil {
 		return nil, data, err
 	}
@@ -94,7 +112,10 @@ func (s *PrvApi) CancelOrder(pair CurrencyPair, id string, opt ...OptionParamete
 	if id != "" {
 		params.Set("orderId", id)
 	}
+
 	MergeOptionParams(&params, opt...)
+	adaptClientOrderId(&params)
+
 	data, err := s.DoAuthRequest(http.MethodDelete, fmt.Sprintf("%s%s", s.UriOpts.Endpoint, s.UriOpts.CancelOrderUri), &params, nil)
 	if err != nil {
 		return data, err

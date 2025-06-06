@@ -3,6 +3,7 @@ package spot
 import (
 	"github.com/nntaoli-project/goex/v2/logger"
 	"github.com/nntaoli-project/goex/v2/model"
+	"net/url"
 )
 
 func adaptKlinePeriod(period model.KlinePeriod) string {
@@ -98,5 +99,13 @@ func adaptOrderOrigStatus(st string) model.OrderStatus {
 		return model.OrderStatus_PartFinished
 	default:
 		return model.OrderStatus(-1)
+	}
+}
+
+func adaptClientOrderId(params *url.Values) {
+	cid := params.Get(model.Order_Client_ID__Opt_Key)
+	if cid != "" {
+		params.Set("origClientOrderId", cid) //clOrdId
+		params.Del(model.Order_Client_ID__Opt_Key)
 	}
 }
