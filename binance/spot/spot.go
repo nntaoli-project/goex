@@ -41,6 +41,7 @@ func New() *Spot {
 			GetOrderInfoResponseUnmarshaler:     unmarshaler.unmarshalOrderResponse,
 			CancelOrderResponseUnmarshaler:      unmarshaler.UnmarshalCancelOrderResponse,
 			GetExchangeInfoResponseUnmarshaler:  unmarshaler.UnmarshalGetExchangeInfoResponse,
+			GetAccountResponseUnmarshaler:       unmarshaler.UnmarshalGetAccountResponse,
 		},
 	}
 	return s

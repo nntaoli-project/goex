@@ -7,6 +7,7 @@ import (
 	"github.com/nntaoli-project/goex/v2/logger"
 	. "github.com/nntaoli-project/goex/v2/model"
 	"github.com/spf13/cast"
+	"log"
 	"strings"
 )
 
@@ -159,6 +160,40 @@ func (u *RespUnmarshaler) UnmarshalGetPendingOrdersResponse(data []byte) ([]Orde
 		orders = append(orders, *ord)
 	})
 	return orders, err
+}
+
+func (u *RespUnmarshaler) UnmarshalGetAccountResponse(data []byte) (map[string]Account, error) {
+	var accounts = make(map[string]Account, 6)
+	_, err := jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		if err != nil {
+			log.Printf("Error processing array element: %v", err)
+			return
+		}
+
+		var account Account
+		asset, err := jsonparser.GetString(value, "asset")
+		if err != nil {
+			logger.Errorf("Error extracting asset: %v", err)
+		}
+		account.Coin = asset
+
+		free, err := jsonparser.GetString(value, "free")
+		if err != nil {
+			logger.Errorf("Error extracting free: %v", err)
+		}
+		account.AvailableBalance = cast.ToFloat64(free)
+
+		locked, err := jsonparser.GetString(value, "locked")
+		if err != nil {
+			logger.Errorf("Error extracting locked: %v", err)
+		}
+		account.FrozenBalance = cast.ToFloat64(locked)
+
+		account.Balance = account.AvailableBalance + account.FrozenBalance
+		accounts[asset] = account
+	}, "balances") // Specify the path to the "balances" array
+
+	return accounts, err
 }
 
 func (u *RespUnmarshaler) unmarshalOrderResponse(data []byte) (*Order, error) {

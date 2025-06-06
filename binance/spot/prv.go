@@ -26,8 +26,15 @@ func NewPrvApi(apiOpts ...options.ApiOption) *PrvApi {
 }
 
 func (s *PrvApi) GetAccount(coin string) (map[string]Account, []byte, error) {
-	//TODO implement me
-	panic("implement me")
+	params := url.Values{}
+	params.Set("omitZeroBalances", "true")
+	reqUrl := fmt.Sprintf("%s%s", s.UriOpts.Endpoint, s.UriOpts.GetAccountUri)
+	data, err := s.DoAuthRequest(http.MethodGet, reqUrl, &params, nil)
+	if err != nil {
+		return nil, data, err
+	}
+	accounts, err := s.UnmarshalerOpts.GetAccountResponseUnmarshaler(data)
+	return accounts, data, err
 }
 
 func (s *PrvApi) CreateOrder(pair CurrencyPair, qty, price float64, side OrderSide, orderTy OrderType, opt ...OptionParameter) (*Order, []byte, error) {
