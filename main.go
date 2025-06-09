@@ -2,6 +2,7 @@ package goex
 
 import (
 	"github.com/nntaoli-project/goex/v2/binance"
+	"github.com/nntaoli-project/goex/v2/bitget"
 	"github.com/nntaoli-project/goex/v2/httpcli"
 	"github.com/nntaoli-project/goex/v2/logger"
 	"github.com/nntaoli-project/goex/v2/okx"
@@ -15,6 +16,7 @@ var (
 var (
 	OKx     = okx.New()
 	Binance = binance.New()
+	Bitget  = bitget.New()
 )
 
 func SetDefaultHttpCli(cli httpcli.IHttpClient) {
