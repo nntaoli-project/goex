@@ -20,6 +20,7 @@ type GetFundingRateHistoryResponseUnmarshaler func([]byte) ([]model.FundingRate,
 type SetPositionModeResponseUnmarshaler func([]byte) (string, error)
 type SetLeverageResponseUnmarshaler func([]byte) error
 type GetLeverageResponseUnmarshaler func([]byte) (string, error)
+type AmendOrderResponseUnmarshaler func([]byte) error
 
 type UnmarshalerOptions struct {
 	ResponseUnmarshaler                      ResponseUnmarshaler
@@ -27,6 +28,7 @@ type UnmarshalerOptions struct {
 	DepthUnmarshaler                         GetDepthResponseUnmarshaler
 	KlineUnmarshaler                         GetKlineResponseUnmarshaler
 	CreateOrderResponseUnmarshaler           CreateOrderResponseUnmarshaler
+	AmendOrderResponseUnmarshaler            AmendOrderResponseUnmarshaler
 	GetOrderInfoResponseUnmarshaler          GetOrderInfoResponseUnmarshaler
 	GetPendingOrdersResponseUnmarshaler      GetPendingOrdersResponseUnmarshaler
 	GetHistoryOrdersResponseUnmarshaler      GetHistoryOrdersResponseUnmarshaler
@@ -77,6 +79,12 @@ func WithGetOrderInfoResponseUnmarshaler(unmarshaler GetOrderInfoResponseUnmarsh
 func WithCreateOrderResponseUnmarshaler(unmarshaler CreateOrderResponseUnmarshaler) UnmarshalerOption {
 	return func(options *UnmarshalerOptions) {
 		options.CreateOrderResponseUnmarshaler = unmarshaler
+	}
+}
+
+func WithAmendOrderResponseUnmarshaler(unmarshaler AmendOrderResponseUnmarshaler) UnmarshalerOption {
+	return func(options *UnmarshalerOptions) {
+		options.AmendOrderResponseUnmarshaler = unmarshaler
 	}
 }
 

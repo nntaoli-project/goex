@@ -143,6 +143,10 @@ func (un *RespUnmarshaler) UnmarshalCreateOrderResponse(data []byte) (*Order, er
 	return ord, err
 }
 
+func (un *RespUnmarshaler) UnmarshalAmendOrderResponse(data []byte) error {
+	return nil
+}
+
 func (un *RespUnmarshaler) UnmarshalGetPendingOrdersResponse(data []byte) ([]Order, error) {
 	var (
 		orders []Order

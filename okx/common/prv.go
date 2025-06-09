@@ -72,6 +72,30 @@ func (prv *Prv) CreateOrder(pair model.CurrencyPair, qty, price float64, side mo
 	return ord, responseBody, err
 }
 
+func (prv *Prv) AmendOrder(pair model.CurrencyPair, orderId string, newQty, newPrice float64, opts ...model.OptionParameter) ([]byte, error) {
+	reqUrl := fmt.Sprintf("%s%s", prv.UriOpts.Endpoint, prv.UriOpts.AmendOrderUri)
+	params := url.Values{}
+	params.Set("instId", pair.Symbol)
+	if orderId != "" {
+		params.Set("ordId", orderId)
+	}
+	if newQty > 0 {
+		params.Set("newSz", util.FloatToString(newQty, pair.QtyPrecision))
+	}
+	if newPrice > 0 {
+		params.Set("newPx", util.FloatToString(newPrice, pair.PricePrecision))
+	}
+	util.MergeOptionParams(&params, opts...)
+	AdaptOrderClientIDOptionParameter(&params)
+	data, responseBody, err := prv.DoAuthRequest(http.MethodPost, reqUrl, &params, nil)
+	if err != nil {
+		logger.Errorf("[AmendOrder] response body =%s", string(responseBody))
+		return responseBody, err
+	}
+	err = prv.UnmarshalOpts.AmendOrderResponseUnmarshaler(data)
+	return responseBody, err
+}
+
 func (prv *Prv) GetOrderInfo(pair model.CurrencyPair, id string, opt ...model.OptionParameter) (*model.Order, []byte, error) {
 	reqUrl := fmt.Sprintf("%s%s", prv.UriOpts.Endpoint, prv.UriOpts.GetOrderUri)
 	params := url.Values{}
@@ -186,7 +210,7 @@ func (prv *Prv) GetLeverage(symbol string, opts ...model.OptionParameter) (strin
 	if err != nil {
 		return "", responseBody, err
 	}
-	
+
 	lever, err := prv.UnmarshalOpts.GetLeverageResponseUnmarshaler(data)
 	return lever, responseBody, err
 }
