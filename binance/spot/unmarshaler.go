@@ -111,8 +111,6 @@ func (u *RespUnmarshaler) UnmarshalGetKlineResponse(data []byte) ([]Kline, error
 			case 4:
 				k.Close = cast.ToFloat64(string(val))
 			case 5:
-				//ignore
-			case 6:
 				k.Vol = cast.ToFloat64(string(val))
 			}
 			i += 1
