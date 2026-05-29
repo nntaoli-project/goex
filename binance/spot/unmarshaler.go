@@ -318,6 +318,6 @@ func (u *RespUnmarshaler) UnmarshalGetExchangeInfoResponse(data []byte) (map[str
 	return currencyPairMap, err
 }
 
-func (u *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
+func (u *RespUnmarshaler) UnmarshalResponse(data []byte, res any) error {
 	return json.Unmarshal(data, res)
 }
