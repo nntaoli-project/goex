@@ -33,7 +33,7 @@ func FloatToString(v float64, n int) string {
 //}
 
 func ValuesToJson(v url.Values) ([]byte, error) {
-	paramMap := make(map[string]interface{})
+	paramMap := make(map[string]any)
 	for k, vv := range v {
 		if len(vv) == 1 {
 			paramMap[k] = vv[0]

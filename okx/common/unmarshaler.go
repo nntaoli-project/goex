@@ -466,6 +466,6 @@ func (un *RespUnmarshaler) UnmarshalGetLeverageResponse(data []byte) (string, er
 	return jsonparser.GetString(data, "[0]", "lever")
 }
 
-func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
+func (un *RespUnmarshaler) UnmarshalResponse(data []byte, res any) error {
 	return json.Unmarshal(data, res)
 }
