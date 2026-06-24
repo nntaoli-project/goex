@@ -419,6 +419,8 @@ func (un *RespUnmarshaler) UnmarshalGetFundingRateResponse(data []byte) (*Fundin
 			rate.Rate = cast.ToFloat64(string(value))
 		case "fundingTime":
 			rate.Tm = cast.ToInt64(string(value))
+		case "nextFundingTime":
+			rate.NextTm = cast.ToInt64(string(value))
 		}
 		return nil
 	})

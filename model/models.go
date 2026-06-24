@@ -162,5 +162,6 @@ type FuturesAccount struct {
 type FundingRate struct {
 	Symbol string  `json:"symbol"`
 	Rate   float64 `json:"rate"`
-	Tm     int64   `json:"tm"` //资金费收取时间
+	NextTm int64   `json:"next_tm"` //收取下一期资金费时间
+	Tm     int64   `json:"tm"`      //资金费收取时间
 }
