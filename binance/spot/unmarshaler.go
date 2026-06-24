@@ -111,8 +111,6 @@ func (u *RespUnmarshaler) UnmarshalGetKlineResponse(data []byte) ([]Kline, error
 			case 4:
 				k.Close = cast.ToFloat64(string(val))
 			case 5:
-				//ignore
-			case 6:
 				k.Vol = cast.ToFloat64(string(val))
 			}
 			i += 1
@@ -320,6 +318,6 @@ func (u *RespUnmarshaler) UnmarshalGetExchangeInfoResponse(data []byte) (map[str
 	return currencyPairMap, err
 }
 
-func (u *RespUnmarshaler) UnmarshalResponse(data []byte, res interface{}) error {
+func (u *RespUnmarshaler) UnmarshalResponse(data []byte, res any) error {
 	return json.Unmarshal(data, res)
 }

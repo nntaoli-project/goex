@@ -2,7 +2,7 @@ package options
 
 import "github.com/nntaoli-project/goex/v2/model"
 
-type ResponseUnmarshaler func([]byte, interface{}) error
+type ResponseUnmarshaler func([]byte, any) error
 type GetTickerResponseUnmarshaler func([]byte) (*model.Ticker, error)
 type GetDepthResponseUnmarshaler func([]byte) (*model.Depth, error)
 type GetKlineResponseUnmarshaler func([]byte) ([]model.Kline, error)
