@@ -32,6 +32,7 @@ func NewFApi() *FApi {
 			GetExchangeInfoResponseUnmarshaler:  UnmarshalGetExchangeInfoResponse,
 			DepthUnmarshaler:                    UnmarshalDepthResponse,
 			KlineUnmarshaler:                    UnmarshalKlinesResponse,
+			TickerUnmarshaler:                   UnmarshalTickerResponse,
 			GetAccountResponseUnmarshaler:       UnmarshalGetAccountResponse,
 			CreateOrderResponseUnmarshaler:      UnmarshalCreateOrderResponse,
 			CancelOrderResponseUnmarshaler:      UnmarshalCancelOrderResponse,

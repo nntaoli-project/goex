@@ -87,8 +87,22 @@ func (f *FApi) GetDepth(pair model.CurrencyPair, limit int, opt ...model.OptionP
 }
 
 func (f *FApi) GetTicker(pair model.CurrencyPair, opt ...model.OptionParameter) (ticker *model.Ticker, responseBody []byte, err error) {
-	//TODO implement me
-	panic("implement me")
+	params := url.Values{}
+	params.Set("symbol", pair.Symbol)
+
+	data, responseBody, err := f.DoNoAuthRequest(http.MethodGet, f.UriOpts.Endpoint+f.UriOpts.TickerUri, &params)
+	if err != nil {
+		return nil, responseBody, err
+	}
+
+	ticker, err = f.UnmarshalOpts.TickerUnmarshaler(data)
+	if err != nil {
+		return nil, responseBody, err
+	}
+
+	ticker.Pair = pair
+
+	return ticker, responseBody, err
 }
 
 func (f *FApi) GetKline(pair model.CurrencyPair, period model.KlinePeriod, opt ...model.OptionParameter) (klines []model.Kline, responseBody []byte, err error) {

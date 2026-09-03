@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/buger/jsonparser"
 	"github.com/nntaoli-project/goex/v2/binance/common"
+	"github.com/nntaoli-project/goex/v2/logger"
 	"github.com/nntaoli-project/goex/v2/model"
 	"github.com/spf13/cast"
 	"time"
@@ -160,6 +161,43 @@ func UnmarshalKlinesResponse(data []byte) ([]model.Kline, error) {
 	})
 
 	return klines, err
+}
+
+func UnmarshalTickerResponse(data []byte) (*model.Ticker, error) {
+	var tk = &model.Ticker{}
+
+	if len(data) == 0 || data[0] != '{' || data[len(data)-1] != '}' {
+		logger.Warnf("[UnmarshalTickerResponse] response data not json object")
+		return tk, nil
+	}
+
+	err := jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		switch string(key) {
+		case "lastPrice":
+			tk.Last = cast.ToFloat64(string(value))
+		// case "bidPrice":
+		// 	tk.Buy = cast.ToFloat64(string(value))
+		// case "askPrice":
+		// 	tk.Sell = cast.ToFloat64(string(value))
+		case "highPrice":
+			tk.High = cast.ToFloat64(string(value))
+		case "lowPrice":
+			tk.Low = cast.ToFloat64(string(value))
+		case "volume":
+			tk.Vol = cast.ToFloat64(string(value))
+		case "priceChangePercent":
+			tk.Percent = cast.ToFloat64(string(value))
+		case "closeTime":
+			tk.Timestamp = cast.ToInt64(string(value))
+		}
+		return nil
+	})
+	if err != nil {
+		logger.Errorf("[UnmarshalTickerResponse] %s", err.Error())
+		return nil, err
+	}
+
+	return tk, nil
 }
 
 func UnmarshalGetAccountResponse(data []byte) (map[string]model.Account, error) {
