@@ -26,7 +26,7 @@ func (okx *OKxV5) GetDepth(pair CurrencyPair, size int, opt ...OptionParameter) 
 		return nil, responseBody, err
 	}
 
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		return nil, responseBody, errors.New(string(responseBody))
 	}
 
@@ -104,7 +104,7 @@ func (okx *OKxV5) GetFundingRate(pair CurrencyPair, opts ...OptionParameter) (ra
 	if rate != nil && err == nil {
 		rate.Symbol = pair.Symbol
 	}
-	return rate, nil, err
+	return rate, responseBody, err
 }
 
 func (okx *OKxV5) GetFundingRateHistory(pair CurrencyPair, limit int, opts ...OptionParameter) (rates []FundingRate, responseBody []byte, err error) {
@@ -118,7 +118,7 @@ func (okx *OKxV5) GetFundingRateHistory(pair CurrencyPair, limit int, opts ...Op
 		return nil, responseBody, err
 	}
 	rates, err = okx.UnmarshalOpts.GetFundingRateHistoryResponseUnmarshaler(data)
-	return rates, nil, err
+	return rates, responseBody, err
 }
 
 func (okx *OKxV5) DoNoAuthRequest(httpMethod, reqUrl string, params *url.Values) ([]byte, []byte, error) {
