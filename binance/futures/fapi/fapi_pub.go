@@ -3,6 +3,7 @@ package fapi
 import (
 	"errors"
 	"fmt"
+	"github.com/buger/jsonparser"
 	"github.com/nntaoli-project/goex/v2/binance/common"
 	. "github.com/nntaoli-project/goex/v2/httpcli"
 	"github.com/nntaoli-project/goex/v2/logger"
@@ -20,10 +21,39 @@ func (f *FApi) DoNoAuthRequest(httpMethod, reqUrl string, params *url.Values) ([
 
 	responseBody, err := Cli.DoRequest(httpMethod, reqUrl, reqBody, nil)
 	if err != nil {
-
+		logger.Errorf("[DoNoAuthRequest] http request error, body: %s", string(responseBody))
+		return responseBody, responseBody, err
 	}
 
-	return responseBody, responseBody, err
+	if err = checkStatusError(responseBody); err != nil {
+		return responseBody, responseBody, err
+	}
+
+	return responseBody, responseBody, nil
+}
+
+// checkStatusError 币安fapi部分接口参数校验失败时返回HTTP 200 + 错误信息, 只能从响应体判断:
+//
+//	{"status":"ERROR","type":"GENERAL","code":"99099990","errorData":"illegal params.","data":null,...}
+//
+// 这些接口成功响应的顶层没有status字段, 所以按等值判断不会误伤。
+func checkStatusError(data []byte) error {
+	if len(data) == 0 || data[0] != '{' { //数组等非错误响应, 交给各自的unmarshaler处理
+		return nil
+	}
+
+	status, err := jsonparser.GetString(data, "status")
+	if err != nil || status != "ERROR" {
+		return nil
+	}
+
+	code, _ := jsonparser.GetString(data, "code")
+	msg, _ := jsonparser.GetString(data, "errorData")
+	if msg == "" {
+		msg = string(data)
+	}
+
+	return fmt.Errorf("binance fapi error: code=%s, msg=%s", code, msg)
 }
 
 func (f *FApi) GetName() string {
@@ -103,6 +133,32 @@ func (f *FApi) GetTicker(pair model.CurrencyPair, opt ...model.OptionParameter) 
 	ticker.Pair = pair
 
 	return ticker, responseBody, err
+}
+
+func (f *FApi) GetFundingRateHistory(pair model.CurrencyPair, limit int, opt ...model.OptionParameter) (rates []model.FundingRate, responseBody []byte, err error) {
+	params := url.Values{}
+	params.Set("symbol", pair.Symbol)
+	if limit > 0 {
+		params.Set("limit", fmt.Sprint(limit))
+	}
+
+	util.MergeOptionParams(&params, opt...)
+
+	data, responseBody, err := f.DoNoAuthRequest(http.MethodGet, f.UriOpts.Endpoint+f.UriOpts.GetFundingRateHistoryUri, &params)
+	if err != nil {
+		return nil, responseBody, err
+	}
+
+	rates, err = f.UnmarshalOpts.GetFundingRateHistoryResponseUnmarshaler(data)
+	if err != nil {
+		return nil, responseBody, err
+	}
+
+	for i := range rates {
+		rates[i].Symbol = pair.Symbol
+	}
+
+	return rates, responseBody, nil
 }
 
 func (f *FApi) GetKline(pair model.CurrencyPair, period model.KlinePeriod, opt ...model.OptionParameter) (klines []model.Kline, responseBody []byte, err error) {

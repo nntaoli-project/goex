@@ -27,6 +27,8 @@ func NewFApi() *FApi {
 			GetAccountUri:       "/fapi/v2/balance",
 			GetPositionsUri:     "/fapi/v2/positionRisk",
 			GetExchangeInfoUri:  "/fapi/v1/exchangeInfo",
+
+			GetFundingRateHistoryUri: "/fapi/v1/fundingRate",
 		},
 		UnmarshalOpts: options.UnmarshalerOptions{
 			GetExchangeInfoResponseUnmarshaler:  UnmarshalGetExchangeInfoResponse,
@@ -40,6 +42,8 @@ func NewFApi() *FApi {
 			GetPendingOrdersResponseUnmarshaler: UnmarshalGetPendingOrdersResponse,
 			GetHistoryOrdersResponseUnmarshaler: UnmarshalGetHistoryOrdersResponse,
 			GetPositionsResponseUnmarshaler:     UnmarshalGetPositionsResponse,
+
+			GetFundingRateHistoryResponseUnmarshaler: UnmarshalGetFundingRateHistoryResponse,
 		},
 	}
 

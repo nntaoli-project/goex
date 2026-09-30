@@ -374,3 +374,37 @@ func UnmarshalGetPositionsResponse(data []byte) ([]model.FuturesPosition, error)
 	})
 	return positions, err
 }
+
+func UnmarshalGetFundingRateHistoryResponse(data []byte) ([]model.FundingRate, error) {
+	var rates []model.FundingRate
+
+	if len(data) == 0 || data[0] != '[' {
+		logger.Errorf("[UnmarshalGetFundingRateHistoryResponse] response data not json array")
+		return nil, errors.New(string(data))
+	}
+
+	_, err := jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		var rate model.FundingRate
+
+		err = jsonparser.ObjectEach(value, func(key []byte, val []byte, dataType jsonparser.ValueType, offset int) error {
+			switch string(key) {
+			case "fundingRate":
+				rate.Rate = cast.ToFloat64(string(val))
+			case "fundingTime":
+				rate.Tm = cast.ToInt64(string(val))
+			}
+			return nil
+		})
+		if err != nil {
+			return
+		}
+
+		rates = append(rates, rate)
+	})
+	if err != nil {
+		logger.Errorf("[UnmarshalGetFundingRateHistoryResponse] %s", err.Error())
+		return nil, err
+	}
+
+	return rates, nil
+}
