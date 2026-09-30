@@ -3,7 +3,7 @@ module github.com/nntaoli-project/goex/v2
 go 1.23.0
 
 require (
-	github.com/buger/jsonparser v1.1.1
+	github.com/buger/jsonparser v1.1.2
 	github.com/google/uuid v1.3.1
 	github.com/nntaoli/go-tools v0.0.0-20231117134637-ffc092526634
 	github.com/spf13/cast v1.5.0
